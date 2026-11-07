@@ -25,6 +25,14 @@ Guide a primary-school learner through short Chinese, mathematics and English ac
 <a id="use-this-package"></a>
 ## Use this package
 
+Install the prebuilt release through the [plugin market](https://winterhuan.github.io/dsh-creative/index.json), or use this pinned Git source with DSH `0.2.2-rc.1`:
+
+```sh
+dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#d65b9eec560259b6efc19b7ef4bad9791dad8657&path:/packages/winterhuan/student'
+```
+
+Replace `market` with the name of your existing DSH profile.
+
 In a new or blank conversation, select **智能学习** (Smart learning) from the native mode menu, then open its workbench in the right sidebar. The workbench and domain Skills/tools are available only in this mode. Existing conversations retain their selected mode; start a new conversation in this mode to continue existing project files. Session state and project files are not migrated. Global settings remain available.
 
 Install the built package into a DSH `0.2.2-rc.1` profile, open a dedicated learning workspace and invoke `/study`.

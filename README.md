@@ -4,9 +4,15 @@ English | [中文](README.zh.md)
 
 Short daily learning, confirmed curricula and spaced mistake review for primary-school students.
 
-[Plugin documentation](packages/winterhuan/student/README.md) · [Release package](https://github.com/winterhuan/dsh-student/releases/download/v0.1.0/winterhuan-dsh-student-0.1.0.tgz)
+[Plugin documentation](packages/winterhuan/student/README.md) · [Release package](https://github.com/winterhuan/dsh-student/releases/download/v0.1.1/winterhuan-dsh-student-0.1.1.tgz)
 
-Use pnpm 10.28.0 to install Release URLs into DSH profiles; pnpm 11 can reject them with `MISSING_TARBALL_INTEGRITY`. Repository builds use pnpm 11.7.0.
+For DSH `0.2.2-rc.1`, enable Custom plugin market and add `https://winterhuan.github.io/dsh-creative/index.json` in Discover. Alternatively, install the prebuilt Git version with pnpm 11.7.0:
+
+```sh
+dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#d65b9eec560259b6efc19b7ef4bad9791dad8657&path:/packages/winterhuan/student'
+```
+
+Replace `market` with the name of your existing DSH profile.
 
 Use Node 24 (default) or Node 22.19 and later, with pnpm 11.7.0.
 

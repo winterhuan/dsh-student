@@ -30,13 +30,7 @@ export function dashboard(state, now, options = {}, interactiveLessons = interac
             return item.stage >= 4;
         return true;
     };
-    const confirmedCounts = { chinese: 0, math: 0, english: 0 };
-    const confirmed = state.mistakes.filter(item => {
-        if (!inStatus(item))
-            return false;
-        confirmedCounts[item.subject]++;
-        return item.subject === subject;
-    }).reverse();
+    const confirmed = state.mistakes.filter(item => item.subject === subject && inStatus(item)).reverse();
     const confirmedOffset = Math.min(mistakeOffset, Math.max(0, Math.ceil(confirmed.length / 20) - 1) * 20);
     const book = state.mistakes.filter(item => item.subject === subject && item.confirmedAt !== undefined);
     const due = status.dueMistakes.filter(item => item.subject === subject);
@@ -63,11 +57,9 @@ export function dashboard(state, now, options = {}, interactiveLessons = interac
                 };
             }),
             reviewPlan: (({ picks, objectiveFills, remaining, unlinkedDue, openSheets }) => ({ picks: picks.length, fills: objectiveFills.length, remaining, unlinkedDue: unlinkedDue.length, openSheets: openSheets.length }))(reviewPlan(state, subject, now, 8, insight)),
-            paperResults: state.paperResults.filter(item => state.worksheets.some(sheet => sheet.id === item.worksheetId && sheet.subject === subject)).slice(-20).reverse(),
             dueMistakes: due.slice(0, 20), dueCount: due.length, dueTotal: status.dueMistakes.length, dueSubjects: due.length ? [subject] : [],
             pendingMistakes: pending.slice(0, 20), pendingCount: pending.length,
-            confirmedMistakes: confirmed.slice(confirmedOffset, confirmedOffset + 20), confirmedCount: confirmed.length, confirmedCounts, confirmedOffset, confirmedSubject: subject,
-            mistakeStatus,
+            confirmedMistakes: confirmed.slice(confirmedOffset, confirmedOffset + 20), confirmedCount: confirmed.length, confirmedOffset, confirmedSubject: subject,
             mistakeBook: {
                 due: book.filter(item => item.dueAt !== undefined && item.dueAt <= now).length,
                 reviewing: book.filter(item => item.stage < 4 && (item.dueAt === undefined || item.dueAt > now)).length,

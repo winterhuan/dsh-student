@@ -3986,14 +3986,20 @@ function migrateStudyFile(parsed) {
 	}
 	return next;
 }
+const stateCache = /* @__PURE__ */ new Map();
 /**
 * Read or update .study/state.json in the calling Session's filesystem.
 * Reads preserve absence; writes require the observed version and current sandbox policy.
 * A competing writer causes an error, never an automatic replay of learning evidence.
+* Archiving validates the revision and command before writing; archive creation and state
+* replacement remain separate writes, so a later filesystem failure can leave an archive.
 * Parsed states are cached per observed file version, so unchanged reads skip re-reading
 * and re-validating the file; any write or external change drops the cache entry.
+* @param exec - calling agent and cancellation signal.
+* @param command - optional learning update; omission reads the current state.
+* @param expectedRevision - revision observed by a submitting panel, checked before writing.
+* @returns the current or updated state, or undefined before setup or after a saved archive is read.
 */
-const stateCache = /* @__PURE__ */ new Map();
 async function studyStore(exec, command, expectedRevision) {
 	const agent = exec.agent;
 	if (!agent?.session.header.cwd) throw new Error("请先在 DSH 中打开学习工作区。");
@@ -4030,8 +4036,12 @@ async function studyStore(exec, command, expectedRevision) {
 		}
 	}
 	if (command === void 0) return state;
-	if (archiveTermSchema.safeParse(command).success) {
-		if (!state) throw new Error("请先建立学习档案，再归档学期。");
+	const archive = archiveTermSchema.safeParse(command);
+	if (archive.success && !state) throw new Error("请先建立学习档案，再归档学期。");
+	if (expectedRevision !== void 0 && expectedRevision !== (state?.revision ?? 0)) throw new StudyConflict();
+	const next = updateStudy(state, command, Date.now());
+	if (next === state) return state;
+	if (archive.success && state) {
 		const name = `.study/archive-${state.profile.schoolYear.replace(/[^a-zA-Z0-9_-]/gu, "-")}-${state.profile.term}.json`;
 		const archiveTarget = await fs.resolve(name, {
 			cwd,
@@ -4041,9 +4051,6 @@ async function studyStore(exec, command, expectedRevision) {
 		if (await fs.stat(archiveTarget, exec.signal)) throw new Error(`归档文件已存在：${name}。请先移走旧归档再归档本学期。`);
 		await fs.writeText(archiveTarget, `${JSON.stringify(state, null, 2)}\n`, { kind: "createIfAbsent" }, exec.signal, policy.resolve({ session: agent.session }));
 	}
-	if (expectedRevision !== void 0 && expectedRevision !== (state?.revision ?? 0)) throw new StudyConflict();
-	const next = updateStudy(state, command, Date.now());
-	if (next === state) return state;
 	const stored = {
 		...next,
 		mistakes: next.mistakes.map(({ stage: _stage, independentDays: _days, dueAt: _due, ...mistake }) => mistake)
@@ -4058,7 +4065,7 @@ async function studyStore(exec, command, expectedRevision) {
 	return next;
 }
 /**
-* Bounded history and status queries. Offset pagination applies to every collection.
+* Bounded history and status queries. Only the requested collection is computed; offset pagination applies to every collection.
 * @param state - current durable learning state, or undefined before setup.
 * @param kind - record collection or projection to read.
 * @param offset - zero-based collection offset.
@@ -4246,25 +4253,25 @@ function queryStudy(state, kind, offset, options = {}) {
 		};
 	}
 	const collections = {
-		due: state.mistakes.filter((item) => item.dueAt !== void 0 && item.dueAt <= now),
-		pending: state.mistakes.filter((item) => item.confirmedAt === void 0),
-		progress: studyStatus(state, now).progress,
-		concepts: state.concepts,
-		objectives: state.objectives,
-		relations: state.relations,
-		worksheets: state.worksheets.map((sheet) => ({
+		due: () => state.mistakes.filter((item) => item.dueAt !== void 0 && item.dueAt <= now),
+		pending: () => state.mistakes.filter((item) => item.confirmedAt === void 0),
+		progress: () => studyStatus(state, now).progress,
+		concepts: () => state.concepts,
+		objectives: () => state.objectives,
+		relations: () => state.relations,
+		worksheets: () => state.worksheets.map((sheet) => ({
 			...sheet,
 			drafts: state.paperDrafts.filter((draft) => draft.worksheetId === sheet.id)
 		})),
-		"paper-results": state.paperResults,
-		materials: state.materials,
-		mistakes: state.mistakes,
-		sessions: state.sessions,
-		attempts: state.attempts
+		"paper-results": () => state.paperResults,
+		materials: () => state.materials,
+		mistakes: () => state.mistakes,
+		sessions: () => state.sessions,
+		attempts: () => state.attempts
 	};
 	const chosen = Object.hasOwn(collections, kind) ? collections[kind] : void 0;
 	if (chosen === void 0) throw new Error(`未知的查询类型：${kind}。可用的类型见 study_status 工具说明。`);
-	const selected = chosen.filter((item) => {
+	const selected = chosen().filter((item) => {
 		if (id && (!("id" in item) || item.id !== id)) return false;
 		if (!subject) return true;
 		if ("subject" in item) return item.subject === subject;

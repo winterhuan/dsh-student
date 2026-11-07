@@ -65,15 +65,21 @@ export function migrateStudyFile(parsed: unknown): unknown {
   return next
 }
 
+const stateCache = new Map<unknown, { version: unknown; state: StudyState }>()
+
 /**
  * Read or update .study/state.json in the calling Session's filesystem.
  * Reads preserve absence; writes require the observed version and current sandbox policy.
  * A competing writer causes an error, never an automatic replay of learning evidence.
+ * Archiving validates the revision and command before writing; archive creation and state
+ * replacement remain separate writes, so a later filesystem failure can leave an archive.
  * Parsed states are cached per observed file version, so unchanged reads skip re-reading
  * and re-validating the file; any write or external change drops the cache entry.
+ * @param exec - calling agent and cancellation signal.
+ * @param command - optional learning update; omission reads the current state.
+ * @param expectedRevision - revision observed by a submitting panel, checked before writing.
+ * @returns the current or updated state, or undefined before setup or after a saved archive is read.
  */
-const stateCache = new Map<unknown, { version: unknown; state: StudyState }>()
-
 export async function studyStore(exec: Pick<ToolExecution, 'agent' | 'signal'>, command?: unknown, expectedRevision?: number): Promise<StudyState | undefined> {
   const agent = exec.agent
   if (!agent?.session.header.cwd) throw new Error('请先在 DSH 中打开学习工作区。')
@@ -106,17 +112,17 @@ export async function studyStore(exec: Pick<ToolExecution, 'agent' | 'signal'>, 
   }
   if (command === undefined) return state
   const archive = archiveTermSchema.safeParse(command)
-  if (archive.success) {
-    if (!state) throw new Error('请先建立学习档案，再归档学期。')
+  if (archive.success && !state) throw new Error('请先建立学习档案，再归档学期。')
+  if (expectedRevision !== undefined && expectedRevision !== (state?.revision ?? 0)) throw new StudyConflict()
+  const next = updateStudy(state, command, Date.now())
+  if (next === state) return state
+  if (archive.success && state) {
     const name = `.study/archive-${state.profile.schoolYear.replace(/[^a-zA-Z0-9_-]/gu, '-')}-${state.profile.term}.json`
     const archiveTarget = await fs.resolve(name, { cwd, signal: exec.signal })
     if (!fs.contains(root, archiveTarget)) throw new Error('归档文件必须位于当前工作区内。')
     if (await fs.stat(archiveTarget, exec.signal)) throw new Error(`归档文件已存在：${name}。请先移走旧归档再归档本学期。`)
     await fs.writeText(archiveTarget, `${JSON.stringify(state, null, 2)}\n`, { kind: 'createIfAbsent' }, exec.signal, policy.resolve({ session: agent.session }))
   }
-  if (expectedRevision !== undefined && expectedRevision !== (state?.revision ?? 0)) throw new StudyConflict()
-  const next = updateStudy(state, command, Date.now())
-  if (next === state) return state
   // Derived review fields are replayed on read; keep them out of the file.
   const stored = { ...next, mistakes: next.mistakes.map(({ stage: _stage, independentDays: _days, dueAt: _due, ...mistake }) => mistake) }
   const content = `${JSON.stringify(stored, null, 2)}\n`
@@ -127,7 +133,7 @@ export async function studyStore(exec: Pick<ToolExecution, 'agent' | 'signal'>, 
 }
 
 /**
- * Bounded history and status queries. Offset pagination applies to every collection.
+ * Bounded history and status queries. Only the requested collection is computed; offset pagination applies to every collection.
  * @param state - current durable learning state, or undefined before setup.
  * @param kind - record collection or projection to read.
  * @param offset - zero-based collection offset.
@@ -240,19 +246,18 @@ export function queryStudy(state: StudyState | undefined, kind: string, offset: 
     }
   }
   type CollectionItem = (StudyState['mistakes'] | StudyState['concepts'] | StudyState['objectives'] | StudyState['relations'] | StudyState['worksheets'] | StudyState['paperResults'] | StudyState['materials'] | StudyState['sessions'] | StudyState['attempts'] | ReturnType<typeof studyStatus>['progress'])[number]
-  const collections: Record<string, CollectionItem[]> = {
-    due: state.mistakes.filter(item => item.dueAt !== undefined && item.dueAt <= now),
-    pending: state.mistakes.filter(item => item.confirmedAt === undefined),
-    progress: studyStatus(state, now).progress,
-    concepts: state.concepts, objectives: state.objectives, relations: state.relations,
-    worksheets: state.worksheets.map(sheet => ({ ...sheet, drafts: state.paperDrafts.filter(draft => draft.worksheetId === sheet.id) })),
-    'paper-results': state.paperResults, materials: state.materials, mistakes: state.mistakes,
-    sessions: state.sessions, attempts: state.attempts,
+  const collections: Record<string, () => CollectionItem[]> = {
+    due: () => state.mistakes.filter(item => item.dueAt !== undefined && item.dueAt <= now),
+    pending: () => state.mistakes.filter(item => item.confirmedAt === undefined),
+    progress: () => studyStatus(state, now).progress,
+    concepts: () => state.concepts, objectives: () => state.objectives, relations: () => state.relations,
+    worksheets: () => state.worksheets.map(sheet => ({ ...sheet, drafts: state.paperDrafts.filter(draft => draft.worksheetId === sheet.id) })),
+    'paper-results': () => state.paperResults, materials: () => state.materials, mistakes: () => state.mistakes,
+    sessions: () => state.sessions, attempts: () => state.attempts,
   }
-  const chosen: CollectionItem[] | undefined = Object.hasOwn(collections, kind) ? collections[kind] : undefined
+  const chosen = Object.hasOwn(collections, kind) ? collections[kind] : undefined
   if (chosen === undefined) throw new Error(`未知的查询类型：${kind}。可用的类型见 study_status 工具说明。`)
-  const records = chosen
-  const selected = records.filter(item => {
+  const selected = chosen().filter(item => {
     if (id && (!('id' in item) || item.id !== id)) return false
     if (!subject) return true
     if ('subject' in item) return item.subject === subject

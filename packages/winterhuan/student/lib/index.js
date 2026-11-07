@@ -1,146 +1,44 @@
-import { _ as insightSummary, a as timeStatus, c as interactiveLessonsView, d as curriculumView, f as itemObjectiveId, g as diagnosticFor, h as sheetOpen, i as studyStatus, l as readInteractiveLessons, m as reviewPlan, o as weeklySummary, p as objectiveInfo, r as studyStore, t as StudyConflict, u as checkInHistory, v as studyInsight, y as commandSchema } from "./store-BYFN1l9u.js";
+import { _ as insightSummary, a as timeStatus, c as interactiveLessonsView, d as curriculumView, f as itemObjectiveId, g as diagnosticFor, h as sheetOpen, i as studyStatus, l as readInteractiveLessons, m as reviewPlan, o as weeklySummary, p as objectiveInfo, r as studyStore, t as StudyConflict, u as checkInHistory, v as studyInsight, y as commandSchema } from "./store-CH4u_IXC.js";
 import { z } from "zod";
 import { FsError } from "@deepseek-ai/dsh-fs";
 import { SessionId } from "@deepseek-ai/dsh-session";
 /** Actions the workbench panel may submit directly; tutor assessment and rewards stay with the model tools. */
 const panelActions = new Set(Object.entries({
-	setup: {
-		panel: true,
-		group: "profile"
-	},
-	material: {
-		panel: false,
-		group: "profile"
-	},
-	course: {
-		panel: false,
-		group: "profile"
-	},
-	"configure-course": {
-		panel: true,
-		group: "profile"
-	},
-	"school-progress": {
-		panel: true,
-		group: "profile"
-	},
-	"archive-term": {
-		panel: true,
-		group: "profile"
-	},
-	"openmaic-settings": {
-		panel: true,
-		group: "profile"
-	},
-	interests: {
-		panel: true,
-		group: "profile"
-	},
-	start: {
-		panel: true,
-		group: "session"
-	},
-	task: {
-		panel: false,
-		group: "session"
-	},
-	answer: {
-		panel: true,
-		group: "session"
-	},
-	hint: {
-		panel: true,
-		group: "session"
-	},
-	stuck: {
-		panel: true,
-		group: "session"
-	},
-	record: {
-		panel: false,
-		group: "session"
-	},
-	stop: {
-		panel: true,
-		group: "session"
-	},
-	mistake: {
-		panel: false,
-		group: "mistakes"
-	},
-	"confirm-mistake": {
-		panel: true,
-		group: "mistakes"
-	},
-	"delete-mistake": {
-		panel: true,
-		group: "mistakes"
-	},
-	"save-exercise": {
-		panel: true,
-		group: "mistakes"
-	},
-	"delete-exercise": {
-		panel: true,
-		group: "mistakes"
-	},
-	concept: {
-		panel: false,
-		group: "mistakes"
-	},
-	"confirm-concept": {
-		panel: true,
-		group: "mistakes"
-	},
-	objective: {
-		panel: false,
-		group: "mistakes"
-	},
-	relation: {
-		panel: false,
-		group: "mistakes"
-	},
-	"link-mistake": {
-		panel: true,
-		group: "mistakes"
-	},
-	"classify-mistake": {
-		panel: true,
-		group: "mistakes"
-	},
-	worksheet: {
-		panel: false,
-		group: "paper"
-	},
-	"paper-draft": {
-		panel: false,
-		group: "paper"
-	},
-	"grade-sheet": {
-		panel: true,
-		group: "paper"
-	},
-	"confirm-paper": {
-		panel: true,
-		group: "paper"
-	},
-	"discard-sheet": {
-		panel: true,
-		group: "paper"
-	},
-	"workbook-draft": {
-		panel: false,
-		group: "paper"
-	},
-	"confirm-workbook": {
-		panel: true,
-		group: "paper"
-	},
-	"dismiss-teaching": {
-		panel: true,
-		group: "paper"
-	}
-}).filter(([, meta]) => meta.panel).map(([action]) => action));
+	setup: true,
+	material: false,
+	course: false,
+	"configure-course": true,
+	"school-progress": true,
+	"archive-term": true,
+	"openmaic-settings": true,
+	interests: true,
+	start: true,
+	task: false,
+	answer: true,
+	hint: true,
+	stuck: true,
+	record: false,
+	stop: true,
+	mistake: false,
+	"confirm-mistake": true,
+	"delete-mistake": true,
+	"save-exercise": true,
+	"delete-exercise": true,
+	concept: false,
+	"confirm-concept": true,
+	objective: false,
+	relation: false,
+	"link-mistake": true,
+	"classify-mistake": true,
+	worksheet: false,
+	"paper-draft": false,
+	"grade-sheet": true,
+	"confirm-paper": true,
+	"discard-sheet": true,
+	"workbook-draft": false,
+	"confirm-workbook": true,
+	"dismiss-teaching": true
+}).filter(([, allowed]) => allowed).map(([action]) => action));
 //#endregion
 //#region lib/types/dashboard.js
 /**
@@ -174,16 +72,7 @@ function dashboard(state, now, options = {}, interactiveLessons = interactiveLes
 		if (mistakeStatus === "mastered") return item.stage >= 4;
 		return true;
 	};
-	const confirmedCounts = {
-		chinese: 0,
-		math: 0,
-		english: 0
-	};
-	const confirmed = state.mistakes.filter((item) => {
-		if (!inStatus(item)) return false;
-		confirmedCounts[item.subject]++;
-		return item.subject === subject;
-	}).reverse();
+	const confirmed = state.mistakes.filter((item) => item.subject === subject && inStatus(item)).reverse();
 	const confirmedOffset = Math.min(mistakeOffset, Math.max(0, Math.ceil(confirmed.length / 20) - 1) * 20);
 	const book = state.mistakes.filter((item) => item.subject === subject && item.confirmedAt !== void 0);
 	const due = status.dueMistakes.filter((item) => item.subject === subject);
@@ -237,7 +126,6 @@ function dashboard(state, now, options = {}, interactiveLessons = interactiveLes
 				unlinkedDue: unlinkedDue.length,
 				openSheets: openSheets.length
 			}))(reviewPlan(state, subject, now, 8, insight)),
-			paperResults: state.paperResults.filter((item) => state.worksheets.some((sheet) => sheet.id === item.worksheetId && sheet.subject === subject)).slice(-20).reverse(),
 			dueMistakes: due.slice(0, 20),
 			dueCount: due.length,
 			dueTotal: status.dueMistakes.length,
@@ -246,10 +134,8 @@ function dashboard(state, now, options = {}, interactiveLessons = interactiveLes
 			pendingCount: pending.length,
 			confirmedMistakes: confirmed.slice(confirmedOffset, confirmedOffset + 20),
 			confirmedCount: confirmed.length,
-			confirmedCounts,
 			confirmedOffset,
 			confirmedSubject: subject,
-			mistakeStatus,
 			mistakeBook: {
 				due: book.filter((item) => item.dueAt !== void 0 && item.dueAt <= now).length,
 				reviewing: book.filter((item) => item.stage < 4 && (item.dueAt === void 0 || item.dueAt > now)).length,

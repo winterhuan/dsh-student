@@ -106,6 +106,29 @@ describe('independently loaded student plugin', () => {
     await expect(call({ action: 'archive-term', parentConfirmation: 'again' })).rejects.toThrow('请先建立学习档案')
   })
 
+  it('rejects a stale archive revision without creating an archive file', async () => {
+    const { execution, cwd } = await fixture()
+    const state = (await studyStore(execution(), setup, 0))!
+    const before = await readFile(join(cwd, '.study/state.json'), 'utf8')
+    const command = { action: 'archive-term', parentConfirmation: '家长确认归档本学期。' }
+    await expect(studyStore(execution(), command, 0)).rejects.toThrow('已更新')
+    expect(await readFile(join(cwd, '.study/state.json'), 'utf8')).toBe(before)
+    expect(await readdir(join(cwd, '.study'))).toEqual(['state.json'])
+    await studyStore(execution(), command, state.revision)
+    expect(await readFile(join(cwd, '.study/archive-2026-2027-first.json'), 'utf8')).toBe(before)
+  })
+
+  it('rejects an archive during active learning without creating an archive file', async () => {
+    const { execution, call, cwd } = await fixture()
+    await call(setup)
+    await call(start)
+    const before = await readFile(join(cwd, '.study/state.json'), 'utf8')
+    const state = stateSchema.parse(JSON.parse(before))
+    await expect(studyStore(execution(), { action: 'archive-term', parentConfirmation: '家长确认归档本学期。' }, state.revision)).rejects.toThrow('先结束当前学习')
+    expect(await readFile(join(cwd, '.study/state.json'), 'utf8')).toBe(before)
+    expect(await readdir(join(cwd, '.study'))).toEqual(['state.json'])
+  })
+
   it('reads the shipped knowledge map and weak points through the status tool', async () => {
     const { ctx, execution, call } = await fixture()
     await call(setup)

@@ -1,6 +1,6 @@
 {
   "name": "@winterhuan/dsh-student",
-  "version": "0.1.1",
+  "version": "0.1.8",
   "description": "Short daily learning, confirmed curricula and spaced mistake review for primary-school students",
   "type": "module",
   "license": "MIT",

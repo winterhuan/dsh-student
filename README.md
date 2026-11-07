@@ -4,7 +4,7 @@ English | [中文](README.zh.md)
 
 Short daily learning, confirmed curricula and spaced mistake review for primary-school students.
 
-[Plugin documentation](packages/winterhuan/student/README.md) · [Release package](https://github.com/winterhuan/dsh-student/releases/download/v0.1.1/winterhuan-dsh-student-0.1.1.tgz)
+[Plugin documentation](packages/winterhuan/student/README.md) · [Release package](https://github.com/winterhuan/dsh-student/releases/download/v0.1.8/winterhuan-dsh-student-0.1.8.tgz)
 
 For DSH `0.2.2-rc.1`, enable Custom plugin market and add `https://winterhuan.github.io/dsh-creative/index.json` in Discover. Alternatively, install the prebuilt Git version with pnpm 11.7.0:
 

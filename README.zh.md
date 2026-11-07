@@ -4,7 +4,7 @@
 
 面向小学生的每日学习、知识点练习和错题复习。
 
-[插件说明](packages/winterhuan/student/README.zh.md) · [发布包](https://github.com/winterhuan/dsh-student/releases/download/v0.1.1/winterhuan-dsh-student-0.1.1.tgz)
+[插件说明](packages/winterhuan/student/README.zh.md) · [发布包](https://github.com/winterhuan/dsh-student/releases/download/v0.1.8/winterhuan-dsh-student-0.1.8.tgz)
 
 在 DSH `0.2.2-rc.1` 中启用「自定义插件市场」，在「发现」添加 `https://winterhuan.github.io/dsh-creative/index.json`。也可用 pnpm 11.7.0 安装已构建的 Git 版本：
 

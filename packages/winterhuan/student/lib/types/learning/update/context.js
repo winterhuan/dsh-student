@@ -1,8 +1,7 @@
 import { canonical, foldText, requireValue, sameSavedAnswer, showValue } from "../shared.js";
 import { itemObjectiveId } from "../view.js";
 export function alignRecord(task, attempt) {
-    const demoNote = task.phase === 'demo' && task.response === undefined;
-    if (!demoNote && task.response === undefined)
+    if (task.response === undefined)
         throw new Error(`请先用 answer 保存原始回答，再记录反馈。当前题目 id：${task.id}。`);
     const problems = [];
     if (attempt.id !== task.id)
@@ -11,7 +10,7 @@ export function alignRecord(task, attempt) {
         problems.push(`topic 不一致。期望：${showValue(task.topic)}。收到：${showValue(attempt.topic)}。`);
     if (foldText(attempt.prompt) !== foldText(task.prompt))
         problems.push(`prompt 不一致。期望：${showValue(task.prompt)}。收到：${showValue(attempt.prompt)}。`);
-    if (!demoNote && !sameSavedAnswer(task, attempt.response)) {
+    if (!sameSavedAnswer(task, attempt.response)) {
         const expected = task.rawResponse !== undefined && task.rawResponse !== task.response ? `${showValue(task.response)}（原始输入：${showValue(task.rawResponse)}）` : showValue(task.response);
         problems.push(`response 不一致。期望：${expected}。收到：${showValue(attempt.response)}。`);
     }
@@ -28,7 +27,7 @@ export function alignRecord(task, attempt) {
         id: task.id,
         topic: task.topic,
         prompt: task.prompt,
-        response: demoNote ? attempt.response : task.response ?? attempt.response,
+        response: task.response,
         ...(task.mistakeId !== undefined ? { mistakeId: task.mistakeId } : {}),
         ...(task.objectiveId !== undefined ? { objectiveId: task.objectiveId } : {}),
         ...(task.variant !== undefined ? { variant: task.variant } : {}),
@@ -58,19 +57,20 @@ export function dropTaught(state, objectiveId) {
  * @returns whether anything changed.
  */
 export function gradeItem(state, worksheet, item, entry, errorType) {
+    const linked = item.mistakeId ? state.mistakes.find(mistake => mistake.id === item.mistakeId) : undefined;
+    const wrong = entry.result === 'incorrect' || entry.result === 'partial';
+    const causeChanged = linked && wrong && errorType !== undefined && linked.errorType !== errorType;
     const index = state.paperResults.findIndex(result => result.worksheetId === worksheet.id && result.itemId === item.id);
     const previous = state.paperResults[index];
     if (previous) {
         const { receivedAt: _before, ...stored } = previous;
         const { receivedAt: _now, ...next } = entry;
-        if (canonical(stored) === canonical(next))
+        if (canonical(stored) === canonical(next) && !causeChanged)
             return false;
         state.paperResults.splice(index, 1);
     }
     state.paperResults.push(previous ? { ...entry, receivedAt: previous.receivedAt } : entry);
-    const linked = item.mistakeId ? state.mistakes.find(mistake => mistake.id === item.mistakeId) : undefined;
     const fromHere = linked?.source !== undefined && linked.source.worksheetId === worksheet.id && linked.source.itemId === item.id;
-    const wrong = entry.result === 'incorrect' || entry.result === 'partial';
     if (linked && wrong && errorType !== undefined)
         linked.errorType = errorType;
     if (linked && fromHere) {

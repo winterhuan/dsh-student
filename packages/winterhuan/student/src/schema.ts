@@ -208,6 +208,7 @@ const workbookDraft = z.object({
   objectiveId: id.optional(), uncertainties: z.string().max(2000), imagePath: text.optional(),
 }).strict()
 const teachingItem = z.object({ id, subject, prompt: text, objectiveId: id.optional(), confirmedAt: time, sourceDraftId: id.optional() }).strict()
+const schoolProgressInput = z.object({ unitId: id, posture: z.enum(['keep-up', 'catch-up']), preview: z.enum(['on', 'off']), pace: z.enum(['teaching', 'review']), parentConfirmation: text.default('家长确认学校进度') }).strict()
 
 /** Validated mutations; confirmation fields record user statements, not authenticated identities. */
 export const commandSchema = z.discriminatedUnion('action', [
@@ -219,8 +220,8 @@ export const commandSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('task'), task }).strict(),
   z.object({ action: z.literal('answer'), taskId: id, response: text }).strict(),
   z.object({ action: z.literal('hint'), taskId: id }).strict(),
-  z.object({ action: z.literal('configure-course'), material, course: courseInput }).strict(),
-  z.object({ action: z.literal('school-progress'), subject, unitId: id, posture: z.enum(['keep-up', 'catch-up']), preview: z.enum(['on', 'off']), pace: z.enum(['teaching', 'review']), parentConfirmation: text.default('家长确认学校进度') }).strict(),
+  z.object({ action: z.literal('configure-course'), material, course: courseInput, progress: schoolProgressInput.optional() }).strict(),
+  z.object({ action: z.literal('school-progress'), subject, ...schoolProgressInput.shape }).strict(),
   z.object({ action: z.literal('record'), attempt: recordAttempt }).strict(),
   z.object({ action: z.literal('stuck'), taskId: id }).strict(),
   z.object({ action: z.literal('stop'), sessionId: id, reflection: z.string().max(2000) }).strict(),
@@ -277,6 +278,7 @@ export const stateSchema = z.object({
   paperResults: z.array(paperResult.extend({ receivedAt: time }).strict()).max(4000).default([]),
   paperDrafts: z.array(paperDraft.extend({ receivedAt: time }).strict()).max(500).default([]),
   workbookDrafts: z.array(workbookDraft.extend({ receivedAt: time }).strict()).max(500).default([]),
+  workbookResults: z.array(workbookDraft.extend({ receivedAt: time, confirmedAt: time, userConfirmation: text, correction: text.optional(), explanation: text.optional(), answerEvidence: text.optional() }).strict()).max(500).default([]),
   teachingQueue: z.array(teachingItem).max(500).default([]),
   /** Parent override for the OpenMAIC origin. Absent means the environment or the localhost default. */
   openmaic: z.object({ baseUrl: z.string().trim().min(1).max(200), parentConfirmation: text }).strict().optional(),

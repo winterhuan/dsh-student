@@ -13,10 +13,10 @@ export declare function objectiveOf(state: StudyState, objectiveId: string): {
     title: string;
     goal: string;
     conceptIds: string[];
-    method: "listen" | "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "speak";
-    errorTypes?: ("carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
+    method: "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "listen" | "speak";
+    errorTypes?: ("pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
     questionPoints?: string[] | undefined;
-    variationAxes?: ("reverse" | "context" | "numbers" | "representation" | "explain")[] | undefined;
+    variationAxes?: ("context" | "numbers" | "representation" | "reverse" | "explain")[] | undefined;
 } | undefined;
 /**
  * Title and subject of a learning objective, custom or shipped, for projections.
@@ -30,8 +30,8 @@ export declare function objectiveInfo(state: StudyState, objectiveId: string): {
 } | undefined;
 export type Worksheet = StudyState['worksheets'][number];
 export type WorksheetItem = Worksheet['items'][number];
-/** The goal a worksheet question tests: its own, then its source mistake's, then the sheet's. */
-export declare function itemObjectiveId(state: StudyState, worksheet: Pick<Worksheet, 'objectiveId'>, item: Pick<WorksheetItem, 'objectiveId' | 'mistakeId'>): string | undefined;
+/** Published question goals are frozen; legacy items can use only their saved sheet goal. */
+export declare function itemObjectiveId(_state: StudyState, worksheet: Pick<Worksheet, 'objectiveId'>, item: Pick<WorksheetItem, 'objectiveId' | 'mistakeId'>): string | undefined;
 export declare function questionObjectiveId(state: StudyState, worksheet: Worksheet, itemId: string): string | undefined;
 /** A printed sheet still waiting for at least one graded question. Discarded sheets never wait. */
 export declare function sheetOpen(state: StudyState, worksheet: Worksheet): boolean;
@@ -106,7 +106,7 @@ export declare function reviewPlan(state: StudyState, subject: CurriculumSubject
     picks: ReviewPick[];
     objectiveFills: ObjectiveFill[];
     errorCoverage: {
-        type: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
+        type: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
         count: number;
     }[];
     remaining: number;

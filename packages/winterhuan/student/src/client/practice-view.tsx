@@ -190,15 +190,19 @@ function WorksheetActions({ worksheet, revision, change, ask, disabled, t }: { w
   const [marks, setMarks] = useState<Record<string, Mark>>(() => Object.fromEntries(worksheet.results.flatMap(item => item.result === 'unassessed' ? [] : [[item.itemId, item.result]])))
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [causes, setCauses] = useState<Record<string, ErrorTypeValue | ''>>({})
-  const [helped, setHelped] = useState<Record<string, boolean>>(() => Object.fromEntries(worksheet.results.flatMap(item => item.result === 'correct' && item.assistance === 'hint' ? [[item.itemId, true]] : [])))
+  const [helped, setHelped] = useState<Record<string, boolean>>({})
   const [paper, setPaper] = useState<Record<string, { result?: Mark; response: string; errorType: ErrorTypeValue | '' }>>(() => Object.fromEntries(worksheet.drafts.map(draft => [draft.itemId, { ...(draft.result === 'correct' || draft.result === 'partial' || draft.result === 'incorrect' ? { result: draft.result } : {}), response: draft.response, errorType: draft.errorType ?? '' }])))
   const [saving, setSaving] = useState(false)
+  function assistanceFor(itemId: string) {
+    const saved = worksheet.results.find(item => item.itemId === itemId)?.assistance ?? worksheet.drafts.find(item => item.itemId === itemId)?.assistance ?? 'independent'
+    return helped[itemId] === undefined ? saved : helped[itemId] ? saved === 'worked-example' ? 'worked-example' : 'hint' : 'independent'
+  }
   const changed = worksheet.items.filter(item => {
     const before = worksheet.results.find(result => result.itemId === item.id)
     const mark = marks[item.id]
     if (mark === undefined) return false
-    const assistance = mark === 'correct' ? helped[item.id] ? 'hint' : 'independent' : undefined
-    return mark !== before?.result || (answers[item.id]?.trim() ?? '') !== '' || (mark === 'correct' && before !== undefined && assistance !== before.assistance)
+    const assistance = assistanceFor(item.id)
+    return mark !== before?.result || (answers[item.id]?.trim() ?? '') !== '' || (before !== undefined && assistance !== before.assistance) || (mark !== 'correct' && causes[item.id] !== undefined && causes[item.id] !== (before?.errorType ?? ''))
   })
   function markAllRight() {
     setMarks(previous => {
@@ -218,19 +222,19 @@ function WorksheetActions({ worksheet, revision, change, ask, disabled, t }: { w
       await change({ action: 'grade-sheet', grade: { worksheetId: worksheet.id, userConfirmation: t('gradeConfirmation'), results: changed.map(item => {
         const response = answers[item.id]?.trim()
         const mark = marks[item.id] ?? 'correct'
-        const cause = causes[item.id]
-        return { itemId: item.id, result: mark, ...(response ? { response } : {}), ...(mark === 'correct' ? { assistance: helped[item.id] ? 'hint' as const : 'independent' as const } : {}), ...(mark !== 'correct' && cause ? { errorType: cause } : {}) }
+        const cause = causes[item.id] ?? worksheet.results.find(result => result.itemId === item.id)?.errorType
+        return { itemId: item.id, result: mark, ...(response ? { response } : {}), assistance: assistanceFor(item.id), ...(mark !== 'correct' && cause ? { errorType: cause } : {}) }
       }) } }, revision)
       setAnswers({}); setMessage(t('gradesSaved'))
     } catch (reason) { setError(reason instanceof Error ? reason.message : t('networkError')) }
     finally { setSaving(false) }
   }
-  const highConfidence = worksheet.drafts.filter(draft => draft.confidence === 'high')
+  const highConfidence = worksheet.drafts.filter(draft => draft.confidence === 'high' && draft.result === 'correct' && draft.uncertainties === '')
   async function confirmBatch(drafts: typeof worksheet.drafts) {
     setSaving(true); setError(''); setMessage('')
     try {
       await change({ action: 'confirm-paper', worksheetId: worksheet.id, userConfirmation: t('confirmPaper'), results: drafts.map(draft => ({
-        itemId: draft.itemId, result: draft.result === 'unassessed' ? 'correct' : draft.result, response: draft.response, assistance: draft.assistance,
+        itemId: draft.itemId, result: 'correct', response: draft.response, assistance: draft.assistance,
         ...(draft.errorType !== undefined ? { errorType: draft.errorType } : {}),
       })) }, revision)
       setMessage(t('confirmPaperDone'))
@@ -273,9 +277,9 @@ function WorksheetActions({ worksheet, revision, change, ask, disabled, t }: { w
         <p>{index + 1}. {item.prompt}</p>
         <p className="student-muted">{t('referenceAnswer')}: {item.answer} · {source?.mistakeId ? `${t('sourceMistake')}: ${source.topic}` : t('practiceItem')}{result ? ` · ${t(result.result)}: ${result.response}` : ''}</p>
         <div className="student-segments" role="radiogroup" aria-label={`${index + 1}`}>{(['correct', 'partial', 'incorrect'] as const).map(mark => <button key={mark} type="button" role="radio" aria-checked={marks[item.id] === mark} onClick={() => setMarks(previous => ({ ...previous, [item.id]: mark }))}>{t(markKeys[mark])}</button>)}</div>
-        {marks[item.id] === 'correct' && <label><input type="checkbox" checked={helped[item.id] === true} onChange={event => { const checked = event.target.checked; setHelped(previous => ({ ...previous, [item.id]: checked })) }} /> {t('hintedCorrect')}</label>}
+        {marks[item.id] === 'correct' && <label><input type="checkbox" checked={assistanceFor(item.id) !== 'independent'} onChange={event => { const checked = event.target.checked; setHelped(previous => ({ ...previous, [item.id]: checked })) }} /> {t('hintedCorrect')}</label>}
         {marks[item.id] !== undefined && marks[item.id] !== 'correct' && <label>{t('childAnswer')}<input value={answers[item.id] ?? ''} maxLength={2000} onChange={event => { const value = event.target.value; setAnswers(previous => ({ ...previous, [item.id]: value })) }} /></label>}
-        {marks[item.id] !== undefined && marks[item.id] !== 'correct' && <label>{t('errorTypeLabel')}<select value={causes[item.id] ?? ''} onChange={event => { const type = errorTypesBySubject[worksheet.subject].find(candidate => candidate === event.target.value); setCauses(previous => ({ ...previous, [item.id]: type ?? '' })) }}><option value="">{t('errorTypeNone')}</option>{errorTypesBySubject[worksheet.subject].map(type => <option key={type} value={type}>{t(type)}</option>)}</select></label>}
+        {marks[item.id] !== undefined && marks[item.id] !== 'correct' && <label>{t('errorTypeLabel')}<select value={causes[item.id] ?? result?.errorType ?? ''} onChange={event => { const type = errorTypesBySubject[worksheet.subject].find(candidate => candidate === event.target.value); setCauses(previous => ({ ...previous, [item.id]: type ?? '' })) }}><option value="">{t('errorTypeNone')}</option>{errorTypesBySubject[worksheet.subject].map(type => <option key={type} value={type}>{t(type)}</option>)}</select></label>}
       </fieldset>
     })}
     {worksheet.drafts.length > 0 && <fieldset className="student-grade" disabled={disabled || saving}>

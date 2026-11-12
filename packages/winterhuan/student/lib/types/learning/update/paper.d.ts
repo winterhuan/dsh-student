@@ -12,7 +12,7 @@ export declare function applyConfirmPaper(ctx: UpdateContext<'confirm-paper'>): 
 export declare function applyDiscardSheet(ctx: UpdateContext<'discard-sheet'>): StudyState;
 /** Save one workbook photo draft without a sheet. */
 export declare function applyWorkbookDraft(ctx: UpdateContext<'workbook-draft'>): StudyState;
-/** Route a confirmed workbook draft to teaching, mistakes or nothing. */
+/** Retain the confirmed photo record and route difficulty to teaching or mistakes. Receipt time is not an answer date. */
 export declare function applyConfirmWorkbook(ctx: UpdateContext<'confirm-workbook'>): StudyState;
 /** Remove one item from the teaching queue. */
 export declare function applyDismissTeaching(ctx: UpdateContext<'dismiss-teaching'>): StudyState;

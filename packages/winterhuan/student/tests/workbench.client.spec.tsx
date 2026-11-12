@@ -4,13 +4,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ParentSettings } from '../src/client/forms.tsx'
 import { StudyDesk } from '../src/client/desk.tsx'
 import { dashboard } from '../src/dashboard.ts'
-import { timeStatus } from '../src/learning/status.ts'
 import { updateStudy } from '../src/learning/update/index.ts'
 import { en } from '../src/client/locales.ts'
 import { NOW, MINUTE, DAY, setup, material, course, start, attempt, mistake, confirm } from './fixtures.ts'
 
 const t = (key: keyof typeof en) => en[key]
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); window.localStorage.clear() })
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.useRealTimers(); window.localStorage.clear() })
 const answerTask = { id: attempt.id, sessionId: attempt.sessionId, subject: attempt.subject, topic: attempt.topic, prompt: attempt.prompt }
 const initial = () => updateStudy(updateStudy(updateStudy(undefined, setup, Date.now()), start, Date.now()), { action: 'task', task: answerTask }, Date.now())
 
@@ -23,18 +22,18 @@ function installFetch(state = initial()) {
       state = updateStudy(state, body.change, Date.now())
     }
     const query = new URL(url, 'http://localhost').searchParams
-    if (query.has('revision') && Number(query.get('revision')) === state.revision && !options?.body) {
-      return new Response(JSON.stringify({ serverNow: Date.now(), revision: state.revision, unchanged: true, time: timeStatus(state, Date.now()) }))
-    }
     const offset = Number(query.get('mistakeOffset') ?? 0)
     const subject = query.get('subject') as 'chinese' | 'math' | 'english' | null
     const status = query.get('mistakeStatus') as 'all' | 'due' | 'reviewing' | 'mastered' | null
     const mapGrade = query.get('mapGrade')
     const mapTerm = query.get('mapTerm') as 'first' | 'second' | null
-    return new Response(JSON.stringify(dashboard(state, Date.now(), { subject: subject ?? 'math', mistakeOffset: offset, mistakeStatus: status ?? 'all', ...(mapGrade ? { mapGrade: Number(mapGrade) } : {}), ...(mapTerm ? { mapTerm } : {}) })))
+    const diagGrade = query.get('diagGrade')
+    const diagTerm = query.get('diagTerm') as 'first' | 'second' | null
+    const diagUnit = query.get('diagUnit')
+    return new Response(JSON.stringify(dashboard(state, Date.now(), { subject: subject ?? 'math', mistakeOffset: offset, mistakeStatus: status ?? 'all', ...(mapGrade ? { mapGrade: Number(mapGrade) } : {}), ...(mapTerm ? { mapTerm } : {}), ...(diagGrade ? { diagGrade: Number(diagGrade) } : {}), ...(diagTerm ? { diagTerm } : {}), ...(diagUnit ? { diagUnit } : {}) })))
   })
   vi.stubGlobal('fetch', fetch)
-  return { requests, fetch, read: () => state }
+  return { requests, fetch, read: () => state, replace: (next: typeof state) => { state = next } }
 }
 
 async function openDesk(tab: 'Knowledge map' | 'Mistakes' | 'Parent setup') {
@@ -54,6 +53,54 @@ function worksheetState() {
 }
 
 describe('learning workbench', () => {
+  it('clears a selected unit when the learner returns to the whole book', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(NOW)
+    const backend = installFetch(updateStudy(undefined, setup, NOW))
+    render(<StudyDesk sessionId="whole-book" visible running={false} ask={vi.fn().mockResolvedValue(undefined)} t={t} />)
+    fireEvent.click(await screen.findByText(en.otherWays))
+    fireEvent.change(screen.getByLabelText(en.scopeLabel), { target: { value: '1-first' } })
+    await screen.findByRole('option', { name: '10 以内的数' })
+    fireEvent.change(screen.getByLabelText(en.scopeUnit), { target: { value: 'm1a-u3' } })
+    fireEvent.change(screen.getByLabelText(en.scopeUnit), { target: { value: '' } })
+    expect((screen.getByLabelText(en.scopeUnit) as HTMLSelectElement).value).toBe('')
+    fireEvent.submit(screen.getByLabelText(en.scopeLabel).closest('form')!)
+    await waitFor(() => expect(backend.read().sessions).toHaveLength(1))
+    expect(backend.read().sessions[0]?.scope).toEqual({ grade: 1, term: 'first' })
+  })
+  it('resets microsteps when another block reuses the same question number', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(NOW)
+    const question = { ...answerTask, steps: ['圈条件', '验算'] }
+    let state = updateStudy(updateStudy(updateStudy(undefined, setup, NOW), start, NOW), { action: 'task', task: question }, NOW)
+    const backend = installFetch(state)
+    const props = { sessionId: 'steps', running: false, ask: vi.fn(), t }
+    const view = render(<StudyDesk {...props} visible />)
+    fireEvent.click(await screen.findByLabelText('圈条件'))
+    expect((screen.getByLabelText('圈条件') as HTMLInputElement).checked).toBe(true)
+    state = updateStudy(state, { ...start, id: 'block-2' }, NOW)
+    state = updateStudy(state, { action: 'task', task: { ...question, sessionId: 'block-2', prompt: '新学习段的问题' } }, NOW)
+    backend.replace(state)
+    view.rerender(<StudyDesk {...props} visible={false} />)
+    view.rerender(<StudyDesk {...props} visible />)
+    await screen.findByText('新学习段的问题')
+    expect((screen.getByLabelText('圈条件') as HTMLInputElement).checked).toBe(false)
+  })
+  it('refreshes displayed counts without a write and retains the current draft', async () => {
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(NOW)
+    const state = updateStudy(updateStudy(undefined, setup, NOW), start, NOW)
+    state.mistakes.push({ ...mistake, uncertainties: '', confirmedAt: NOW, dueAt: NOW + MINUTE, stage: 0, independentDays: [] })
+    const backend = installFetch(state)
+    const props = { sessionId: 'clock', running: false, ask: vi.fn(), t }
+    const view = render(<StudyDesk {...props} visible />)
+    await screen.findByText(/Due for review: 0/)
+    fireEvent.click(screen.getByText(en.reflectionOptional))
+    fireEvent.change(screen.getByLabelText(en.reflection), { target: { value: '未保存反思' } })
+    clock.mockReturnValue(NOW + MINUTE)
+    view.rerender(<StudyDesk {...props} visible={false} />)
+    view.rerender(<StudyDesk {...props} visible />)
+    await screen.findByText(/Due for review: 1/)
+    expect((screen.getByLabelText(en.reflection) as HTMLTextAreaElement).value).toBe('未保存反思')
+    expect(backend.requests).toEqual([])
+  })
   it('saves the original answer before native tutoring and recovers it after remount', async () => {
     const backend = installFetch()
     const ask = vi.fn().mockRejectedValue(new Error('Tutor unavailable'))
@@ -144,18 +191,18 @@ it('keeps answers available throughout a block and can start again after stoppin
     expect(screen.queryByText(attempt.prompt)).toBeNull()
   })
 
-  it('polls conditionally once loaded and keeps the displayed data when evidence is unchanged', async () => {
+  it('refreshes the displayed dashboard on each visible poll', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
     const backend = installFetch(initial())
     render(<StudyDesk sessionId="poll" visible running={false} ask={vi.fn()} t={t} />)
     await screen.findByText(attempt.prompt)
     expect(backend.fetch).toHaveBeenCalledTimes(1)
     expect(String(backend.fetch.mock.calls[0]?.[0])).not.toContain('&revision=')
-    // Real clocks: the interval fires once with the revision the panel already displays.
-    await act(async () => { await new Promise(resolve => setTimeout(resolve, 3400)) })
+    await act(async () => { vi.advanceTimersByTime(3000) })
     const pollUrl = String(backend.fetch.mock.calls.at(-1)?.[0])
-    expect(pollUrl).toContain(`&revision=${backend.read().revision}`)
+    expect(pollUrl).not.toContain('&revision=')
     expect(screen.getByText(attempt.prompt)).toBeTruthy()
-    expect(backend.fetch.mock.calls.filter(([url]) => !String(url).includes('&revision='))).toHaveLength(1)
+    expect(backend.fetch).toHaveBeenCalledTimes(2)
   })
 })
 
@@ -285,6 +332,46 @@ it('confirms high-confidence transcriptions in one batch and leaves the rest for
   expect(backend.read().paperDrafts).toHaveLength(1)
 })
 
+it('batches only clearly transcribed correct responses and preserves their assistance', async () => {
+  const entries = [
+    { id: 'right', result: 'correct', assistance: 'hint', uncertainties: '' },
+    { id: 'unknown', result: 'unassessed', assistance: 'independent', uncertainties: '' },
+    { id: 'wrong', result: 'incorrect', assistance: 'independent', uncertainties: '' },
+    { id: 'partial', result: 'partial', assistance: 'independent', uncertainties: '' },
+    { id: 'unclear', result: 'correct', assistance: 'independent', uncertainties: '数字不清' },
+  ] as const
+  let state = updateStudy(undefined, setup, NOW)
+  state = updateStudy(state, { action: 'worksheet', worksheet: { id: 'safe', subject: 'math', objectiveId: 'm2a-o-sub', items: entries.map(entry => ({ id: entry.id, prompt: `题目 ${entry.id}`, answer: '15', explanation: '加法', answerEvidence: '8+7=15' })) } }, NOW)
+  for (const entry of entries) state = updateStudy(state, { action: 'paper-draft', paperDraft: { worksheetId: 'safe', itemId: entry.id, response: '15', result: entry.result, assistance: entry.assistance, uncertainties: entry.uncertainties, confidence: 'high' } }, NOW)
+  const backend = installFetch(state)
+  render(<StudyDesk sessionId="safe-batch" visible running={false} ask={vi.fn()} t={t} />)
+  await openDesk('Mistakes')
+  fireEvent.click(screen.getByText(/5 questions/).closest('summary')!)
+  const batch = await screen.findByRole('button', { name: `${en.confirmHighConfidence} · 1` })
+  fireEvent.click(batch)
+  await screen.findByText(en.confirmPaperDone)
+  expect(backend.read().paperResults).toEqual([expect.objectContaining({ itemId: 'right', result: 'correct', assistance: 'hint' })])
+  expect(backend.read().paperDrafts.map(item => item.itemId)).toEqual(['unknown', 'wrong', 'partial', 'unclear'])
+})
+
+it('saves a worksheet cause-only edit and retains known help when correcting its mark', async () => {
+  let state = worksheetState()
+  state = updateStudy(state, { action: 'grade-sheet', grade: { worksheetId: 'sheet', results: [{ itemId: 'q1', result: 'incorrect', response: '14', assistance: 'worked-example', errorType: 'carry-borrow' }], userConfirmation: '家长核对。' } }, NOW)
+  const backend = installFetch(state)
+  render(<StudyDesk sessionId="cause-edit" visible running={false} ask={vi.fn()} t={t} />)
+  await openDesk('Mistakes')
+  const summary = screen.getByText('凑十加法 · 1 questions · Checked 1/1')
+  fireEvent.click(summary)
+  const panel = within(summary.closest('details')!)
+  fireEvent.change(panel.getByLabelText(en.errorTypeLabel), { target: { value: 'calculation' } })
+  fireEvent.click(panel.getByRole('button', { name: 'Save marks · 1' }))
+  await waitFor(() => expect(backend.read().mistakes[0]?.errorType).toBe('calculation'))
+  fireEvent.click(panel.getByRole('radio', { name: en.markCorrect }))
+  fireEvent.click(panel.getByRole('button', { name: 'Save marks · 1' }))
+  await waitFor(() => expect(backend.read().paperResults[0]?.result).toBe('correct'))
+  expect(backend.read().paperResults[0]?.assistance).toBe('worked-example')
+})
+
 it('requires an explicit school year and saves an empty optional course note', async () => {
   const change = vi.fn(async (command: unknown) => dashboard(updateStudy(undefined, command, NOW), NOW))
   render(<ParentSettings data={dashboard(undefined, NOW)} change={change} t={t} />)
@@ -298,6 +385,56 @@ it('requires an explicit school year and saves an empty optional course note', a
   fireEvent.click(screen.getByRole('button', { name: 'Save' }))
   await screen.findByText('Saved')
   expect(change).toHaveBeenCalledWith(expect.objectContaining({ action: 'setup', profile: expect.objectContaining({ schoolYear: '2026–2027', schoolAlias: '', parentConfirmation: en.profileConfirm }) }), 0)
+})
+
+it('saves consecutive parent forms at current revisions while preserving an unrelated draft', async () => {
+  let state = updateStudy(undefined, setup, NOW)
+  const change = vi.fn(async (command, revision) => {
+    if (revision !== state.revision) throw new Error('学习档案已更新')
+    state = updateStudy(state, command, NOW)
+    return dashboard(state, NOW)
+  })
+  const view = render(<ParentSettings data={dashboard(state, NOW)} change={change} t={t} />)
+  fireEvent.change(screen.getByLabelText(en.openmaicBase), { target: { value: 'https://classroom.example' } })
+  fireEvent.change(screen.getByLabelText(en.nickname), { target: { value: '小苗' } })
+  fireEvent.submit(screen.getByLabelText(en.nickname).closest('form')!)
+  await screen.findByText(en.saved)
+  view.rerender(<ParentSettings data={dashboard(state, NOW)} change={change} t={t} />)
+  expect((screen.getByLabelText(en.openmaicBase) as HTMLInputElement).value).toBe('https://classroom.example')
+  fireEvent.submit(screen.getByLabelText(en.openmaicBase).closest('form')!)
+  await waitFor(() => expect(state.openmaic?.baseUrl).toBe('https://classroom.example'))
+  expect(change.mock.calls.map(call => call[1])).toEqual([1, 2])
+})
+
+it('keeps a parent draft and its conflict when the edited record changes', async () => {
+  let state = updateStudy(undefined, setup, NOW)
+  const change = vi.fn(async (command, revision) => {
+    if (revision !== state.revision) throw new Error('学习档案已更新')
+    state = updateStudy(state, command, NOW)
+    return dashboard(state, NOW)
+  })
+  const view = render(<ParentSettings data={dashboard(state, NOW)} change={change} t={t} />)
+  fireEvent.change(screen.getByLabelText(en.nickname), { target: { value: '未保存昵称' } })
+  state = updateStudy(state, { ...setup, profile: { ...setup.profile, nickname: '另一处保存的昵称' } }, NOW)
+  view.rerender(<ParentSettings data={dashboard(state, NOW)} change={change} t={t} />)
+  expect((screen.getByLabelText(en.nickname) as HTMLInputElement).value).toBe('未保存昵称')
+  fireEvent.submit(screen.getByLabelText(en.nickname).closest('form')!)
+  await screen.findByRole('alert')
+  expect(state.profile.nickname).toBe('另一处保存的昵称')
+  expect((screen.getByLabelText(en.nickname) as HTMLInputElement).value).toBe('未保存昵称')
+})
+
+it('saves the selected course and school frontier with one parent request', async () => {
+  let state = updateStudy(undefined, setup, NOW)
+  const data = dashboard(state, NOW)
+  const change = vi.fn(async command => { state = updateStudy(state, command, NOW); return dashboard(state, NOW) })
+  render(<ParentSettings data={data} curriculum={data.study!.curriculum} change={change} t={t} />)
+  fireEvent.change(screen.getByLabelText(en.unit), { target: { value: 'm2a-u-mul' } })
+  fireEvent.submit(screen.getByLabelText(en.unit).closest('form')!)
+  await screen.findByText(en.saved)
+  expect(change).toHaveBeenCalledTimes(1)
+  expect(state.revision).toBe(2)
+  expect(state.courses[0]?.progress).toMatchObject({ unitId: 'm2a-u-mul' })
 })
 
 it('offers the preceding school year before September without silently selecting it', () => {

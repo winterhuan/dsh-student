@@ -1428,13 +1428,23 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
         unit: z.ZodString;
         parentConfirmation: z.ZodDefault<z.ZodString>;
     }, z.core.$strict>;
+    progress: z.ZodOptional<z.ZodObject<{
+        unitId: z.ZodString;
+        posture: z.ZodEnum<{
+            "keep-up": "keep-up";
+            "catch-up": "catch-up";
+        }>;
+        preview: z.ZodEnum<{
+            on: "on";
+            off: "off";
+        }>;
+        pace: z.ZodEnum<{
+            review: "review";
+            teaching: "teaching";
+        }>;
+        parentConfirmation: z.ZodDefault<z.ZodString>;
+    }, z.core.$strict>>;
 }, z.core.$strict>, z.ZodObject<{
-    action: z.ZodLiteral<"school-progress">;
-    subject: z.ZodEnum<{
-        chinese: "chinese";
-        math: "math";
-        english: "english";
-    }>;
     unitId: z.ZodString;
     posture: z.ZodEnum<{
         "keep-up": "keep-up";
@@ -1449,6 +1459,12 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
         teaching: "teaching";
     }>;
     parentConfirmation: z.ZodDefault<z.ZodString>;
+    action: z.ZodLiteral<"school-progress">;
+    subject: z.ZodEnum<{
+        chinese: "chinese";
+        math: "math";
+        english: "english";
+    }>;
 }, z.core.$strict>, z.ZodObject<{
     action: z.ZodLiteral<"record">;
     attempt: z.ZodObject<{
@@ -4122,6 +4138,31 @@ export declare const stateSchema: z.ZodObject<{
         uncertainties: z.ZodString;
         imagePath: z.ZodOptional<z.ZodString>;
         receivedAt: z.ZodNumber;
+    }, z.core.$strict>>>;
+    workbookResults: z.ZodDefault<z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        subject: z.ZodEnum<{
+            chinese: "chinese";
+            math: "math";
+            english: "english";
+        }>;
+        prompt: z.ZodString;
+        response: z.ZodOptional<z.ZodString>;
+        outcome: z.ZodEnum<{
+            stuck: "stuck";
+            hinted: "hinted";
+            "independent-wrong": "independent-wrong";
+            "independent-correct": "independent-correct";
+        }>;
+        objectiveId: z.ZodOptional<z.ZodString>;
+        uncertainties: z.ZodString;
+        imagePath: z.ZodOptional<z.ZodString>;
+        receivedAt: z.ZodNumber;
+        confirmedAt: z.ZodNumber;
+        userConfirmation: z.ZodString;
+        correction: z.ZodOptional<z.ZodString>;
+        explanation: z.ZodOptional<z.ZodString>;
+        answerEvidence: z.ZodOptional<z.ZodString>;
     }, z.core.$strict>>>;
     teachingQueue: z.ZodDefault<z.ZodArray<z.ZodObject<{
         id: z.ZodString;

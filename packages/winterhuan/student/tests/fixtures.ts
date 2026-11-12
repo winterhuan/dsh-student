@@ -1,4 +1,14 @@
-import type { Command } from '../src/schema.ts'
+import type { Command, StudyState } from '../src/schema.ts'
+import { updateStudy } from '../src/learning/update/index.ts'
+
+/** Publish, answer and assess a fixture question through the public learning update interface. */
+export function recordAnswer(state: StudyState, input: Extract<Command, { action: 'record' }>['attempt'], now: number): StudyState {
+  const { response, result: _result, assistance, feedback: _feedback, answerEvidence: _evidence, ...task } = input
+  state = updateStudy(state, { action: 'task', task }, now)
+  if (assistance === 'hint') state = updateStudy(state, { action: 'hint', taskId: task.id }, now)
+  state = updateStudy(state, { action: 'answer', taskId: task.id, response }, now)
+  return updateStudy(state, { action: 'record', attempt: input }, now)
+}
 
 export const NOW = Date.parse('2026-10-05T09:00:00+08:00')
 export const MINUTE = 60_000

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { updateStudy } from '../src/learning/update/index.ts'
 import { queryStudy } from '../src/store.ts'
-import { NOW, MINUTE, DAY, setup, start, attempt, mistake, confirm } from './fixtures.ts'
+import { NOW, MINUTE, DAY, setup, start, attempt, mistake, confirm, recordAnswer } from './fixtures.ts'
 
 describe('printed review sheets and the mistake schedule', () => {
   const evening = Date.parse('2026-10-10T22:15:00+08:00')
@@ -118,7 +118,7 @@ describe('printed review sheets and the mistake schedule', () => {
   it('keeps a slot on the review sheet for a weak goal without a due mistake', () => {
     let state = linked()
     state = updateStudy(state, { ...start, id: 'weak-block' }, evening + MINUTE)
-    state = updateStudy(state, { action: 'record', attempt: { ...attempt, id: 'weak-block', sessionId: 'weak-block', objectiveId: 'm2a-o-meaning', result: 'incorrect' } }, evening + 2 * MINUTE)
+    state = recordAnswer(state, { ...attempt, id: 'weak-block', sessionId: 'weak-block', objectiveId: 'm2a-o-meaning', result: 'incorrect' }, evening + 2 * MINUTE)
     state = updateStudy(state, { action: 'stop', sessionId: 'weak-block', reflection: '' }, evening + 3 * MINUTE)
     vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-11T09:00:00+08:00'))
     expect(queryStudy(state, 'review-sheet', 0, { subject: 'math' })).toMatchObject({

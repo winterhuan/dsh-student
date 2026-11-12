@@ -6,7 +6,10 @@ import { errorTypesBySubject } from "../../vocabulary.js";
 /** Save one printable sheet and freeze its mistake citations. */
 export function applyWorksheet(ctx) {
     const { command, previous, state, now } = ctx;
-    const sheet = command.worksheet;
+    const sheet = { ...command.worksheet, items: command.worksheet.items.map(item => {
+            const goalId = item.objectiveId ?? (item.mistakeId ? state.mistakes.find(mistake => mistake.id === item.mistakeId)?.objectiveId : undefined) ?? command.worksheet.objectiveId;
+            return { ...item, ...(goalId !== undefined ? { objectiveId: goalId } : {}) };
+        }) };
     requireValue(new Set(sheet.items.map(item => item.id)).size === sheet.items.length, '练习单题号不能重复。');
     if (sheet.objectiveId)
         requireValue(objectiveOf(state, sheet.objectiveId)?.subject === sheet.subject, '练习单学习目标不存在或科目不符。');
@@ -33,6 +36,7 @@ export function applyWorksheet(ctx) {
             return previous;
         requireValue(existing.discardedAt === undefined, '这张练习单已作废，请换一个新编号。');
         requireValue(!state.paperResults.some(item => item.worksheetId === existing.id), '这张练习单已有作答，请换一个新编号。');
+        requireValue(!state.paperDrafts.some(item => item.worksheetId === existing.id), '这张练习单已有照片转录，请换一个新编号。');
         state.worksheets = state.worksheets.map(item => item === existing ? { ...sheet, createdAt: existing.createdAt } : item);
         return state;
     }
@@ -81,12 +85,10 @@ export function applyGradeSheet(ctx) {
         if (entry.errorType !== undefined)
             requireValue(errorTypesBySubject[worksheet.subject].includes(entry.errorType), '错因分类与科目不符。');
         const before = state.paperResults.find(result => result.worksheetId === worksheet.id && result.itemId === item.id);
-        const assistance = entry.assistance ?? 'independent';
-        const response = entry.response ?? before?.response ?? '（家长在面板批改，未转录原答案）';
-        if (before && before.result === entry.result && before.assistance === assistance && before.response === response)
-            continue;
-        gradeItem(state, worksheet, item, { worksheetId: worksheet.id, itemId: item.id, response, result: entry.result, assistance, feedback: '家长批改', answerEvidence: item.answerEvidence, userConfirmation: grade.userConfirmation, receivedAt: now }, entry.result !== 'correct' ? entry.errorType : undefined);
-        changed = true;
+        const draft = state.paperDrafts.find(candidate => candidate.worksheetId === worksheet.id && candidate.itemId === item.id);
+        const assistance = entry.assistance ?? before?.assistance ?? draft?.assistance ?? 'independent';
+        const response = entry.response ?? before?.response ?? draft?.response ?? '（家长在面板批改，未转录原答案）';
+        changed = gradeItem(state, worksheet, item, { worksheetId: worksheet.id, itemId: item.id, response, result: entry.result, assistance, feedback: '家长批改', answerEvidence: item.answerEvidence, userConfirmation: grade.userConfirmation, receivedAt: now }, entry.result !== 'correct' ? entry.errorType : undefined) || changed;
     }
     if (!changed)
         return previous;
@@ -111,11 +113,7 @@ export function applyConfirmPaper(ctx) {
         const assistance = entry.assistance ?? draft?.assistance ?? before?.assistance ?? 'independent';
         const response = entry.response ?? draft?.response ?? before?.response ?? '（家长核对照片转录，未转录原答案）';
         const errorType = entry.result !== 'correct' ? entry.errorType ?? draft?.errorType : undefined;
-        const same = before !== undefined && before.result === entry.result && before.assistance === assistance && before.response === response;
-        if (!same) {
-            gradeItem(state, worksheet, item, { worksheetId: worksheet.id, itemId: item.id, response, result: entry.result, assistance, feedback: '家长核对照片转录', answerEvidence: item.answerEvidence, userConfirmation: command.userConfirmation, receivedAt: draft?.receivedAt ?? now }, errorType);
-            changed = true;
-        }
+        changed = gradeItem(state, worksheet, item, { worksheetId: worksheet.id, itemId: item.id, response, result: entry.result, assistance, feedback: '家长核对照片转录', answerEvidence: item.answerEvidence, userConfirmation: command.userConfirmation, receivedAt: draft?.receivedAt ?? now }, errorType) || changed;
         if (draft !== undefined) {
             state.paperDrafts = state.paperDrafts.filter(candidate => candidate !== draft);
             changed = true;
@@ -139,6 +137,7 @@ export function applyDiscardSheet(ctx) {
 export function applyWorkbookDraft(ctx) {
     const { command, previous, state, now } = ctx;
     const draft = command.draft;
+    requireValue(!state.workbookResults.some(item => item.id === draft.id), '这道练习册题已确认，请换一个新编号。');
     if (draft.objectiveId)
         requireValue(objectiveOf(state, draft.objectiveId)?.subject === draft.subject, '学习目标不存在或科目不符。');
     const next = { ...draft, uncertainties: draft.uncertainties };
@@ -153,7 +152,7 @@ export function applyWorkbookDraft(ctx) {
     state.workbookDrafts.push({ ...next, receivedAt: now });
     return state;
 }
-/** Route a confirmed workbook draft to teaching, mistakes or nothing. */
+/** Retain the confirmed photo record and route difficulty to teaching or mistakes. Receipt time is not an answer date. */
 export function applyConfirmWorkbook(ctx) {
     const { command, previous, state, now } = ctx;
     const draft = state.workbookDrafts.find(item => item.id === command.id);
@@ -163,6 +162,12 @@ export function applyConfirmWorkbook(ctx) {
     const objectiveId = command.objectiveId === '' ? undefined : command.objectiveId ?? draft.objectiveId;
     if (objectiveId)
         requireValue(objectiveOf(state, objectiveId)?.subject === draft.subject, '学习目标不存在或科目不符。');
+    const { objectiveId: _draftGoal, ...original } = draft;
+    state.workbookResults.push({ ...original, outcome, ...(objectiveId !== undefined ? { objectiveId } : {}), confirmedAt: now, userConfirmation: command.userConfirmation,
+        ...(command.correction !== undefined ? { correction: command.correction } : {}),
+        ...(command.explanation !== undefined ? { explanation: command.explanation } : {}),
+        ...(command.answerEvidence !== undefined ? { answerEvidence: command.answerEvidence } : {}),
+    });
     state.workbookDrafts = state.workbookDrafts.filter(item => item.id !== draft.id);
     if (outcome === 'independent-correct') {
         dropTaught(state, objectiveId);

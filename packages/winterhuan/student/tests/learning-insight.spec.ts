@@ -7,7 +7,7 @@ import { curriculumView } from '../src/learning/view.ts'
 import { dashboard } from '../src/dashboard.ts'
 import { queryStudy } from '../src/store.ts'
 import { stateSchema } from '../src/schema.ts'
-import { NOW, MINUTE, DAY, setup, material, course, start, attempt, mistake, confirm } from './fixtures.ts'
+import { NOW, MINUTE, DAY, setup, material, course, start, attempt, mistake, confirm, recordAnswer } from './fixtures.ts'
 
 describe('shipped knowledge map objectives and insight', () => {
   const task = { id: attempt.id, sessionId: attempt.sessionId, subject: attempt.subject, topic: attempt.topic, prompt: attempt.prompt, objectiveId: 'm2a-o-meaning' }
@@ -75,7 +75,7 @@ describe('shipped knowledge map objectives and insight', () => {
       const at = NOW - (2 - day) * DAY
       const id = `m-${day}`
       state = updateStudy(state, { ...start, id }, at)
-      state = updateStudy(state, { action: 'record', attempt: { ...attempt, id, sessionId: id, objectiveId: 'm2a-o-meaning' } }, at + MINUTE)
+      state = recordAnswer(state, { ...attempt, id, sessionId: id, objectiveId: 'm2a-o-meaning' }, at + MINUTE)
       state = updateStudy(state, { action: 'stop', sessionId: id, reflection: '' }, at + MINUTE)
     }
     insight = studyInsight(state, NOW + 2 * MINUTE)
@@ -84,8 +84,8 @@ describe('shipped knowledge map objectives and insight', () => {
     expect(view?.units.find(item => item.id === 'm2a-u-mul')).toMatchObject({ mastered: 2, due: 5, concepts: 7 })
     const at = NOW + DAY
     state = updateStudy(state, { ...start, id: 'h1' }, at)
-    state = updateStudy(state, { action: 'record', attempt: { ...attempt, id: 'h1', sessionId: 'h1', objectiveId: 'm2a-o-shop', assistance: 'hint' } }, at + MINUTE)
-    state = updateStudy(state, { action: 'record', attempt: { ...attempt, id: 'h2', sessionId: 'h1', objectiveId: 'm2a-o-shop', result: 'incorrect' } }, at + 2 * MINUTE)
+    state = recordAnswer(state, { ...attempt, id: 'h1', sessionId: 'h1', objectiveId: 'm2a-o-shop', assistance: 'hint' }, at + MINUTE)
+    state = recordAnswer(state, { ...attempt, id: 'h2', sessionId: 'h1', objectiveId: 'm2a-o-shop', result: 'incorrect' }, at + 2 * MINUTE)
     insight = studyInsight(state, at + 3 * MINUTE)
     expect(insight.objectives.find(item => item.id === 'm2a-o-shop')).toMatchObject({ level: 'weak', helpedOrWrong: 2, reasons: [{ code: 'needs-teaching', count: 1 }, { code: 'recent-help-or-error', count: 2 }] })
     expect(insight.weakPoints.map(item => item.id)).toEqual(['m2a-o-shop', 'm2a-o-tables'])
@@ -262,7 +262,7 @@ describe('choice tasks, map browsing and recurring check-ins', () => {
       const at = NOW - (40 - day) * DAY
       const id = `m-${day}`
       state = updateStudy(state, { ...start, id }, at)
-      state = updateStudy(state, { action: 'record', attempt: { ...attempt, id, sessionId: id, objectiveId: 'm2a-o-meaning' } }, at + MINUTE)
+      state = recordAnswer(state, { ...attempt, id, sessionId: id, objectiveId: 'm2a-o-meaning' }, at + MINUTE)
       state = updateStudy(state, { action: 'stop', sessionId: id, reflection: '' }, at + MINUTE)
     }
     const plan = studyInsight(state, NOW).diagnostics.find(item => item.subject === 'math')
@@ -363,7 +363,7 @@ describe('school progress frontier', () => {
     state = updateStudy(state, { action: 'answer', taskId: 'g1-t1', response: '7' }, NOW)
     state = updateStudy(state, { action: 'record', attempt: { ...attempt, id: 'g1-t1', sessionId: 'g1-check', topic: '10 以内加减', prompt: '3 + 4 = ?', response: '7', objectiveId: 'm1a-o-meaning' } }, NOW + MINUTE)
     expect(state.attempts[0]?.objectiveId).toBe('m1a-o-meaning')
-    expect(() => updateStudy(state, { action: 'record', attempt: { ...attempt, id: 'g1-t2', sessionId: 'g1-check', objectiveId: 'm2a-o-sub' } }, NOW + MINUTE)).toThrow('不在本段学习范围内')
+    expect(() => updateStudy(state, { action: 'task', task: { id: 'g1-t2', sessionId: 'g1-check', subject: 'math', topic: attempt.topic, prompt: attempt.prompt, objectiveId: 'm2a-o-sub' } }, NOW + MINUTE)).toThrow('不在本段学习范围内')
     state = updateStudy(state, { action: 'stop', sessionId: 'g1-check', reflection: '' }, NOW + 2 * MINUTE)
     const after = diagnosticFor(state, 'math', NOW + 3 * MINUTE, { grade: 1, term: 'first' })
     expect(after.coverage).toMatchObject({ probed: 1, total: 9 })
@@ -423,7 +423,7 @@ describe('school progress frontier', () => {
       const at = NOW - (2 - day) * DAY
       const id = `sort-${day}`
       state = updateStudy(state, { ...start, id }, at)
-      state = updateStudy(state, { action: 'record', attempt: { ...attempt, id, sessionId: id, objectiveId: 'm2a-o-sort' } }, at + MINUTE)
+      state = recordAnswer(state, { ...attempt, id, sessionId: id, objectiveId: 'm2a-o-sort' }, at + MINUTE)
       state = updateStudy(state, { action: 'stop', sessionId: id, reflection: '' }, at + MINUTE)
     }
     const quiet = recentCheckIns(state, NOW + 7 * MINUTE)

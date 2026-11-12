@@ -5,7 +5,6 @@ import { commandSchema } from "./schema.js";
 import { panelActions } from "./actions.js";
 import { studyStore, StudyConflict } from "./store.js";
 import { dashboard } from "./dashboard.js";
-import { timeStatus } from "./learning/status.js";
 import { readInteractiveLessons } from "./openmaic.js";
 const mutation = z.object({ revision: z.number().int().nonnegative(), change: commandSchema }).strict();
 /** Browser requests must address the local DSH host and originate from the same authority. */
@@ -63,8 +62,8 @@ export async function handleStudyRequest(context, request, response) {
             send(response, 400, { error: '请先打开学习会话' });
             return;
         }
-        // A conditional poll names the revision it already displays; the same query with new params re-fetches in full.
-        const ifRevision = url.searchParams.has('revision') ? z.coerce.number().int().nonnegative().parse(url.searchParams.get('revision')) : undefined;
+        if (url.searchParams.has('revision'))
+            z.coerce.number().int().nonnegative().parse(url.searchParams.get('revision'));
         const mistakeOffset = z.coerce.number().int().min(0).max(5000).parse(url.searchParams.get('mistakeOffset') ?? '0');
         const subject = z.enum(['chinese', 'math', 'english']).parse(url.searchParams.get('subject') ?? 'math');
         const mistakeStatus = z.enum(['all', 'due', 'reviewing', 'mastered']).parse(url.searchParams.get('mistakeStatus') ?? 'all');
@@ -99,11 +98,7 @@ export async function handleStudyRequest(context, request, response) {
         // The tutor shell writes the lesson log; this response only reads it, including on an unchanged poll,
         // because that write does not bump the study revision.
         const interactiveLessons = await readInteractiveLessons(agent, abort.signal, state?.openmaic?.baseUrl);
-        if (change === undefined && ifRevision !== undefined && state !== undefined && ifRevision === state.revision) {
-            // Unchanged evidence: only the time-derived suggestion state moves with the clock. The lesson log still refreshes.
-            send(response, 200, { serverNow: Date.now(), revision: state.revision, unchanged: true, time: timeStatus(state, Date.now()), interactiveLessons });
-            return;
-        }
+        // Revision alone does not establish validity across due times, calendar days or evidence thresholds.
         send(response, 200, { ...dashboard(state, Date.now(), { subject, mistakeOffset, mistakeStatus, ...(tab !== undefined ? { tab } : {}), ...(mapGrade !== undefined ? { mapGrade } : {}), ...(mapTerm !== undefined ? { mapTerm } : {}), ...(diagGrade !== undefined ? { diagGrade } : {}), ...(diagTerm !== undefined ? { diagTerm } : {}), ...(diagUnit !== undefined ? { diagUnit } : {}) }), interactiveLessons });
     }
     catch (error) {

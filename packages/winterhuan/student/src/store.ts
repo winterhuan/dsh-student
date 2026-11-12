@@ -152,6 +152,7 @@ export function queryStudy(state: StudyState | undefined, kind: string, offset: 
       pendingMistakes: summary.pendingMistakes.slice(0, 20), pendingMistakeCount: summary.pendingMistakes.length,
       teachingQueue: state.teachingQueue.slice(0, 20), teachingQueueCount: state.teachingQueue.length,
       workbookDrafts: state.workbookDrafts.slice(0, 20), workbookDraftCount: state.workbookDrafts.length,
+      workbookResults: state.workbookResults.slice(-20).reverse(), workbookResultCount: state.workbookResults.length,
       more: 'The study skill owns what to do next; kind=progress, due, weak, exercises or curriculum with offset pages more records. interests and interestFocus wrap question context; facts stay on the knowledge map. dueToday lists at most two mistakes to clear and dueBacklog is the full overdue count. openmaic.baseUrl is the interactive-lesson service; write lesson records at openmaic.lessonsPath with the shell, not study_update.',
     }
   }

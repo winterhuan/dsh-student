@@ -47,7 +47,7 @@ export function studyStatus(state, now) {
     }
     const interests = interestTagsOf(state.interests?.tags);
     return {
-        task: state.task ?? null, feedback: state.task ? state.attempts.find(item => item.id === state.task?.id) ?? null : null,
+        task: state.task ?? null, feedback: state.task ? state.attempts.find(item => item.id === state.task?.id && item.sessionId === state.task.sessionId) ?? null : null,
         revision: state.revision, profile: state.profile, interests, interestFocus: interestFocus(interests, studyDay(now)), ...time, active: activeSession(state) ?? null,
         openmaic: {
             baseUrl: effectiveOpenmaicBase(state.openmaic?.baseUrl, process.env.OPENMAIC_BASE),

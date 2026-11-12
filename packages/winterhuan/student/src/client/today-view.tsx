@@ -80,7 +80,7 @@ export function TodayView({ study, subject, activity, setActivity, goal, clearGo
         : active && active.subject !== subject ? <p className="student-muted">{t('otherSubjectActive').replace('{subject}', t(active.subject))}</p> : null}
     </section>
     {ownSession && <>
-      <section className="student-focus"><p className="student-muted">{t('chatHelp')}</p>{task ? <Task study={study} goalTitle={goalTitle(study, task.objectiveId)} goalText={objectiveMeta?.goal} days={objectiveMeta?.independentDays} disabled={disabled || running} t={t} act={act} tutor={tutor} /> : <p>{t('waiting')}</p>}
+      <section className="student-focus"><p className="student-muted">{t('chatHelp')}</p>{task ? <Task key={`${task.sessionId}:${task.id}`} study={study} goalTitle={goalTitle(study, task.objectiveId)} goalText={objectiveMeta?.goal} days={objectiveMeta?.independentDays} disabled={disabled || running} t={t} act={act} tutor={tutor} /> : <p>{t('waiting')}</p>}
         {available && (running ? <p role="status">{t('tutorWorking')}</p>
           : (!task || study.feedback || task.response !== undefined || task.hintLevel > 0) && <button disabled={disabled} onClick={() => { void tutor('').catch(() => {}) }}>{t(!task ? 'prepareTask' : study.feedback ? 'nextTask' : task.response !== undefined ? 'retryFeedback' : 'retryHint')}</button>)}
       </section>
@@ -218,7 +218,7 @@ function Alternate({ study, activity, setActivity, disabled, start, goal, intens
           <option value="current">{t('scopeCurrent')}</option>
           {([[1, 'first'], [1, 'second'], [2, 'first'], [2, 'second']] as const).filter(([grade, term]) => !(grade === study.profile.grade && term === study.profile.term)).map(([grade, term]) => <option key={`${grade}-${term}`} value={`${grade}-${term}`}>{t(grade === 1 ? 'gradeOne' : 'gradeTwo')} · {t(term)}</option>)}
         </select></label>
-        {scoped && <label>{t('scopeUnit')}<select aria-label={t('scopeUnit')} value={scope.unit ?? ''} onChange={event => setScope({ ...scope, ...(event.target.value ? { unit: event.target.value } : {}) })}>
+        {scoped && <label>{t('scopeUnit')}<select aria-label={t('scopeUnit')} value={scope.unit ?? ''} onChange={event => { const { unit: _unit, ...book } = scope; setScope({ ...book, ...(event.target.value ? { unit: event.target.value } : {}) }) }}>
           <option value="">{t('scopeWholeMap')}</option>
           {scopeUnits.map(unit => <option key={unit.id} value={unit.id}>{unit.name}</option>)}
         </select></label>}

@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { INTEREST_TAG } from '../interests.ts'
 import type { Command, StudyState } from '../schema.ts'
 import { errorTypesBySubject } from '../vocabulary.ts'
@@ -14,10 +14,13 @@ export function Field({ name, label, value = '', type = 'text', min, max, requir
   return <label>{label}<input name={name} defaultValue={value} type={type} min={min} max={max} required={required} maxLength={2000} /></label>
 }
 
-function SaveForm({ revision, submit, children, t, disabled = false, button = 'save' }: {
-  revision: number; submit: (data: FormData, revision: number) => Promise<Dashboard>; children: ReactNode; t: Translate; disabled?: boolean; button?: 'save' | 'confirm'
+function SaveForm({ revision, baseline, submit, children, t, disabled = false, button = 'save' }: {
+  revision: number; baseline: string; submit: (data: FormData, revision: number) => Promise<Dashboard>; children: ReactNode; t: Translate; disabled?: boolean; button?: 'save' | 'confirm'
 }) {
-  const [base, setBase] = useState(revision)
+  const [base, setBase] = useState({ revision, baseline })
+  useEffect(() => {
+    setBase(previous => previous.baseline === baseline || previous.revision === revision ? { revision, baseline } : previous)
+  }, [revision, baseline])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
@@ -26,7 +29,7 @@ function SaveForm({ revision, submit, children, t, disabled = false, button = 's
     if (busy) return
     const values = new FormData(event.currentTarget)
     setBusy(true); setSaved(false); setError('')
-    try { const result = await submit(values, base); setBase(result.revision); setSaved(true) }
+    try { const result = await submit(values, base.revision); setBase({ revision: result.revision, baseline }); setSaved(true) }
     catch (reason) { setError(reason instanceof Error ? reason.message : t('networkError')) }
     finally { setBusy(false) }
   }
@@ -53,7 +56,7 @@ export function ParentSettings({ data, change, t, curriculum = null, subject = '
   const years = Array.from({ length: 7 }, (_, index) => `${currentYear + 1 - index}–${currentYear + 2 - index}`)
   return <section>
     <p>{t('parentHelp')}</p>
-    <SaveForm key={profile ? `profile-${profile.nickname}-${profile.grade}-${profile.term}-${profile.schoolYear}` : 'setup'} revision={data.revision} t={t} submit={(form, revision) => change({
+    <SaveForm revision={data.revision} baseline={JSON.stringify(profile ?? null)} t={t} submit={(form, revision) => change({
       action: 'setup',
       profile: {
         nickname: read(form, 'nickname'),
@@ -82,17 +85,15 @@ export function ParentSettings({ data, change, t, curriculum = null, subject = '
     {profile && <>
       <h3>{t('curriculum')}</h3><p>{t('materialHelp')}</p>
       {study.courses.map(course => <p key={course.subject}>{t(course.subject)} · {study.materials.find(item => item.id === course.materialId)?.title} · {course.unit}</p>)}
-      <SaveForm revision={data.revision} t={t} submit={async (form, revision) => {
+      <SaveForm revision={data.revision} baseline={JSON.stringify({ scope: { region: profile.region, grade: profile.grade, term: profile.term, schoolYear: profile.schoolYear, schoolSystem: profile.schoolSystem }, course: study.courses.find(item => item.subject === subject) })} t={t} submit={async (form, revision) => {
         const materialId = crypto.randomUUID()
         const selected = read(form, 'subject')
         const courseSubject = subjects.find(item => item === selected) ?? subject
         const unitId = read(form, 'unitId')
         const unit = curriculum?.scope.current ? curriculum.units.find(item => item.id === unitId) : undefined
         const { region, grade, term, schoolYear, schoolSystem } = profile
-        const saved = await change({ action: 'configure-course', material: { id: materialId, subject: courseSubject, scope: { region, grade, term, schoolYear, schoolSystem }, title: curriculum?.scope.current ? curriculum.title : t(courseSubject), publisher: t('mapMaterialPublisher'), edition: curriculum?.scope.current ? curriculum.id : t('mapMaterialEdition'), editionStatus: 'identified', kind: 'official-textbook', locator: curriculum?.scope.current ? `knowledge/curriculum/${curriculum.id}.json` : t('mapMaterialLocator'), evidence: t('mapMaterialEvidence') }, course: { subject: courseSubject, materialId, unit: unit?.name ?? read(form, 'unit'), parentConfirmation: t('materialConfirm') } }, revision)
-        if (!unit) return saved
-        const existing = saved.study?.courses.find(item => item.subject === courseSubject)?.progress
-        return change({ action: 'school-progress', subject: courseSubject, unitId: unit.id, posture: existing?.posture ?? 'keep-up', preview: existing?.preview ? 'on' : 'off', pace: existing?.pace ?? 'teaching', parentConfirmation: t('confirmSchoolProgress') }, saved.revision)
+        const existing = study.courses.find(item => item.subject === courseSubject)?.progress
+        return change({ action: 'configure-course', material: { id: materialId, subject: courseSubject, scope: { region, grade, term, schoolYear, schoolSystem }, title: curriculum?.scope.current ? curriculum.title : t(courseSubject), publisher: t('mapMaterialPublisher'), edition: curriculum?.scope.current ? curriculum.id : t('mapMaterialEdition'), editionStatus: 'identified', kind: 'official-textbook', locator: curriculum?.scope.current ? `knowledge/curriculum/${curriculum.id}.json` : t('mapMaterialLocator'), evidence: t('mapMaterialEvidence') }, course: { subject: courseSubject, materialId, unit: unit?.name ?? read(form, 'unit'), parentConfirmation: t('materialConfirm') }, ...(unit ? { progress: { unitId: unit.id, posture: existing?.posture ?? 'keep-up', preview: existing?.preview ? 'on' : 'off', pace: existing?.pace ?? 'teaching', parentConfirmation: t('confirmSchoolProgress') } } : {}) }, revision)
       }}>
         <label>{t('subject')}<select name="subject" aria-label={t('subject')} value={subject} onChange={event => { const next = subjects.find(item => item === event.target.value); if (next) onSubject?.(next) }}>{subjects.map(item => <option key={item} value={item}>{t(item)}</option>)}</select></label>
         {curriculum?.scope.current ? <label>{t('unit')}<select name="unitId" aria-label={t('unit')} key={subject} defaultValue={study.courses.find(item => item.subject === subject)?.progress?.unitId ?? ''} required>
@@ -133,7 +134,7 @@ export function ParentSettings({ data, change, t, curriculum = null, subject = '
       <h3>{t('openmaicTitle')}</h3>
       <p className="student-muted">{t('openmaicBaseHelp')}</p>
       <p>{t('openmaicEffective')}: {data.interactiveLessons.baseUrl}</p>
-      <SaveForm revision={data.revision} t={t} submit={(form, revision) => change({ action: 'openmaic-settings', baseUrl: read(form, 'baseUrl'), parentConfirmation: t('openmaicConfirm') }, revision)}>
+      <SaveForm revision={data.revision} baseline={study.openmaic?.savedBaseUrl ?? ''} t={t} submit={(form, revision) => change({ action: 'openmaic-settings', baseUrl: read(form, 'baseUrl'), parentConfirmation: t('openmaicConfirm') }, revision)}>
         <Field name="baseUrl" label={t('openmaicBase')} value={study.openmaic?.savedBaseUrl ?? ''} required={false} />
         <p className="student-muted">{t('openmaicAccessHint')}</p>
       </SaveForm>
@@ -152,7 +153,7 @@ export function ParentSettings({ data, change, t, curriculum = null, subject = '
 /** Parent theme tags. The saved list is edited here; an empty profile shows the example tags from status. */
 function InterestsForm({ tags, revision, change, t }: { tags: string[]; revision: number; change: ChangeStudy; t: Translate }) {
   const [draft, setDraft] = useState(tags)
-  return <SaveForm revision={revision} t={t} submit={(_form, nextRevision) => {
+  return <SaveForm revision={revision} baseline={JSON.stringify(tags)} t={t} submit={(_form, nextRevision) => {
     const next = [...new Set(draft.map(tag => tag.trim()).filter(tag => tag !== ''))]
     if (next.length < 3 || next.length > 8) throw new Error(t('interestCount'))
     if (next.some(tag => !INTEREST_TAG.test(tag))) throw new Error(t('interestShape'))
@@ -173,7 +174,7 @@ export function MistakeConfirmation({ mistake, revision, change, t }: { mistake:
   return <details><summary>{mistake.topic}</summary>
     <p>{t('learnerAnswer')}: {mistake.learnerAnswer}</p>
     {mistake.uncertainties && <p>{t('uncertainties')}: {mistake.uncertainties}</p>}
-    <SaveForm revision={revision} t={t} button="confirm" submit={(form, base) => {
+    <SaveForm revision={revision} baseline={JSON.stringify(mistake)} t={t} button="confirm" submit={(form, base) => {
       const picked = read(form, 'errorType')
       const errorType = errorTypesBySubject[mistake.subject].find(candidate => candidate === picked)
       return change({ action: 'confirm-mistake', id: mistake.id, prompt: read(form, 'prompt'), learnerAnswer: read(form, 'learnerAnswer'), correction: read(form, 'correction'), explanation: read(form, 'explanation'), answerEvidence: read(form, 'answerEvidence'), ...(errorType !== undefined ? { errorType } : {}), userConfirmation: t('confirmMistake') }, base)

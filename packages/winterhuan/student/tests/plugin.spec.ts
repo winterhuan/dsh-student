@@ -74,6 +74,8 @@ describe('independently loaded student plugin', () => {
     await call({ action: 'material', material })
     await call({ action: 'course', course })
     await call({ ...start, mode: 'school' })
+    await call({ action: 'task', task: { id: attempt.id, sessionId: attempt.sessionId, subject: attempt.subject, topic: attempt.topic, prompt: attempt.prompt } })
+    await call({ action: 'answer', taskId: attempt.id, response: attempt.response })
     await call({ action: 'record', attempt })
     await call({ action: 'stop', sessionId: start.id, reflection: '我学会先凑十。' })
     await call({ action: 'mistake', mistake })

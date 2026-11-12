@@ -271,6 +271,22 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             objectiveId?: string | undefined;
             imagePath?: string | undefined;
         }[];
+        workbookResults: {
+            id: string;
+            subject: "chinese" | "math" | "english";
+            prompt: string;
+            outcome: "stuck" | "hinted" | "independent-wrong" | "independent-correct";
+            uncertainties: string;
+            receivedAt: number;
+            confirmedAt: number;
+            userConfirmation: string;
+            response?: string | undefined;
+            objectiveId?: string | undefined;
+            imagePath?: string | undefined;
+            correction?: string | undefined;
+            explanation?: string | undefined;
+            answerEvidence?: string | undefined;
+        }[];
         teachingQueue: {
             id: string;
             subject: "chinese" | "math" | "english";
@@ -281,7 +297,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         recentAttempts: {
             result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
-            assistance: "hint" | "independent" | "worked-example";
+            assistance: "independent" | "hint" | "worked-example";
             id: string;
             sessionId: string;
             subject: "chinese" | "math" | "english";
@@ -508,7 +524,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             id: string;
             subject: "chinese" | "math" | "english";
             title: string;
-            level: "due" | "mastered" | "practising" | "weak" | "stalled" | "untouched";
+            level: "practising" | "due" | "weak" | "stalled" | "mastered" | "untouched";
             priority: number;
             reasons: import("./learning/mastery.ts").InsightReason[];
         }[];
@@ -563,10 +579,11 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             objectiveTitle: string;
             open: boolean;
             results: {
+                errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                 itemId: string;
                 result: "correct" | "partial" | "incorrect" | "unassessed";
                 response: string;
-                assistance: "hint" | "independent" | "worked-example";
+                assistance: "independent" | "hint" | "worked-example";
             }[];
             drafts: {
                 confidence?: "high" | "low";
@@ -574,7 +591,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                 itemId: string;
                 response: string;
                 result: "correct" | "partial" | "incorrect" | "unassessed";
-                assistance: "hint" | "independent" | "worked-example";
+                assistance: "independent" | "hint" | "worked-example";
                 uncertainties: string;
             }[];
             sources: {
@@ -878,7 +895,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         active: {
             id: string;
             subject: "chinese" | "math" | "english";
-            mode: "foundation" | "school" | "review" | "explore" | "diagnose";
+            mode: "review" | "foundation" | "school" | "explore" | "diagnose";
             startedAt: number;
             intensity?: "light" | "standard" | "deep" | undefined;
             endedAt?: number | undefined;
@@ -909,7 +926,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                 confirmedAt: number;
                 posture: "keep-up" | "catch-up";
                 preview: boolean;
-                pace: "review" | "teaching";
+                pace: "teaching" | "review";
             } | undefined;
         }[];
         unconfirmedSubjects: string[];
@@ -930,7 +947,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             hintLevel: number;
             choices?: string[] | undefined;
             steps?: string[] | undefined;
-            phase?: "demo" | "guide" | "try" | "vary" | undefined;
+            phase?: "demo" | "try" | "vary" | "guide" | undefined;
             variant?: "numeric" | "context" | "reasoning" | undefined;
             mistakeId?: string | undefined;
             objectiveId?: string | undefined;
@@ -1134,7 +1151,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         } | null;
         feedback: {
             result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
-            assistance: "hint" | "independent" | "worked-example";
+            assistance: "independent" | "hint" | "worked-example";
             id: string;
             sessionId: string;
             subject: "chinese" | "math" | "english";

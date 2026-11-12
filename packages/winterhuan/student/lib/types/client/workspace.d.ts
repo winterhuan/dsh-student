@@ -1,5 +1,4 @@
 import type { Dashboard, MistakeStatus } from '../dashboard.ts';
-import type { TimeStatus } from '../learning/status.ts';
 import type { Command } from '../schema.ts';
 /** Query identity for one visible workbench: the open tab, notebook page, subject, notebook filter, an optional knowledge-map scope and an optional check-in scope. */
 export interface StudyQuery {
@@ -13,11 +12,9 @@ export interface StudyQuery {
     diagTerm?: 'first' | 'second';
     diagUnit?: string;
 }
-/** One conditional poll response: evidence unchanged, only the time-derived state moved. */
+/** One workspace response, including an error returned by the route. */
 type PollResponse = Dashboard & {
     error?: string;
-    unchanged?: boolean;
-    time?: TimeStatus;
 };
 /** Poll visible workbenches; preserve data on failure and discard obsolete responses. */
 export declare function useStudy(sessionId: string, visible: boolean, networkError: string, query: StudyQuery): {
@@ -269,6 +266,22 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 objectiveId?: string | undefined;
                 imagePath?: string | undefined;
             }[];
+            workbookResults: {
+                id: string;
+                subject: "chinese" | "math" | "english";
+                prompt: string;
+                outcome: "stuck" | "hinted" | "independent-wrong" | "independent-correct";
+                uncertainties: string;
+                receivedAt: number;
+                confirmedAt: number;
+                userConfirmation: string;
+                response?: string | undefined;
+                objectiveId?: string | undefined;
+                imagePath?: string | undefined;
+                correction?: string | undefined;
+                explanation?: string | undefined;
+                answerEvidence?: string | undefined;
+            }[];
             teachingQueue: {
                 id: string;
                 subject: "chinese" | "math" | "english";
@@ -279,7 +292,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
             }[];
             recentAttempts: {
                 result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
-                assistance: "hint" | "independent" | "worked-example";
+                assistance: "independent" | "hint" | "worked-example";
                 id: string;
                 sessionId: string;
                 subject: "chinese" | "math" | "english";
@@ -506,7 +519,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 id: string;
                 subject: "chinese" | "math" | "english";
                 title: string;
-                level: "due" | "mastered" | "practising" | "weak" | "stalled" | "untouched";
+                level: "practising" | "due" | "weak" | "stalled" | "mastered" | "untouched";
                 priority: number;
                 reasons: import("../learning/mastery.ts").InsightReason[];
             }[];
@@ -561,10 +574,11 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 objectiveTitle: string;
                 open: boolean;
                 results: {
+                    errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                     itemId: string;
                     result: "correct" | "partial" | "incorrect" | "unassessed";
                     response: string;
-                    assistance: "hint" | "independent" | "worked-example";
+                    assistance: "independent" | "hint" | "worked-example";
                 }[];
                 drafts: {
                     confidence?: "high" | "low";
@@ -572,7 +586,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                     itemId: string;
                     response: string;
                     result: "correct" | "partial" | "incorrect" | "unassessed";
-                    assistance: "hint" | "independent" | "worked-example";
+                    assistance: "independent" | "hint" | "worked-example";
                     uncertainties: string;
                 }[];
                 sources: {
@@ -876,7 +890,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
             active: {
                 id: string;
                 subject: "chinese" | "math" | "english";
-                mode: "foundation" | "school" | "review" | "explore" | "diagnose";
+                mode: "review" | "foundation" | "school" | "explore" | "diagnose";
                 startedAt: number;
                 intensity?: "light" | "standard" | "deep" | undefined;
                 endedAt?: number | undefined;
@@ -907,7 +921,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                     confirmedAt: number;
                     posture: "keep-up" | "catch-up";
                     preview: boolean;
-                    pace: "review" | "teaching";
+                    pace: "teaching" | "review";
                 } | undefined;
             }[];
             unconfirmedSubjects: string[];
@@ -928,7 +942,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 hintLevel: number;
                 choices?: string[] | undefined;
                 steps?: string[] | undefined;
-                phase?: "demo" | "guide" | "try" | "vary" | undefined;
+                phase?: "demo" | "try" | "vary" | "guide" | undefined;
                 variant?: "numeric" | "context" | "reasoning" | undefined;
                 mistakeId?: string | undefined;
                 objectiveId?: string | undefined;
@@ -1132,7 +1146,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
             } | null;
             feedback: {
                 result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
-                assistance: "hint" | "independent" | "worked-example";
+                assistance: "independent" | "hint" | "worked-example";
                 id: string;
                 sessionId: string;
                 subject: "chinese" | "math" | "english";

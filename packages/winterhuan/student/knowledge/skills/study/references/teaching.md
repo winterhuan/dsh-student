@@ -8,7 +8,7 @@
 
 四步写在当前题的 `phase` 上，和复习卷的换数字、换情境、说理阶梯分开：
 
-1. `demo`：用一道同结构的例子示范。`record` 的 `assistance` 用 `worked-example`。这不是孩子的答案。
+1. `demo`：在题干与步骤里展示同结构的例子，不把示范说明记成孩子的答案。孩子实际回答后，先 `answer` 保存原话，`record` 的 `assistance` 用 `worked-example`，不计独立掌握。
 2. `guide`：先 `hint`，让孩子做一步。没有提示不能记这一步，也不能标 `independent`。
 3. `try`：换数字，孩子独立做。
 4. `vary`：先移动括号或改不等号方向，再出两步题。

@@ -3,13 +3,12 @@ import { itemObjectiveId, type Worksheet, type WorksheetItem } from '../view.ts'
 import type { ErrorType, StudyState } from '../../schema.ts'
 
 export function alignRecord<T extends { id: string; topic: string; prompt: string; response: string; mistakeId?: string | undefined; objectiveId?: string | undefined; variant?: AttemptInput['variant']; figure?: AttemptInput['figure'] }>(task: NonNullable<StudyState['task']>, attempt: T): T {
-  const demoNote = task.phase === 'demo' && task.response === undefined
-  if (!demoNote && task.response === undefined) throw new Error(`请先用 answer 保存原始回答，再记录反馈。当前题目 id：${task.id}。`)
+  if (task.response === undefined) throw new Error(`请先用 answer 保存原始回答，再记录反馈。当前题目 id：${task.id}。`)
   const problems: string[] = []
   if (attempt.id !== task.id) problems.push(`id 不一致。期望：${showValue(task.id)}。收到：${showValue(attempt.id)}。`)
   if (foldText(attempt.topic) !== foldText(task.topic)) problems.push(`topic 不一致。期望：${showValue(task.topic)}。收到：${showValue(attempt.topic)}。`)
   if (foldText(attempt.prompt) !== foldText(task.prompt)) problems.push(`prompt 不一致。期望：${showValue(task.prompt)}。收到：${showValue(attempt.prompt)}。`)
-  if (!demoNote && !sameSavedAnswer(task, attempt.response)) {
+  if (!sameSavedAnswer(task, attempt.response)) {
     const expected = task.rawResponse !== undefined && task.rawResponse !== task.response ? `${showValue(task.response)}（原始输入：${showValue(task.rawResponse)}）` : showValue(task.response)
     problems.push(`response 不一致。期望：${expected}。收到：${showValue(attempt.response)}。`)
   }
@@ -23,7 +22,7 @@ export function alignRecord<T extends { id: string; topic: string; prompt: strin
     id: task.id,
     topic: task.topic,
     prompt: task.prompt,
-    response: demoNote ? attempt.response : task.response ?? attempt.response,
+    response: task.response,
     ...(task.mistakeId !== undefined ? { mistakeId: task.mistakeId } : {}),
     ...(task.objectiveId !== undefined ? { objectiveId: task.objectiveId } : {}),
     ...(task.variant !== undefined ? { variant: task.variant } : {}),
@@ -54,18 +53,19 @@ export function dropTaught(state: StudyState, objectiveId: string | undefined): 
  * @returns whether anything changed.
  */
 export function gradeItem(state: StudyState, worksheet: Worksheet, item: WorksheetItem, entry: StudyState['paperResults'][number], errorType?: ErrorType): boolean {
+  const linked = item.mistakeId ? state.mistakes.find(mistake => mistake.id === item.mistakeId) : undefined
+  const wrong = entry.result === 'incorrect' || entry.result === 'partial'
+  const causeChanged = linked && wrong && errorType !== undefined && linked.errorType !== errorType
   const index = state.paperResults.findIndex(result => result.worksheetId === worksheet.id && result.itemId === item.id)
   const previous = state.paperResults[index]
   if (previous) {
     const { receivedAt: _before, ...stored } = previous
     const { receivedAt: _now, ...next } = entry
-    if (canonical(stored) === canonical(next)) return false
+    if (canonical(stored) === canonical(next) && !causeChanged) return false
     state.paperResults.splice(index, 1)
   }
   state.paperResults.push(previous ? { ...entry, receivedAt: previous.receivedAt } : entry)
-  const linked = item.mistakeId ? state.mistakes.find(mistake => mistake.id === item.mistakeId) : undefined
   const fromHere = linked?.source !== undefined && linked.source.worksheetId === worksheet.id && linked.source.itemId === item.id
-  const wrong = entry.result === 'incorrect' || entry.result === 'partial'
   if (linked && wrong && errorType !== undefined) linked.errorType = errorType
   if (linked && fromHere) {
     if (wrong) {

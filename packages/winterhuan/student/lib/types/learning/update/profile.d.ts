@@ -6,7 +6,7 @@ export declare function applySetup(command: Extract<Command, {
 }>, now: number): StudyState;
 /** Update the existing learner profile in place, preserving all learning evidence. */
 export declare function applyUpdateProfile(ctx: UpdateContext<'setup'>): StudyState;
-/** Save a material and its course atomically under one revision. */
+/** Save a material, its course and optional confirmed school frontier under one revision. */
 export declare function applyConfigureCourse(ctx: UpdateContext<'configure-course'>): StudyState;
 /** Register one course material; an identical retry is a no-op. */
 export declare function applyMaterial(ctx: UpdateContext<'material'>): StudyState;

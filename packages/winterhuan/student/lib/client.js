@@ -8,7 +8,7 @@ window.__ModuleLoader__.load({
 		let _deepseek_ai_dsh_client_ui_primitives = require("@deepseek-ai/dsh-client-ui-primitives");
 		let react = require("react");
 		let react_dom = require("react-dom");
-		//#region \0dsh-global-css:/Users/winter/dsh-plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
+		//#region \0dsh-global-css:/Users/winter/dsh-creative/.worktrees/student-native-chat-contracts/plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
 		const css = ".student-desk{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font:13px/1.5 var(--dsw-font-family);flex-direction:column;gap:12px;padding:0 12px 20px;display:flex;overflow:auto}.student-top{z-index:2;background:var(--dsw-alias-bg-base);border-bottom:1px solid var(--dsw-alias-border-l2);flex-direction:column;gap:8px;margin:0 -12px;padding:10px 12px 8px;display:flex;position:sticky;top:0}.student-toolbar{align-items:center;gap:8px;display:flex}.student-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;display:grid}.student-subjects{background:var(--dsw-alias-bg-layer-1);border-radius:8px;flex:1;gap:2px;padding:2px;display:flex}.student-subjects button{background:0 0;border:0;flex:1}.student-quiet{background:0 0;border:0;flex:none;padding:6px 8px}.student-desk section{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);border-radius:10px;flex-direction:column;gap:8px;padding:12px;display:flex}.student-desk details{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:10px;padding:10px 12px}.student-desk h3{margin:0;font-size:13px;font-weight:500}.student-desk p{overflow-wrap:anywhere;white-space:pre-wrap;margin:0}.student-desk form,.student-desk fieldset,.student-desk label{flex-direction:column;gap:8px;min-width:0;display:flex}.student-desk fieldset{border:0;margin:0;padding:0}.student-desk button,.student-desk input,.student-desk select,.student-desk textarea{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);box-sizing:border-box;border-radius:8px;min-width:0;max-width:100%;padding:8px}.student-desk button{cursor:pointer}.student-desk .student-subjects button,.student-desk .student-quiet{background:0 0;border:0}.student-desk button:hover:enabled:not([aria-pressed=true]):not(.student-primary){background:var(--dsw-alias-button-ghost-active-fill)}.student-desk .student-tabs button[aria-pressed=true],.student-desk .student-views button[aria-pressed=true],.student-desk .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-desk .student-tabs button[aria-pressed=true]:hover:enabled,.student-desk .student-views button[aria-pressed=true]:hover:enabled,.student-desk .student-primary:hover:enabled{background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-foreground)}.student-desk .student-subjects button[aria-pressed=true],.student-desk .student-segments button[aria-pressed=true],.student-desk .student-segments button[aria-checked=true]{background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);box-shadow:inset 0 0 0 1px var(--dsw-alias-state-business-primary)}.student-desk :disabled{opacity:.6;cursor:default}.student-desk :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.student-desk textarea{resize:vertical;min-height:72px}.student-desk .student-check{flex-direction:row;align-items:flex-start}.student-desk .student-check input{flex:none}.student-desk img{object-fit:contain;background:var(--dsw-alias-bg-base);border-radius:8px;width:100%;max-height:240px}.student-status{gap:6px}.student-desk .student-question{background:var(--dsw-alias-bg-base);border-radius:8px;padding:12px;font-size:16px;line-height:1.45}.student-desk summary{cursor:pointer;overflow-wrap:anywhere;font-weight:500}.student-desk .student-pages{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-plan{border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-1))}.student-desk details>details,.student-desk details>div,.student-desk details>p{margin-top:8px}.student-muted{color:var(--dsw-alias-label-secondary)}.student-unit{border-top:1px solid var(--dsw-alias-border-l2);padding-top:8px}.student-choices{flex-direction:column;gap:8px;display:flex}.student-choices button{text-align:left;width:100%;padding:12px 14px;font-size:15px}.student-result{font-size:15px;font-weight:500}.student-scope{flex-wrap:wrap;align-items:flex-end;gap:8px;display:flex}.student-scope label{flex:120px}.student-segments{flex-wrap:wrap;gap:6px;display:flex}.student-desk .student-grade{border-top:1px solid var(--dsw-alias-border-l2);padding:8px 0}.student-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px;height:8px;display:flex;overflow:hidden}.student-bar span{height:100%;display:block}.student-level-mastered,.student-fill-mastered{background:var(--dsw-alias-state-success-primary)}.student-level-practising,.student-fill-practising{background:var(--dsw-alias-state-business-primary)}.student-level-stalled,.student-fill-stalled{background:var(--dsw-alias-state-warn-primary)}.student-level-weak,.student-fill-weak{background:var(--dsw-alias-state-error-primary)}.student-level-due,.student-fill-due{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, var(--dsw-alias-state-warn-primary))}.student-level-untouched,.student-fill-untouched{background:var(--dsw-alias-label-tertiary)}.student-legend{flex-wrap:wrap;gap:8px 12px;display:flex}.student-dot{vertical-align:middle;border-radius:50%;width:8px;height:8px;margin-right:4px;display:inline-block}.student-chips{flex-direction:column;gap:6px;display:flex}.student-chip{text-align:left;border-radius:8px;align-items:center;gap:6px;width:100%;padding:8px 10px;display:flex}.student-views{grid-template-columns:1fr 1fr;gap:6px;display:grid}.student-pair{grid-template-columns:1fr 1fr;gap:8px;display:grid}.student-mastery{align-items:center;gap:6px;display:flex}.student-mastery span{border-radius:50%;width:10px;height:10px}.student-simon{flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-simon li{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 8px}.student-simon-done{opacity:.7}.student-simon-current{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, var(--dsw-alias-bg-base));font-weight:500}.student-steps{flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-map-inline{border:1px solid var(--dsw-alias-border-l2);border-left:3px solid var(--dsw-alias-state-business-primary);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base));border-radius:8px;margin:4px 0 8px;padding:8px 10px}.student-map-links{margin-top:8px}.student-mindmap-unit{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:8px;margin:8px 0;padding:10px}.student-mindmap-unit>summary{cursor:pointer;font-weight:500}.student-mindmap-branch{border-left:2px solid var(--dsw-alias-border-l2);flex-direction:column;gap:6px;margin:8px 0 0;padding:0 0 0 12px;list-style:none;display:flex}.student-mindmap-node{flex-direction:column;gap:4px;display:flex}.student-mindmap-concept{text-align:left;align-items:center;gap:6px;width:100%;display:flex}.student-mindmap-concept[aria-pressed=true]{background:var(--dsw-alias-bg-layer-2,transparent)}.student-mindmap-concept.student-level-mastered{box-shadow:inset 3px 0 0 var(--dsw-alias-state-success-primary)}.student-mindmap-concept.student-level-practising{box-shadow:inset 3px 0 0 var(--dsw-alias-state-business-primary)}.student-mindmap-concept.student-level-stalled{box-shadow:inset 3px 0 0 var(--dsw-alias-state-warn-primary)}.student-mindmap-concept.student-level-weak,.student-mindmap-concept.student-level-due{box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}.student-figure svg{width:100%;height:auto;max-height:220px;color:var(--dsw-alias-label-primary)}.student-figure circle,.student-figure rect,.student-figure line,.student-figure path,.student-figure polyline,.student-figure polygon{fill:none;stroke:currentColor;stroke-width:1.4px}.student-figure text{fill:currentColor;stroke:none}.student-figure .student-fill{fill:currentColor}.student-desk progress{width:100%;height:8px}.student-desk progress::-webkit-progress-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px}.student-desk progress::-webkit-progress-value{background:var(--dsw-alias-state-business-primary);border-radius:999px}.student-sheet-portal{font:13px/1.5 var(--dsw-font-family)}.student-sheet-portal button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);cursor:pointer;border-radius:8px;padding:8px}.student-sheet-portal .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-sheet-portal .student-quiet{background:0 0;border:0}.student-sheet-backdrop{z-index:1000;box-sizing:border-box;background:color-mix(in srgb, var(--dsw-alias-label-primary) 32%, transparent);justify-content:center;align-items:flex-start;padding:32px 16px;display:flex;position:fixed;inset:0;overflow:auto}.student-sheet-dialog{box-sizing:border-box;background:var(--dsw-alias-bg-base);border-radius:10px;flex-direction:column;gap:8px;width:min(720px,100%);padding:12px;display:flex}.student-sheet-toolbar{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.student-sheet-toolbar .student-muted{flex:200px;margin:0}.student-sheet-scroll{overflow:auto}.student-sheet{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);color:#333;font:14px/1.6 var(--dsw-font-family);background:#fff;border-radius:8px;flex-direction:column;gap:12px;padding:24px;display:flex}.student-url{user-select:text;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.student-sheet h2{text-align:center;margin:0;font-size:18px;font-weight:500}.student-sheet-meta{text-align:center;margin:0;font-size:12px}.student-sheet-item{break-inside:avoid;flex-direction:column;gap:8px;display:flex}.student-sheet-item>p{white-space:pre-wrap;margin:0}.student-sheet .student-figure svg{color:#333;width:100%;height:auto;max-height:260px}.student-sheet-lines{flex-direction:column;display:flex}.student-sheet-rule{border-bottom:1px solid #b9c0c7;height:22px}.student-sheet-box{border:1px dashed #b9c0c7;border-radius:4px;height:84px}@page{size:A4;margin:12mm 14mm}@media print{body>:not(.student-sheet-portal){display:none!important}.student-sheet-backdrop{background:0 0;padding:0;display:block;position:static;overflow:visible}.student-sheet-dialog{display:contents}.student-sheet-toolbar{display:none}.student-sheet-scroll{overflow:visible}.student-sheet{border:0;border-radius:0;width:100%;padding:0}.student-sheet-item{page-break-inside:avoid}}";
 		const tagId = "@winterhuan/dsh-student/plugin.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
@@ -1119,8 +1119,17 @@ window.__ModuleLoader__.load({
 				maxLength: 2e3
 			})] });
 		}
-		function SaveForm({ revision, submit, children, t, disabled = false, button = "save" }) {
-			const [base, setBase] = (0, react.useState)(revision);
+		function SaveForm({ revision, baseline, submit, children, t, disabled = false, button = "save" }) {
+			const [base, setBase] = (0, react.useState)({
+				revision,
+				baseline
+			});
+			(0, react.useEffect)(() => {
+				setBase((previous) => previous.baseline === baseline || previous.revision === revision ? {
+					revision,
+					baseline
+				} : previous);
+			}, [revision, baseline]);
 			const [busy, setBusy] = (0, react.useState)(false);
 			const [error, setError] = (0, react.useState)("");
 			const [saved, setSaved] = (0, react.useState)(false);
@@ -1132,8 +1141,11 @@ window.__ModuleLoader__.load({
 				setSaved(false);
 				setError("");
 				try {
-					const result = await submit(values, base);
-					setBase(result.revision);
+					const result = await submit(values, base.revision);
+					setBase({
+						revision: result.revision,
+						baseline
+					});
 					setSaved(true);
 				} catch (reason) {
 					setError(reason instanceof Error ? reason.message : t("networkError"));
@@ -1177,6 +1189,7 @@ window.__ModuleLoader__.load({
 				(0, react_jsx_runtime.jsx)("p", { children: t("parentHelp") }),
 				(0, react_jsx_runtime.jsxs)(SaveForm, {
 					revision: data.revision,
+					baseline: JSON.stringify(profile ?? null),
 					t,
 					submit: (form, revision) => change({
 						action: "setup",
@@ -1257,7 +1270,7 @@ window.__ModuleLoader__.load({
 							})]
 						})] })
 					]
-				}, profile ? `profile-${profile.nickname}-${profile.grade}-${profile.term}-${profile.schoolYear}` : "setup"),
+				}),
 				profile && (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
 					(0, react_jsx_runtime.jsx)("h3", { children: t("curriculum") }),
 					(0, react_jsx_runtime.jsx)("p", { children: t("materialHelp") }),
@@ -1270,6 +1283,16 @@ window.__ModuleLoader__.load({
 					] }, course.subject)),
 					(0, react_jsx_runtime.jsxs)(SaveForm, {
 						revision: data.revision,
+						baseline: JSON.stringify({
+							scope: {
+								region: profile.region,
+								grade: profile.grade,
+								term: profile.term,
+								schoolYear: profile.schoolYear,
+								schoolSystem: profile.schoolSystem
+							},
+							course: study.courses.find((item) => item.subject === subject)
+						}),
 						t,
 						submit: async (form, revision) => {
 							const materialId = crypto.randomUUID();
@@ -1278,7 +1301,8 @@ window.__ModuleLoader__.load({
 							const unitId = read(form, "unitId");
 							const unit = curriculum?.scope.current ? curriculum.units.find((item) => item.id === unitId) : void 0;
 							const { region, grade, term, schoolYear, schoolSystem } = profile;
-							const saved = await change({
+							const existing = study.courses.find((item) => item.subject === courseSubject)?.progress;
+							return change({
 								action: "configure-course",
 								material: {
 									id: materialId,
@@ -1303,19 +1327,15 @@ window.__ModuleLoader__.load({
 									materialId,
 									unit: unit?.name ?? read(form, "unit"),
 									parentConfirmation: t("materialConfirm")
-								}
+								},
+								...unit ? { progress: {
+									unitId: unit.id,
+									posture: existing?.posture ?? "keep-up",
+									preview: existing?.preview ? "on" : "off",
+									pace: existing?.pace ?? "teaching",
+									parentConfirmation: t("confirmSchoolProgress")
+								} } : {}
 							}, revision);
-							if (!unit) return saved;
-							const existing = saved.study?.courses.find((item) => item.subject === courseSubject)?.progress;
-							return change({
-								action: "school-progress",
-								subject: courseSubject,
-								unitId: unit.id,
-								posture: existing?.posture ?? "keep-up",
-								preview: existing?.preview ? "on" : "off",
-								pace: existing?.pace ?? "teaching",
-								parentConfirmation: t("confirmSchoolProgress")
-							}, saved.revision);
 						},
 						children: [(0, react_jsx_runtime.jsxs)("label", { children: [t("subject"), (0, react_jsx_runtime.jsx)("select", {
 							name: "subject",
@@ -1462,6 +1482,7 @@ window.__ModuleLoader__.load({
 					] }),
 					(0, react_jsx_runtime.jsxs)(SaveForm, {
 						revision: data.revision,
+						baseline: study.openmaic?.savedBaseUrl ?? "",
 						t,
 						submit: (form, revision) => change({
 							action: "openmaic-settings",
@@ -1505,6 +1526,7 @@ window.__ModuleLoader__.load({
 			const [draft, setDraft] = (0, react.useState)(tags);
 			return (0, react_jsx_runtime.jsxs)(SaveForm, {
 				revision,
+				baseline: JSON.stringify(tags),
 				t,
 				submit: (_form, nextRevision) => {
 					const next = [...new Set(draft.map((tag) => tag.trim()).filter((tag) => tag !== ""))];
@@ -1566,6 +1588,7 @@ window.__ModuleLoader__.load({
 				] }),
 				(0, react_jsx_runtime.jsxs)(SaveForm, {
 					revision,
+					baseline: JSON.stringify(mistake),
 					t,
 					button: "confirm",
 					submit: (form, base) => {
@@ -1621,16 +1644,13 @@ window.__ModuleLoader__.load({
 			const writing = (0, react.useRef)(false);
 			const offset = (0, react.useRef)(0);
 			const controllers = (0, react.useRef)(/* @__PURE__ */ new Set());
-			const seenSignature = (0, react.useRef)("");
-			const seenRevision = (0, react.useRef)(void 0);
-			const signature = `${query.tab}:${query.offset}:${query.subject}:${query.status}:${query.mapGrade ?? ""}:${query.mapTerm ?? ""}:${query.diagGrade ?? ""}:${query.diagTerm ?? ""}:${query.diagUnit ?? ""}`;
-			const request = (0, react.useCallback)(async (change, revision, conditional) => {
+			const request = (0, react.useCallback)(async (change, revision) => {
 				const sequence = ++latest.current;
 				const controller = new AbortController();
 				controllers.current.add(controller);
 				try {
 					const scope = `${query.mapGrade !== void 0 ? `&mapGrade=${query.mapGrade}` : ""}${query.mapTerm !== void 0 ? `&mapTerm=${query.mapTerm}` : ""}${query.diagGrade !== void 0 ? `&diagGrade=${query.diagGrade}` : ""}${query.diagTerm !== void 0 ? `&diagTerm=${query.diagTerm}` : ""}${query.diagUnit !== void 0 && query.diagUnit !== "" ? `&diagUnit=${encodeURIComponent(query.diagUnit)}` : ""}`;
-					const response = await fetch(`/student/workspace?sessionId=${encodeURIComponent(sessionId)}&tab=${query.tab}&mistakeOffset=${query.offset}&subject=${query.subject}&mistakeStatus=${query.status}${scope}${conditional !== void 0 ? `&revision=${conditional}` : ""}`, {
+					const response = await fetch(`/student/workspace?sessionId=${encodeURIComponent(sessionId)}&tab=${query.tab}&mistakeOffset=${query.offset}&subject=${query.subject}&mistakeStatus=${query.status}${scope}`, {
 						signal: controller.signal,
 						...change ? {
 							method: "POST",
@@ -1645,20 +1665,7 @@ window.__ModuleLoader__.load({
 					if (!response.ok) throw new Error(value.error ?? networkError);
 					if (alive.current && sequence === latest.current) {
 						offset.current = value.serverNow - Date.now();
-						if (value.unchanged === true && value.time !== void 0) setData((previous) => previous && previous.study ? {
-							...previous,
-							serverNow: value.serverNow,
-							...value.interactiveLessons !== void 0 ? { interactiveLessons: value.interactiveLessons } : {},
-							study: {
-								...previous.study,
-								...value.time
-							}
-						} : previous);
-						else {
-							seenSignature.current = signature;
-							seenRevision.current = value.revision;
-							setData(value);
-						}
+						setData(value);
 						setError("");
 					}
 					return value;
@@ -1679,13 +1686,12 @@ window.__ModuleLoader__.load({
 				query.mapTerm,
 				query.diagGrade,
 				query.diagTerm,
-				query.diagUnit,
-				signature
+				query.diagUnit
 			]);
 			const reload = (0, react.useCallback)(async () => {
 				if (writing.current) return;
-				await request(void 0, void 0, seenSignature.current === signature ? seenRevision.current : void 0).catch(() => {});
-			}, [request, signature]);
+				await request().catch(() => {});
+			}, [request]);
 			(0, react.useEffect)(() => {
 				alive.current = true;
 				return () => {
@@ -4129,19 +4135,23 @@ window.__ModuleLoader__.load({
 			const [marks, setMarks] = (0, react.useState)(() => Object.fromEntries(worksheet.results.flatMap((item) => item.result === "unassessed" ? [] : [[item.itemId, item.result]])));
 			const [answers, setAnswers] = (0, react.useState)({});
 			const [causes, setCauses] = (0, react.useState)({});
-			const [helped, setHelped] = (0, react.useState)(() => Object.fromEntries(worksheet.results.flatMap((item) => item.result === "correct" && item.assistance === "hint" ? [[item.itemId, true]] : [])));
+			const [helped, setHelped] = (0, react.useState)({});
 			const [paper, setPaper] = (0, react.useState)(() => Object.fromEntries(worksheet.drafts.map((draft) => [draft.itemId, {
 				...draft.result === "correct" || draft.result === "partial" || draft.result === "incorrect" ? { result: draft.result } : {},
 				response: draft.response,
 				errorType: draft.errorType ?? ""
 			}])));
 			const [saving, setSaving] = (0, react.useState)(false);
+			function assistanceFor(itemId) {
+				const saved = worksheet.results.find((item) => item.itemId === itemId)?.assistance ?? worksheet.drafts.find((item) => item.itemId === itemId)?.assistance ?? "independent";
+				return helped[itemId] === void 0 ? saved : helped[itemId] ? saved === "worked-example" ? "worked-example" : "hint" : "independent";
+			}
 			const changed = worksheet.items.filter((item) => {
 				const before = worksheet.results.find((result) => result.itemId === item.id);
 				const mark = marks[item.id];
 				if (mark === void 0) return false;
-				const assistance = mark === "correct" ? helped[item.id] ? "hint" : "independent" : void 0;
-				return mark !== before?.result || (answers[item.id]?.trim() ?? "") !== "" || mark === "correct" && before !== void 0 && assistance !== before.assistance;
+				const assistance = assistanceFor(item.id);
+				return mark !== before?.result || (answers[item.id]?.trim() ?? "") !== "" || before !== void 0 && assistance !== before.assistance || mark !== "correct" && causes[item.id] !== void 0 && causes[item.id] !== (before?.errorType ?? "");
 			});
 			function markAllRight() {
 				setMarks((previous) => {
@@ -4168,12 +4178,12 @@ window.__ModuleLoader__.load({
 							results: changed.map((item) => {
 								const response = answers[item.id]?.trim();
 								const mark = marks[item.id] ?? "correct";
-								const cause = causes[item.id];
+								const cause = causes[item.id] ?? worksheet.results.find((result) => result.itemId === item.id)?.errorType;
 								return {
 									itemId: item.id,
 									result: mark,
 									...response ? { response } : {},
-									...mark === "correct" ? { assistance: helped[item.id] ? "hint" : "independent" } : {},
+									assistance: assistanceFor(item.id),
 									...mark !== "correct" && cause ? { errorType: cause } : {}
 								};
 							})
@@ -4187,7 +4197,7 @@ window.__ModuleLoader__.load({
 					setSaving(false);
 				}
 			}
-			const highConfidence = worksheet.drafts.filter((draft) => draft.confidence === "high");
+			const highConfidence = worksheet.drafts.filter((draft) => draft.confidence === "high" && draft.result === "correct" && draft.uncertainties === "");
 			async function confirmBatch(drafts) {
 				setSaving(true);
 				setError("");
@@ -4199,7 +4209,7 @@ window.__ModuleLoader__.load({
 						userConfirmation: t("confirmPaper"),
 						results: drafts.map((draft) => ({
 							itemId: draft.itemId,
-							result: draft.result === "unassessed" ? "correct" : draft.result,
+							result: "correct",
 							response: draft.response,
 							assistance: draft.assistance,
 							...draft.errorType !== void 0 ? { errorType: draft.errorType } : {}
@@ -4350,7 +4360,7 @@ window.__ModuleLoader__.load({
 							marks[item.id] === "correct" && (0, react_jsx_runtime.jsxs)("label", { children: [
 								(0, react_jsx_runtime.jsx)("input", {
 									type: "checkbox",
-									checked: helped[item.id] === true,
+									checked: assistanceFor(item.id) !== "independent",
 									onChange: (event) => {
 										const checked = event.target.checked;
 										setHelped((previous) => ({
@@ -4374,7 +4384,7 @@ window.__ModuleLoader__.load({
 								}
 							})] }),
 							marks[item.id] !== void 0 && marks[item.id] !== "correct" && (0, react_jsx_runtime.jsxs)("label", { children: [t("errorTypeLabel"), (0, react_jsx_runtime.jsxs)("select", {
-								value: causes[item.id] ?? "",
+								value: causes[item.id] ?? result?.errorType ?? "",
 								onChange: (event) => {
 									const type = errorTypesBySubject[worksheet.subject].find((candidate) => candidate === event.target.value);
 									setCauses((previous) => ({
@@ -5031,7 +5041,7 @@ window.__ModuleLoader__.load({
 							t,
 							act,
 							tutor
-						}) : (0, react_jsx_runtime.jsx)("p", { children: t("waiting") }),
+						}, `${task.sessionId}:${task.id}`) : (0, react_jsx_runtime.jsx)("p", { children: t("waiting") }),
 						available && (running ? (0, react_jsx_runtime.jsx)("p", {
 							role: "status",
 							children: t("tutorWorking")
@@ -5509,10 +5519,13 @@ window.__ModuleLoader__.load({
 							})] }), scoped && (0, react_jsx_runtime.jsxs)("label", { children: [t("scopeUnit"), (0, react_jsx_runtime.jsxs)("select", {
 								"aria-label": t("scopeUnit"),
 								value: scope.unit ?? "",
-								onChange: (event) => setScope({
-									...scope,
-									...event.target.value ? { unit: event.target.value } : {}
-								}),
+								onChange: (event) => {
+									const { unit: _unit, ...book } = scope;
+									setScope({
+										...book,
+										...event.target.value ? { unit: event.target.value } : {}
+									});
+								},
 								children: [(0, react_jsx_runtime.jsx)("option", {
 									value: "",
 									children: t("scopeWholeMap")

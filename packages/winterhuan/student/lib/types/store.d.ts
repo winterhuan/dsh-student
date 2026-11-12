@@ -86,6 +86,23 @@ export declare function queryStudy(state: StudyState | undefined, kind: string, 
         imagePath?: string | undefined;
     }[];
     workbookDraftCount: number;
+    workbookResults: {
+        id: string;
+        subject: "chinese" | "math" | "english";
+        prompt: string;
+        outcome: "stuck" | "hinted" | "independent-wrong" | "independent-correct";
+        uncertainties: string;
+        receivedAt: number;
+        confirmedAt: number;
+        userConfirmation: string;
+        response?: string | undefined;
+        objectiveId?: string | undefined;
+        imagePath?: string | undefined;
+        correction?: string | undefined;
+        explanation?: string | undefined;
+        answerEvidence?: string | undefined;
+    }[];
+    workbookResultCount: number;
     more: string;
     weakPoints: {
         id: string;
@@ -1885,6 +1902,29 @@ export declare function queryStudy(state: StudyState | undefined, kind: string, 
         userConfirmation: string;
         receivedAt: number;
     } | {
+        id: string;
+        subject: "chinese" | "math" | "english";
+        topic: string;
+        prompt: string;
+        learnerAnswer: string;
+        correction: string;
+        explanation: string;
+        answerEvidence: string;
+        uncertainties: string;
+        independentDays: string[];
+        stage: number;
+        imagePath?: string | undefined;
+        materialId?: string | undefined;
+        objectiveId?: string | undefined;
+        errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+        confirmedAt?: number | undefined;
+        userConfirmation?: string | undefined;
+        dueAt?: number | undefined;
+        source?: {
+            worksheetId: string;
+            itemId: string;
+        } | undefined;
+    } | {
         result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
         assistance: "independent" | "hint" | "worked-example";
         id: string;
@@ -2110,29 +2150,6 @@ export declare function queryStudy(state: StudyState | undefined, kind: string, 
             term: "first" | "second";
             units?: string[] | undefined;
             objectiveIds?: string[] | undefined;
-        } | undefined;
-    } | {
-        id: string;
-        subject: "chinese" | "math" | "english";
-        topic: string;
-        prompt: string;
-        learnerAnswer: string;
-        correction: string;
-        explanation: string;
-        answerEvidence: string;
-        uncertainties: string;
-        independentDays: string[];
-        stage: number;
-        imagePath?: string | undefined;
-        materialId?: string | undefined;
-        objectiveId?: string | undefined;
-        errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
-        confirmedAt?: number | undefined;
-        userConfirmation?: string | undefined;
-        dueAt?: number | undefined;
-        source?: {
-            worksheetId: string;
-            itemId: string;
         } | undefined;
     } | {
         level: string;

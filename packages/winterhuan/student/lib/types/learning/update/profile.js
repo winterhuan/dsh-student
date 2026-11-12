@@ -21,13 +21,14 @@ export function applyUpdateProfile(ctx) {
     state.profile = command.profile;
     return state;
 }
-/** Save a material and its course atomically under one revision. */
+/** Save a material, its course and optional confirmed school frontier under one revision. */
 export function applyConfigureCourse(ctx) {
     const { command, previous, now } = ctx;
     requireValue(command.material.id === command.course.materialId && command.material.subject === command.course.subject, '教材与学校进度必须引用同一份资料和科目。');
     const withMaterial = rawApply(previous, { action: 'material', material: command.material }, now);
     const withCourse = rawApply(withMaterial, { action: 'course', course: command.course }, now);
-    return stateSchema.parse({ ...withCourse, revision: previous.revision + 1 });
+    const withProgress = command.progress ? rawApply(withCourse, { action: 'school-progress', subject: command.course.subject, ...command.progress }, now) : withCourse;
+    return stateSchema.parse({ ...withProgress, revision: previous.revision + 1 });
 }
 /** Register one course material; an identical retry is a no-op. */
 export function applyMaterial(ctx) {

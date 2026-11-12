@@ -5,7 +5,7 @@ import { studyStatus } from '../src/learning/status.ts'
 import { studyDay } from '../src/learning/shared.ts'
 import { migrateStudyFile, queryStudy } from '../src/store.ts'
 import { stateSchema } from '../src/schema.ts'
-import { NOW, MINUTE, DAY, setup, material, course, start, attempt, mistake, confirm, figureSamples } from './fixtures.ts'
+import { NOW, MINUTE, DAY, setup, material, course, start, attempt, mistake, confirm, figureSamples, recordAnswer } from './fixtures.ts'
 
 const dueDay = (from: number, days = 1) => Date.parse(`${studyDay(from + days * DAY)}T00:00:00+08:00`)
 
@@ -24,7 +24,7 @@ describe('daily learning without time limits', () => {
   it('auto-closes an open block when starting another and records elapsed time only', () => {
     let state = updateStudy(updateStudy(undefined, setup, NOW), start, NOW)
     expect(studyStatus(state, NOW + 10 * MINUTE)).toMatchObject({ phase: 'studying', time: { blockElapsed: '10分钟', todayElapsed: '10分钟' } })
-    state = updateStudy(state, { action: 'record', attempt }, NOW + 11 * MINUTE)
+    state = recordAnswer(state, attempt, NOW + 11 * MINUTE)
     expect(state.attempts[0]).toMatchObject({ response: attempt.response })
     expect(state.attempts[0]).not.toHaveProperty('late')
     expect(state.sessions[0]).not.toHaveProperty('deadline')
@@ -56,14 +56,14 @@ describe('daily learning without time limits', () => {
   it('gives no stars for idle time and at most two per day for actual work and reflection', () => {
     let state = updateStudy(updateStudy(undefined, setup, NOW), start, NOW)
     const record = { action: 'record', attempt }
-    state = updateStudy(state, record, NOW + MINUTE)
+    state = recordAnswer(state, attempt, NOW + MINUTE)
     expect(updateStudy(state, record, NOW + 2 * MINUTE)).toBe(state)
-    expect(() => updateStudy(state, { action: 'record', attempt: { ...attempt, response: '另一答案' } }, NOW + 2 * MINUTE)).toThrow('ID')
+    expect(() => updateStudy(state, { action: 'record', attempt: { ...attempt, response: '另一答案' } }, NOW + 2 * MINUTE)).toThrow('response 不一致')
     state = updateStudy(state, { action: 'stop', sessionId: start.id, reflection: '先凑十再相加。' }, NOW + 2 * MINUTE)
     expect(state.rewards).toHaveLength(2)
     expect(updateStudy(state, { action: 'stop', sessionId: start.id, reflection: '' }, NOW + 3 * MINUTE)).toBe(state)
     state = updateStudy(state, { ...start, id: 'b2' }, NOW + 7 * MINUTE)
-    state = updateStudy(state, { action: 'record', attempt: { ...attempt, id: 'a2', sessionId: 'b2', result: 'incorrect' } }, NOW + 8 * MINUTE)
+    state = recordAnswer(state, { ...attempt, id: 'a2', sessionId: 'b2', result: 'incorrect' }, NOW + 8 * MINUTE)
     state = updateStudy(state, { action: 'stop', sessionId: 'b2', reflection: '需要再试一次。' }, NOW + 9 * MINUTE)
     expect(state.rewards).toHaveLength(2)
   })
@@ -78,7 +78,7 @@ describe('daily learning without time limits', () => {
   it('attributes delayed closure to the day the block started', () => {
     const late = Date.parse('2026-10-05T23:58:00+08:00')
     let state = updateStudy(updateStudy(undefined, setup, late), start, late)
-    state = updateStudy(state, { action: 'record', attempt }, late + MINUTE)
+    state = recordAnswer(state, attempt, late + MINUTE)
     state = updateStudy(state, { action: 'stop', sessionId: start.id, reflection: '' }, late + 10 * MINUTE)
     expect(state.sessions[0]?.spentMs).toBe(10 * MINUTE)
     expect(state.rewards[0]?.day).toBe('2026-10-05')
@@ -116,7 +116,7 @@ describe('curriculum and source identity', () => {
     state = updateStudy(state, { action: 'material', material: { ...material, id: 'real' } }, NOW)
     state = updateStudy(state, { action: 'course', course: { ...course, materialId: 'real' } }, NOW)
     state = updateStudy(state, { ...start, mode: 'school' }, NOW)
-    state = updateStudy(state, { action: 'record', attempt }, NOW + MINUTE)
+    state = recordAnswer(state, attempt, NOW + MINUTE)
     expect(state.attempts[0]?.materialId).toBe('real')
     expect(state.materials).toHaveLength(3)
   })
@@ -144,6 +144,19 @@ describe('shared workbench tasks', () => {
     expect(state.task?.response).toBeUndefined()
   })
 
+  it('keeps reused question numbers separate across learning blocks', () => {
+    let state = updateStudy(begin(), { action: 'hint', taskId: task.id }, NOW)
+    state = updateStudy(state, { action: 'answer', taskId: task.id, response: attempt.response }, NOW)
+    state = updateStudy(state, { action: 'record', attempt: { ...attempt, assistance: 'hint' } }, NOW)
+    state = updateStudy(state, { ...start, id: 'block-2' }, NOW)
+    state = updateStudy(state, { action: 'task', task: { ...task, sessionId: 'block-2' } }, NOW)
+    expect(studyStatus(state, NOW).feedback).toBeNull()
+    state = updateStudy(state, { action: 'answer', taskId: task.id, response: '15' }, NOW)
+    state = updateStudy(state, { action: 'record', attempt: { ...attempt, sessionId: 'block-2', response: '15' } }, NOW)
+    expect(studyStatus(state, NOW).feedback).toMatchObject({ sessionId: 'block-2', response: '15', assistance: 'independent' })
+    expect(state.attempts[0]).toMatchObject({ sessionId: 'block-1', response: attempt.response, assistance: 'hint' })
+  })
+
   it('records hints as assistance and still saves a task later in the block', () => {
     let state = updateStudy(begin(), { action: 'hint', taskId: task.id }, NOW)
     state = updateStudy(state, { action: 'answer', taskId: task.id, response: attempt.response }, NOW + MINUTE)
@@ -159,10 +172,26 @@ describe('shared workbench tasks', () => {
     expect(state.task).toMatchObject({ id: 'late', response: '15' })
   })
 
+  it('rejects assessment without its published question, including a renamed hinted answer', () => {
+    const emptyBlock = updateStudy(updateStudy(undefined, setup, NOW), start, NOW)
+    expect(() => updateStudy(emptyBlock, { action: 'record', attempt }, NOW)).toThrow('已保存的题目')
+    let state = updateStudy(begin(), { action: 'hint', taskId: task.id }, NOW)
+    state = updateStudy(state, { action: 'answer', taskId: task.id, response: attempt.response }, NOW)
+    expect(() => updateStudy(state, { action: 'record', attempt: { ...attempt, id: 'renamed' } }, NOW)).toThrow('已保存的题目')
+    expect(state.attempts).toEqual([])
+  })
+
   it('validates review source before showing a question', () => {
     const state = updateStudy(updateStudy(undefined, setup, NOW), { ...start, mode: 'review' }, NOW)
     expect(() => updateStudy(state, { action: 'task', task }, NOW)).toThrow('已确认的错题')
     expect(() => updateStudy(state, { action: 'task', task: { ...task, mistakeId: 'missing' } }, NOW)).toThrow()
+  })
+
+  it('rejects out-of-scope questions before learners can answer them', () => {
+    const state = updateStudy(updateStudy(undefined, setup, NOW), { ...start, scope: { grade: 1, term: 'first', units: ['m1a-u3'] } }, NOW)
+    expect(() => updateStudy(state, { action: 'task', task: { ...task, objectiveId: 'm2a-o-sub' } }, NOW)).toThrow('不在本段学习范围内')
+    expect(() => updateStudy(state, { action: 'task', task }, NOW)).toThrow('学习目标')
+    expect(state.task).toBeUndefined()
   })
 
   it('saves course configuration atomically with one revision and keeps prior state on mismatch', () => {
@@ -173,6 +202,19 @@ describe('shared workbench tasks', () => {
     expect(next.courses).toEqual([course])
     expect(() => updateStudy(state, { action: 'configure-course', material, course: { ...course, subject: 'chinese' } }, NOW)).toThrow('同一份资料')
     expect(state.materials).toEqual([])
+  })
+})
+
+describe('compound parent saves', () => {
+  it('confirms the course and school frontier in one save and rejects either invalid half', () => {
+    const state = updateStudy(undefined, setup, NOW)
+    const progress = { unitId: 'm2a-u-mul', posture: 'catch-up' as const, preview: 'on' as const, pace: 'review' as const, parentConfirmation: '家长核对学校进度。' }
+    const next = updateStudy(state, { action: 'configure-course', material, course, progress }, NOW)
+    expect(next.revision).toBe(state.revision + 1)
+    expect(next.courses[0]?.progress).toMatchObject({ unitId: 'm2a-u-mul', posture: 'catch-up', preview: true, pace: 'review', confirmedAt: NOW })
+    expect(() => updateStudy(state, { action: 'configure-course', material, course, progress: { ...progress, unitId: 'm1a-u3' } }, NOW)).toThrow('当前年级学期')
+    expect(state.materials).toEqual([])
+    expect(state.courses).toEqual([])
   })
 })
 
@@ -266,6 +308,53 @@ describe('subject knowledge and paper practice', () => {
     expect(studyStatus(state, NOW).progress.find(item => item.objectiveId === 'm2a-o-sub')).toBeUndefined()
   })
 
+  it('keeps a published worksheet goal after its source mistake changes or is deleted', () => {
+    let state = updateStudy(undefined, setup, NOW)
+    state = updateStudy(state, { action: 'confirm-mistake', ...confirm, subject: 'math', learnerAnswer: '14', objectiveId: 'm2a-o-sub' }, NOW)
+    const published = { id: 'frozen', subject: 'math' as const, items: [{ ...sheet.items[0]!, mistakeId: mistake.id }] }
+    state = updateStudy(state, { action: 'worksheet', worksheet: published }, NOW)
+    state = updateStudy(state, { action: 'link-mistake', mistakeId: mistake.id, objectiveId: 'm2a-o-shop' }, NOW)
+    expect(state.worksheets[0]?.items[0]?.objectiveId).toBe('m2a-o-sub')
+    state = updateStudy(state, { action: 'delete-mistake', id: mistake.id }, NOW)
+    state = updateStudy(state, { action: 'grade-sheet', grade: { worksheetId: published.id, results: [{ itemId: 'q1', result: 'correct', response: '15' }], userConfirmation: '家长核对原答案。' } }, NOW)
+    expect(studyInsight(state, NOW).objectives.find(item => item.id === 'm2a-o-sub')).toMatchObject({ attempts: 1 })
+    expect(studyInsight(state, NOW).objectives.find(item => item.id === 'm2a-o-shop')).toMatchObject({ attempts: 0 })
+  })
+
+  it('preserves worksheet content while a photo draft awaits confirmation', () => {
+    let state = updateStudy(undefined, setup, NOW)
+    const published = { id: 'drafted', subject: 'math' as const, objectiveId: 'm2a-o-sub', items: [{ ...sheet.items[0]!, mistakeId: undefined }] }
+    state = updateStudy(state, { action: 'worksheet', worksheet: published }, NOW)
+    state = updateStudy(state, { action: 'paper-draft', paperDraft: { ...draft, worksheetId: published.id } }, NOW)
+    expect(() => updateStudy(state, { action: 'worksheet', worksheet: { ...published, items: [{ ...published.items[0]!, prompt: '另一题', answer: '99' }] } }, NOW)).toThrow('转录')
+    expect(state.paperDrafts[0]?.response).toBe(draft.response)
+    expect(state.worksheets[0]?.items[0]?.answer).toBe('15')
+  })
+
+  it('retains known assistance when manual marks omit it and saves cause-only corrections', () => {
+    let state = updateStudy(undefined, setup, NOW)
+    const published = { id: 'marks', subject: 'math' as const, objectiveId: 'm2a-o-sub', items: [{ ...sheet.items[0]!, mistakeId: undefined }] }
+    state = updateStudy(state, { action: 'worksheet', worksheet: published }, NOW)
+    state = updateStudy(state, { action: 'paper-draft', paperDraft: { ...draft, worksheetId: published.id, assistance: 'hint', result: 'incorrect' } }, NOW)
+    const grade = { worksheetId: published.id, results: [{ itemId: 'q1', result: 'incorrect' as const, errorType: 'carry-borrow' as const }], userConfirmation: '家长核对。' }
+    state = updateStudy(state, { action: 'grade-sheet', grade }, NOW)
+    expect(state.paperResults[0]).toMatchObject({ assistance: 'hint', response: draft.response })
+    state = updateStudy(state, { action: 'grade-sheet', grade: { ...grade, results: [{ ...grade.results[0]!, errorType: 'calculation' }] } }, NOW + MINUTE)
+    expect(state.mistakes[0]?.errorType).toBe('calculation')
+    expect(state.paperResults[0]?.receivedAt).toBe(NOW)
+  })
+
+  it('keeps confirmed workbook answers readable after consuming the photo draft', () => {
+    let state = updateStudy(undefined, setup, NOW)
+    state = updateStudy(state, { action: 'workbook-draft', draft: { id: 'answered-page', subject: 'math', prompt: '20-( )>6', response: '13', outcome: 'independent-correct', uncertainties: '', objectiveId: 'm2a-o-sub', imagePath: 'attachments/page.png' } }, NOW)
+    state = updateStudy(state, { action: 'confirm-workbook', id: 'answered-page', userConfirmation: '家长核对原答案。' }, NOW + DAY)
+    const restored = stateSchema.parse(JSON.parse(JSON.stringify(state)))
+    expect(queryStudy(restored, 'status')).toMatchObject({ workbookDrafts: [], workbookResults: [expect.objectContaining({ id: 'answered-page', response: '13', outcome: 'independent-correct', imagePath: 'attachments/page.png', receivedAt: NOW, confirmedAt: NOW + DAY, userConfirmation: '家长核对原答案。' })] })
+    expect(restored.sessions).toEqual([])
+    expect(restored.attempts).toEqual([])
+    expect(studyInsight(restored, NOW + DAY).objectives.find(item => item.id === 'm2a-o-sub')?.independentDays).toBe(0)
+  })
+
   it('records evidence-backed concept relationships within one subject', () => {
     let state = updateStudy(undefined, setup, NOW)
     for (const item of [concept, { ...concept, id: 'addition', name: '加法' }]) {
@@ -308,10 +397,10 @@ describe('teaching when the learner is stuck', () => {
     let state = updateStudy(updateStudy(undefined, setup, NOW), start, NOW)
     let at = NOW
     for (let i = 0; i < 3; i += 1) {
-      state = updateStudy(state, { action: 'record', attempt: { ...attempt, id: `day-${i}`, objectiveId: 'm2a-o-sub' } }, at)
+      state = recordAnswer(state, { ...attempt, id: `day-${i}`, objectiveId: 'm2a-o-sub' }, at)
       at += DAY
     }
-    state = updateStudy(state, { action: 'record', attempt: { ...attempt, id: 'helped', objectiveId: 'm2a-o-sub', assistance: 'hint' } }, at)
+    state = recordAnswer(state, { ...attempt, id: 'helped', objectiveId: 'm2a-o-sub', assistance: 'hint' }, at)
     const goal = studyInsight(state, at).objectives.find(item => item.id === 'm2a-o-sub')
     expect(goal).toMatchObject({ independentDays: 3 })
     expect(goal?.level).not.toBe('mastered')
@@ -332,7 +421,7 @@ describe('teaching when the learner is stuck', () => {
     expect(state.attempts[0]).toMatchObject({ assistance: 'hint', objectiveId: 'm2a-o-sub' })
   })
 
-  it('rejects an independent record for demo and guide, and lets a demo note skip the child answer', () => {
+  it('keeps demonstration content separate from saved learner responses and independent evidence', () => {
     let state = begin('guide')
     state = updateStudy(state, { action: 'answer', taskId: task.id, response: attempt.response }, NOW)
     expect(() => updateStudy(state, { action: 'record', attempt: { ...attempt, objectiveId: task.objectiveId, assistance: 'hint' } }, NOW)).toThrow('引导步要先请求提示')
@@ -342,9 +431,14 @@ describe('teaching when the learner is stuck', () => {
     expect(() => updateStudy(state, { action: 'record', attempt: { ...attempt, objectiveId: task.objectiveId, assistance: 'independent' } }, NOW)).toThrow('不能记录为独立')
     state = begin('demo')
     const { assistance: _assistance, ...note } = attempt
-    state = updateStudy(state, { action: 'record', attempt: { ...note, objectiveId: task.objectiveId, response: '先把不等号当成等号。' } }, NOW)
-    expect(state.attempts[0]).toMatchObject({ assistance: 'worked-example', response: '先把不等号当成等号。' })
-    expect(() => updateStudy(begin('demo'), { action: 'record', attempt: { ...attempt, objectiveId: task.objectiveId, assistance: 'independent' } }, NOW)).toThrow('不能记录为独立')
+    expect(() => updateStudy(state, { action: 'record', attempt: { ...note, objectiveId: task.objectiveId, response: '先把不等号当成等号。' } }, NOW)).toThrow('原始回答')
+    expect(state.task?.response).toBeUndefined()
+    expect(state.attempts).toEqual([])
+    state = updateStudy(state, { action: 'answer', taskId: task.id, response: attempt.response }, NOW)
+    expect(() => updateStudy(state, { action: 'record', attempt: { ...attempt, objectiveId: task.objectiveId } }, NOW)).toThrow('不能记录为独立')
+    state = updateStudy(state, { action: 'record', attempt: { ...note, objectiveId: task.objectiveId } }, NOW)
+    expect(state.attempts[0]).toMatchObject({ assistance: 'worked-example', response: attempt.response })
+    expect(studyInsight(state, NOW).objectives.find(item => item.id === task.objectiveId)?.independentDays).toBe(0)
   })
 
   it('records 不会, keeps today on that objective, and clears it after an independent correct', () => {

@@ -50,7 +50,11 @@ export function dashboard(state: StudyState | undefined, now: number, options: {
         ...sheet,
         objectiveTitle: titles.length <= 2 ? titles.join('、') : `${titles.slice(0, 2).join('、')}等 ${titles.length} 个目标`,
         open: sheetOpen(state, sheet),
-        results: state.paperResults.filter(item => item.worksheetId === sheet.id).map(item => ({ itemId: item.itemId, result: item.result, response: item.response, assistance: item.assistance })),
+        results: state.paperResults.filter(item => item.worksheetId === sheet.id).map(item => {
+          const question = sheet.items.find(question => question.id === item.itemId)
+          const errorType = state.mistakes.find(mistake => mistake.id === question?.mistakeId)?.errorType
+          return { itemId: item.itemId, result: item.result, response: item.response, assistance: item.assistance, ...(errorType !== undefined ? { errorType } : {}) }
+        }),
         drafts: state.paperDrafts.filter(item => item.worksheetId === sheet.id).map(item => ({ itemId: item.itemId, response: item.response, result: item.result, assistance: item.assistance, uncertainties: item.uncertainties, ...(item.errorType !== undefined ? { errorType: item.errorType } : {}), ...(item.confidence !== undefined ? { confidence: item.confidence } : {}) })),
         sources: sheet.items.map(item => {
           const mistake = item.mistakeId ? state.mistakes.find(candidate => candidate.id === item.mistakeId) : undefined
@@ -95,6 +99,7 @@ export function dashboard(state: StudyState | undefined, now: number, options: {
     materials: state.materials.filter(item => state.courses.some(course => course.materialId === item.id)),
     exercises: state.exercises.filter(item => item.subject === subject).slice(-20).reverse(),
     workbookDrafts: state.workbookDrafts.filter(item => item.subject === subject).slice(-20).reverse(),
+    workbookResults: state.workbookResults.filter(item => item.subject === subject).slice(-20).reverse(),
     teachingQueue: state.teachingQueue.filter(item => item.subject === subject).slice(-20).reverse(),
     recentAttempts: state.attempts.filter(item => item.subject === subject).slice(-20).reverse(),
   }, interactiveLessons }

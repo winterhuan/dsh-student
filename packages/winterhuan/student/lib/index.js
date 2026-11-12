@@ -1,4 +1,4 @@
-import { _ as insightSummary, a as timeStatus, c as interactiveLessonsView, d as curriculumView, f as itemObjectiveId, g as diagnosticFor, h as sheetOpen, i as studyStatus, l as readInteractiveLessons, m as reviewPlan, o as weeklySummary, p as objectiveInfo, r as studyStore, t as StudyConflict, u as checkInHistory, v as studyInsight, y as commandSchema } from "./store-CH4u_IXC.js";
+import { _ as studyInsight, a as weeklySummary, c as readInteractiveLessons, d as itemObjectiveId, f as objectiveInfo, g as insightSummary, h as diagnosticFor, i as studyStatus, l as checkInHistory, m as sheetOpen, p as reviewPlan, r as studyStore, s as interactiveLessonsView, t as StudyConflict, u as curriculumView, v as commandSchema } from "./store-PcpFOtoN.js";
 import { z } from "zod";
 import { FsError } from "@deepseek-ai/dsh-fs";
 import { SessionId } from "@deepseek-ai/dsh-session";
@@ -92,12 +92,17 @@ function dashboard(state, now, options = {}, interactiveLessons = interactiveLes
 					...sheet,
 					objectiveTitle: titles.length <= 2 ? titles.join("、") : `${titles.slice(0, 2).join("、")}等 ${titles.length} 个目标`,
 					open: sheetOpen(state, sheet),
-					results: state.paperResults.filter((item) => item.worksheetId === sheet.id).map((item) => ({
-						itemId: item.itemId,
-						result: item.result,
-						response: item.response,
-						assistance: item.assistance
-					})),
+					results: state.paperResults.filter((item) => item.worksheetId === sheet.id).map((item) => {
+						const question = sheet.items.find((question) => question.id === item.itemId);
+						const errorType = state.mistakes.find((mistake) => mistake.id === question?.mistakeId)?.errorType;
+						return {
+							itemId: item.itemId,
+							result: item.result,
+							response: item.response,
+							assistance: item.assistance,
+							...errorType !== void 0 ? { errorType } : {}
+						};
+					}),
 					drafts: state.paperDrafts.filter((item) => item.worksheetId === sheet.id).map((item) => ({
 						itemId: item.itemId,
 						response: item.response,
@@ -183,6 +188,7 @@ function dashboard(state, now, options = {}, interactiveLessons = interactiveLes
 			materials: state.materials.filter((item) => state.courses.some((course) => course.materialId === item.id)),
 			exercises: state.exercises.filter((item) => item.subject === subject).slice(-20).reverse(),
 			workbookDrafts: state.workbookDrafts.filter((item) => item.subject === subject).slice(-20).reverse(),
+			workbookResults: state.workbookResults.filter((item) => item.subject === subject).slice(-20).reverse(),
 			teachingQueue: state.teachingQueue.filter((item) => item.subject === subject).slice(-20).reverse(),
 			recentAttempts: state.attempts.filter((item) => item.subject === subject).slice(-20).reverse()
 		},
@@ -266,7 +272,7 @@ async function handleStudyRequest(context, request, response) {
 			send(response, 400, { error: "请先打开学习会话" });
 			return;
 		}
-		const ifRevision = url.searchParams.has("revision") ? z.coerce.number().int().nonnegative().parse(url.searchParams.get("revision")) : void 0;
+		if (url.searchParams.has("revision")) z.coerce.number().int().nonnegative().parse(url.searchParams.get("revision"));
 		const mistakeOffset = z.coerce.number().int().min(0).max(5e3).parse(url.searchParams.get("mistakeOffset") ?? "0");
 		const subject = z.enum([
 			"chinese",
@@ -315,16 +321,6 @@ async function handleStudyRequest(context, request, response) {
 			signal: abort.signal
 		}, change, revision);
 		const interactiveLessons = await readInteractiveLessons(agent, abort.signal, state?.openmaic?.baseUrl);
-		if (change === void 0 && ifRevision !== void 0 && state !== void 0 && ifRevision === state.revision) {
-			send(response, 200, {
-				serverNow: Date.now(),
-				revision: state.revision,
-				unchanged: true,
-				time: timeStatus(state, Date.now()),
-				interactiveLessons
-			});
-			return;
-		}
 		send(response, 200, {
 			...dashboard(state, Date.now(), {
 				subject,

@@ -10,7 +10,7 @@ import { studyStore, StudyConflict } from '../src/store.ts'
 import { NOW, DAY, mistake, setup } from './fixtures.ts'
 
 vi.mock('../src/store.ts', async importOriginal => ({ ...await importOriginal<typeof import('../src/store.ts')>(), studyStore: vi.fn() }))
-afterEach(() => { vi.mocked(studyStore).mockReset() })
+afterEach(() => { vi.mocked(studyStore).mockReset(); vi.restoreAllMocks() })
 
 async function request({ method = 'GET', body = '', header = {}, session = true, child = false, path = '/student/workspace?sessionId=test' } = {}) {
   const req = Object.assign(Readable.from(body ? [Buffer.from(body)] : []), { method, url: path, headers: { host: 'localhost:3000', 'content-type': 'application/json', ...header } }) as IncomingMessage
@@ -75,18 +75,29 @@ describe('student workspace boundary', () => {
     expect((await request({ method: 'POST', path: '/student/print?sessionId=test', body: JSON.stringify({ revision: 1, worksheetId: 'sheet', confirmed: true }) })).status).toBe(404)
     expect(studyStore).not.toHaveBeenCalled()
   })
-  it('answers a matching conditional poll with the time state only', async () => {
+  it('answers a matching revision poll with fresh dashboard data', async () => {
     const state = updateStudy(undefined, setup, NOW)
     vi.mocked(studyStore).mockResolvedValue(state)
     const conditional = await request({ path: `/student/workspace?sessionId=test&revision=${state.revision}` })
     expect(conditional.status).toBe(200)
-    expect(conditional.result.unchanged).toBe(true)
+    expect(conditional.result.unchanged).toBeUndefined()
     expect(conditional.result.revision).toBe(state.revision)
-    expect(conditional.result.time).toMatchObject({ phase: 'ready', time: { timezone: 'Asia/Shanghai' } })
-    expect(conditional.result.study).toBeUndefined()
+    expect(conditional.result.study).toMatchObject({ phase: 'ready', time: { timezone: 'Asia/Shanghai' } })
     expect(conditional.result.interactiveLessons).toMatchObject({ baseUrl: effectiveOpenmaicBase(undefined, process.env.OPENMAIC_BASE), lessons: [], lessonsPath: '.study/openmaic-lessons.json' })
     const stale = await request({ path: `/student/workspace?sessionId=test&revision=${state.revision - 1}` })
     expect(stale.result).toMatchObject({ revision: state.revision, study: { profile: state.profile } })
+  })
+  it('refreshes due counts at an unchanged revision when the due time passes', async () => {
+    const state = updateStudy(undefined, setup, NOW)
+    state.mistakes.push({ ...mistake, uncertainties: '', confirmedAt: NOW, dueAt: NOW + 60_000, stage: 0, independentDays: [] })
+    vi.mocked(studyStore).mockResolvedValue(state)
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(NOW)
+    const path = `/student/workspace?sessionId=test&tab=today&revision=${state.revision}`
+    expect((await request({ path })).result.study?.dueCount).toBe(0)
+    clock.mockReturnValue(NOW + 60_000)
+    const refreshed = await request({ path })
+    expect(refreshed.result.revision).toBe(state.revision)
+    expect(refreshed.result.study?.dueCount).toBe(1)
   })
   it('lightens the knowledge map for non-map tabs and keeps it full for the map tab', async () => {
     const state = updateStudy(undefined, setup, NOW)

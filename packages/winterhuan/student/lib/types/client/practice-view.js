@@ -78,16 +78,20 @@ function WorksheetActions({ worksheet, revision, change, ask, disabled, t }) {
     const [marks, setMarks] = useState(() => Object.fromEntries(worksheet.results.flatMap(item => item.result === 'unassessed' ? [] : [[item.itemId, item.result]])));
     const [answers, setAnswers] = useState({});
     const [causes, setCauses] = useState({});
-    const [helped, setHelped] = useState(() => Object.fromEntries(worksheet.results.flatMap(item => item.result === 'correct' && item.assistance === 'hint' ? [[item.itemId, true]] : [])));
+    const [helped, setHelped] = useState({});
     const [paper, setPaper] = useState(() => Object.fromEntries(worksheet.drafts.map(draft => [draft.itemId, { ...(draft.result === 'correct' || draft.result === 'partial' || draft.result === 'incorrect' ? { result: draft.result } : {}), response: draft.response, errorType: draft.errorType ?? '' }])));
     const [saving, setSaving] = useState(false);
+    function assistanceFor(itemId) {
+        const saved = worksheet.results.find(item => item.itemId === itemId)?.assistance ?? worksheet.drafts.find(item => item.itemId === itemId)?.assistance ?? 'independent';
+        return helped[itemId] === undefined ? saved : helped[itemId] ? saved === 'worked-example' ? 'worked-example' : 'hint' : 'independent';
+    }
     const changed = worksheet.items.filter(item => {
         const before = worksheet.results.find(result => result.itemId === item.id);
         const mark = marks[item.id];
         if (mark === undefined)
             return false;
-        const assistance = mark === 'correct' ? helped[item.id] ? 'hint' : 'independent' : undefined;
-        return mark !== before?.result || (answers[item.id]?.trim() ?? '') !== '' || (mark === 'correct' && before !== undefined && assistance !== before.assistance);
+        const assistance = assistanceFor(item.id);
+        return mark !== before?.result || (answers[item.id]?.trim() ?? '') !== '' || (before !== undefined && assistance !== before.assistance) || (mark !== 'correct' && causes[item.id] !== undefined && causes[item.id] !== (before?.errorType ?? ''));
     });
     function markAllRight() {
         setMarks(previous => {
@@ -111,8 +115,8 @@ function WorksheetActions({ worksheet, revision, change, ask, disabled, t }) {
             await change({ action: 'grade-sheet', grade: { worksheetId: worksheet.id, userConfirmation: t('gradeConfirmation'), results: changed.map(item => {
                         const response = answers[item.id]?.trim();
                         const mark = marks[item.id] ?? 'correct';
-                        const cause = causes[item.id];
-                        return { itemId: item.id, result: mark, ...(response ? { response } : {}), ...(mark === 'correct' ? { assistance: helped[item.id] ? 'hint' : 'independent' } : {}), ...(mark !== 'correct' && cause ? { errorType: cause } : {}) };
+                        const cause = causes[item.id] ?? worksheet.results.find(result => result.itemId === item.id)?.errorType;
+                        return { itemId: item.id, result: mark, ...(response ? { response } : {}), assistance: assistanceFor(item.id), ...(mark !== 'correct' && cause ? { errorType: cause } : {}) };
                     }) } }, revision);
             setAnswers({});
             setMessage(t('gradesSaved'));
@@ -124,14 +128,14 @@ function WorksheetActions({ worksheet, revision, change, ask, disabled, t }) {
             setSaving(false);
         }
     }
-    const highConfidence = worksheet.drafts.filter(draft => draft.confidence === 'high');
+    const highConfidence = worksheet.drafts.filter(draft => draft.confidence === 'high' && draft.result === 'correct' && draft.uncertainties === '');
     async function confirmBatch(drafts) {
         setSaving(true);
         setError('');
         setMessage('');
         try {
             await change({ action: 'confirm-paper', worksheetId: worksheet.id, userConfirmation: t('confirmPaper'), results: drafts.map(draft => ({
-                    itemId: draft.itemId, result: draft.result === 'unassessed' ? 'correct' : draft.result, response: draft.response, assistance: draft.assistance,
+                    itemId: draft.itemId, result: 'correct', response: draft.response, assistance: draft.assistance,
                     ...(draft.errorType !== undefined ? { errorType: draft.errorType } : {}),
                 })) }, revision);
             setMessage(t('confirmPaperDone'));
@@ -182,7 +186,7 @@ function WorksheetActions({ worksheet, revision, change, ask, disabled, t }) {
     return _jsxs("details", { children: [_jsxs("summary", { children: [worksheet.objectiveTitle, " \u00B7 ", worksheet.items.length, " ", t('questions'), " \u00B7 ", worksheet.open ? `${t('notGraded')} ${worksheet.items.length - worksheet.results.length}` : `${t('graded')} ${worksheet.results.length}/${worksheet.items.length}`] }), _jsxs("p", { className: "student-muted", children: [t('createdAt'), ": ", new Date(worksheet.createdAt).toLocaleDateString(), " \u00B7 ", t('gradeHelp')] }), _jsx("button", { type: "button", disabled: disabled, onClick: () => { setPreviewing(true); setMessage(''); }, children: t('previewPrintSheet') }), previewing && _jsx(WorksheetPrint, { worksheet: worksheet, onClose: () => setPreviewing(false), t: t }), _jsx("button", { type: "button", disabled: disabled || saving, onClick: markAllRight, children: t('markAllCorrect') }), worksheet.items.map((item, index) => {
                 const source = worksheet.sources.find(candidate => candidate.itemId === item.id);
                 const result = worksheet.results.find(candidate => candidate.itemId === item.id);
-                return _jsxs("fieldset", { className: "student-grade", disabled: disabled || saving, children: [_jsxs("p", { children: [index + 1, ". ", item.prompt] }), _jsxs("p", { className: "student-muted", children: [t('referenceAnswer'), ": ", item.answer, " \u00B7 ", source?.mistakeId ? `${t('sourceMistake')}: ${source.topic}` : t('practiceItem'), result ? ` · ${t(result.result)}: ${result.response}` : ''] }), _jsx("div", { className: "student-segments", role: "radiogroup", "aria-label": `${index + 1}`, children: ['correct', 'partial', 'incorrect'].map(mark => _jsx("button", { type: "button", role: "radio", "aria-checked": marks[item.id] === mark, onClick: () => setMarks(previous => ({ ...previous, [item.id]: mark })), children: t(markKeys[mark]) }, mark)) }), marks[item.id] === 'correct' && _jsxs("label", { children: [_jsx("input", { type: "checkbox", checked: helped[item.id] === true, onChange: event => { const checked = event.target.checked; setHelped(previous => ({ ...previous, [item.id]: checked })); } }), " ", t('hintedCorrect')] }), marks[item.id] !== undefined && marks[item.id] !== 'correct' && _jsxs("label", { children: [t('childAnswer'), _jsx("input", { value: answers[item.id] ?? '', maxLength: 2000, onChange: event => { const value = event.target.value; setAnswers(previous => ({ ...previous, [item.id]: value })); } })] }), marks[item.id] !== undefined && marks[item.id] !== 'correct' && _jsxs("label", { children: [t('errorTypeLabel'), _jsxs("select", { value: causes[item.id] ?? '', onChange: event => { const type = errorTypesBySubject[worksheet.subject].find(candidate => candidate === event.target.value); setCauses(previous => ({ ...previous, [item.id]: type ?? '' })); }, children: [_jsx("option", { value: "", children: t('errorTypeNone') }), errorTypesBySubject[worksheet.subject].map(type => _jsx("option", { value: type, children: t(type) }, type))] })] })] }, item.id);
+                return _jsxs("fieldset", { className: "student-grade", disabled: disabled || saving, children: [_jsxs("p", { children: [index + 1, ". ", item.prompt] }), _jsxs("p", { className: "student-muted", children: [t('referenceAnswer'), ": ", item.answer, " \u00B7 ", source?.mistakeId ? `${t('sourceMistake')}: ${source.topic}` : t('practiceItem'), result ? ` · ${t(result.result)}: ${result.response}` : ''] }), _jsx("div", { className: "student-segments", role: "radiogroup", "aria-label": `${index + 1}`, children: ['correct', 'partial', 'incorrect'].map(mark => _jsx("button", { type: "button", role: "radio", "aria-checked": marks[item.id] === mark, onClick: () => setMarks(previous => ({ ...previous, [item.id]: mark })), children: t(markKeys[mark]) }, mark)) }), marks[item.id] === 'correct' && _jsxs("label", { children: [_jsx("input", { type: "checkbox", checked: assistanceFor(item.id) !== 'independent', onChange: event => { const checked = event.target.checked; setHelped(previous => ({ ...previous, [item.id]: checked })); } }), " ", t('hintedCorrect')] }), marks[item.id] !== undefined && marks[item.id] !== 'correct' && _jsxs("label", { children: [t('childAnswer'), _jsx("input", { value: answers[item.id] ?? '', maxLength: 2000, onChange: event => { const value = event.target.value; setAnswers(previous => ({ ...previous, [item.id]: value })); } })] }), marks[item.id] !== undefined && marks[item.id] !== 'correct' && _jsxs("label", { children: [t('errorTypeLabel'), _jsxs("select", { value: causes[item.id] ?? result?.errorType ?? '', onChange: event => { const type = errorTypesBySubject[worksheet.subject].find(candidate => candidate === event.target.value); setCauses(previous => ({ ...previous, [item.id]: type ?? '' })); }, children: [_jsx("option", { value: "", children: t('errorTypeNone') }), errorTypesBySubject[worksheet.subject].map(type => _jsx("option", { value: type, children: t(type) }, type))] })] })] }, item.id);
             }), worksheet.drafts.length > 0 && _jsxs("fieldset", { className: "student-grade", disabled: disabled || saving, children: [_jsx("legend", { children: t('draftsTitle') }), _jsx("p", { className: "student-muted", children: t('draftsHelp') }), highConfidence.length > 0 && _jsxs("button", { type: "button", disabled: disabled || saving, onClick: () => { void confirmBatch(highConfidence); }, children: [t('confirmHighConfidence'), " \u00B7 ", highConfidence.length] }), worksheet.drafts.map(draft => {
                         const index = worksheet.items.findIndex(item => item.id === draft.itemId);
                         const value = paper[draft.itemId];

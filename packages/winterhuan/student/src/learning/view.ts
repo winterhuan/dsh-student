@@ -28,9 +28,9 @@ export function objectiveInfo(state: StudyState, objectiveId: string): { title: 
 export type Worksheet = StudyState['worksheets'][number]
 export type WorksheetItem = Worksheet['items'][number]
 
-/** The goal a worksheet question tests: its own, then its source mistake's, then the sheet's. */
-export function itemObjectiveId(state: StudyState, worksheet: Pick<Worksheet, 'objectiveId'>, item: Pick<WorksheetItem, 'objectiveId' | 'mistakeId'>): string | undefined {
-  return item.objectiveId ?? (item.mistakeId ? state.mistakes.find(mistake => mistake.id === item.mistakeId)?.objectiveId : undefined) ?? worksheet.objectiveId
+/** Published question goals are frozen; legacy items can use only their saved sheet goal. */
+export function itemObjectiveId(_state: StudyState, worksheet: Pick<Worksheet, 'objectiveId'>, item: Pick<WorksheetItem, 'objectiveId' | 'mistakeId'>): string | undefined {
+  return item.objectiveId ?? worksheet.objectiveId
 }
 
 export function questionObjectiveId(state: StudyState, worksheet: Worksheet, itemId: string): string | undefined {

@@ -10,7 +10,6 @@ import { commandSchema } from './schema.ts'
 import { panelActions } from './actions.ts'
 import { studyStore, StudyConflict } from './store.ts'
 import { dashboard } from './dashboard.ts'
-import { timeStatus } from './learning/status.ts'
 import { readInteractiveLessons } from './openmaic.ts'
 
 const mutation = z.object({ revision: z.number().int().nonnegative(), change: commandSchema }).strict()
@@ -56,8 +55,7 @@ export async function handleStudyRequest(context: Context, request: IncomingMess
     if (url.pathname !== '/student/workspace' || !['GET', 'POST'].includes(request.method ?? '')) { send(response, 404, { error: '学习接口不存在' }); return }
     const rawId = url.searchParams.get('sessionId')
     if (!rawId || rawId.length > 200) { send(response, 400, { error: '请先打开学习会话' }); return }
-    // A conditional poll names the revision it already displays; the same query with new params re-fetches in full.
-    const ifRevision = url.searchParams.has('revision') ? z.coerce.number().int().nonnegative().parse(url.searchParams.get('revision')) : undefined
+    if (url.searchParams.has('revision')) z.coerce.number().int().nonnegative().parse(url.searchParams.get('revision'))
     const mistakeOffset = z.coerce.number().int().min(0).max(5000).parse(url.searchParams.get('mistakeOffset') ?? '0')
     const subject = z.enum(['chinese', 'math', 'english']).parse(url.searchParams.get('subject') ?? 'math')
     const mistakeStatus = z.enum(['all', 'due', 'reviewing', 'mastered']).parse(url.searchParams.get('mistakeStatus') ?? 'all')
@@ -83,11 +81,7 @@ export async function handleStudyRequest(context: Context, request: IncomingMess
     // The tutor shell writes the lesson log; this response only reads it, including on an unchanged poll,
     // because that write does not bump the study revision.
     const interactiveLessons = await readInteractiveLessons(agent, abort.signal, state?.openmaic?.baseUrl)
-    if (change === undefined && ifRevision !== undefined && state !== undefined && ifRevision === state.revision) {
-      // Unchanged evidence: only the time-derived suggestion state moves with the clock. The lesson log still refreshes.
-      send(response, 200, { serverNow: Date.now(), revision: state.revision, unchanged: true, time: timeStatus(state, Date.now()), interactiveLessons })
-      return
-    }
+    // Revision alone does not establish validity across due times, calendar days or evidence thresholds.
     send(response, 200, { ...dashboard(state, Date.now(), { subject, mistakeOffset, mistakeStatus, ...(tab !== undefined ? { tab } : {}), ...(mapGrade !== undefined ? { mapGrade } : {}), ...(mapTerm !== undefined ? { mapTerm } : {}), ...(diagGrade !== undefined ? { diagGrade } : {}), ...(diagTerm !== undefined ? { diagTerm } : {}), ...(diagUnit !== undefined ? { diagUnit } : {}) }), interactiveLessons })
   } catch (error) {
     const conflict = error instanceof StudyConflict || (error instanceof FsError && ['FS_STALE_VERSION', 'FS_NOT_OBSERVED'].includes(error.code))

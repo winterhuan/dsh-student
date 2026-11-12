@@ -18,7 +18,7 @@ export const planKeys = { review: 'recommendReview', practice: 'recommendPractic
 export const intensityKeys = { light: 'intensityLight', standard: 'intensityStandard', deep: 'intensityDeep' } as const
 export const intensityHelpKeys = { light: 'intensityLightHelp', standard: 'intensityStandardHelp', deep: 'intensityDeepHelp' } as const
 export const sampleKeys = { untouched: 'sampleUntouched', stalled: 'sampleStalled', recheck: 'sampleRecheck', progress: 'sampleProgress' } as const
-export const assistKeys = { independent: 'assistIndependent', hint: 'assistHint', 'worked-example': 'assistWorked' } as const
+export const assistKeys = { independent: 'assistIndependent', hint: 'assistHint', 'worked-example': 'assistWorked', unknown: 'assistUnknown' } as const
 export const focusKeys = { literacy: 'focusLiteracy', pinyin: 'focusPinyin', reading: 'focusReading', writing: 'focusWriting', concepts: 'focusConcepts', calculation: 'focusCalculation', geometry: 'focusGeometry', measurement: 'focusMeasurement', words: 'focusWords', sentences: 'focusSentences', story: 'focusStory', listen: 'focusListen', project: 'focusProject', review: 'focusReview' } as const
 export const reminderKeys = { 'first-explain': 'remindFirst', 'after-correction': 'remindAfterFix', 'before-next': 'remindNext' } as const
 

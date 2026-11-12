@@ -292,7 +292,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
             }[];
             recentAttempts: {
                 result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
-                assistance: "independent" | "hint" | "worked-example";
+                assistance: "unknown" | "independent" | "hint" | "worked-example";
                 id: string;
                 sessionId: string;
                 subject: "chinese" | "math" | "english";
@@ -500,6 +500,8 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 } | undefined;
                 materialId?: string | undefined;
                 rawResponse?: string | undefined;
+                questionId?: string | undefined;
+                responseId?: string | undefined;
             }[];
             recommendation: {
                 kind: "review" | "practice" | "diagnose" | "learn" | "preview" | "hold";
@@ -578,7 +580,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                     itemId: string;
                     result: "correct" | "partial" | "incorrect" | "unassessed";
                     response: string;
-                    assistance: "independent" | "hint" | "worked-example";
+                    assistance: "unknown" | "independent" | "hint" | "worked-example";
                 }[];
                 drafts: {
                     confidence?: "high" | "low";
@@ -586,7 +588,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                     itemId: string;
                     response: string;
                     result: "correct" | "partial" | "incorrect" | "unassessed";
-                    assistance: "independent" | "hint" | "worked-example";
+                    assistance: "unknown" | "independent" | "hint" | "worked-example";
                     uncertainties: string;
                 }[];
                 sources: {
@@ -1142,11 +1144,12 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 response?: string | undefined;
                 rawResponse?: string | undefined;
                 answeredAt?: number | undefined;
+                responseId?: string | undefined;
                 stuck?: boolean | undefined;
             } | null;
             feedback: {
                 result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
-                assistance: "independent" | "hint" | "worked-example";
+                assistance: "unknown" | "independent" | "hint" | "worked-example";
                 id: string;
                 sessionId: string;
                 subject: "chinese" | "math" | "english";
@@ -1354,6 +1357,8 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 } | undefined;
                 materialId?: string | undefined;
                 rawResponse?: string | undefined;
+                questionId?: string | undefined;
+                responseId?: string | undefined;
             } | null;
             revision: number;
             profile: {

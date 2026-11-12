@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { updateNotices, updateStudy } from '../src/learning/update/index.ts'
+import { updateNotices } from '../src/learning/update/index.ts'
+import { updateStudy } from './fixtures.ts'
 import { diagnosticFor, studyInsight } from '../src/learning/mastery.ts'
 import { checkInHistory } from '../src/learning/view.ts'
 import { studyStatus } from '../src/learning/status.ts'

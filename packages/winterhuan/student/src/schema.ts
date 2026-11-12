@@ -37,6 +37,8 @@ export const sheetKindSchema = z.enum(['daily', 'practice', 'review'])
 export const exerciseRoleSchema = z.enum(['diagnose', 'demo', 'try', 'vary', 'daily'])
 /** Pedagogical role of a structured exercise item. */
 export type ExerciseRole = z.infer<typeof exerciseRoleSchema>
+/** Allowed methods for confirmed custom goals; shared by file validation and settings handlers. */
+export const customObjectiveMethods = { chinese: ['recognize', 'read-evidence', 'express'], math: ['represent', 'reason', 'verify'], english: ['context', 'listen', 'speak'] } as const
 const scope = z.object({ region: text, grade: z.number().int().min(1).max(6), term: z.enum(['first', 'second']), schoolYear: text, schoolSystem: z.enum(['five-four', 'six-three']) }).strict()
 const profile = scope.extend({ nickname: text, schoolAlias: z.string().trim().max(2000), parentConfirmation: text.default('家长已确认学习档案') }).strict()
 const material = z.object({
@@ -184,7 +186,7 @@ export const phaseSchema = z.enum(['demo', 'guide', 'try', 'vary'])
 /** One teaching step on the current task. */
 export type TeachPhase = z.infer<typeof phaseSchema>
 const attemptResult = z.enum(['correct', 'partial', 'incorrect', 'unassessed', 'stuck'])
-const assistance = z.enum(['independent', 'hint', 'worked-example'])
+const assistance = z.enum(['independent', 'hint', 'worked-example', 'unknown'])
 const attemptBody = {
   id, sessionId: id, subject, topic: text, prompt: text, response: text,
   feedback: text, answerEvidence: text, mistakeId: id.optional(), objectiveId: id.optional(),
@@ -262,7 +264,7 @@ export const stateSchema = z.object({
     materialId: id.optional(), unit: text.optional(), reflection: z.string().max(2000).optional(),
     scope: z.object({ grade: z.number().int().min(1).max(6), term: z.enum(['first', 'second']), units: z.array(id).max(20).optional(), objectiveIds: z.array(id).max(60).optional() }).strict().optional(),
   }).strict()).max(5000),
-  attempts: z.array(attempt.extend({ at: time, materialId: id.optional(), rawResponse: text.optional() }).strict()).max(20000),
+  attempts: z.array(attempt.extend({ at: time, materialId: id.optional(), rawResponse: text.optional(), questionId: id.optional(), responseId: id.optional() }).strict()).max(20000),
   mistakes: z.array(mistake.extend({
     confirmedAt: time.optional(), userConfirmation: text.optional(),
     // Derived by replay on read; persisted copies are legacy and ignored.
@@ -285,7 +287,7 @@ export const stateSchema = z.object({
   /** Parent theme tags. Absent profiles still read the example list; facts stay on the knowledge map. */
   interests: z.object({ tags: z.array(z.string().trim().regex(INTEREST_TAG)).min(3).max(8), parentConfirmation: text }).strict().optional(),
   rewards: z.array(z.object({ day: z.string(), reason: z.enum(['participation', 'reflection']) }).strict()).max(1000),
-  task: task.extend({ response: text.optional(), rawResponse: text.optional(), answeredAt: time.optional(), hintLevel: z.number().int().min(0).max(3), stuck: z.boolean().optional() }).strict().optional(),
+  task: task.extend({ response: text.optional(), rawResponse: text.optional(), answeredAt: time.optional(), responseId: id.optional(), hintLevel: z.number().int().min(0).max(3), stuck: z.boolean().optional() }).strict().optional(),
 }).strict()
 
 /** The archive command on its own, so the store can intercept it before applying the mutation. */

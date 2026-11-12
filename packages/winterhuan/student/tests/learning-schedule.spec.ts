@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { updateStudy } from '../src/learning/update/index.ts'
+import { updateStudy, copyFixture } from './fixtures.ts'
 import { studyStatus } from '../src/learning/status.ts'
 import { queryStudy } from '../src/store.ts'
 import { scheduleMistakes } from '../src/learning/schedule.ts'
@@ -76,9 +76,9 @@ describe('error-aware review spacing', () => {
       state = updateStudy(state, { action: 'stop', sessionId: id, reflection: '' }, at + 3 * MINUTE)
       return state
     }
-    const once = scheduleMistakes(structuredClone(wrong(1, NOW + 2 * DAY)))
+    const once = scheduleMistakes(copyFixture(wrong(1, NOW + 2 * DAY)))
     expect(once.mistakes[0]?.dueAt).toBe(dueDay(NOW + 2 * DAY + 2 * MINUTE, 1))
-    const twice = scheduleMistakes(structuredClone(wrong(2, NOW + 5 * DAY)))
+    const twice = scheduleMistakes(copyFixture(wrong(2, NOW + 5 * DAY)))
     expect(twice.mistakes[0]?.dueAt).toBe(dueDay(NOW + 5 * DAY + 2 * MINUTE, 2))
   })
 })

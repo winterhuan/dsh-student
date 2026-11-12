@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { commandSchema } from "./schema.js";
 import { panelActions } from "./actions.js";
 import { studyStore, StudyConflict } from "./store.js";
-import { dashboard } from "./dashboard.js";
+import { queryDashboard as dashboard } from "./learning/queries.js";
 import { readInteractiveLessons } from "./openmaic.js";
 const mutation = z.object({ revision: z.number().int().nonnegative(), change: commandSchema }).strict();
 /** Browser requests must address the local DSH host and originate from the same authority. */

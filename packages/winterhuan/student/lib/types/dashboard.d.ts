@@ -297,7 +297,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         recentAttempts: {
             result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
-            assistance: "independent" | "hint" | "worked-example";
+            assistance: "unknown" | "independent" | "hint" | "worked-example";
             id: string;
             sessionId: string;
             subject: "chinese" | "math" | "english";
@@ -505,6 +505,8 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             } | undefined;
             materialId?: string | undefined;
             rawResponse?: string | undefined;
+            questionId?: string | undefined;
+            responseId?: string | undefined;
         }[];
         recommendation: {
             kind: "review" | "practice" | "diagnose" | "learn" | "preview" | "hold";
@@ -583,7 +585,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                 itemId: string;
                 result: "correct" | "partial" | "incorrect" | "unassessed";
                 response: string;
-                assistance: "independent" | "hint" | "worked-example";
+                assistance: "unknown" | "independent" | "hint" | "worked-example";
             }[];
             drafts: {
                 confidence?: "high" | "low";
@@ -591,7 +593,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                 itemId: string;
                 response: string;
                 result: "correct" | "partial" | "incorrect" | "unassessed";
-                assistance: "independent" | "hint" | "worked-example";
+                assistance: "unknown" | "independent" | "hint" | "worked-example";
                 uncertainties: string;
             }[];
             sources: {
@@ -1147,11 +1149,12 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             response?: string | undefined;
             rawResponse?: string | undefined;
             answeredAt?: number | undefined;
+            responseId?: string | undefined;
             stuck?: boolean | undefined;
         } | null;
         feedback: {
             result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
-            assistance: "independent" | "hint" | "worked-example";
+            assistance: "unknown" | "independent" | "hint" | "worked-example";
             id: string;
             sessionId: string;
             subject: "chinese" | "math" | "english";
@@ -1359,6 +1362,8 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             } | undefined;
             materialId?: string | undefined;
             rawResponse?: string | undefined;
+            questionId?: string | undefined;
+            responseId?: string | undefined;
         } | null;
         revision: number;
         profile: {

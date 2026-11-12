@@ -1,3 +1,4 @@
+import { attachEvidence, evidenceOf } from "../evidence.js";
 import { activeSession, requireValue } from "../shared.js";
 import { scheduleMistakes } from "../schedule.js";
 import { commandSchema, stateSchema } from "../../schema.js";
@@ -14,7 +15,8 @@ export function updateNotices(input) {
 }
 /** Apply one validated command end to end: clone, dispatch, and re-derive review schedules for mutations. */
 export function rawApply(previous, command, now) {
-    const state = structuredClone(previous);
+    const inheritedEvidence = evidenceOf(previous);
+    const state = attachEvidence(structuredClone(previous), inheritedEvidence);
     const active = activeSession(state);
     const base = { previous, state, now, active };
     let result;
@@ -123,10 +125,10 @@ export function rawApply(previous, command, now) {
     if (result === previous)
         return previous;
     if (result !== state)
-        return result;
+        return command.action === 'archive-term' ? result : attachEvidence(result, inheritedEvidence);
     state.revision += 1;
     state.updatedAt = now;
-    return scheduleMistakes(stateSchema.parse(state));
+    return scheduleMistakes(attachEvidence(stateSchema.parse(state), inheritedEvidence));
 }
 /** Apply one validated mutation without changing the input; setup creates the first state or updates the existing profile in place. */
 export function updateStudy(previous, input, now) {

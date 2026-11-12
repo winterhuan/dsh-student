@@ -87,7 +87,11 @@ export function sameSavedAnswer(task, incoming) {
     return task.choices !== undefined && matchChoice(task.choices, incoming) === task.response;
 }
 export function todaySpent(state, now) {
-    return state.sessions.filter(session => studyDay(session.startedAt) === studyDay(now)).reduce((sum, session) => sum + spent(session, now), 0);
+    const start = Date.parse(`${studyDay(now)}T00:00:00+08:00`);
+    return state.sessions.reduce((sum, session) => {
+        const end = session.endedAt ?? now;
+        return sum + Math.max(0, Math.min(end, now) - Math.max(session.startedAt, start));
+    }, 0);
 }
 export function activeSession(state) { return state.sessions.find(session => session.endedAt === undefined); }
 /** Parent-confirmed class frontier; the default suggestion range, not a hard gate. Absent progress leaves the whole map in scope. */

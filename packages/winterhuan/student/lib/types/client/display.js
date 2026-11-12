@@ -6,7 +6,7 @@ export const planKeys = { review: 'recommendReview', practice: 'recommendPractic
 export const intensityKeys = { light: 'intensityLight', standard: 'intensityStandard', deep: 'intensityDeep' };
 export const intensityHelpKeys = { light: 'intensityLightHelp', standard: 'intensityStandardHelp', deep: 'intensityDeepHelp' };
 export const sampleKeys = { untouched: 'sampleUntouched', stalled: 'sampleStalled', recheck: 'sampleRecheck', progress: 'sampleProgress' };
-export const assistKeys = { independent: 'assistIndependent', hint: 'assistHint', 'worked-example': 'assistWorked' };
+export const assistKeys = { independent: 'assistIndependent', hint: 'assistHint', 'worked-example': 'assistWorked', unknown: 'assistUnknown' };
 export const focusKeys = { literacy: 'focusLiteracy', pinyin: 'focusPinyin', reading: 'focusReading', writing: 'focusWriting', concepts: 'focusConcepts', calculation: 'focusCalculation', geometry: 'focusGeometry', measurement: 'focusMeasurement', words: 'focusWords', sentences: 'focusSentences', story: 'focusStory', listen: 'focusListen', project: 'focusProject', review: 'focusReview' };
 export const reminderKeys = { 'first-explain': 'remindFirst', 'after-correction': 'remindAfterFix', 'before-next': 'remindNext' };
 /** Remaining time as m:ss. */

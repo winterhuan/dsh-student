@@ -1,9 +1,11 @@
-import { DAY, activeSession, formatDuration, studyDay, todaySpent, type Outcome } from './shared.ts'
+import { DAY, activeSession, formatDuration, studyDay, todaySpent } from './shared.ts'
 import { interestFocus, interestTagsOf } from '../interests.ts'
 import { effectiveOpenmaicBase, OPENMAIC_COOKIE_PATH, OPENMAIC_LESSONS_PATH } from '../openmaic.ts'
 import type { ErrorType, StudyState } from '../schema.ts'
-import type { StudyInsight } from './mastery.ts'
-import { objectiveInfo, questionObjectiveId } from './view.ts'
+import { studyInsight, type StudyInsight } from './mastery.ts'
+import { evidenceOf, evidenceDay, evidenceAtCutoff, attachEvidence } from './evidence.ts'
+import { dayStart, replayMistake, scheduleMistakes } from './schedule.ts'
+import { objectiveInfo } from './view.ts'
 
 /** Current session state: either ready to start or actively studying. */
 export type StudyPhase = 'ready' | 'studying'
@@ -43,24 +45,22 @@ export function timeStatus(state: StudyState, now: number): TimeStatus {
 export function studyStatus(state: StudyState, now: number) {
   const time = timeStatus(state, now)
   const progress = new Map<string, { subject: string; topic: string; materialId?: string; objectiveId?: string; attempts: number; independentDays: string[] }>()
-  function includeEvidence(subject: string, topic: string, at: number, result: string, assistance: string, materialId?: string, objectiveId?: string) {
+  function includeEvidence(subject: string, topic: string, at: number | undefined, result: string, assistance: string, materialId?: string, objectiveId?: string) {
     const key = objectiveId ?? JSON.stringify([subject, topic, materialId])
     const item = progress.get(key) ?? { subject, topic, ...(materialId ? { materialId } : {}), ...(objectiveId ? { objectiveId } : {}), attempts: 0, independentDays: [] }
     item.attempts += 1
     // Distinct independent days stay. A later hint does not erase them; map mastery still withholds mastered while recent help is inside 14 days.
-    if (result === 'correct' && assistance === 'independent' && !item.independentDays.includes(studyDay(at))) item.independentDays.push(studyDay(at))
+    if (at !== undefined && result === 'correct' && assistance === 'independent' && !item.independentDays.includes(studyDay(at))) item.independentDays.push(studyDay(at))
     progress.set(key, item)
   }
-  for (const attempt of state.attempts) includeEvidence(attempt.subject, attempt.topic, attempt.at, attempt.result, attempt.assistance, attempt.materialId, attempt.objectiveId)
-  for (const result of state.paperResults) {
-    const worksheet = state.worksheets.find(item => item.id === result.worksheetId)
-    const objectiveId = worksheet ? questionObjectiveId(state, worksheet, result.itemId) : undefined
-    const objective = objectiveId ? objectiveInfo(state, objectiveId) : undefined
-    if (worksheet && objective && objectiveId) includeEvidence(worksheet.subject, objective.title, result.receivedAt, result.result, result.assistance, undefined, objectiveId)
+  for (const entry of evidenceOf(state).entries) {
+    const day = evidenceDay(entry)
+    const goal = entry.objectiveId ? objectiveInfo(state, entry.objectiveId) : undefined
+    includeEvidence(entry.subject, goal?.title ?? entry.topic, day === undefined ? undefined : dayStart(day), entry.result, entry.assistance, undefined, entry.objectiveId)
   }
   const interests = interestTagsOf(state.interests?.tags)
   return {
-    task: state.task ?? null, feedback: state.task ? state.attempts.find(item => item.id === state.task?.id && item.sessionId === state.task.sessionId) ?? null : null,
+    task: state.task ?? null, feedback: state.task ? state.attempts.find(item => item.sessionId === state.task!.sessionId && (state.task!.responseId ? item.responseId === state.task!.responseId : item.questionId === undefined && item.id === state.task!.id)) ?? null : null,
     revision: state.revision, profile: state.profile, interests, interestFocus: interestFocus(interests, studyDay(now)), ...time, active: activeSession(state) ?? null,
     openmaic: {
       baseUrl: effectiveOpenmaicBase(state.openmaic?.baseUrl, process.env.OPENMAIC_BASE),
@@ -82,6 +82,7 @@ export interface WeeklySummary {
   activeDays: number
   practisedGoals: number
   masteredGoals: number
+  recoveredGoals: number
   newMistakes: number
   consolidatedMistakes: number
   dueCompletion: { done: number; total: number }
@@ -100,39 +101,66 @@ export interface WeeklySummary {
 export function weeklySummary(state: StudyState, now: number, insight: StudyInsight): WeeklySummary {
   const days = Array.from({ length: 7 }, (_, index) => studyDay(now - (6 - index) * DAY))
   const daySet = new Set(days)
-  const minutesByDay = days.map(day => ({
-    day,
-    minutes: Math.round(state.sessions.filter(session => studyDay(session.startedAt) === day)
-      .reduce((sum, session) => sum + (session.spentMs ?? Math.max(0, (session.endedAt ?? now) - session.startedAt)), 0) / 60_000),
-  }))
-  const windowStart = now - 7 * DAY
-  const outcomesByGoal = new Map<string, Outcome[]>()
-  const add = (key: string | undefined, outcome: Outcome) => { if (key !== undefined) outcomesByGoal.set(key, [...(outcomesByGoal.get(key) ?? []), outcome]) }
-  for (const attempt of state.attempts) add(attempt.objectiveId, { at: attempt.at, result: attempt.result, assistance: attempt.assistance })
-  for (const result of state.paperResults) {
-    const sheet = state.worksheets.find(item => item.id === result.worksheetId)
-    const item = sheet?.items.find(candidate => candidate.id === result.itemId)
-    const goal = item?.objectiveId ?? (item?.mistakeId !== undefined ? state.mistakes.find(mistake => mistake.id === item.mistakeId)?.objectiveId : undefined) ?? sheet?.objectiveId
-    add(goal, { at: result.receivedAt, result: result.result, assistance: result.assistance })
+  const minutesByDay = summaryMinutes(state, now)
+  const windowStart = dayStart(days[0]!)
+  const index = evidenceOf(state)
+  const entries = evidenceAtCutoff(index, now)
+  const practised = new Set(entries.filter(item => daySet.has(evidenceDay(item)!)).flatMap(item => item.objectiveId ? [item.objectiveId] : []))
+  const checkpoints = [...new Set(entries.map(item => item.answerDate.kind === 'instant' ? item.answerDate.at : dayStart(evidenceDay(item)!) + DAY - 1))].filter(at => at <= now || studyDay(at) === studyDay(now)).sort((a, b) => a - b)
+  const ever = new Set<string>()
+  const troubled = new Set<string>()
+  const first = new Map<string, string>()
+  const recovered = new Map<string, string>()
+  for (const at of checkpoints) {
+    const currentEntries = entries.filter(item => item.answerDate.kind === 'instant' ? item.answerDate.at === at : dayStart(evidenceDay(item)!) + DAY - 1 === at)
+    const beforeAt = currentEntries.some(item => item.answerDate.kind === 'day') ? dayStart(studyDay(at)) : at - 1
+    const before = structuredClone(state)
+    attachEvidence(before, { entries: index.entries.filter(item => item.answerDate.kind === 'instant' ? item.answerDate.at < at : item.answerDate.kind === 'day' ? item.answerDate.day < studyDay(at) : false), stuckSignals: index.stuckSignals.filter(signal => signal.at <= beforeAt) })
+    scheduleMistakes(before, beforeAt)
+    for (const goal of studyInsight(before, beforeAt).objectives) if (ever.has(goal.id) && (goal.level === 'due' || goal.level === 'weak')) troubled.add(goal.id)
+    const historical = structuredClone(state)
+    historical.mistakes = historical.mistakes.filter(item => item.confirmedAt === undefined || item.confirmedAt <= at)
+    historical.teachingQueue = historical.teachingQueue.filter(item => item.confirmedAt <= at)
+    historical.sessions = historical.sessions.filter(item => item.startedAt <= at)
+    attachEvidence(historical, index)
+    scheduleMistakes(historical, at)
+    const historicalInsight = studyInsight(historical, at)
+    const answered = new Set(currentEntries.filter(item => item.result === 'correct' && item.assistance === 'independent').flatMap(item => item.objectiveId ? [item.objectiveId] : []))
+    for (const goal of historicalInsight.objectives) {
+      if (ever.has(goal.id) && (goal.level === 'due' || goal.level === 'weak')) troubled.add(goal.id)
+      if (goal.level !== 'mastered' || !answered.has(goal.id)) continue
+      if (!ever.has(goal.id)) { first.set(goal.id, studyDay(at)); ever.add(goal.id) }
+      else if (troubled.has(goal.id)) { recovered.set(goal.id, studyDay(at)); troubled.delete(goal.id) }
+    }
   }
-  let practisedGoals = 0
-  let masteredGoals = 0
-  for (const goal of insight.objectives) {
-    const history = outcomesByGoal.get(goal.id) ?? []
-    if (!history.some(item => item.at >= windowStart)) continue
-    practisedGoals += 1
-    const independentDays = new Set(history.filter(item => item.at >= windowStart && item.result === 'correct' && item.assistance === 'independent').map(item => studyDay(item.at)))
-    if (goal.independentDays >= 3 && independentDays.size > 0) masteredGoals += 1
-  }
-  const newMistakes = state.mistakes.filter(mistake => mistake.confirmedAt !== undefined && mistake.confirmedAt >= windowStart).length
-  const consolidatedMistakes = state.mistakes.filter(mistake => mistake.stage >= 4 && (mistake.independentDays.at(-1) !== undefined) && daySet.has(mistake.independentDays.at(-1) ?? '')).length
-  const dueInWindow = state.mistakes.filter(mistake => mistake.confirmedAt !== undefined && mistake.dueAt !== undefined && mistake.dueAt >= windowStart && mistake.dueAt <= now)
-  const dueCompletion = { done: dueInWindow.filter(mistake => state.attempts.some(attempt => attempt.mistakeId === mistake.id && attempt.at >= (mistake.dueAt ?? 0)) || state.paperResults.some(result => result.receivedAt >= (mistake.dueAt ?? 0) && state.worksheets.some(sheet => sheet.id === result.worksheetId && sheet.items.some(item => item.id === result.itemId && item.mistakeId === mistake.id)))).length, total: dueInWindow.length }
+  const currentMastered = new Set(insight.objectives.filter(goal => goal.level === 'mastered').map(goal => goal.id))
+  const practisedGoals = practised.size
+  const masteredGoals = [...first].filter(([goal, day]) => currentMastered.has(goal) && daySet.has(day)).length
+  const recoveredGoals = [...recovered].filter(([goal, day]) => currentMastered.has(goal) && daySet.has(day)).length
+  const newMistakes = state.mistakes.filter(mistake => mistake.confirmedAt !== undefined && mistake.confirmedAt >= windowStart && mistake.confirmedAt <= now).length
+  const replay = state.mistakes.map(mistake => replayMistake(mistake, index, now, windowStart))
+  const consolidatedMistakes = replay.filter(item => item.consolidatedDay !== undefined && daySet.has(item.consolidatedDay)).length
+  const dueCompletion = { done: replay.filter(item => item.completed).length, total: replay.filter(item => item.opportunity).length }
   const causeCounts = new Map<ErrorType, number>()
   for (const mistake of state.mistakes) {
-    if (mistake.confirmedAt === undefined || mistake.confirmedAt < windowStart || mistake.errorType === undefined) continue
+    if (mistake.confirmedAt === undefined || mistake.confirmedAt < windowStart || mistake.confirmedAt > now || mistake.errorType === undefined) continue
     causeCounts.set(mistake.errorType, (causeCounts.get(mistake.errorType) ?? 0) + 1)
   }
   const errorCauses = [...causeCounts.entries()].map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count || a.type.localeCompare(b.type)).slice(0, 3)
-  return { minutesByDay, activeDays: minutesByDay.filter(item => item.minutes > 0).length, practisedGoals, masteredGoals, newMistakes, consolidatedMistakes, dueCompletion, errorCauses, suggestion: insight.recommendation }
+  return { minutesByDay, activeDays: minutesByDay.filter(item => item.minutes > 0).length, practisedGoals, masteredGoals, recoveredGoals, newMistakes, consolidatedMistakes, dueCompletion, errorCauses, suggestion: insight.recommendation }
+}
+
+/**
+ * Cheap elapsed-minute projection for Shanghai today and the preceding six calendar days.
+ * @param state - block timing records; answers and grading times are unused.
+ * @param now - explicit current clock.
+ * @returns per-day minutes with midnight-crossing blocks split across their actual calendar days.
+ */
+export function summaryMinutes(state: StudyState, now: number): { day: string; minutes: number }[] {
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = studyDay(now - (6 - index) * DAY)
+    const start = dayStart(day)
+    const milliseconds = state.sessions.reduce((sum, block) => sum + Math.max(0, Math.min(block.endedAt ?? now, start + DAY, now) - Math.max(block.startedAt, start)), 0)
+    return { day, minutes: Math.round(milliseconds / 60_000) }
+  })
 }

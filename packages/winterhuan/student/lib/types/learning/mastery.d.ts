@@ -22,6 +22,8 @@ export interface ObjectiveInsight {
     attempts: number;
     helpedOrWrong: number;
     lastAt?: number;
+    /** Actual day when the latest evidence has day precision rather than an exact instant. */
+    lastDay?: string;
     activeMistakes: number;
     dueMistakes: number;
     masteredMistakes: number;

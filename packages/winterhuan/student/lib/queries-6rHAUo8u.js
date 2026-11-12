@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 //#region lib/types/interests.js
 /** Example tags used when a profile has not saved its own list. */
 const DEFAULT_INTEREST_TAGS = [
@@ -110,10 +111,10 @@ const focusBySubject = {
 };
 //#endregion
 //#region lib/types/schema.js
-const text$1 = z.string().trim().min(1).max(2e3);
-const id = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u);
-const time = z.number().int().nonnegative();
-const subject = z.enum([
+const text$2 = z.string().trim().min(1).max(2e3);
+const id$1 = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u);
+const time$1 = z.number().int().nonnegative();
+const subject$1 = z.enum([
 	"chinese",
 	"math",
 	"english"
@@ -165,25 +166,43 @@ const exerciseRoleSchema = z.enum([
 	"vary",
 	"daily"
 ]);
-const scope = z.object({
-	region: text$1,
+/** Allowed methods for confirmed custom goals; shared by file validation and settings handlers. */
+const customObjectiveMethods = {
+	chinese: [
+		"recognize",
+		"read-evidence",
+		"express"
+	],
+	math: [
+		"represent",
+		"reason",
+		"verify"
+	],
+	english: [
+		"context",
+		"listen",
+		"speak"
+	]
+};
+const scope$1 = z.object({
+	region: text$2,
 	grade: z.number().int().min(1).max(6),
 	term: z.enum(["first", "second"]),
-	schoolYear: text$1,
+	schoolYear: text$2,
 	schoolSystem: z.enum(["five-four", "six-three"])
 }).strict();
-const profile = scope.extend({
-	nickname: text$1,
+const profile = scope$1.extend({
+	nickname: text$2,
 	schoolAlias: z.string().trim().max(2e3),
-	parentConfirmation: text$1.default("家长已确认学习档案")
+	parentConfirmation: text$2.default("家长已确认学习档案")
 }).strict();
 const material = z.object({
-	id,
-	subject,
-	scope,
-	title: text$1,
-	publisher: text$1,
-	edition: text$1,
+	id: id$1,
+	subject: subject$1,
+	scope: scope$1,
+	title: text$2,
+	publisher: text$2,
+	edition: text$2,
 	editionStatus: z.enum(["unconfirmed", "identified"]),
 	kind: z.enum([
 		"official-textbook",
@@ -191,54 +210,54 @@ const material = z.object({
 		"reference",
 		"generated"
 	]),
-	locator: text$1,
-	evidence: text$1
+	locator: text$2,
+	evidence: text$2
 }).strict();
 const schoolProgress = z.object({
-	unitId: id,
-	confirmedAt: time,
+	unitId: id$1,
+	confirmedAt: time$1,
 	posture: z.enum(["keep-up", "catch-up"]),
 	preview: z.boolean(),
 	pace: z.enum(["teaching", "review"])
 }).strict();
 const courseInput = z.object({
-	subject,
-	materialId: id,
-	unit: text$1,
-	parentConfirmation: text$1.default("家长已确认教材与当前单元")
+	subject: subject$1,
+	materialId: id$1,
+	unit: text$2,
+	parentConfirmation: text$2.default("家长已确认教材与当前单元")
 }).strict();
 const course = courseInput.extend({ progress: schoolProgress.optional() }).strict();
 const mistake = z.object({
-	id,
-	subject,
-	topic: text$1,
-	prompt: text$1,
-	learnerAnswer: text$1,
-	correction: text$1,
-	explanation: text$1,
-	answerEvidence: text$1,
-	imagePath: text$1.optional(),
+	id: id$1,
+	subject: subject$1,
+	topic: text$2,
+	prompt: text$2,
+	learnerAnswer: text$2,
+	correction: text$2,
+	explanation: text$2,
+	answerEvidence: text$2,
+	imagePath: text$2.optional(),
 	uncertainties: z.string().max(2e3),
-	materialId: id.optional(),
-	objectiveId: id.optional(),
+	materialId: id$1.optional(),
+	objectiveId: id$1.optional(),
 	errorType: errorTypeSchema.optional()
 }).strict();
 const concept = z.object({
-	id,
-	subject,
-	name: text$1,
-	definition: text$1,
-	example: text$1,
-	source: text$1,
+	id: id$1,
+	subject: subject$1,
+	name: text$2,
+	definition: text$2,
+	example: text$2,
+	source: text$2,
 	facts: z.array(stepText).min(2).max(8).optional(),
-	misconceptions: z.array(text$1).max(3).optional()
+	misconceptions: z.array(text$2).max(3).optional()
 }).strict();
 const objective = z.object({
-	id,
-	subject,
-	title: text$1,
-	goal: text$1,
-	conceptIds: z.array(id).min(1).max(5),
+	id: id$1,
+	subject: subject$1,
+	title: text$2,
+	goal: text$2,
+	conceptIds: z.array(id$1).min(1).max(5),
 	method: z.enum([
 		"recognize",
 		"read-evidence",
@@ -251,13 +270,13 @@ const objective = z.object({
 		"speak"
 	]),
 	errorTypes: z.array(errorTypeSchema).max(4).optional(),
-	questionPoints: z.array(text$1).max(4).optional(),
+	questionPoints: z.array(text$2).max(4).optional(),
 	variationAxes: z.array(variationAxisSchema).max(4).optional()
 }).strict();
 const relation = z.object({
-	id,
-	fromId: id,
-	toId: id,
+	id: id$1,
+	fromId: id$1,
+	toId: id$1,
 	kind: z.enum([
 		"prerequisite",
 		"part-of",
@@ -265,8 +284,8 @@ const relation = z.object({
 		"explains",
 		"cause-effect"
 	]),
-	explanation: text$1,
-	source: text$1
+	explanation: text$2,
+	source: text$2
 }).strict();
 const label = z.string().trim().max(24);
 const count = (max) => z.number().int().min(0).max(max);
@@ -325,7 +344,8 @@ const sketchElement = z.discriminatedUnion("draw", [
 		to: sketchPoint
 	}).strict()
 ]);
-const figure = z.discriminatedUnion("kind", [
+/** Printable figures drawn by the SVG renderer; an empty label prints an answer box. */
+const figureSchema = z.discriminatedUnion("kind", [
 	z.object({
 		kind: z.literal("bar-model"),
 		bars: z.array(z.object({
@@ -568,35 +588,36 @@ const figure = z.discriminatedUnion("kind", [
 		}]).some((point) => point.y > value.height)) fail("简笔画的笔画不能超出画布高度。");
 	}
 });
+const figure = figureSchema;
 /** One structured exercise item shared by the shipped exercise bank and the workspace collection. */
 const exerciseItemSchema = z.object({
-	id,
-	subject,
-	objectiveId: id,
+	id: id$1,
+	subject: subject$1,
+	objectiveId: id$1,
 	role: exerciseRoleSchema,
 	variant: variantSchema,
-	prompt: text$1,
-	choices: z.array(text$1).min(2).max(4).optional(),
+	prompt: text$2,
+	choices: z.array(text$2).min(2).max(4).optional(),
 	figure: figure.optional(),
 	steps: z.array(stepText).min(2).max(4),
-	answer: text$1,
-	explanation: text$1,
-	answerEvidence: text$1,
+	answer: text$2,
+	explanation: text$2,
+	answerEvidence: text$2,
 	errorType: errorTypeSchema.optional()
 }).strict();
 const workspaceExerciseInput = z.object({
-	id,
-	subject,
-	objectiveId: id,
+	id: id$1,
+	subject: subject$1,
+	objectiveId: id$1,
 	role: exerciseRoleSchema.default("try"),
 	variant: variantSchema.default("numeric"),
-	prompt: text$1,
-	choices: z.array(text$1).min(2).max(4).optional(),
+	prompt: text$2,
+	choices: z.array(text$2).min(2).max(4).optional(),
 	figure: figure.optional(),
 	steps: z.array(stepText).min(2).max(4),
-	answer: text$1,
-	explanation: text$1,
-	answerEvidence: text$1,
+	answer: text$2,
+	explanation: text$2,
+	answerEvidence: text$2,
 	errorType: errorTypeSchema.optional()
 }).strict();
 /** One step of teaching the current task: show, guide, independent try, then a variation. */
@@ -616,19 +637,20 @@ const attemptResult = z.enum([
 const assistance = z.enum([
 	"independent",
 	"hint",
-	"worked-example"
+	"worked-example",
+	"unknown"
 ]);
 const attemptBody = {
-	id,
-	sessionId: id,
-	subject,
-	topic: text$1,
-	prompt: text$1,
-	response: text$1,
-	feedback: text$1,
-	answerEvidence: text$1,
-	mistakeId: id.optional(),
-	objectiveId: id.optional(),
+	id: id$1,
+	sessionId: id$1,
+	subject: subject$1,
+	topic: text$2,
+	prompt: text$2,
+	response: text$2,
+	feedback: text$2,
+	answerEvidence: text$2,
+	mistakeId: id$1.optional(),
+	objectiveId: id$1.optional(),
 	variant: variantSchema.optional(),
 	figure: figure.optional()
 };
@@ -644,17 +666,17 @@ const recordAttempt = z.object({
 	assistance: assistance.optional()
 }).strict();
 const task = z.object({
-	id,
-	sessionId: id,
-	subject,
-	topic: text$1,
-	prompt: text$1,
-	choices: z.array(text$1).min(2).max(4).optional(),
+	id: id$1,
+	sessionId: id$1,
+	subject: subject$1,
+	topic: text$2,
+	prompt: text$2,
+	choices: z.array(text$2).min(2).max(4).optional(),
 	steps: z.array(stepText).min(2).max(5).optional(),
 	phase: phaseSchema.optional(),
 	variant: variantSchema.optional(),
-	mistakeId: id.optional(),
-	objectiveId: id.optional(),
+	mistakeId: id$1.optional(),
+	objectiveId: id$1.optional(),
 	figure: figure.optional()
 }).strict();
 const answerSpace = z.enum([
@@ -664,22 +686,22 @@ const answerSpace = z.enum([
 	"box"
 ]);
 const worksheetItem = z.object({
-	id,
-	objectiveId: id.optional(),
-	mistakeId: id.optional(),
+	id: id$1,
+	objectiveId: id$1.optional(),
+	mistakeId: id$1.optional(),
 	variant: variantSchema.optional(),
-	prompt: text$1,
+	prompt: text$2,
 	figure: figure.optional(),
 	space: answerSpace.optional(),
-	answer: text$1,
-	explanation: text$1,
-	answerEvidence: text$1
+	answer: text$2,
+	explanation: text$2,
+	answerEvidence: text$2
 }).strict();
 const worksheet = z.object({
-	id,
-	subject,
+	id: id$1,
+	subject: subject$1,
 	kind: sheetKindSchema.optional(),
-	objectiveId: id.optional(),
+	objectiveId: id$1.optional(),
 	items: z.array(worksheetItem).min(1).max(8)
 }).strict();
 const result = z.enum([
@@ -689,19 +711,19 @@ const result = z.enum([
 	"unassessed"
 ]);
 const paperResult = z.object({
-	worksheetId: id,
-	itemId: id,
-	response: text$1,
+	worksheetId: id$1,
+	itemId: id$1,
+	response: text$2,
 	result,
 	assistance,
-	feedback: text$1,
-	answerEvidence: text$1,
-	userConfirmation: text$1.default("家长在面板批改")
+	feedback: text$2,
+	answerEvidence: text$2,
+	userConfirmation: text$2.default("家长在面板批改")
 }).strict();
 const paperDraft = z.object({
-	worksheetId: id,
-	itemId: id,
-	response: text$1,
+	worksheetId: id$1,
+	itemId: id$1,
+	response: text$2,
 	result,
 	assistance,
 	uncertainties: z.string().max(2e3),
@@ -709,19 +731,19 @@ const paperDraft = z.object({
 	confidence: z.enum(["high", "low"]).optional()
 }).strict();
 const gradeSheet = z.object({
-	worksheetId: id,
+	worksheetId: id$1,
 	results: z.array(z.object({
-		itemId: id,
+		itemId: id$1,
 		result: z.enum([
 			"correct",
 			"partial",
 			"incorrect"
 		]),
-		response: text$1.optional(),
+		response: text$2.optional(),
 		assistance: assistance.optional(),
 		errorType: errorTypeSchema.optional()
 	}).strict()).min(1).max(8),
-	userConfirmation: text$1.default("家长在面板批改")
+	userConfirmation: text$2.default("家长在面板批改")
 }).strict();
 const workbookOutcome = z.enum([
 	"stuck",
@@ -730,29 +752,29 @@ const workbookOutcome = z.enum([
 	"independent-correct"
 ]);
 const workbookDraft = z.object({
-	id,
-	subject,
-	prompt: text$1,
-	response: text$1.optional(),
+	id: id$1,
+	subject: subject$1,
+	prompt: text$2,
+	response: text$2.optional(),
 	outcome: workbookOutcome,
-	objectiveId: id.optional(),
+	objectiveId: id$1.optional(),
 	uncertainties: z.string().max(2e3),
-	imagePath: text$1.optional()
+	imagePath: text$2.optional()
 }).strict();
 const teachingItem = z.object({
-	id,
-	subject,
-	prompt: text$1,
-	objectiveId: id.optional(),
-	confirmedAt: time,
-	sourceDraftId: id.optional()
+	id: id$1,
+	subject: subject$1,
+	prompt: text$2,
+	objectiveId: id$1.optional(),
+	confirmedAt: time$1,
+	sourceDraftId: id$1.optional()
 }).strict();
 const schoolProgressInput = z.object({
-	unitId: id,
+	unitId: id$1,
 	posture: z.enum(["keep-up", "catch-up"]),
 	preview: z.enum(["on", "off"]),
 	pace: z.enum(["teaching", "review"]),
-	parentConfirmation: text$1.default("家长确认学校进度")
+	parentConfirmation: text$2.default("家长确认学校进度")
 }).strict();
 /** Validated mutations; confirmation fields record user statements, not authenticated identities. */
 const commandSchema = z.discriminatedUnion("action", [
@@ -770,8 +792,8 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("start"),
-		id,
-		subject,
+		id: id$1,
+		subject: subject$1,
 		mode: z.enum([
 			"foundation",
 			"school",
@@ -787,8 +809,8 @@ const commandSchema = z.discriminatedUnion("action", [
 		scope: z.object({
 			grade: z.number().int().min(1).max(6),
 			term: z.enum(["first", "second"]),
-			units: z.array(id).max(20).optional(),
-			objectiveIds: z.array(id).max(60).optional()
+			units: z.array(id$1).max(20).optional(),
+			objectiveIds: z.array(id$1).max(60).optional()
 		}).strict().optional()
 	}).strict(),
 	z.object({
@@ -797,12 +819,12 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("answer"),
-		taskId: id,
-		response: text$1
+		taskId: id$1,
+		response: text$2
 	}).strict(),
 	z.object({
 		action: z.literal("hint"),
-		taskId: id
+		taskId: id$1
 	}).strict(),
 	z.object({
 		action: z.literal("configure-course"),
@@ -812,7 +834,7 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("school-progress"),
-		subject,
+		subject: subject$1,
 		...schoolProgressInput.shape
 	}).strict(),
 	z.object({
@@ -821,11 +843,11 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("stuck"),
-		taskId: id
+		taskId: id$1
 	}).strict(),
 	z.object({
 		action: z.literal("stop"),
-		sessionId: id,
+		sessionId: id$1,
 		reflection: z.string().max(2e3)
 	}).strict(),
 	z.object({
@@ -834,21 +856,21 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("confirm-mistake"),
-		id,
-		subject: subject.optional(),
-		topic: text$1.optional(),
-		objectiveId: z.union([id, z.literal("")]).optional(),
-		prompt: text$1,
-		learnerAnswer: text$1.optional(),
-		correction: text$1,
-		explanation: text$1,
-		answerEvidence: text$1,
+		id: id$1,
+		subject: subject$1.optional(),
+		topic: text$2.optional(),
+		objectiveId: z.union([id$1, z.literal("")]).optional(),
+		prompt: text$2,
+		learnerAnswer: text$2.optional(),
+		correction: text$2,
+		explanation: text$2,
+		answerEvidence: text$2,
 		errorType: errorTypeSchema.optional(),
-		userConfirmation: text$1.default("家长已核对错题与订正")
+		userConfirmation: text$2.default("家长已核对错题与订正")
 	}).strict(),
 	z.object({
 		action: z.literal("delete-mistake"),
-		id
+		id: id$1
 	}).strict(),
 	z.object({
 		action: z.literal("save-exercise"),
@@ -856,7 +878,7 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("delete-exercise"),
-		id
+		id: id$1
 	}).strict(),
 	z.object({
 		action: z.literal("concept"),
@@ -864,11 +886,11 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("confirm-concept"),
-		id,
-		definition: text$1.optional(),
-		example: text$1.optional(),
-		source: text$1.optional(),
-		userConfirmation: text$1.default("家长已核对概念")
+		id: id$1,
+		definition: text$2.optional(),
+		example: text$2.optional(),
+		source: text$2.optional(),
+		userConfirmation: text$2.default("家长已核对概念")
 	}).strict(),
 	z.object({
 		action: z.literal("objective"),
@@ -880,12 +902,12 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("link-mistake"),
-		mistakeId: id,
-		objectiveId: id
+		mistakeId: id$1,
+		objectiveId: id$1
 	}).strict(),
 	z.object({
 		action: z.literal("classify-mistake"),
-		mistakeId: id,
+		mistakeId: id$1,
 		errorType: z.union([errorTypeSchema, z.literal("")]).optional()
 	}).strict(),
 	z.object({
@@ -902,23 +924,23 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("confirm-paper"),
-		worksheetId: id,
+		worksheetId: id$1,
 		results: z.array(z.object({
-			itemId: id,
+			itemId: id$1,
 			result: z.enum([
 				"correct",
 				"partial",
 				"incorrect"
 			]),
-			response: text$1.optional(),
+			response: text$2.optional(),
 			assistance: assistance.optional(),
 			errorType: errorTypeSchema.optional()
 		}).strict()).min(1).max(8),
-		userConfirmation: text$1.default("家长已核对转录结果")
+		userConfirmation: text$2.default("家长已核对转录结果")
 	}).strict(),
 	z.object({
 		action: z.literal("discard-sheet"),
-		worksheetId: id
+		worksheetId: id$1
 	}).strict(),
 	z.object({
 		action: z.literal("workbook-draft"),
@@ -926,46 +948,46 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("confirm-workbook"),
-		id,
+		id: id$1,
 		outcome: workbookOutcome.optional(),
-		objectiveId: z.union([id, z.literal("")]).optional(),
-		correction: text$1.optional(),
-		explanation: text$1.optional(),
-		answerEvidence: text$1.optional(),
-		userConfirmation: text$1.default("家长已核对练习册题目")
+		objectiveId: z.union([id$1, z.literal("")]).optional(),
+		correction: text$2.optional(),
+		explanation: text$2.optional(),
+		answerEvidence: text$2.optional(),
+		userConfirmation: text$2.default("家长已核对练习册题目")
 	}).strict(),
 	z.object({
 		action: z.literal("dismiss-teaching"),
-		id
+		id: id$1
 	}).strict(),
 	z.object({
 		action: z.literal("archive-term"),
-		parentConfirmation: text$1.default("家长确认归档本学期")
+		parentConfirmation: text$2.default("家长确认归档本学期")
 	}).strict(),
 	z.object({
 		action: z.literal("openmaic-settings"),
 		baseUrl: z.string().trim().max(200),
-		parentConfirmation: text$1.default("家长确认 OpenMAIC 地址")
+		parentConfirmation: text$2.default("家长确认 OpenMAIC 地址")
 	}).strict(),
 	z.object({
 		action: z.literal("interests"),
 		tags: z.array(z.string().trim().regex(INTEREST_TAG)).min(3).max(8),
-		parentConfirmation: text$1.default("家长确认兴趣标签")
+		parentConfirmation: text$2.default("家长确认兴趣标签")
 	}).strict()
 ]);
 /** One learner and term per workspace; previous materials and attempts are retained. */
 const stateSchema = z.object({
 	format: z.literal(1),
-	revision: time,
-	updatedAt: time,
+	revision: time$1,
+	updatedAt: time$1,
 	profile,
 	/** Set by archive-term; a state file carrying it reads as absent so a new term can be set up. */
-	archivedAt: time.optional(),
+	archivedAt: time$1.optional(),
 	materials: z.array(material).max(500),
 	courses: z.array(course).max(3),
 	sessions: z.array(z.object({
-		id,
-		subject,
+		id: id$1,
+		subject: subject$1,
 		mode: z.enum([
 			"foundation",
 			"school",
@@ -978,76 +1000,79 @@ const stateSchema = z.object({
 			"standard",
 			"deep"
 		]).optional(),
-		startedAt: time,
-		endedAt: time.optional(),
-		spentMs: time.optional(),
-		materialId: id.optional(),
-		unit: text$1.optional(),
+		startedAt: time$1,
+		endedAt: time$1.optional(),
+		spentMs: time$1.optional(),
+		materialId: id$1.optional(),
+		unit: text$2.optional(),
 		reflection: z.string().max(2e3).optional(),
 		scope: z.object({
 			grade: z.number().int().min(1).max(6),
 			term: z.enum(["first", "second"]),
-			units: z.array(id).max(20).optional(),
-			objectiveIds: z.array(id).max(60).optional()
+			units: z.array(id$1).max(20).optional(),
+			objectiveIds: z.array(id$1).max(60).optional()
 		}).strict().optional()
 	}).strict()).max(5e3),
 	attempts: z.array(attempt.extend({
-		at: time,
-		materialId: id.optional(),
-		rawResponse: text$1.optional()
+		at: time$1,
+		materialId: id$1.optional(),
+		rawResponse: text$2.optional(),
+		questionId: id$1.optional(),
+		responseId: id$1.optional()
 	}).strict()).max(2e4),
 	mistakes: z.array(mistake.extend({
-		confirmedAt: time.optional(),
-		userConfirmation: text$1.optional(),
-		dueAt: time.optional(),
+		confirmedAt: time$1.optional(),
+		userConfirmation: text$2.optional(),
+		dueAt: time$1.optional(),
 		source: z.object({
-			worksheetId: id,
-			itemId: id
+			worksheetId: id$1,
+			itemId: id$1
 		}).strict().optional(),
 		independentDays: z.array(z.string()).default([]),
 		stage: z.number().int().min(0).max(4).default(0)
 	}).strict()).max(5e3),
-	exercises: z.array(exerciseItemSchema.extend({ savedAt: time.optional() }).strict()).max(1e3).default([]),
+	exercises: z.array(exerciseItemSchema.extend({ savedAt: time$1.optional() }).strict()).max(1e3).default([]),
 	concepts: z.array(concept.extend({
-		confirmedAt: time.optional(),
-		userConfirmation: text$1.optional()
+		confirmedAt: time$1.optional(),
+		userConfirmation: text$2.optional()
 	}).strict()).max(1e3).default([]),
 	objectives: z.array(objective).max(1e3).default([]),
 	relations: z.array(relation).max(2e3).default([]),
 	worksheets: z.array(worksheet.extend({
-		createdAt: time,
-		discardedAt: time.optional()
+		createdAt: time$1,
+		discardedAt: time$1.optional()
 	}).strict()).max(500).default([]),
-	paperResults: z.array(paperResult.extend({ receivedAt: time }).strict()).max(4e3).default([]),
-	paperDrafts: z.array(paperDraft.extend({ receivedAt: time }).strict()).max(500).default([]),
-	workbookDrafts: z.array(workbookDraft.extend({ receivedAt: time }).strict()).max(500).default([]),
+	paperResults: z.array(paperResult.extend({ receivedAt: time$1 }).strict()).max(4e3).default([]),
+	paperDrafts: z.array(paperDraft.extend({ receivedAt: time$1 }).strict()).max(500).default([]),
+	workbookDrafts: z.array(workbookDraft.extend({ receivedAt: time$1 }).strict()).max(500).default([]),
 	workbookResults: z.array(workbookDraft.extend({
-		receivedAt: time,
-		confirmedAt: time,
-		userConfirmation: text$1,
-		correction: text$1.optional(),
-		explanation: text$1.optional(),
-		answerEvidence: text$1.optional()
+		receivedAt: time$1,
+		confirmedAt: time$1,
+		userConfirmation: text$2,
+		correction: text$2.optional(),
+		explanation: text$2.optional(),
+		answerEvidence: text$2.optional()
 	}).strict()).max(500).default([]),
 	teachingQueue: z.array(teachingItem).max(500).default([]),
 	/** Parent override for the OpenMAIC origin. Absent means the environment or the localhost default. */
 	openmaic: z.object({
 		baseUrl: z.string().trim().min(1).max(200),
-		parentConfirmation: text$1
+		parentConfirmation: text$2
 	}).strict().optional(),
 	/** Parent theme tags. Absent profiles still read the example list; facts stay on the knowledge map. */
 	interests: z.object({
 		tags: z.array(z.string().trim().regex(INTEREST_TAG)).min(3).max(8),
-		parentConfirmation: text$1
+		parentConfirmation: text$2
 	}).strict().optional(),
 	rewards: z.array(z.object({
 		day: z.string(),
 		reason: z.enum(["participation", "reflection"])
 	}).strict()).max(1e3),
 	task: task.extend({
-		response: text$1.optional(),
-		rawResponse: text$1.optional(),
-		answeredAt: time.optional(),
+		response: text$2.optional(),
+		rawResponse: text$2.optional(),
+		answeredAt: time$1.optional(),
+		responseId: id$1.optional(),
 		hintLevel: z.number().int().min(0).max(3),
 		stuck: z.boolean().optional()
 	}).strict().optional()
@@ -1060,7 +1085,7 @@ const archiveTermSchema = z.object({
 //#endregion
 //#region lib/types/curriculum.js
 const recordId = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u);
-const text = z.string().trim().min(1).max(2e3);
+const text$1 = z.string().trim().min(1).max(2e3);
 const fact = z.string().trim().min(1).max(240);
 const subjectSchema = z.enum([
 	"chinese",
@@ -1106,9 +1131,9 @@ const curriculumMethods = {
 };
 const ideaSchema = z.object({
 	id: recordId,
-	name: text,
-	definition: text,
-	example: text
+	name: text$1,
+	definition: text$1,
+	example: text$1
 }).strict();
 /** One subject's concepts. A concept is shared by the subject and is not divided by grade or unit. Its definition states only what is required to identify it, and admits one reading. */
 const ideaCatalogSchema = z.object({
@@ -1126,34 +1151,34 @@ const curriculumSchema = z.object({
 	subject: subjectSchema,
 	grade: z.number().int().min(1).max(2),
 	term: termSchema,
-	title: text,
-	basis: text,
+	title: text$1,
+	basis: text$1,
 	units: z.array(z.object({
 		id: recordId,
-		name: text,
-		summary: text,
+		name: text$1,
+		summary: text$1,
 		focus: unitFocusSchema.optional()
 	}).strict()).min(1).max(20),
 	concepts: z.array(z.object({
 		id: recordId,
-		name: text,
+		name: text$1,
 		unit: recordId,
-		definition: text,
-		example: text,
-		source: text,
+		definition: text$1,
+		example: text$1,
+		source: text$1,
 		ideaIds: z.array(recordId).max(6).optional(),
 		facts: z.array(fact).min(2).max(8).optional(),
-		misconceptions: z.array(text).max(3).optional(),
-		examples: z.array(text).max(3).optional()
+		misconceptions: z.array(text$1).max(3).optional(),
+		examples: z.array(text$1).max(3).optional()
 	}).strict()).min(1).max(80),
 	objectives: z.array(z.object({
 		id: recordId,
-		title: text,
-		goal: text,
+		title: text$1,
+		goal: text$1,
 		conceptIds: z.array(recordId).min(1).max(5),
 		method: methodSchema,
 		errorTypes: z.array(errorTypeSchema).max(4).optional(),
-		questionPoints: z.array(text).max(4).optional(),
+		questionPoints: z.array(text$1).max(4).optional(),
 		variationAxes: z.array(variationAxisSchema).max(4).optional()
 	}).strict()).min(1).max(60),
 	relations: z.array(z.object({
@@ -1161,8 +1186,8 @@ const curriculumSchema = z.object({
 		fromId: recordId,
 		toId: recordId,
 		kind: relationKindSchema,
-		explanation: text,
-		source: text
+		explanation: text$1,
+		source: text$1
 	}).strict()).max(120)
 }).strict().superRefine((file, context) => {
 	const fail = (path, message) => context.addIssue({
@@ -1255,7 +1280,7 @@ const SUBJECTS = [
 	"math",
 	"english"
 ];
-const cache = /* @__PURE__ */ new Map();
+const cache$1 = /* @__PURE__ */ new Map();
 const ideaCache = /* @__PURE__ */ new Map();
 const exerciseCache = /* @__PURE__ */ new Map();
 /** Read through a variable so bundler asset rewriting of `new URL(…, import.meta.url)` does not apply to data files. */
@@ -1282,11 +1307,11 @@ function subjectIdeas(subject) {
 function load(subject, grade, term) {
 	if (grade < 1 || grade > 2) return void 0;
 	const key = `${subject}-grade${grade}-${term}`;
-	const cached = cache.get(key);
+	const cached = cache$1.get(key);
 	if (cached !== void 0) return cached;
 	const url = new URL(`../knowledge/curriculum/${key}.json`, moduleUrl);
 	const file = curriculumSchema.parse(JSON.parse(readFileSync(url, "utf8")));
-	cache.set(key, file);
+	cache$1.set(key, file);
 	return file;
 }
 /**
@@ -1472,7 +1497,11 @@ function sameSavedAnswer(task, incoming) {
 	return task.choices !== void 0 && matchChoice(task.choices, incoming) === task.response;
 }
 function todaySpent(state, now) {
-	return state.sessions.filter((session) => studyDay(session.startedAt) === studyDay(now)).reduce((sum, session) => sum + spent(session, now), 0);
+	const start = Date.parse(`${studyDay(now)}T00:00:00+08:00`);
+	return state.sessions.reduce((sum, session) => {
+		const end = session.endedAt ?? now;
+		return sum + Math.max(0, Math.min(end, now) - Math.max(session.startedAt, start));
+	}, 0);
 }
 function activeSession(state) {
 	return state.sessions.find((session) => session.endedAt === void 0);
@@ -1533,8 +1562,164 @@ function scopeSelects(scope, subject, unit, objectiveId) {
 	}, subject)?.units.some((item) => item.id === unit) ?? false;
 }
 //#endregion
+//#region lib/types/learning/evidence.js
+const indexes = /* @__PURE__ */ new WeakMap();
+/**
+* Derive effective facts once from validated block and worksheet owners.
+* @param workspace - current validated entity files.
+* @returns one fact per saved response, including unassessed and unknown facts.
+*/
+function deriveEvidence(workspace) {
+	const entries = [];
+	const stuckSignals = [];
+	for (const file of [...workspace.blocks, ...workspace.worksheets]) {
+		const questions = file.kind === "block" ? file.questions : file.items;
+		for (const response of file.responses) {
+			const question = questions.find((item) => item.id === response.questionId);
+			if (!question) continue;
+			const assessment = file.assessments.find((item) => item.responseId === response.id);
+			const declaredDate = response.answerDate ?? (file.kind === "worksheet" ? file.answerDate : void 0) ?? { kind: "unknown" };
+			const source = response.source;
+			const matchedNative = source.kind === "native" ? workspace.nativeSources?.find((item) => item.sessionId === source.sessionId && item.messageId === source.messageId && item.inputVersion === source.inputVersion && item.rawResponse === response.rawResponse) : void 0;
+			const answerDate = declaredDate.kind === "instant" && declaredDate.basis === "native-input" ? matchedNative && matchedNative.receiptAt === declaredDate.at ? declaredDate : { kind: "unknown" } : declaredDate;
+			entries.push({
+				termId: file.termId,
+				ownerId: file.id,
+				ownerKind: file.kind,
+				responseId: response.id,
+				questionId: question.id,
+				subject: file.subject,
+				topic: question.topic,
+				...typeof question.objectiveId === "string" && !question.basisStatus ? { objectiveId: question.objectiveId } : {},
+				...question.basisStatus ? { basisStatus: question.basisStatus } : {},
+				...question.mistakeId ? { mistakeId: question.mistakeId } : {},
+				rawResponse: response.rawResponse,
+				result: question.basisStatus ? "unassessed" : assessment?.result ?? "unassessed",
+				assistance: response.assistance,
+				source: response.source,
+				answerDate,
+				...assessment ? { assessedAt: assessment.assessedAt } : {}
+			});
+		}
+		if (file.kind === "block") for (const signal of file.stuckSignals ?? []) {
+			const goal = questions.find((item) => item.id === signal.questionId)?.objectiveId;
+			if (typeof goal === "string") stuckSignals.push({
+				objectiveId: goal,
+				at: signal.at
+			});
+		}
+	}
+	return {
+		entries,
+		stuckSignals
+	};
+}
+/**
+* Attach validated facts to a compatibility display projection without persisting another authority.
+* @param state - display projection used by current dashboard consumers.
+* @param index - normalized facts from the official files.
+* @returns the same display state.
+*/
+function attachEvidence(state, index) {
+	indexes.set(state, index);
+	return state;
+}
+/**
+* Read the shared index. Legacy grading and receipt fields do not establish actual answer dates.
+* @param state - current display state or handler result.
+* @returns normalized facts for every domain projection.
+*/
+function evidenceOf(state) {
+	const attached = indexes.get(state);
+	if (attached) return attached;
+	const entries = state.attempts.map((item) => ({
+		termId: "legacy",
+		ownerId: item.sessionId,
+		ownerKind: "block",
+		responseId: item.id,
+		questionId: item.id,
+		subject: item.subject,
+		topic: item.topic,
+		rawResponse: item.rawResponse ?? item.response,
+		result: item.result,
+		assistance: "unknown",
+		answerDate: { kind: "unknown" },
+		source: {
+			kind: "legacy",
+			sourcePath: ".study/state.json",
+			row: `attempts:${item.sessionId}:${item.id}`
+		},
+		...item.objectiveId ? { objectiveId: item.objectiveId } : {},
+		...item.mistakeId ? { mistakeId: item.mistakeId } : {}
+	}));
+	for (const item of state.paperResults) {
+		const sheet = state.worksheets.find((sheet) => sheet.id === item.worksheetId);
+		const question = sheet?.items.find((question) => question.id === item.itemId);
+		if (!sheet || !question) continue;
+		const goal = question.objectiveId ?? sheet.objectiveId;
+		entries.push({
+			termId: "legacy",
+			ownerId: sheet.id,
+			ownerKind: "worksheet",
+			responseId: item.itemId,
+			questionId: item.itemId,
+			subject: sheet.subject,
+			topic: question.prompt,
+			rawResponse: item.response,
+			result: item.result,
+			assistance: "unknown",
+			answerDate: { kind: "unknown" },
+			source: {
+				kind: "legacy",
+				sourcePath: ".study/state.json",
+				row: `paperResults:${sheet.id}:${item.itemId}`
+			},
+			...goal ? { objectiveId: goal } : {},
+			...question.mistakeId ? { mistakeId: question.mistakeId } : {}
+		});
+	}
+	return {
+		entries,
+		stuckSignals: []
+	};
+}
+/**
+* Read the actual calendar day without manufacturing a timestamp for paper work.
+* @param evidence - normalized response.
+* @returns the Shanghai day or undefined for an unknown date.
+*/
+function evidenceDay(evidence) {
+	return evidence.answerDate.kind === "day" ? evidence.answerDate.day : evidence.answerDate.kind === "instant" ? studyDay(evidence.answerDate.at) : void 0;
+}
+/**
+* Select only facts that were answered by the historical cutoff.
+* Day precision selects a calendar day without establishing within-day order; exact facts use their actual instant.
+* @param index - normalized evidence.
+* @param now - historical or current cutoff.
+* @returns dated effective responses without future facts or unknown dates.
+*/
+function evidenceAtCutoff(index, now) {
+	const today = studyDay(now);
+	return index.entries.filter((item) => item.answerDate.kind === "instant" ? item.answerDate.at <= now : item.answerDate.kind === "day" ? item.answerDate.day <= today : false);
+}
+/**
+* Compare answer ordering without borrowing receipt or assessment times.
+* @param later - possible later response.
+* @param earlier - earlier response or a known signal instant.
+* @returns true only when actual answer precision establishes a later answer.
+*/
+function demonstrablyAfter(later, earlier) {
+	if (typeof earlier === "number") return later.answerDate.kind === "instant" ? later.answerDate.at >= earlier : later.answerDate.kind === "day" ? later.answerDate.day > studyDay(earlier) : false;
+	const laterDay = evidenceDay(later);
+	const earlierDay = evidenceDay(earlier);
+	if (!laterDay || !earlierDay) return false;
+	if (laterDay !== earlierDay) return laterDay > earlierDay;
+	return later.answerDate.kind === "instant" && earlier.answerDate.kind === "instant" && later.answerDate.at > earlier.answerDate.at;
+}
+//#endregion
 //#region lib/types/learning/schedule.js
-/** Spaced-repetition intervals in days for stages 1..4 (1d / 7d / 16d / 35d forgetting curve). */
+/** Shared review replay from actual answer dates; receipt and grading dates are never scheduling input. */
+/** Existing spaced-review intervals, in days for stages one through four. */
 const REVIEW_DAYS = [
 	1,
 	7,
@@ -1546,49 +1731,79 @@ function dayStart(day) {
 	return Date.parse(`${day}T00:00:00+08:00`);
 }
 /**
-* Replay every confirmed mistake's review evidence: answers that cite it and paper results on items that cite it.
-* A mistake is due from the calendar day after confirmation or after the last wrong answer, not at a clock time.
-* Wrong, partial or helped answers keep the stage and only make it due again the next day. An independent correct
-* answer on any day, earlier than the due day included, advances it at most once per day; the next due day counts
-* from that answer along the 1 / 7 / 16 / 35-day curve.
-* Stage 4 (a 35-day interval) is consolidated.
+* Replay a stable mistake identity, preserving earned stages and conservative same-day difficulty.
+* @param mistake - confirmed mistake declaration.
+* @param index - effective actual-answer facts.
+* @param now - historical/current cutoff.
+* @param windowStart - optional seven-day window start for review completion.
+* @returns earned stage, current due date and one review opportunity/completion per mistake.
 */
-function scheduleMistakes(state) {
-	const evidence = /* @__PURE__ */ new Map();
-	const add = (mistakeId, at, result, assistance) => {
-		if (!mistakeId) return;
-		evidence.set(mistakeId, [...evidence.get(mistakeId) ?? [], {
-			at,
-			result,
-			assistance
-		}]);
+function replayMistake(mistake, index, now, windowStart) {
+	if (mistake.confirmedAt === void 0 || mistake.confirmedAt > now) return {
+		stage: 0,
+		independentDays: [],
+		opportunity: false,
+		completed: false
 	};
-	for (const attempt of state.attempts) add(attempt.mistakeId, attempt.at, attempt.result, attempt.assistance);
-	const sheets = new Map(state.worksheets.map((sheet) => [sheet.id, sheet]));
-	for (const result of state.paperResults) add(sheets.get(result.worksheetId)?.items.find((item) => item.id === result.itemId)?.mistakeId, result.receivedAt, result.result, result.assistance);
-	for (const mistake of state.mistakes) {
-		if (mistake.confirmedAt === void 0) continue;
-		const confirmedAt = mistake.confirmedAt;
-		let stage = 0;
-		let days = [];
-		let wrongs = 0;
-		let due = studyDay(confirmedAt + DAY);
-		for (const item of (evidence.get(mistake.id) ?? []).filter((entry) => entry.at >= confirmedAt).sort((a, b) => a.at - b.at)) {
-			if (item.result === "unassessed" || item.result === "stuck") continue;
-			const day = studyDay(item.at);
-			if (item.result !== "correct" || item.assistance !== "independent") {
+	let dueAt = dayStart(studyDay(mistake.confirmedAt + DAY));
+	let stage = 0;
+	let wrongs = 0;
+	const independentDays = [];
+	let opportunity = false;
+	let completed = false;
+	let consolidatedDay;
+	const registerOpportunity = (at) => {
+		if (windowStart !== void 0 && dueAt <= at && dueAt <= now && Math.max(dueAt, windowStart) <= at) opportunity = true;
+	};
+	const rows = evidenceAtCutoff(index, now).filter((item) => item.mistakeId === mistake.id && demonstrablyAfter(item, mistake.confirmedAt));
+	const groups = /* @__PURE__ */ new Map();
+	for (const row of rows) {
+		const day = evidenceDay(row);
+		groups.set(day, [...groups.get(day) ?? [], row]);
+	}
+	for (const [day, entries] of [...groups].sort(([left], [right]) => left.localeCompare(right))) {
+		const sorted = entries.some((entry) => entry.answerDate.kind !== "instant") ? entries.slice().sort((a, b) => Number(!(a.result === "correct" && a.assistance === "independent")) - Number(!(b.result === "correct" && b.assistance === "independent"))) : entries.slice().sort((a, b) => (a.answerDate.kind === "instant" ? a.answerDate.at : 0) - (b.answerDate.kind === "instant" ? b.answerDate.at : 0));
+		for (const item of sorted) {
+			const at = item.answerDate.kind === "instant" ? item.answerDate.at : dayStart(day);
+			registerOpportunity(at);
+			if (item.result === "unassessed" || item.result === "stuck" || item.result === "correct" && item.assistance === "unknown") continue;
+			if (item.result === "correct" && item.assistance === "independent") {
+				if (windowStart !== void 0 && at >= windowStart && at >= dueAt) completed = true;
+				if (independentDays.includes(day)) continue;
+				independentDays.push(day);
+				stage = Math.min(4, stage + 1);
+				dueAt = dayStart(studyDay(dayStart(day) + REVIEW_DAYS[stage - 1] * DAY));
+				if (stage === 4 && consolidatedDay === void 0) consolidatedDay = day;
+			} else {
 				wrongs += 1;
-				due = studyDay(item.at + (wrongs >= 2 ? 2 : 1) * DAY);
-				continue;
+				dueAt = dayStart(studyDay(dayStart(day) + (wrongs >= 2 ? 2 : 1) * DAY));
 			}
-			if (days.includes(day)) continue;
-			days = [...days, day];
-			stage = Math.min(4, stage + 1);
-			due = studyDay(item.at + (REVIEW_DAYS[stage - 1] ?? 1) * DAY);
 		}
-		mistake.stage = stage;
-		mistake.independentDays = days;
-		mistake.dueAt = dayStart(due);
+	}
+	registerOpportunity(now);
+	return {
+		stage,
+		independentDays,
+		dueAt,
+		opportunity,
+		completed: opportunity && completed,
+		...consolidatedDay ? { consolidatedDay } : {}
+	};
+}
+/**
+* Update display-only review fields through the shared replay owner.
+* @param state - parsed display projection; persisted stages are ignored.
+* @param now - optional explicit cutoff; omission replays every dated effective fact.
+* @returns the same state with derived review fields.
+*/
+function scheduleMistakes(state, now = 86399999e8) {
+	const index = evidenceOf(state);
+	for (const mistake of state.mistakes) {
+		const replay = replayMistake(mistake, index, now);
+		mistake.stage = replay.stage;
+		mistake.independentDays = replay.independentDays;
+		if (replay.dueAt !== void 0) mistake.dueAt = replay.dueAt;
+		else delete mistake.dueAt;
 	}
 	return state;
 }
@@ -1608,28 +1823,24 @@ const checkInSizes = {
 	standard: 6,
 	deep: 12
 };
-function outcomeIndex(state) {
+function lastEvidenceCutoff(item) {
+	return item.lastAt ?? (item.lastDay ? dayStart(item.lastDay) + 864e5 - 1 : void 0);
+}
+function outcomeIndex(state, now) {
 	const index = /* @__PURE__ */ new Map();
-	const add = (objectiveId, outcome) => {
-		if (objectiveId === void 0) return;
-		index.set(objectiveId, [...index.get(objectiveId) ?? [], outcome]);
-	};
-	const mistakeObjective = new Map(state.mistakes.map((mistake) => [mistake.id, mistake.objectiveId]));
-	const worksheetObjective = /* @__PURE__ */ new Map();
-	for (const sheet of state.worksheets) for (const item of sheet.items) {
-		const goal = item.objectiveId ?? (item.mistakeId !== void 0 ? mistakeObjective.get(item.mistakeId) : void 0) ?? sheet.objectiveId;
-		if (goal !== void 0) worksheetObjective.set(`${sheet.id}:${item.id}`, goal);
+	for (const item of evidenceAtCutoff(evidenceOf(state), now)) {
+		if (!item.objectiveId) continue;
+		const day = evidenceDay(item);
+		const outcome = {
+			at: item.answerDate.kind === "instant" ? item.answerDate.at : dayStart(day) + DAY - 1,
+			day,
+			precision: item.answerDate.kind === "instant" ? "instant" : "day",
+			result: item.result,
+			assistance: item.assistance,
+			evidence: item
+		};
+		index.set(item.objectiveId, [...index.get(item.objectiveId) ?? [], outcome]);
 	}
-	for (const attempt of state.attempts) add(attempt.objectiveId, {
-		at: attempt.at,
-		result: attempt.result,
-		assistance: attempt.assistance
-	});
-	for (const result of state.paperResults) add(worksheetObjective.get(`${result.worksheetId}:${result.itemId}`), {
-		at: result.receivedAt,
-		result: result.result,
-		assistance: result.assistance
-	});
 	return index;
 }
 /**
@@ -1640,9 +1851,9 @@ function outcomeIndex(state) {
 function teachingNeeded(outcomes, queue) {
 	const stuckAt = outcomes.flatMap((item) => item.result === "stuck" ? [item.at] : []);
 	const latestStuck = stuckAt.length > 0 ? Math.max(...stuckAt) : void 0;
-	if (latestStuck !== void 0 && !outcomes.some((item) => item.at > latestStuck && item.result === "correct" && item.assistance === "independent")) return true;
-	if (!outcomes.some((item) => item.result === "correct" && item.assistance === "independent") && outcomes.some((item) => item.result === "correct" && item.assistance !== "independent")) return true;
-	return queue.some((item) => !outcomes.some((outcome) => outcome.at >= item.confirmedAt && outcome.result === "correct" && outcome.assistance === "independent"));
+	if (latestStuck !== void 0 && !outcomes.some((item) => (item.evidence ? outcomes.filter((entry) => entry.result === "stuck" && entry.evidence).every((entry) => demonstrablyAfter(item.evidence, entry.evidence)) : item.at > latestStuck) && item.result === "correct" && item.assistance === "independent")) return true;
+	if (!outcomes.some((item) => item.result === "correct" && item.assistance === "independent") && outcomes.some((item) => item.result === "correct" && ["hint", "worked-example"].includes(item.assistance))) return true;
+	return queue.some((item) => !outcomes.some((outcome) => (outcome.evidence ? demonstrablyAfter(outcome.evidence, item.confirmedAt) : outcome.at >= item.confirmedAt) && outcome.result === "correct" && outcome.assistance === "independent"));
 }
 /**
 * One objective's mastery derived from its outcome evidence, its confirmed mistakes and the teaching queue.
@@ -1652,9 +1863,9 @@ function teachingNeeded(outcomes, queue) {
 function masteryOf(state, base, outcomes, now) {
 	const independentDays = new Set(outcomes.filter((item) => item.result === "correct" && item.assistance === "independent").map((item) => studyDay(item.at)));
 	const lastAt = outcomes.reduce((latest, item) => latest === void 0 || item.at > latest ? item.at : latest, void 0);
-	const helpedOrWrong = outcomes.filter((item) => item.at >= now - 12096e5 && (item.result === "incorrect" || item.result === "partial" || item.result === "correct" && item.assistance !== "independent")).length;
+	const helpedOrWrong = outcomes.filter((item) => item.at >= now - 12096e5 && (item.result === "incorrect" || item.result === "partial" || item.result === "correct" && ["hint", "worked-example"].includes(item.assistance))).length;
 	const wrongRecent = outcomes.filter((item) => item.at >= now - 12096e5 && (item.result === "incorrect" || item.result === "partial")).length;
-	const mistakes = state.mistakes.filter((item) => item.objectiveId === base.id && item.confirmedAt !== void 0);
+	const mistakes = state.mistakes.filter((item) => item.objectiveId === base.id && item.confirmedAt !== void 0 && item.confirmedAt <= now);
 	const dueMistakes = mistakes.filter((item) => item.dueAt !== void 0 && item.dueAt <= now).length;
 	const activeMistakes = mistakes.filter((item) => item.stage < 4).length;
 	const causeCounts = /* @__PURE__ */ new Map();
@@ -1664,7 +1875,7 @@ function masteryOf(state, base, outcomes, now) {
 		count
 	})).sort((a, b) => b.count - a.count || a.type.localeCompare(b.type)).slice(0, 5);
 	const recurringTypes = [...causeCounts.values()].filter((count) => count >= 2).length;
-	const teaching = teachingNeeded(outcomes, state.teachingQueue.filter((item) => item.objectiveId === base.id));
+	const teaching = teachingNeeded(outcomes, [...state.teachingQueue.filter((item) => item.objectiveId === base.id && item.confirmedAt <= now), ...evidenceOf(state).stuckSignals.filter((item) => item.objectiveId === base.id && item.at <= now).map((item) => ({ confirmedAt: item.at }))]);
 	const weak = teaching || activeMistakes >= 2 || helpedOrWrong >= 2 || independentDays.size === 0 && wrongRecent >= 1;
 	const stalled = !weak && independentDays.size < 3 && lastAt !== void 0 && now - lastAt > 864e6;
 	const level = dueMistakes > 0 ? "due" : weak ? "weak" : independentDays.size >= 3 && activeMistakes === 0 && helpedOrWrong === 0 ? "mastered" : stalled ? "stalled" : lastAt !== void 0 || mistakes.length > 0 ? "practising" : "untouched";
@@ -1698,13 +1909,14 @@ function masteryOf(state, base, outcomes, now) {
 		count: 0
 	});
 	const priority = level === "mastered" ? 0 : (teaching ? 64 : 0) + dueMistakes * 40 + Math.min(36, helpedOrWrong * 12) + Math.min(24, activeMistakes * 8) + Math.min(16, recurringTypes * 8) + (stalled ? 10 : 0) + (level === "untouched" ? 5 : 0);
+	const dateOnlyLatest = lastAt !== void 0 && outcomes.some((item) => item.precision === "day" && item.day === studyDay(lastAt));
 	return {
 		...base,
 		level,
 		independentDays: independentDays.size,
 		attempts: outcomes.length,
 		helpedOrWrong,
-		...lastAt !== void 0 ? { lastAt } : {},
+		...lastAt !== void 0 ? dateOnlyLatest ? { lastDay: studyDay(lastAt) } : { lastAt } : {},
 		activeMistakes,
 		dueMistakes,
 		masteredMistakes: mistakes.length - activeMistakes,
@@ -1738,7 +1950,7 @@ function learnable(state, item, scope) {
 * @returns objective insights, the five weakest points, per-subject check-in plans, at most two due clears and one recommendation.
 */
 function studyInsight(state, now) {
-	const outcomes = outcomeIndex(state);
+	const outcomes = outcomeIndex(state, now);
 	const objectives = [];
 	const seen = /* @__PURE__ */ new Set();
 	const include = (base) => {
@@ -1763,7 +1975,7 @@ function studyInsight(state, now) {
 		});
 		const untouched = pool.filter((item) => item.level === "untouched");
 		const stalled = pool.filter((item) => item.level === "stalled");
-		const recheck = pool.filter((item) => item.level === "mastered" && item.lastAt !== void 0 && now - item.lastAt >= RECHECK_AFTER);
+		const recheck = pool.filter((item) => item.level === "mastered" && lastEvidenceCutoff(item) !== void 0 && now - lastEvidenceCutoff(item) >= RECHECK_AFTER);
 		const progress = pool.filter((item) => item.level === "practising");
 		const rotated = [];
 		const byUnit = /* @__PURE__ */ new Map();
@@ -2027,7 +2239,7 @@ function studyInsight(state, now) {
 	}
 	if (recommendation !== null && (recommendation.kind === "preview" || recommendation.kind === "learn") && recommendation.objectiveId !== void 0) {
 		const nextTarget = objectives.find((candidate) => candidate.id === recommendation.objectiveId);
-		const practised = objectives.filter((candidate) => candidate.lastAt !== void 0).sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))[0];
+		const practised = objectives.filter((candidate) => lastEvidenceCutoff(candidate) !== void 0).sort((a, b) => (lastEvidenceCutoff(b) ?? 0) - (lastEvidenceCutoff(a) ?? 0))[0];
 		if (nextTarget !== void 0 && (recommendation.kind === "preview" || practised === void 0 || practised.unit !== nextTarget.unit)) remind(nextTarget, "before-next");
 	}
 	return {
@@ -2062,7 +2274,7 @@ function diagnosticFor(state, subject, now, scope, insight) {
 	else {
 		const map = builtinObjectivesIn(scope, subject);
 		const scoped = scope.objectiveIds !== void 0 ? map.filter((item) => scope.objectiveIds?.includes(item.id)) : scope.units !== void 0 ? map.filter((item) => item.unit !== "" && scope.units?.includes(item.unit)) : map;
-		const outcomes = outcomeIndex(state);
+		const outcomes = outcomeIndex(state, now);
 		pool = scoped.map((base) => current.objectives.find((item) => item.id === base.id) ?? masteryOf(state, base, outcomes.get(base.id) ?? [], now));
 	}
 	const lastAt = state.sessions.filter((item) => item.mode === "diagnose" && item.subject === subject).reduce((latest, item) => latest === void 0 || item.startedAt > latest ? item.startedAt : latest, void 0);
@@ -2075,7 +2287,7 @@ function diagnosticFor(state, subject, now, scope, insight) {
 	});
 	const untouched = pool.filter((item) => item.level === "untouched");
 	const stalled = pool.filter((item) => item.level === "stalled");
-	const recheck = pool.filter((item) => item.level === "mastered" && item.lastAt !== void 0 && now - item.lastAt >= RECHECK_AFTER);
+	const recheck = pool.filter((item) => item.level === "mastered" && lastEvidenceCutoff(item) !== void 0 && now - lastEvidenceCutoff(item) >= RECHECK_AFTER);
 	const progress = pool.filter((item) => item.level === "practising");
 	const rotated = [];
 	const byUnit = /* @__PURE__ */ new Map();
@@ -2173,10 +2385,6 @@ function objectiveInfo(state, objectiveId) {
 /** Published question goals are frozen; legacy items can use only their saved sheet goal. */
 function itemObjectiveId(_state, worksheet, item) {
 	return item.objectiveId ?? worksheet.objectiveId;
-}
-function questionObjectiveId(state, worksheet, itemId) {
-	const item = worksheet.items.find((question) => question.id === itemId);
-	return item ? itemObjectiveId(state, worksheet, item) : void 0;
 }
 /** A printed sheet still waiting for at least one graded question. Discarded sheets never wait. */
 function sheetOpen(state, worksheet) {
@@ -2627,6 +2835,70 @@ function duplicate(items, matches, equal) {
 	return true;
 }
 //#endregion
+//#region lib/types/files/lessons.js
+/** Consistent complete reads for the independent OpenMAIC file. No classroom URL earns learner evidence. */
+/**
+* Validate every lesson row at one bounded actual file version.
+* @param fs - caller's execution-world adapter.
+* @param signal - cancels bounded version rereads.
+* @returns the complete valid file or explicit failure; performs no repairs or cookie reads.
+*/
+async function readLessonFile(fs, signal) {
+	for (let attempt = 0; attempt < 3; attempt += 1) {
+		const before = await fs.stat(OPENMAIC_LESSONS_PATH, signal);
+		if (!before) return {
+			status: "missing",
+			issues: []
+		};
+		try {
+			if (before.type !== "file") throw new Error("Use a regular lesson JSON file.");
+			const bytes = await fs.read(OPENMAIC_LESSONS_PATH, signal, 524288);
+			const after = await fs.stat(OPENMAIC_LESSONS_PATH, signal);
+			if (before.version !== after?.version || before.targetKey !== after.targetKey) continue;
+			const raw = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+			const parsed = lessonFileSchema.safeParse(raw);
+			if (!parsed.success) return {
+				status: typeof raw === "object" && raw !== null && "format" in raw && typeof raw.format === "number" && raw.format > 1 ? "future-format" : "invalid",
+				observation: before,
+				validRows: parseInteractiveLessons(new TextDecoder().decode(bytes)).lessons,
+				issues: parsed.error.issues.slice(0, 100).map((issue) => ({
+					path: OPENMAIC_LESSONS_PATH,
+					field: issue.path.join("."),
+					rule: "lesson-file",
+					correction: issue.message
+				}))
+			};
+			return {
+				status: "valid",
+				file: parsed.data,
+				observation: before,
+				issues: []
+			};
+		} catch (error) {
+			if (signal.aborted) throw error;
+			return {
+				status: "invalid",
+				observation: before,
+				issues: [{
+					path: OPENMAIC_LESSONS_PATH,
+					field: "",
+					rule: "lesson-file",
+					correction: error instanceof Error ? error.message : "Preserve the original and repair the lesson file explicitly."
+				}]
+			};
+		}
+	}
+	return {
+		status: "changing",
+		issues: [{
+			path: OPENMAIC_LESSONS_PATH,
+			field: "",
+			rule: "changing-read",
+			correction: "Finish the lesson write and read again."
+		}]
+	};
+}
+//#endregion
 //#region lib/types/openmaic.js
 /** Default OpenMAIC origin when the parent has not saved one and OPENMAIC_BASE is unset. */
 const DEFAULT_OPENMAIC_BASE = "http://localhost:3000";
@@ -2634,9 +2906,8 @@ const DEFAULT_OPENMAIC_BASE = "http://localhost:3000";
 const OPENMAIC_LESSONS_PATH = ".study/openmaic-lessons.json";
 /** Cookie jar shared by generate, poll, retry and stage reads. Never copy it into chat or state. */
 const OPENMAIC_COOKIE_PATH = ".study/openmaic-cookies.txt";
-const LESSONS_MAX_BYTES = 524288;
 const LESSONS_SHOWN = 20;
-const stamp = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/u);
+const stamp = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/u).refine((value) => Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 19) === value.slice(0, 19), "Use an actual UTC lifecycle time.");
 const lessonId = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u);
 /**
 * Accept an http(s) origin or origin-plus-path. Credentials, queries and hashes are rejected
@@ -2686,6 +2957,7 @@ function lessonHttpUrl(value) {
 }
 const httpLessonUrl = z.string().trim().max(2e3).refine((value) => lessonHttpUrl(value) !== void 0, "课堂地址需要是 http 或 https URL");
 const pollUrl = z.string().trim().max(500).refine((value) => value.startsWith("/") && !value.startsWith("//") || lessonHttpUrl(value) !== void 0, "轮询地址需要是相对路径或 http(s) URL");
+/** Strict complete lesson row shared by the application and read-only CLI. */
 const lessonSchema = z.object({
 	id: lessonId,
 	status: z.enum([
@@ -2721,7 +2993,32 @@ const lessonSchema = z.object({
 			summary: z.string().trim().max(400).optional()
 		}).strict()).max(12)
 	}).strict().optional()
-}).strict();
+}).strict().superRefine((lesson, ctx) => {
+	if (lesson.updatedAt < lesson.createdAt) ctx.addIssue({
+		code: "custom",
+		path: ["updatedAt"],
+		message: "Use lifecycle times with update after creation."
+	});
+});
+/** Complete independent OpenMAIC business file; validation checks all eighty possible rows before pagination. */
+const lessonFileSchema = z.object({
+	format: z.literal(1),
+	lessons: z.array(lessonSchema).max(80)
+}).strict().superRefine((file, ctx) => {
+	const seen = /* @__PURE__ */ new Set();
+	for (const [index, lesson] of file.lessons.entries()) {
+		if (seen.has(lesson.id)) ctx.addIssue({
+			code: "custom",
+			path: [
+				"lessons",
+				index,
+				"id"
+			],
+			message: "Lesson identities must be unique."
+		});
+		seen.add(lesson.id);
+	}
+});
 /** Build the settings half of the projection before a file read. */
 function interactiveLessonsView(savedBase, lessons = [], error) {
 	return {
@@ -2733,8 +3030,9 @@ function interactiveLessonsView(savedBase, lessons = [], error) {
 	};
 }
 /**
-* Parse the tutor-written lesson log. Invalid rows are dropped so one bad write does not hide the rest.
+* Parse every tutor-written lesson row before display pagination. Invalid and duplicate rows are dropped.
 * @param text - UTF-8 contents of `.study/openmaic-lessons.json`.
+* @returns every independently valid row and an explicit whole-file failure when required.
 */
 function parseInteractiveLessons(text) {
 	let parsed;
@@ -2746,6 +3044,8 @@ function parseInteractiveLessons(text) {
 			error: "互动课记录不是有效的 JSON"
 		};
 	}
+	const complete = lessonFileSchema.safeParse(parsed);
+	if (complete.success) return { lessons: complete.data.lessons.slice().sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)) };
 	const file = z.object({
 		format: z.literal(1),
 		lessons: z.array(z.unknown()).max(80)
@@ -2754,24 +3054,24 @@ function parseInteractiveLessons(text) {
 		lessons: [],
 		error: "互动课记录格式无法读取"
 	};
-	const lessons = [];
+	const candidates = [];
 	let dropped = 0;
 	for (const item of file.data.lessons) {
 		const lesson = lessonSchema.safeParse(item);
-		if (lesson.success) lessons.push(lesson.data);
+		if (lesson.success) candidates.push(lesson.data);
 		else dropped += 1;
 	}
+	const lessons = candidates.filter((lesson) => candidates.filter((candidate) => candidate.id === lesson.id).length === 1);
 	lessons.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
-	const shown = lessons.slice(0, LESSONS_SHOWN);
-	return dropped > 0 ? {
-		lessons: shown,
-		error: "有几条互动课记录无法读取，其余仍显示"
-	} : { lessons: shown };
+	return {
+		lessons,
+		error: dropped > 0 ? "有几条互动课记录无法读取，其余仍显示" : "互动课记录的身份或时间无法读取"
+	};
 }
 /**
 * Read the lesson log from the session workspace.
 * A missing file is an empty list. A bad file sets `error` and does not fail the workspace request.
-* The file is not cached: the tutor rewrites it without bumping the study revision, and the desk poll must see that write.
+* The shared reader checks actual versions on both sides; the desk displays at most twenty valid rows.
 */
 async function readInteractiveLessons(agent, signal, savedBase) {
 	const empty = interactiveLessonsView(savedBase);
@@ -2789,15 +3089,23 @@ async function readInteractiveLessons(agent, signal, savedBase) {
 			...empty,
 			error: "互动课记录必须位于当前工作区内"
 		};
-		const stat = await fs.stat(target, signal);
-		if (!stat) return empty;
-		if (stat.type !== "file") return {
-			...empty,
-			error: "互动课记录必须是普通文件"
-		};
-		const bytes = await fs.readBytes(target, signal, LESSONS_MAX_BYTES);
-		const parsed = parseInteractiveLessons(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
-		return parsed.error !== void 0 ? interactiveLessonsView(savedBase, parsed.lessons, parsed.error) : interactiveLessonsView(savedBase, parsed.lessons);
+		const read = await readLessonFile({
+			async stat(_path, signal) {
+				const info = await fs.stat(target, signal);
+				return info ? {
+					...info,
+					targetKey: target.targetKey
+				} : void 0;
+			},
+			async list() {
+				return [];
+			},
+			async read(_path, signal, max) {
+				return fs.readBytes(target, signal, max);
+			}
+		}, signal);
+		if (read.status === "missing") return empty;
+		return interactiveLessonsView(savedBase, (read.file?.lessons ?? read.validRows ?? []).slice().sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)).slice(0, LESSONS_SHOWN), read.status === "valid" ? void 0 : "互动课记录格式、身份或时间无法读取");
 	} catch (error) {
 		if (signal.aborted) throw error;
 		return {
@@ -3147,24 +3455,6 @@ function applyStop(ctx) {
 }
 //#endregion
 //#region lib/types/learning/update/mistakes.js
-/** Learning methods each subject allows for custom objectives; mirrors the shipped maps. */
-const subjectMethods = {
-	chinese: [
-		"recognize",
-		"read-evidence",
-		"express"
-	],
-	math: [
-		"represent",
-		"reason",
-		"verify"
-	],
-	english: [
-		"context",
-		"listen",
-		"speak"
-	]
-};
 /** Save or update an unconfirmed mistake transcription. */
 function applyMistake(ctx) {
 	const { command, previous, state } = ctx;
@@ -3301,7 +3591,7 @@ function applyConfirmConcept(ctx) {
 function applyObjective(ctx) {
 	const { command, previous, state } = ctx;
 	if (duplicate(state.objectives, (item) => item.id === command.objective.id, (item) => canonical(item) === canonical(command.objective))) return previous;
-	requireValue(subjectMethods[command.objective.subject].some((method) => method === command.objective.method), "学习方法与科目不符。");
+	requireValue(customObjectiveMethods[command.objective.subject].some((method) => method === command.objective.method), "学习方法与科目不符。");
 	requireValue(command.objective.conceptIds.every((id) => state.concepts.some((item) => item.id === id && item.subject === command.objective.subject && item.confirmedAt !== void 0)), "学习目标必须关联同科已确认概念。");
 	requireValue(new Set(command.objective.conceptIds).size === command.objective.conceptIds.length, "学习目标不能重复关联概念。");
 	state.objectives.push(command.objective);
@@ -3603,7 +3893,8 @@ function updateNotices(input) {
 }
 /** Apply one validated command end to end: clone, dispatch, and re-derive review schedules for mutations. */
 function rawApply(previous, command, now) {
-	const state = structuredClone(previous);
+	const inheritedEvidence = evidenceOf(previous);
+	const state = attachEvidence(structuredClone(previous), inheritedEvidence);
 	const base = {
 		previous,
 		state,
@@ -3811,10 +4102,10 @@ function rawApply(previous, command, now) {
 		});
 	}
 	if (result === previous) return previous;
-	if (result !== state) return result;
+	if (result !== state) return command.action === "archive-term" ? result : attachEvidence(result, inheritedEvidence);
 	state.revision += 1;
 	state.updatedAt = now;
-	return scheduleMistakes(stateSchema.parse(state));
+	return scheduleMistakes(attachEvidence(stateSchema.parse(state), inheritedEvidence));
 }
 /** Apply one validated mutation without changing the input; setup creates the first state or updates the existing profile in place. */
 function updateStudy(previous, input, now) {
@@ -3825,167 +4116,8 @@ function updateStudy(previous, input, now) {
 	return rawApply(previous, command, now);
 }
 //#endregion
-//#region lib/types/learning/status.js
-/**
-* Elapsed clocks for the current block and today, computed from sessions only.
-* Reading never closes a session.
-*/
-function timeStatus(state, now) {
-	const active = activeSession(state);
-	const todayMs = todaySpent(state, now);
-	const phase = active ? "studying" : "ready";
-	const blockElapsedMs = active ? Math.max(0, now - active.startedAt) : 0;
-	return {
-		phase,
-		time: {
-			timezone: "Asia/Shanghai",
-			blockElapsed: active ? formatDuration(blockElapsedMs) : null,
-			todayElapsed: formatDuration(todayMs)
-		}
-	};
-}
-/**
-* Summarize elapsed time, course confirmation, rewards and evidence-derived progress.
-* Reading does not close a session; stop records when the learner actually stopped.
-*/
-function studyStatus(state, now) {
-	const time = timeStatus(state, now);
-	const progress = /* @__PURE__ */ new Map();
-	function includeEvidence(subject, topic, at, result, assistance, materialId, objectiveId) {
-		const key = objectiveId ?? JSON.stringify([
-			subject,
-			topic,
-			materialId
-		]);
-		const item = progress.get(key) ?? {
-			subject,
-			topic,
-			...materialId ? { materialId } : {},
-			...objectiveId ? { objectiveId } : {},
-			attempts: 0,
-			independentDays: []
-		};
-		item.attempts += 1;
-		if (result === "correct" && assistance === "independent" && !item.independentDays.includes(studyDay(at))) item.independentDays.push(studyDay(at));
-		progress.set(key, item);
-	}
-	for (const attempt of state.attempts) includeEvidence(attempt.subject, attempt.topic, attempt.at, attempt.result, attempt.assistance, attempt.materialId, attempt.objectiveId);
-	for (const result of state.paperResults) {
-		const worksheet = state.worksheets.find((item) => item.id === result.worksheetId);
-		const objectiveId = worksheet ? questionObjectiveId(state, worksheet, result.itemId) : void 0;
-		const objective = objectiveId ? objectiveInfo(state, objectiveId) : void 0;
-		if (worksheet && objective && objectiveId) includeEvidence(worksheet.subject, objective.title, result.receivedAt, result.result, result.assistance, void 0, objectiveId);
-	}
-	const interests = interestTagsOf(state.interests?.tags);
-	return {
-		task: state.task ?? null,
-		feedback: state.task ? state.attempts.find((item) => item.id === state.task?.id && item.sessionId === state.task.sessionId) ?? null : null,
-		revision: state.revision,
-		profile: state.profile,
-		interests,
-		interestFocus: interestFocus(interests, studyDay(now)),
-		...time,
-		active: activeSession(state) ?? null,
-		openmaic: {
-			baseUrl: effectiveOpenmaicBase(state.openmaic?.baseUrl, process.env.OPENMAIC_BASE),
-			savedBaseUrl: state.openmaic?.baseUrl ?? "",
-			lessonsPath: OPENMAIC_LESSONS_PATH,
-			cookiePath: OPENMAIC_COOKIE_PATH
-		},
-		courses: state.courses,
-		unconfirmedSubjects: [
-			"chinese",
-			"math",
-			"english"
-		].filter((subject) => !state.courses.some((course) => course.subject === subject)),
-		stars: state.rewards.length,
-		todayStars: state.rewards.filter((reward) => reward.day === studyDay(now)).length,
-		dueMistakes: state.mistakes.filter((mistake) => mistake.dueAt !== void 0 && mistake.dueAt <= now).map((mistake) => ({
-			id: mistake.id,
-			subject: mistake.subject,
-			topic: mistake.topic
-		})),
-		pendingMistakes: state.mistakes.filter((mistake) => mistake.confirmedAt === void 0).map((mistake) => mistake.id),
-		progress: [...progress.values()].map((item) => ({
-			...item,
-			level: item.independentDays.length >= 3 ? "independent-on-three-days" : "practising"
-		}))
-	};
-}
-/**
-* Summarise the last seven calendar days for the parent: minutes per day, goals practised and
-* newly mastered, mistake flow, due-review completion and this week's top error causes.
-* Purely derived from stored evidence; nothing is stored per week.
-* @param state - current durable learning state.
-* @param now - host wall-clock time in milliseconds.
-* @param insight - precomputed insight for the same state and time, when the caller already has one.
-*/
-function weeklySummary(state, now, insight) {
-	const days = Array.from({ length: 7 }, (_, index) => studyDay(now - (6 - index) * DAY));
-	const daySet = new Set(days);
-	const minutesByDay = days.map((day) => ({
-		day,
-		minutes: Math.round(state.sessions.filter((session) => studyDay(session.startedAt) === day).reduce((sum, session) => sum + (session.spentMs ?? Math.max(0, (session.endedAt ?? now) - session.startedAt)), 0) / 6e4)
-	}));
-	const windowStart = now - 7 * DAY;
-	const outcomesByGoal = /* @__PURE__ */ new Map();
-	const add = (key, outcome) => {
-		if (key !== void 0) outcomesByGoal.set(key, [...outcomesByGoal.get(key) ?? [], outcome]);
-	};
-	for (const attempt of state.attempts) add(attempt.objectiveId, {
-		at: attempt.at,
-		result: attempt.result,
-		assistance: attempt.assistance
-	});
-	for (const result of state.paperResults) {
-		const sheet = state.worksheets.find((item) => item.id === result.worksheetId);
-		const item = sheet?.items.find((candidate) => candidate.id === result.itemId);
-		add(item?.objectiveId ?? (item?.mistakeId !== void 0 ? state.mistakes.find((mistake) => mistake.id === item.mistakeId)?.objectiveId : void 0) ?? sheet?.objectiveId, {
-			at: result.receivedAt,
-			result: result.result,
-			assistance: result.assistance
-		});
-	}
-	let practisedGoals = 0;
-	let masteredGoals = 0;
-	for (const goal of insight.objectives) {
-		const history = outcomesByGoal.get(goal.id) ?? [];
-		if (!history.some((item) => item.at >= windowStart)) continue;
-		practisedGoals += 1;
-		const independentDays = new Set(history.filter((item) => item.at >= windowStart && item.result === "correct" && item.assistance === "independent").map((item) => studyDay(item.at)));
-		if (goal.independentDays >= 3 && independentDays.size > 0) masteredGoals += 1;
-	}
-	const newMistakes = state.mistakes.filter((mistake) => mistake.confirmedAt !== void 0 && mistake.confirmedAt >= windowStart).length;
-	const consolidatedMistakes = state.mistakes.filter((mistake) => mistake.stage >= 4 && mistake.independentDays.at(-1) !== void 0 && daySet.has(mistake.independentDays.at(-1) ?? "")).length;
-	const dueInWindow = state.mistakes.filter((mistake) => mistake.confirmedAt !== void 0 && mistake.dueAt !== void 0 && mistake.dueAt >= windowStart && mistake.dueAt <= now);
-	const dueCompletion = {
-		done: dueInWindow.filter((mistake) => state.attempts.some((attempt) => attempt.mistakeId === mistake.id && attempt.at >= (mistake.dueAt ?? 0)) || state.paperResults.some((result) => result.receivedAt >= (mistake.dueAt ?? 0) && state.worksheets.some((sheet) => sheet.id === result.worksheetId && sheet.items.some((item) => item.id === result.itemId && item.mistakeId === mistake.id)))).length,
-		total: dueInWindow.length
-	};
-	const causeCounts = /* @__PURE__ */ new Map();
-	for (const mistake of state.mistakes) {
-		if (mistake.confirmedAt === void 0 || mistake.confirmedAt < windowStart || mistake.errorType === void 0) continue;
-		causeCounts.set(mistake.errorType, (causeCounts.get(mistake.errorType) ?? 0) + 1);
-	}
-	const errorCauses = [...causeCounts.entries()].map(([type, count]) => ({
-		type,
-		count
-	})).sort((a, b) => b.count - a.count || a.type.localeCompare(b.type)).slice(0, 3);
-	return {
-		minutesByDay,
-		activeDays: minutesByDay.filter((item) => item.minutes > 0).length,
-		practisedGoals,
-		masteredGoals,
-		newMistakes,
-		consolidatedMistakes,
-		dueCompletion,
-		errorCauses,
-		suggestion: insight.recommendation
-	};
-}
-//#endregion
-//#region lib/types/store.js
-const MAX_BYTES = 8388608;
+//#region lib/types/files/legacy.js
+/** Non-mutating callers clone legacy parsed values before compatibility parsing. Original bytes remain untouched. */
 /**
 * One-time fix for worksheets saved before the place-value rule split borrowing from crossing.
 * A figure that mixed `regroup: 'yes'` with crossed dots had its crosses dropped; the subtraction
@@ -4032,83 +4164,1942 @@ function migrateStudyFile(parsed) {
 	}
 	return next;
 }
-const stateCache = /* @__PURE__ */ new Map();
+//#endregion
+//#region lib/types/files/schema.js
+/** Strict official Student files. Entity identity is independent of file observation and business revision. */
+const id = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u);
+const text = z.string().min(1).max(2e3);
+const time = z.number().int().nonnegative().max(864e13);
+const subject = z.enum([
+	"chinese",
+	"math",
+	"english"
+]);
+const termId = id.transform((value) => value);
+const blockId = id.transform((value) => value);
+const worksheetId = id.transform((value) => value);
+const responseId = id.transform((value) => value);
+const base = {
+	format: z.literal(2),
+	termId
+};
+const scope = stateSchema.shape.sessions.element.shape.scope.unwrap();
+/** Known assistance and unknown assistance remain separate from correctness. */
+const assistanceSchema = z.enum([
+	"independent",
+	"hint",
+	"worked-example",
+	"unknown"
+]);
+const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u).refine((value) => {
+	const parsed = Date.parse(`${value}T00:00:00+08:00`);
+	return Number.isFinite(parsed) && new Date(parsed + 288e5).toISOString().slice(0, 10) === value;
+}, "Use an actual calendar date.");
+/** Actual answer time; parent day precision never supplies a within-day order. */
+const answerDateSchema = z.discriminatedUnion("kind", [
+	z.object({ kind: z.literal("unknown") }).strict(),
+	z.object({
+		kind: z.literal("day"),
+		day,
+		parentConfirmation: text
+	}).strict(),
+	z.object({
+		kind: z.literal("instant"),
+		at: time,
+		basis: z.enum(["native-input", "current-manual"]),
+		sourceVersion: text
+	}).strict()
+]);
+/** Native input version or preserved source; missing receipt matching is explicitly unknown. */
+const responseSourceSchema = z.discriminatedUnion("kind", [
+	z.object({ kind: z.literal("unknown") }).strict(),
+	z.object({
+		kind: z.literal("native"),
+		sessionId: text,
+		messageId: text,
+		inputVersion: text,
+		receiptAt: time.optional(),
+		attachments: z.array(text).max(8).optional()
+	}).strict(),
+	z.object({
+		kind: z.literal("paper"),
+		imagePaths: z.array(text).max(8),
+		parentConfirmation: text
+	}).strict(),
+	z.object({
+		kind: z.literal("manual"),
+		entry: z.enum(["current", "historical"]),
+		parentConfirmation: text
+	}).strict(),
+	z.object({
+		kind: z.literal("legacy"),
+		sourcePath: text,
+		row: text
+	}).strict()
+]);
+const target = z.union([id, z.object({
+	kind: z.literal("pending"),
+	reason: text
+}).strict()]);
+/** Published question source, including unresolved legacy material. */
+const questionSourceSchema = z.discriminatedUnion("kind", [
+	z.object({
+		kind: z.literal("authored"),
+		description: text
+	}).strict(),
+	z.object({
+		kind: z.literal("exercise"),
+		exerciseId: id,
+		description: text
+	}).strict(),
+	z.object({
+		kind: z.literal("mistake"),
+		mistakeId: id,
+		description: text
+	}).strict(),
+	z.object({
+		kind: z.literal("legacy"),
+		sourcePath: text,
+		row: text
+	}).strict()
+]);
+/** Published question content reused by blocks and worksheets, including every supported figure. */
+const questionSchema = z.object({
+	id,
+	objectiveId: target,
+	mistakeId: id.optional(),
+	source: questionSourceSchema,
+	topic: text,
+	prompt: text,
+	answer: text,
+	explanation: text,
+	answerEvidence: text,
+	basisStatus: z.literal("legacy-pending").optional(),
+	choices: z.array(text).min(2).max(4).optional(),
+	steps: z.array(text.max(240)).min(2).max(5).optional(),
+	figure: figureSchema.optional(),
+	phase: phaseSchema.optional(),
+	variant: variantSchema.optional(),
+	space: z.enum([
+		"none",
+		"line",
+		"lines",
+		"box"
+	]).optional()
+}).strict();
+/** Original learner wording and its actual date; assessments cannot replace these fields. */
+const responseSchema = z.object({
+	id: responseId,
+	questionId: id,
+	rawResponse: text,
+	response: text.optional(),
+	assistance: assistanceSchema,
+	assistanceConfirmation: text.optional(),
+	answerDate: answerDateSchema.optional(),
+	source: responseSourceSchema
+}).strict();
+/** The current assessment of one response. A correction replaces this entry under the same response identity. */
+const assessmentSchema = z.object({
+	id,
+	responseId,
+	result: z.enum([
+		"correct",
+		"partial",
+		"incorrect",
+		"unassessed",
+		"stuck"
+	]),
+	assistance: assistanceSchema,
+	feedback: text,
+	answerEvidence: text,
+	assessedAt: time,
+	correctedAt: time.optional(),
+	userConfirmation: text.optional(),
+	errorType: errorTypeSchema.optional()
+}).strict();
+const pending = z.object({
+	sourcePath: text,
+	row: text,
+	fields: z.array(text).min(1).max(20),
+	reason: text
+}).strict();
+/** One term owns profile, material, course and compound school-progress settings. */
+const termSettingsSchema = z.object({
+	...base,
+	kind: z.literal("term-settings"),
+	revision: time,
+	updatedAt: time,
+	profile: stateSchema.shape.profile.extend({ parentConfirmation: text }),
+	materials: stateSchema.shape.materials,
+	courses: z.array(stateSchema.shape.courses.element.extend({ parentConfirmation: text })).max(3),
+	interests: stateSchema.shape.interests,
+	openmaic: stateSchema.shape.openmaic,
+	archivedAt: time.optional(),
+	migration: z.object({
+		sourcePath: text,
+		sourceSha256: z.string().regex(/^[a-f0-9]{64}$/u),
+		backupPath: text
+	}).strict().optional()
+}).strict();
+/** One block owns its historical course context, questions, responses, hints and assessments. */
+const blockSchema = z.object({
+	...base,
+	kind: z.literal("block"),
+	id: blockId,
+	subject,
+	mode: stateSchema.shape.sessions.element.shape.mode,
+	intensity: stateSchema.shape.sessions.element.shape.intensity,
+	startedAt: time,
+	endedAt: time.optional(),
+	spentMs: time.optional(),
+	reflection: z.string().max(2e3).optional(),
+	context: z.object({
+		profile: stateSchema.shape.profile.optional(),
+		pendingProfile: text.optional(),
+		scope: scope.optional(),
+		material: stateSchema.shape.materials.element.optional()
+	}).strict(),
+	currentQuestionId: id.optional(),
+	questions: z.array(questionSchema).max(200),
+	responses: z.array(responseSchema).max(500),
+	currentResponseId: responseId.optional(),
+	hints: z.array(z.object({
+		questionId: id,
+		responseId: responseId.optional(),
+		level: z.number().int().min(1).max(3),
+		at: time
+	}).strict()).max(500),
+	stuckSignals: z.array(z.object({
+		questionId: id,
+		at: time
+	}).strict()).max(200).optional(),
+	assessments: z.array(assessmentSchema).max(500),
+	pendingLegacy: z.array(pending).max(500).optional()
+}).strict();
+/** One worksheet owns frozen question targets, photo drafts and all confirmed workbook outcomes. */
+const worksheetSchema = z.object({
+	...base,
+	kind: z.literal("worksheet"),
+	id: worksheetId,
+	subject,
+	worksheetKind: sheetKindSchema.optional(),
+	origin: z.enum(["prepared", "workbook"]),
+	createdAt: time,
+	discardedAt: time.optional(),
+	context: z.object({
+		profile: stateSchema.shape.profile.optional(),
+		pendingProfile: text.optional(),
+		scope: scope.optional()
+	}).strict(),
+	answerDate: answerDateSchema.optional(),
+	items: z.array(questionSchema).min(1).max(8),
+	responses: z.array(responseSchema).max(500),
+	assessments: z.array(assessmentSchema).max(500),
+	drafts: z.array(z.object({
+		id,
+		questionId: id,
+		response: text,
+		result: assessmentSchema.shape.result,
+		assistance: assistanceSchema,
+		confidence: z.enum(["high", "low"]),
+		uncertainties: z.string().max(2e3),
+		imagePaths: z.array(text).max(8),
+		receivedAt: time
+	}).strict()).max(500),
+	pendingLegacy: z.array(pending).max(500).optional()
+}).strict();
+/** Bounded non-block collections; mistakes, teaching and curriculum extensions retain explicit ownership. */
+const collectionsSchema = z.object({
+	...base,
+	kind: z.literal("collections"),
+	mistakes: z.array(stateSchema.shape.mistakes.element.omit({
+		stage: true,
+		independentDays: true,
+		dueAt: true
+	})).max(5e3),
+	exercises: stateSchema.shape.exercises,
+	concepts: stateSchema.shape.concepts,
+	objectives: stateSchema.shape.objectives,
+	relations: stateSchema.shape.relations,
+	teachingQueue: stateSchema.shape.teachingQueue,
+	rewards: stateSchema.shape.rewards,
+	pendingLegacy: z.array(pending).max(5e3).optional()
+}).strict();
+/** Machine-readable file definitions shared by CLI, application reads and manual saves. */
+const officialFileSchemas = {
+	"term-settings": termSettingsSchema,
+	block: blockSchema,
+	worksheet: worksheetSchema,
+	collections: collectionsSchema
+};
+//#endregion
+//#region lib/types/files/validation.js
+/** Pure parsed-file and cross-entity validation, shared by every Student consumer. */
 /**
-* Read or update .study/state.json in the calling Session's filesystem.
-* Reads preserve absence; writes require the observed version and current sandbox policy.
-* A competing writer causes an error, never an automatic replay of learning evidence.
-* Archiving validates the revision and command before writing; archive creation and state
-* replacement remain separate writes, so a later filesystem failure can leave an archive.
-* Parsed states are cached per observed file version, so unchanged reads skip re-reading
-* and re-validating the file; any write or external change drops the cache entry.
-* @param exec - calling agent and cancellation signal.
-* @param command - optional learning update; omission reads the current state.
-* @param expectedRevision - revision observed by a submitting panel, checked before writing.
-* @returns the current or updated state, or undefined before setup or after a saved archive is read.
+* Validate parsed official files and available previously validated versions.
+* @param input - discovered current files with exact workspace-relative paths.
+* @param prior - preserved valid file versions for used-content comparison.
+* @param nativeSources - matching consumed input versions resolved from native Session records.
+* @returns bounded issues and independently valid workspace entities.
 */
-async function studyStore(exec, command, expectedRevision) {
-	const agent = exec.agent;
-	if (!agent?.session.header.cwd) throw new Error("请先在 DSH 中打开学习工作区。");
-	exec.signal.throwIfAborted();
-	const fs = agent.ctx.get("fs");
-	const policy = agent.ctx.get("sandboxPolicy");
-	if (!fs || !policy) throw new Error("学生插件需要 DSH 文件系统和沙箱策略服务。");
-	const cwd = agent.session.header.cwd;
-	const root = await fs.resolve(cwd, { signal: exec.signal });
-	const target = await fs.resolve(".study/state.json", {
-		cwd,
-		signal: exec.signal
-	});
-	if (!fs.contains(root, target)) throw new Error("学习档案必须位于当前工作区内。");
-	const before = await fs.stat(target, exec.signal);
-	let state;
-	if (before) {
-		if (before.type !== "file") throw new Error(".study/state.json 必须是普通文件。");
-		const cached = stateCache.get(target);
-		if (cached && cached.version === before.version) state = cached.state;
-		else {
-			const bytes = await fs.readBytes(target, exec.signal, MAX_BYTES);
-			const after = await fs.stat(target, exec.signal);
-			if (after?.version !== before.version) throw new Error("学习档案已更新，请查询最新状态后重试。");
-			const parsed = stateSchema.parse(migrateStudyFile(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes))));
-			state = parsed.archivedAt !== void 0 ? void 0 : scheduleMistakes(parsed);
-			if (state !== void 0) {
-				if (stateCache.size >= 8) stateCache.clear();
-				stateCache.set(target, {
-					version: after?.version ?? before.version,
-					state
-				});
+function validateStudyFiles(input, prior = [], nativeSources = []) {
+	const issues = [];
+	const files = [];
+	const paths = /* @__PURE__ */ new Set();
+	const fail = (path, field, rule, correction) => {
+		if (issues.length < 100) issues.push({
+			path,
+			field: field.slice(0, 240),
+			rule,
+			correction: correction.slice(0, 500)
+		});
+	};
+	for (const entry of input) {
+		if (paths.has(entry.path)) fail(entry.path, "", "duplicate-file", "Supply one current file per path.");
+		paths.add(entry.path);
+		const raw = z.object({
+			kind: z.string(),
+			format: z.number()
+		}).passthrough().safeParse(entry.value);
+		if (!raw.success) {
+			fail(entry.path, "", "schema", "Save an official JSON object with format and kind.");
+			continue;
+		}
+		const schema = Object.hasOwn(officialFileSchemas, raw.data.kind) ? officialFileSchemas[raw.data.kind] : void 0;
+		if (!schema) {
+			fail(entry.path, "kind", "file-kind", "Use term-settings, block, worksheet or collections.");
+			continue;
+		}
+		const parsed = schema.safeParse(entry.value);
+		if (!parsed.success) {
+			for (const issue of parsed.error.issues) fail(entry.path, issue.path.join("."), raw.data.format > 2 ? "future-format" : "schema", issue.message);
+			continue;
+		}
+		const file = parsed.data;
+		const expected = file.kind === "term-settings" ? ".study/settings.json" : file.kind === "collections" ? ".study/collections.json" : `.study/${file.kind === "block" ? "blocks" : "worksheets"}/${file.id}.json`;
+		if (entry.path !== expected) fail(entry.path, "id", "file-membership", `Place this ${file.kind} at ${expected}.`);
+		files.push({
+			path: entry.path,
+			file
+		});
+	}
+	const settings = files.find((entry) => entry.file.kind === "term-settings")?.file;
+	if (!settings || settings.kind !== "term-settings") {
+		fail(".study/settings.json", "", "missing-settings", "Create valid term settings before publishing other entities.");
+		return {
+			valid: false,
+			issues,
+			files
+		};
+	}
+	const blocks = files.flatMap((entry) => entry.file.kind === "block" ? [entry.file] : []);
+	const worksheets = files.flatMap((entry) => entry.file.kind === "worksheet" ? [entry.file] : []);
+	if (blocks.length > 5e3) fail(".study/blocks", "", "collection-limit", "Keep at most 5,000 block files in this term.");
+	if (worksheets.length > 500) fail(".study/worksheets", "", "collection-limit", "Keep at most 500 worksheet files in this term.");
+	const collections = files.find((entry) => entry.file.kind === "collections")?.file;
+	const workspace = {
+		settings,
+		blocks,
+		worksheets,
+		nativeSources,
+		...collections?.kind === "collections" ? { collections } : {}
+	};
+	const unique = (path, field, rows) => {
+		const seen = /* @__PURE__ */ new Set();
+		rows.forEach((row, index) => {
+			if (seen.has(row.id)) fail(path, `${field}.${index}.id`, "duplicate-identity", "Keep one entry per stable identity; use a new identity for a new attempt.");
+			seen.add(row.id);
+		});
+	};
+	unique(".study/settings.json", "materials", settings.materials);
+	if (new Set(settings.courses.map((course) => course.subject)).size !== settings.courses.length) fail(".study/settings.json", "courses", "duplicate-subject", "Keep one course per subject.");
+	for (const course of settings.courses) {
+		const material = settings.materials.find((item) => item.id === course.materialId);
+		if (!material || material.subject !== course.subject || material.editionStatus !== "identified" || !["official-textbook", "school-material"].includes(material.kind)) fail(".study/settings.json", "courses", "course-material", "Reference an identified school material of the same subject.");
+		if (course.progress && !curriculumFor(settings.profile, course.subject)?.units.some((unit) => unit.id === course.progress?.unitId)) fail(".study/settings.json", "courses.progress.unitId", "school-progress", "Confirm a unit in the current knowledge map.");
+	}
+	if (blocks.filter((block) => block.endedAt === void 0).length > 1) fail(".study/blocks", "", "active-block", "End the previous block before starting another; retain its pending responses.");
+	for (const { path, file } of files) {
+		if (file.termId !== settings.termId) fail(path, "termId", "term-identity", "Use the current term identity or preserve this entity in its original archive.");
+		if (file.kind === "collections") {
+			for (const field of [
+				"mistakes",
+				"exercises",
+				"concepts",
+				"objectives",
+				"relations",
+				"teachingQueue"
+			]) unique(path, field, file[field]);
+			for (const objective of file.objectives) if (!customObjectiveMethods[objective.subject].some((method) => method === objective.method) || new Set(objective.conceptIds).size !== objective.conceptIds.length || !objective.conceptIds.every((id) => file.concepts.some((concept) => concept.id === id && concept.subject === objective.subject && concept.confirmedAt !== void 0 && concept.userConfirmation))) fail(path, "objectives", "confirmed-goal", "Reference distinct confirmed concepts of this subject and use an allowed learning method.");
+			for (const relation of file.relations) {
+				const from = file.concepts.find((concept) => concept.id === relation.fromId);
+				const to = file.concepts.find((concept) => concept.id === relation.toId);
+				if (!from || !to || from.id === to.id || from.subject !== to.subject || from.confirmedAt === void 0 || to.confirmedAt === void 0 || !from.userConfirmation || !to.userConfirmation) fail(path, "relations", "concept-reference", "Reference two distinct confirmed concepts of the same subject.");
+			}
+			for (const mistake of file.mistakes) {
+				if (mistake.errorType && !errorTypesBySubject[mistake.subject].includes(mistake.errorType)) fail(path, "mistakes.errorType", "subject-cause", "Use a cause belonging to the mistake subject.");
+				if (mistake.confirmedAt !== void 0 && (!mistake.userConfirmation || mistake.uncertainties !== "")) fail(path, "mistakes", "mistake-confirmation", "Retain a parent statement and resolve transcription uncertainty before confirmation.");
+			}
+			continue;
+		}
+		if (file.kind !== "block" && file.kind !== "worksheet") continue;
+		const questions = file.kind === "block" ? file.questions : file.items;
+		unique(path, "questions", questions);
+		unique(path, "responses", file.responses);
+		unique(path, "assessments", file.assessments);
+		if (new Set(file.assessments.map((item) => item.responseId)).size !== file.assessments.length) fail(path, "assessments", "one-assessment-per-response", "Correct the existing assessment instead of adding another for the same response.");
+		if (file.kind === "block" && file.currentQuestionId && !questions.some((item) => item.id === file.currentQuestionId)) fail(path, "currentQuestionId", "question-reference", "Reference a saved question in this block.");
+		if (file.kind === "block" && file.currentResponseId && !file.responses.some((response) => response.id === file.currentResponseId && response.questionId === file.currentQuestionId)) fail(path, "currentResponseId", "response-reference", "Select a saved response to the current question in this block.");
+		if (!file.context.profile && !file.context.pendingProfile) fail(path, "context.profile", "historical-profile", "Save the historical profile, or explicitly retain a pending legacy profile source.");
+		if (file.context.pendingProfile && !settings.migration) fail(path, "context.pendingProfile", "legacy-profile-source", "Pending historical profiles require a preserved migration source.");
+		if (file.kind === "block" && file.mode === "school" && !file.context.pendingProfile && (!file.context.profile || !file.context.material || !sameScope(file.context.profile, file.context.material.scope))) fail(path, "context.material", "historical-course", "Save the confirmed compatible course context for this school block.");
+		if (file.kind === "block" && file.mode === "school" && file.startedAt >= settings.updatedAt) {
+			const course = settings.courses.find((course) => course.subject === file.subject);
+			const material = settings.materials.find((material) => material.id === course?.materialId);
+			if (!file.context.pendingProfile && (!file.context.profile || !material || !sameScope(settings.profile, material.scope) || !sameScope(settings.profile, file.context.profile) || file.context.material?.id !== material.id)) fail(path, "context.material", "future-course-confirmation", "Confirm a course compatible with the current profile before starting a future school block.");
+		}
+		for (const [i, question] of questions.entries()) {
+			if (question.basisStatus && question.source.kind !== "legacy") fail(path, `questions.${i}.basisStatus`, "legacy-basis-source", "Unresolved answer bases belong only to preserved legacy questions.");
+			if (typeof question.objectiveId !== "string") {
+				if (question.source.kind !== "legacy") fail(path, `questions.${i}.objectiveId`, "pending-target", "Only preserved legacy questions may carry an unresolved target.");
+				continue;
+			}
+			const builtin = builtinObjectiveAnywhere(question.objectiveId);
+			const custom = workspace.collections?.objectives.find((item) => item.id === question.objectiveId);
+			const goal = builtin ?? custom;
+			if (!goal || goal.subject !== file.subject) fail(path, `questions.${i}.objectiveId`, "subject-target", "Reference a saved or shipped learning goal of this subject.");
+			if (file.context.scope && (!goal || !scopeSelects(file.context.scope, file.subject, builtin?.unit ?? "", question.objectiveId))) fail(path, `questions.${i}.objectiveId`, "effective-scope", "Publish a question inside the explicitly selected scope.");
+			if (question.source.kind === "exercise") {
+				const sourceId = question.source.exerciseId;
+				if (![...workspace.collections?.exercises ?? [], ...subjectExercises(file.subject)].some((item) => item.id === sourceId && item.objectiveId === question.objectiveId)) fail(path, `questions.${i}.source`, "exercise-source", "Reference a saved or shipped exercise for this goal.");
+			}
+		}
+		for (const [i, response] of file.responses.entries()) {
+			const question = questions.find((item) => item.id === response.questionId);
+			if (!question) fail(path, `responses.${i}.questionId`, "question-reference", "Save the referenced question before its original answer.");
+			if (question?.phase === "demo" && response.assistance !== "worked-example") fail(path, `responses.${i}.assistance`, "demonstration", "A real response to a demonstration carries worked-example assistance.");
+			if (response.answerDate?.kind === "instant" && response.answerDate.basis === "native-input" && (response.source.kind !== "native" || response.source.receiptAt !== response.answerDate.at || response.source.inputVersion !== response.answerDate.sourceVersion)) fail(path, `responses.${i}.answerDate`, "native-input-version", "Use the matching consumed native input version and receipt time, or retain an unknown date.");
+			if (response.answerDate?.kind === "instant" && response.answerDate.basis === "current-manual" && (response.source.kind !== "manual" || response.source.entry !== "current")) fail(path, `responses.${i}.answerDate`, "current-manual-source", "Use a confirmed current manual response; historical and paper entry retain day precision or an unknown date.");
+			if (file.kind === "worksheet" && file.answerDate?.kind === "instant") fail(path, "answerDate", "worksheet-date-precision", "Use a parent-confirmed calendar date for a worksheet-wide date.");
+			if (file.kind === "block" && file.hints.some((hint) => hint.questionId === response.questionId && (hint.responseId === response.id || response.answerDate?.kind === "instant" && hint.at <= response.answerDate.at)) && !["hint", "worked-example"].includes(response.assistance)) fail(path, `responses.${i}.assistance`, "known-help", "Preserve the help used for this response.");
+		}
+		for (const [i, assessment] of file.assessments.entries()) {
+			const response = file.responses.find((item) => item.id === assessment.responseId);
+			if (!response) fail(path, `assessments.${i}.responseId`, "response-reference", "Save the original learner response before assessment.");
+			if (response && assessment.assistance !== response.assistance) fail(path, `assessments.${i}.assistance`, "assistance-association", "Keep assessment assistance consistent with the saved response.");
+			if (file.kind === "worksheet" && !assessment.userConfirmation) fail(path, `assessments.${i}.userConfirmation`, "parent-confirmation", "Record the parent statement confirming this paper result.");
+		}
+		if (file.kind === "worksheet") {
+			unique(path, "drafts", file.drafts);
+			for (const draft of file.drafts) if (!questions.some((question) => question.id === draft.questionId)) fail(path, "drafts.questionId", "question-reference", "Retain the published question used by transcription.");
+		}
+		for (const old of prior.filter((entry) => entry.path === path && entry.file.kind === file.kind)) {
+			if (old.file.kind !== "block" && old.file.kind !== "worksheet") continue;
+			if (old.file.termId !== file.termId || old.file.id !== file.id) {
+				fail(path, "id", "identity-reuse", "Preserve term and entity identity at this path.");
+				continue;
+			}
+			const oldQuestions = old.file.kind === "block" ? old.file.questions : old.file.items;
+			if ((old.file.responses.length > 0 || old.file.kind === "worksheet" && old.file.drafts.length > 0) && canonical(old.file.context) !== canonical(file.context)) fail(path, "context", "historical-context", "Preserve the historical profile, material and selected scope used by these responses.");
+			for (const question of oldQuestions) if ((old.file.responses.some((response) => response.questionId === question.id) || old.file.kind === "worksheet" && old.file.drafts.some((draft) => draft.questionId === question.id)) && canonical(question) !== canonical(questions.find((item) => item.id === question.id))) fail(path, "questions", "frozen-content", "Retain used question content and target; publish replacements under a new identity.");
+			for (const response of old.file.responses) {
+				const current = file.responses.find((item) => item.id === response.id);
+				const { assistance: oldHelp, assistanceConfirmation: _oldConfirmation, answerDate: oldDate, ...original } = response;
+				const { assistance: newHelp, assistanceConfirmation: newConfirmation, answerDate: newDate, ...comparable } = current ?? response;
+				const helpChanged = newHelp !== oldHelp && !(oldHelp === "unknown" && newConfirmation);
+				const dateChanged = canonical(oldDate) !== canonical(newDate) && !(oldDate?.kind !== "instant" && newDate?.kind === "day" && newDate.parentConfirmation);
+				if (!current || canonical(comparable) !== canonical(original) || helpChanged || dateChanged) fail(path, "responses", "original-response", "Preserve original response identity and wording; confirm unknown help or actual paper dates explicitly and correct assessment separately.");
 			}
 		}
 	}
-	if (command === void 0) return state;
-	const archive = archiveTermSchema.safeParse(command);
-	if (archive.success && !state) throw new Error("请先建立学习档案，再归档学期。");
-	if (expectedRevision !== void 0 && expectedRevision !== (state?.revision ?? 0)) throw new StudyConflict();
-	const next = updateStudy(state, command, Date.now());
-	if (next === state) return state;
-	if (archive.success && state) {
-		const name = `.study/archive-${state.profile.schoolYear.replace(/[^a-zA-Z0-9_-]/gu, "-")}-${state.profile.term}.json`;
-		const archiveTarget = await fs.resolve(name, {
-			cwd,
-			signal: exec.signal
-		});
-		if (!fs.contains(root, archiveTarget)) throw new Error("归档文件必须位于当前工作区内。");
-		if (await fs.stat(archiveTarget, exec.signal)) throw new Error(`归档文件已存在：${name}。请先移走旧归档再归档本学期。`);
-		await fs.writeText(archiveTarget, `${JSON.stringify(state, null, 2)}\n`, { kind: "createIfAbsent" }, exec.signal, policy.resolve({ session: agent.session }));
+	const affected = (path) => issues.some((issue) => issue.path === path || path.startsWith(`${issue.path}/`));
+	if (affected(".study/collections.json")) {
+		for (const file of [...blocks, ...worksheets]) if ((file.kind === "block" ? file.questions : file.items).some((question) => typeof question.objectiveId === "string" && !builtinObjectiveAnywhere(question.objectiveId))) fail(`.study/${file.kind === "block" ? "blocks" : "worksheets"}/${file.id}.json`, "objectiveId", "invalid-target-source", "Repair the referenced custom-goal collection before using this entity.");
 	}
-	const stored = {
-		...next,
-		mistakes: next.mistakes.map(({ stage: _stage, independentDays: _days, dueAt: _due, ...mistake }) => mistake)
+	const partial = affected(".study/settings.json") ? void 0 : {
+		settings,
+		nativeSources,
+		blocks: blocks.filter((block) => !affected(`.study/blocks/${block.id}.json`)),
+		worksheets: worksheets.filter((sheet) => !affected(`.study/worksheets/${sheet.id}.json`)),
+		...workspace.collections && !affected(".study/collections.json") ? { collections: workspace.collections } : {}
 	};
-	const content = `${JSON.stringify(stored, null, 2)}\n`;
-	if (Buffer.byteLength(content) > MAX_BYTES) throw new Error("本学期学习档案已达到 8 MiB 限制，请备份并使用新工作区。");
-	await fs.writeText(target, content, before ? {
-		kind: "replaceIfVersion",
-		version: before.version
-	} : { kind: "createIfAbsent" }, exec.signal, policy.resolve({ session: agent.session }));
-	stateCache.delete(target);
-	return next;
+	return {
+		valid: issues.length === 0,
+		issues,
+		files,
+		...partial ? { workspace: partial } : {}
+	};
+}
+//#endregion
+//#region lib/types/files/recovery.js
+/** Read-only migration, archive and restore descriptions. Agents perform every publication and repair directly. */
+/**
+* Hash original bytes for backup/source verification and recoverable migration identity.
+* @param bytes - exact observed source bytes, before compatibility transformation.
+* @returns their SHA-256 digest.
+*/
+function sourceSha256(bytes) {
+	return createHash("sha256").update(bytes).digest("hex");
+}
+/**
+* Describe a v1 conversion only after verifying a distinct original-byte backup.
+* @param read - freshly observed, non-mutating legacy read.
+* @param backup - independently observed original-byte backup, never an overwritten existing original.
+* @param existing - independently read existing v2 output for interrupted-operation recovery.
+* @returns stable entities, named unsupported facts and explicit partial/conflicting outputs; performs no writes.
+*/
+function describeMigration(read, backup, existing = []) {
+	const source = read.files.find((file) => file.path === ".study/state.json");
+	const hash = source ? sourceSha256(source.bytes) : "";
+	const plan = {
+		status: "blocked",
+		sourceSha256: hash,
+		outputs: [],
+		pending: [],
+		issues: []
+	};
+	if (!source || read.status !== "legacy" || backup.path === source.path || backup.targetKey === source.targetKey || sourceSha256(backup.bytes) !== hash) {
+		plan.issues.push({
+			path: backup.path,
+			field: "",
+			rule: "original-byte-backup",
+			correction: "Preserve a distinct original-byte backup and verify it against the currently observed v1 source."
+		});
+		return plan;
+	}
+	const parsed = stateSchema.safeParse(migrateStudyFile(structuredClone(read.legacy)));
+	if (!parsed.success) {
+		plan.issues.push({
+			path: source.path,
+			field: "",
+			rule: "legacy-schema",
+			correction: "Preserve the original bytes and explicitly repair or review unsupported legacy data."
+		});
+		return plan;
+	}
+	const state = parsed.data;
+	const termId = termSettingsSchema.shape.termId.parse(`legacy-${hash.slice(0, 32)}`);
+	plan.termId = termId;
+	plan.sourceVersion = source.version;
+	plan.backupPath = backup.path;
+	const pending = (row, fields, reason) => {
+		const fact = {
+			sourcePath: source.path,
+			row,
+			fields,
+			reason
+		};
+		plan.pending.push(fact);
+		return fact;
+	};
+	const declarations = z.object({
+		profile: z.object({ parentConfirmation: z.string().optional() }).passthrough(),
+		courses: z.array(z.object({ parentConfirmation: z.string().optional() }).passthrough())
+	}).passthrough().parse(read.legacy);
+	if (!declarations.profile.parentConfirmation?.trim()) pending("profile", ["parentConfirmation"], "The original bytes contain no parent statement; compatibility defaults are not confirmation.");
+	for (const [index, course] of declarations.courses.entries()) if (!course.parentConfirmation?.trim()) pending(`courses.${index}`, ["parentConfirmation"], "The original bytes contain no course confirmation statement.");
+	if (plan.pending.length) {
+		plan.issues.push({
+			path: source.path,
+			field: "parentConfirmation",
+			rule: "legacy-confirmation",
+			correction: "Keep the verified legacy bytes and obtain explicit statements for reviewed v2 settings before conversion."
+		});
+		return plan;
+	}
+	const files = [];
+	files.push({
+		path: ".study/settings.json",
+		file: termSettingsSchema.parse({
+			format: 2,
+			kind: "term-settings",
+			termId,
+			revision: state.revision,
+			updatedAt: state.updatedAt,
+			profile: state.profile,
+			materials: state.materials,
+			courses: state.courses,
+			...state.interests ? { interests: state.interests } : {},
+			...state.openmaic ? { openmaic: state.openmaic } : {},
+			...state.archivedAt !== void 0 ? { archivedAt: state.archivedAt } : {},
+			migration: {
+				sourcePath: source.path,
+				sourceSha256: hash,
+				backupPath: backup.path
+			}
+		})
+	});
+	for (const [i, block] of state.sessions.entries()) {
+		const legacy = [pending(`sessions.${i}`, [
+			"historicalProfile",
+			"nativeSessionId",
+			"resolvedIntent"
+		], "The source has no historical profile snapshot, consumed native input identity or complete resolved intent.")];
+		if (state.attempts.some((attempt) => attempt.sessionId === block.id)) legacy.push(pending(`attempts[sessionId=${block.id}]`, [
+			"publishedQuestionSource",
+			"originalResponseSource",
+			"answerDate",
+			"assistance"
+		], "Flattened assessment text and classification are preserved declarations; grading time does not establish answer time."));
+		if (state.task?.sessionId === block.id) legacy.push(pending("task", [
+			"referenceAnswerSource",
+			"nativeSource",
+			"answerDate",
+			...state.task.hintLevel > 0 ? [] : ["assistance"]
+		], "The current slot retains text and help observations, but lacks a frozen pre-answer basis and consumed native input version."));
+		files.push({
+			path: `.study/blocks/${block.id}.json`,
+			file: blockSchema.parse({
+				format: 2,
+				kind: "block",
+				termId,
+				id: block.id,
+				subject: block.subject,
+				mode: block.mode,
+				...block.intensity ? { intensity: block.intensity } : {},
+				startedAt: block.startedAt,
+				...block.endedAt !== void 0 ? { endedAt: block.endedAt } : {},
+				...block.spentMs !== void 0 ? { spentMs: block.spentMs } : {},
+				...block.reflection !== void 0 ? { reflection: block.reflection } : {},
+				context: {
+					pendingProfile: "The legacy source did not retain the historical profile.",
+					...block.scope ? { scope: block.scope } : {},
+					...block.materialId && state.materials.find((material) => material.id === block.materialId) ? { material: state.materials.find((material) => material.id === block.materialId) } : {}
+				},
+				questions: [],
+				responses: [],
+				hints: [],
+				assessments: [],
+				pendingLegacy: legacy
+			})
+		});
+	}
+	for (const [i, sheet] of state.worksheets.entries()) {
+		const legacy = [];
+		const file = worksheetSchema.parse({
+			format: 2,
+			kind: "worksheet",
+			termId,
+			id: sheet.id,
+			subject: sheet.subject,
+			origin: "prepared",
+			createdAt: sheet.createdAt,
+			...sheet.kind ? { worksheetKind: sheet.kind } : {},
+			...sheet.discardedAt !== void 0 ? { discardedAt: sheet.discardedAt } : {},
+			context: { pendingProfile: "The legacy source did not retain the historical profile." },
+			items: sheet.items.map((item, j) => {
+				const goal = item.objectiveId ?? (item.mistakeId ? void 0 : sheet.objectiveId);
+				if (!goal) legacy.push(pending(`worksheets.${i}.items.${j}`, ["objectiveId", "originalPublicationSource"], "A current mistake classification cannot recover the original worksheet target."));
+				return {
+					...item,
+					objectiveId: goal ?? {
+						kind: "pending",
+						reason: "Original worksheet target requires source review."
+					},
+					topic: item.prompt,
+					source: {
+						kind: "legacy",
+						sourcePath: source.path,
+						row: `worksheets.${i}.items.${j}`
+					}
+				};
+			}),
+			responses: [],
+			assessments: [],
+			drafts: [],
+			pendingLegacy: legacy
+		});
+		for (const [j, draft] of state.paperDrafts.entries()) if (draft.worksheetId === sheet.id) file.drafts.push({
+			id: `legacy-draft-${j}`,
+			questionId: draft.itemId,
+			response: draft.response,
+			result: draft.result,
+			assistance: draft.assistance === "independent" ? "unknown" : draft.assistance,
+			confidence: draft.confidence ?? "low",
+			uncertainties: draft.uncertainties,
+			imagePaths: [],
+			receivedAt: draft.receivedAt
+		});
+		for (const [j, result] of state.paperResults.entries()) if (result.worksheetId === sheet.id) legacy.push(pending(`paperResults.${j}`, [
+			"originalResponseSource",
+			"assistance",
+			"answerDate",
+			"originalContentSource"
+		], "Legacy confirmations and receipt timestamps remain declarations until their original response, help and publication sources are reviewed."));
+		file.pendingLegacy = legacy;
+		files.push({
+			path: `.study/worksheets/${sheet.id}.json`,
+			file
+		});
+	}
+	for (const [i, workbook] of [...state.workbookResults, ...state.workbookDrafts].entries()) {
+		const confirmed = i < state.workbookResults.length ? state.workbookResults[i] : void 0;
+		const worksheetId = `workbook-${workbook.id}`.length <= 80 ? `workbook-${workbook.id}` : `workbook-${sourceSha256(new TextEncoder().encode(workbook.id)).slice(0, 32)}`;
+		const row = confirmed ? `workbookResults.${i}` : `workbookDrafts.${i - state.workbookResults.length}`;
+		const legacy = [pending(row, [
+			"answerDate",
+			"nativeSource",
+			...workbook.objectiveId ? [] : ["objectiveId"],
+			...workbook.outcome === "hinted" ? [] : ["assistance"]
+		], "Original workbook content and combined outcome declarations are retained; receipt/confirmation time is not answer time.")];
+		const assistance = workbook.outcome === "hinted" && confirmed ? "hint" : "unknown";
+		const file = worksheetSchema.parse({
+			format: 2,
+			kind: "worksheet",
+			termId,
+			id: worksheetId,
+			subject: workbook.subject,
+			origin: "workbook",
+			createdAt: workbook.receivedAt,
+			context: { pendingProfile: "The legacy source did not retain the historical profile." },
+			items: [{
+				id: "q1",
+				objectiveId: workbook.objectiveId ?? {
+					kind: "pending",
+					reason: "Workbook target requires confirmation."
+				},
+				topic: workbook.prompt,
+				prompt: workbook.prompt,
+				...!confirmed?.correction || !confirmed.explanation || !confirmed.answerEvidence ? { basisStatus: "legacy-pending" } : {},
+				answer: confirmed?.correction ?? "Legacy reference answer requires confirmation.",
+				explanation: confirmed?.explanation ?? "Legacy explanation requires confirmation.",
+				answerEvidence: confirmed?.answerEvidence ?? "Legacy answer basis requires confirmation.",
+				source: {
+					kind: "legacy",
+					sourcePath: source.path,
+					row
+				}
+			}],
+			responses: confirmed && workbook.response ? [{
+				id: workbook.id,
+				questionId: "q1",
+				rawResponse: workbook.response,
+				assistance,
+				answerDate: { kind: "unknown" },
+				source: {
+					kind: "legacy",
+					sourcePath: source.path,
+					row
+				}
+			}] : [],
+			assessments: confirmed && workbook.response ? [{
+				id: `assessment-${sourceSha256(new TextEncoder().encode(workbook.id)).slice(0, 24)}`,
+				responseId: workbook.id,
+				result: workbook.outcome === "hinted" || workbook.outcome === "independent-correct" ? "correct" : workbook.outcome === "independent-wrong" ? "incorrect" : "stuck",
+				assistance,
+				feedback: confirmed.explanation ?? workbook.outcome,
+				answerEvidence: confirmed.answerEvidence ?? "Legacy answer basis requires confirmation.",
+				assessedAt: confirmed.confirmedAt,
+				userConfirmation: confirmed.userConfirmation
+			}] : [],
+			drafts: !confirmed ? [{
+				id: workbook.id,
+				questionId: "q1",
+				response: workbook.response ?? "Original response unavailable.",
+				result: "unassessed",
+				assistance: "unknown",
+				confidence: "low",
+				uncertainties: workbook.uncertainties,
+				imagePaths: workbook.imagePath ? [workbook.imagePath] : [],
+				receivedAt: workbook.receivedAt
+			}] : [],
+			pendingLegacy: legacy
+		});
+		files.push({
+			path: `.study/worksheets/${worksheetId}.json`,
+			file
+		});
+	}
+	if (state.attempts.some((attempt) => !state.sessions.some((block) => block.id === attempt.sessionId))) pending("attempts[missing owning block]", [
+		"owningBlock",
+		"publishedQuestionSource",
+		"answerDate",
+		"assistance"
+	], "No saved owning block establishes these flattened legacy associations.");
+	files.push({
+		path: ".study/collections.json",
+		file: collectionsSchema.parse({
+			format: 2,
+			kind: "collections",
+			termId,
+			mistakes: state.mistakes.map(({ stage: _stage, independentDays: _days, dueAt: _due, ...mistake }) => mistake),
+			exercises: state.exercises,
+			concepts: state.concepts,
+			objectives: state.objectives,
+			relations: state.relations,
+			teachingQueue: state.teachingQueue,
+			rewards: state.rewards,
+			pendingLegacy: plan.pending.slice(0, 5e3)
+		})
+	});
+	const validation = validateStudyFiles(files.map(({ path, file }) => ({
+		path,
+		value: file
+	})));
+	plan.issues.push(...validation.issues);
+	plan.outputs = files.map(({ path, file }) => {
+		const prior = existing.find((entry) => entry.path === path);
+		return {
+			path,
+			file,
+			status: prior ? canonical(prior.file) === canonical(file) ? "already-valid" : "conflict" : "missing"
+		};
+	});
+	plan.status = validation.valid && !plan.outputs.some((output) => output.status === "conflict") ? "ready" : "partial";
+	return plan;
+}
+/** A validated observed-version backup, separate from business authority. */
+const backupSchema = z.object({
+	format: z.literal(1),
+	kind: z.literal("observed-version"),
+	sourcePath: z.string().max(240),
+	targetKey: z.string().max(2e3),
+	version: z.string().max(2e3),
+	observedAt: z.number().int().nonnegative(),
+	sha256: z.string().regex(/^[a-f0-9]{64}$/u),
+	bytesBase64: z.string().max(11184812)
+}).strict();
+const backupCache = /* @__PURE__ */ new Map();
+/**
+* Inspect existing backup candidates without restoring or deleting original invalid files.
+* @param fs - read-capable workspace adapter.
+* @param signal - cancellation signal.
+* @returns byte-verified backup records and bounded per-file failures.
+*/
+async function readBackups(fs, signal) {
+	const backups = [];
+	const issues = [];
+	const entries = await fs.list(".study/backups", signal);
+	if (entries.length > 128) issues.push({
+		path: ".study/backups",
+		field: "",
+		rule: "backup-count",
+		correction: "Inspect and explicitly remove excess external backup files; the application retains at most 128."
+	});
+	let total = 0;
+	for (const entry of entries.slice(0, 128)) {
+		const path = `.study/backups/${entry.name}`;
+		try {
+			const observation = await fs.stat(path, signal);
+			if (!observation || observation.type !== "file") throw new Error("A backup must be a regular file.");
+			const cached = backupCache.get(observation.targetKey);
+			const backup = cached?.version === observation.version ? cached.backup : backupSchema.parse(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(await fs.read(path, signal, 12e6))));
+			if ((await fs.stat(path, signal))?.version !== observation.version) throw new Error("The backup changed while reading; inspect it again.");
+			if (sourceSha256(Buffer.from(backup.bytesBase64, "base64")) !== backup.sha256) throw new Error("Backup bytes do not match their recorded digest.");
+			total += Buffer.byteLength(backup.bytesBase64, "base64");
+			if (total > 33554432) throw new Error("Retained backup source bytes exceed the 32 MiB limit.");
+			if (backupCache.size >= 128) backupCache.delete(backupCache.keys().next().value ?? "");
+			while ([...backupCache.values()].reduce((sum, entry) => sum + entry.backup.bytesBase64.length, backup.bytesBase64.length) > 44739248 && backupCache.size > 0) backupCache.delete(backupCache.keys().next().value ?? "");
+			backupCache.set(observation.targetKey, {
+				version: observation.version,
+				backup
+			});
+			backups.push({
+				path,
+				backup
+			});
+		} catch (error) {
+			if (signal.aborted) throw error;
+			issues.push({
+				path,
+				field: "",
+				rule: "backup-verification",
+				correction: error instanceof Error ? error.message : "Preserve and inspect the invalid backup."
+			});
+		}
+	}
+	return {
+		backups,
+		issues
+	};
+}
+/**
+* Retain observed valid source bytes with three versions per entity, 128 files and 32 MiB total.
+* @param fs - application adapter with guarded backup writes and deletion.
+* @param read - current consistent validated read; invalid originals are never replaced.
+* @param now - observation clock, distinct from answer time.
+* @param signal - cancellation signal.
+* @returns verified retained candidates and explicit backup failures.
+*/
+async function retainObservedBackups(fs, read, now, signal) {
+	const existing = await readBackups(fs, signal);
+	if (!fs.write || !fs.remove || read.status !== "valid") return existing;
+	const backups = existing.backups.slice();
+	if (existing.issues.length) return existing;
+	for (const source of read.files.filter((file) => file.file)) {
+		const hash = sourceSha256(source.bytes);
+		if (backups.some((entry) => entry.backup.sourcePath === source.path && entry.backup.sha256 === hash)) continue;
+		const backup = {
+			format: 1,
+			kind: "observed-version",
+			sourcePath: source.path,
+			targetKey: source.targetKey,
+			version: source.version,
+			observedAt: now,
+			sha256: hash,
+			bytesBase64: Buffer.from(source.bytes).toString("base64")
+		};
+		const path = `.study/backups/${sourceSha256(new TextEncoder().encode(source.targetKey)).slice(0, 24)}-${hash.slice(0, 24)}.json`;
+		const size = (entry) => Buffer.byteLength(entry.backup.bytesBase64, "base64");
+		while (backups.filter((entry) => entry.backup.sourcePath === source.path).length >= 3 || backups.length >= 128 || backups.reduce((sum, entry) => sum + size(entry), source.bytes.byteLength) > 33554432) {
+			const oldest = backups.filter((entry) => backups.filter((candidate) => candidate.backup.sourcePath === source.path).length >= 3 ? entry.backup.sourcePath === source.path : true).sort((left, right) => left.backup.observedAt - right.backup.observedAt || left.path.localeCompare(right.path))[0];
+			if (!oldest) break;
+			const observed = await fs.stat(oldest.path, signal);
+			if (observed) await fs.remove(oldest.path, observed.version, signal);
+			backups.splice(backups.indexOf(oldest), 1);
+		}
+		try {
+			await fs.write(path, `${JSON.stringify(backup)}\n`, { kind: "createIfAbsent" }, signal);
+			backups.push({
+				path,
+				backup
+			});
+		} catch (error) {
+			if (signal.aborted) throw error;
+			if (!(await readBackups(fs, signal)).backups.some((entry) => entry.path === path && entry.backup.sha256 === hash)) existing.issues.push({
+				path,
+				field: "",
+				rule: "backup-write",
+				correction: error instanceof Error ? error.message : "Inspect whether this backup was saved before retrying."
+			});
+		}
+	}
+	return {
+		backups,
+		issues: existing.issues
+	};
+}
+/**
+* Decode byte-verified backup files for available preserved-version comparison.
+* @param backups - explicitly retained observed-version candidates.
+* @returns strict official source files; malformed backups supply no trusted comparison.
+*/
+function backupVersions(backups) {
+	return backups.flatMap(({ backup }) => {
+		try {
+			const bytes = Buffer.from(backup.bytesBase64, "base64");
+			if (sourceSha256(bytes) !== backup.sha256) return [];
+			const raw = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+			const kind = z.object({ kind: z.enum([
+				"term-settings",
+				"block",
+				"worksheet",
+				"collections"
+			]) }).passthrough().parse(raw).kind;
+			return [{
+				path: backup.sourcePath,
+				file: officialFileSchemas[kind].parse(raw)
+			}];
+		} catch (_error) {
+			return [];
+		}
+	});
+}
+/**
+* Validate a chosen restore candidate against independently read current entities.
+* @param read - current files, including invalid original bytes.
+* @param chosen - explicit user-selected verified backup.
+* @returns destination, preserved-current descriptor and revalidation issues; performs no writes.
+*/
+function describeRestore(read, chosen) {
+	const source = backupVersions([chosen])[0];
+	const current = read.files.find((file) => file.path === chosen.backup.sourcePath);
+	const issues = source ? validateStudyFiles([...read.files.filter((file) => file.path !== source.path && file.file).map((file) => ({
+		path: file.path,
+		value: file.file
+	})), {
+		path: source.path,
+		value: source.file
+	}]).issues : [{
+		path: chosen.path,
+		field: "",
+		rule: "backup-verification",
+		correction: "Choose a byte-verified strict official backup."
+	}];
+	return {
+		status: issues.length === 0 ? "available" : "blocked",
+		destinationPath: chosen.backup.sourcePath,
+		backupPath: chosen.path,
+		sourceSha256: chosen.backup.sha256,
+		...current ? { preserveCurrent: {
+			path: current.path,
+			version: current.version,
+			sha256: sourceSha256(current.bytes)
+		} } : {},
+		issues
+	};
+}
+/**
+* Inspect a partial term archive without recreating an existing valid export or changing the active term.
+* @param source - observed source term.
+* @param archive - independently read exported term directory.
+* @param active - current active term after the separate replacement step.
+* @returns stable archive identity, missing outputs and explicit partial outcome.
+*/
+function describeArchive(source, archive, active) {
+	const termId = source.workspace?.settings.termId;
+	if (!termId || !["valid", "archived"].includes(source.status)) return void 0;
+	const missingPaths = source.files.filter((file) => file.file && !archive.files.some((exported) => exported.path === file.path && exported.file && canonical(exported.file) === canonical(file.file))).map((file) => file.path);
+	const conflict = archive.workspace !== void 0 && archive.workspace.settings.termId !== termId;
+	const exported = ["valid", "archived"].includes(archive.status) && missingPaths.length === 0;
+	const retained = active.workspace?.settings.termId === termId && active.status !== "archived";
+	const activeKnown = [
+		"valid",
+		"archived",
+		"missing"
+	].includes(active.status);
+	return {
+		termId,
+		archivePath: `.study/archives/${termId}`,
+		status: conflict ? "conflict" : exported ? !activeKnown ? "export-valid-active-unknown" : retained ? "export-valid-active-retained" : "complete" : "export-needed",
+		missingPaths,
+		issues: [...archive.issues, ...active.issues]
+	};
+}
+//#endregion
+//#region lib/types/files/application.js
+/**
+* Bind official-file reads and guarded manual writes to the calling execution world.
+* @param exec - current registered agent and cancellation signal.
+* @returns filesystem adapter that preserves DSH containment and write policy.
+*/
+function applicationStudyFiles(exec) {
+	const agent = exec.agent;
+	if (!agent?.session.header.cwd) throw new Error("Open a Student workspace before reading its files.");
+	const availableFs = agent.ctx.get("fs");
+	const policy = agent.ctx.get("sandboxPolicy");
+	if (!availableFs || !policy) throw new Error("Student requires the DSH filesystem and sandbox policy services.");
+	const fs = availableFs;
+	const cwd = agent.session.header.cwd;
+	async function target(path, signal) {
+		const root = await fs.resolve(cwd, { signal });
+		const resolved = await fs.resolve(path, {
+			cwd,
+			signal
+		});
+		if (!fs.contains(root, resolved)) throw new Error("学习档案必须位于当前工作区内。");
+		return resolved;
+	}
+	return {
+		async stat(path, signal) {
+			const resolved = await target(path, signal);
+			const info = await fs.stat(resolved, signal);
+			return info ? {
+				...info,
+				targetKey: resolved.targetKey
+			} : void 0;
+		},
+		async list(path, signal) {
+			const resolved = await target(path, signal);
+			if (!await fs.stat(resolved, signal)) return [];
+			return (await fs.listDir(resolved, signal)).map((entry) => ({
+				name: entry.name,
+				type: entry.type
+			}));
+		},
+		async read(path, signal, limit) {
+			return fs.readBytes(await target(path, signal), signal, limit);
+		},
+		async write(path, content, intent, signal) {
+			return (await fs.writeText(await target(path, signal), content, intent, signal, policy.resolve({ session: agent.session }))).version;
+		},
+		async remove(path, version, signal) {
+			await fs.deleteFile(await target(path, signal), { version }, signal, policy.resolve({ session: agent.session }));
+		}
+	};
+}
+//#endregion
+//#region lib/types/files/read.js
+const MAX_FILE_BYTES = 8388608;
+const MAX_TOTAL_BYTES = 33554432;
+const cache = /* @__PURE__ */ new Map();
+/**
+* Read a stable set of official files, checking membership and actual versions on both sides.
+* @param fs - filesystem adapter in the caller's execution world.
+* @param signal - cancels discovery, bounded rereads and byte reads.
+* @param prior - preserved validated versions available for frozen-content checks.
+* @param nativeSources - independently resolved consumed input observations, empty for the read-only CLI.
+* @returns validated facts or an explicit incomplete, invalid or changing result.
+*/
+async function readWorkspace(fs, signal, prior = [], nativeSources = []) {
+	for (let attempt = 0; attempt < 3; attempt += 1) {
+		signal.throwIfAborted();
+		const membership = [];
+		const paths = [".study/settings.json", ".study/collections.json"];
+		const discoveryIssues = [];
+		for (const [path, limit] of [
+			[".study/blocks", 5e3],
+			[".study/worksheets", 500],
+			[".study/archives", 128]
+		]) {
+			const entries = await fs.list(path, signal);
+			if (entries.length > limit) return {
+				status: "invalid",
+				files: [],
+				membership,
+				issues: [{
+					path,
+					field: "",
+					rule: "collection-limit",
+					correction: `Keep at most ${limit} entity files in this directory.`
+				}]
+			};
+			const names = entries.map((entry) => `${entry.type}:${entry.name}`).sort();
+			membership.push({
+				path,
+				names
+			});
+			for (const entry of entries) {
+				if (path === ".study/archives") {
+					if (entry.type !== "directory" || !/^[a-zA-Z0-9_-]{1,80}$/u.test(entry.name)) discoveryIssues.push({
+						path: `${path}/${entry.name}`,
+						field: "",
+						rule: "archive-membership",
+						correction: "Keep each preserved term in a directory named after its stable term identity."
+					});
+					continue;
+				}
+				if (entry.type !== "file" || !/^[a-zA-Z0-9_-]{1,80}\.json$/u.test(entry.name)) discoveryIssues.push({
+					path: `${path}/${entry.name}`,
+					field: "",
+					rule: "file-membership",
+					correction: "Use one regular JSON file named after the stable entity identity."
+				});
+				else paths.push(`${path}/${entry.name}`);
+			}
+		}
+		const before = await Promise.all(paths.map((path) => fs.stat(path, signal)));
+		if (!before[0]) {
+			const legacy = await fs.stat(".study/state.json", signal);
+			if (!legacy) {
+				if (paths.length > 2 || before[1]) return {
+					status: "invalid",
+					files: [],
+					membership,
+					issues: [{
+						path: ".study/settings.json",
+						field: "",
+						rule: "missing-settings",
+						correction: "Restore or create term settings for these entities."
+					}]
+				};
+				return {
+					status: "missing",
+					files: [],
+					membership,
+					issues: discoveryIssues
+				};
+			}
+			try {
+				const bytes = await fs.read(".study/state.json", signal, MAX_FILE_BYTES);
+				if ((await fs.stat(".study/state.json", signal))?.version !== legacy.version) continue;
+				const value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+				if (typeof value === "object" && value !== null && "format" in value && typeof value.format === "number" && value.format > 1) return {
+					status: "future-format",
+					files: [{
+						path: ".study/state.json",
+						...legacy,
+						bytes
+					}],
+					membership,
+					issues: [{
+						path: ".study/state.json",
+						field: "format",
+						rule: "future-format",
+						correction: "Read this source with a compatible plugin; preserve its bytes."
+					}]
+				};
+				stateSchema.parse(migrateStudyFile(structuredClone(value)));
+				return {
+					status: "legacy",
+					files: [{
+						path: ".study/state.json",
+						...legacy,
+						bytes
+					}],
+					membership,
+					issues: [],
+					legacy: value
+				};
+			} catch (error) {
+				if (signal.aborted) throw error;
+				return {
+					status: "invalid",
+					files: [],
+					membership,
+					issues: [{
+						path: ".study/state.json",
+						field: "",
+						rule: "legacy-read",
+						correction: error instanceof Error ? error.message : "Preserve the original and restore valid JSON explicitly."
+					}]
+				};
+			}
+		}
+		const files = [];
+		const input = [];
+		const available = [...prior];
+		let total = 0;
+		for (const [index, path] of paths.entries()) {
+			const observed = before[index];
+			if (!observed) continue;
+			if (observed.type !== "file") {
+				discoveryIssues.push({
+					path,
+					field: "",
+					rule: "regular-file",
+					correction: "Use a regular UTF-8 JSON file."
+				});
+				continue;
+			}
+			const cached = cache.get(observed.targetKey);
+			if (cached?.file) available.push({
+				path,
+				file: cached.file
+			});
+			let bytes;
+			try {
+				bytes = cached?.version === observed.version ? cached.bytes : await fs.read(path, signal, MAX_FILE_BYTES);
+			} catch (error) {
+				if (signal.aborted) throw error;
+				discoveryIssues.push({
+					path,
+					field: "",
+					rule: "file-read",
+					correction: error instanceof Error ? error.message : "Preserve the original and inspect this file."
+				});
+				continue;
+			}
+			total += bytes.byteLength;
+			if (total > MAX_TOTAL_BYTES) return {
+				status: "invalid",
+				files,
+				membership,
+				issues: [{
+					path: ".study",
+					field: "",
+					rule: "workspace-size",
+					correction: "Archive older records; current official files are limited to 32 MiB."
+				}]
+			};
+			files.push({
+				path,
+				...observed,
+				bytes
+			});
+			try {
+				const value = cached?.version === observed.version ? cached.value : JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+				input.push({
+					path,
+					value
+				});
+			} catch (error) {
+				discoveryIssues.push({
+					path,
+					field: "",
+					rule: "json",
+					correction: error instanceof Error ? error.message : "Save valid UTF-8 JSON."
+				});
+			}
+		}
+		const validation = validateStudyFiles(input, available, nativeSources);
+		const migration = validation.workspace?.settings.migration;
+		if (migration) {
+			const backup = await fs.stat(migration.backupPath, signal);
+			try {
+				if (!backup || backup.type !== "file" || !migration.backupPath.startsWith(".study/") || migration.backupPath === ".study/settings.json" || migration.backupPath === migration.sourcePath) throw new Error("A distinct preserved original-byte migration backup is required.");
+				const bytes = await fs.read(migration.backupPath, signal, MAX_FILE_BYTES);
+				if ((await fs.stat(migration.backupPath, signal))?.version !== backup.version) continue;
+				if (createHash("sha256").update(bytes).digest("hex") !== migration.sourceSha256) throw new Error("The preserved migration source bytes do not match their recorded digest.");
+				const original = await fs.stat(migration.sourcePath, signal);
+				if (original) {
+					const originalBytes = await fs.read(migration.sourcePath, signal, MAX_FILE_BYTES);
+					if ((await fs.stat(migration.sourcePath, signal))?.version !== original.version) continue;
+					if (createHash("sha256").update(originalBytes).digest("hex") !== migration.sourceSha256) throw new Error("The original legacy source changed after the verified migration plan.");
+				}
+			} catch (error) {
+				if (signal.aborted) throw error;
+				discoveryIssues.push({
+					path: ".study/settings.json",
+					field: "migration",
+					rule: "migration-source",
+					correction: error instanceof Error ? error.message : "Inspect the preserved source before resuming migration."
+				});
+			}
+		}
+		const after = await Promise.all(paths.map((path) => fs.stat(path, signal)));
+		if (before.some((entry, index) => entry?.version !== after[index]?.version || entry?.targetKey !== after[index]?.targetKey)) continue;
+		let changed = false;
+		for (const directory of membership) {
+			const entries = await fs.list(directory.path, signal);
+			if (JSON.stringify(entries.map((entry) => `${entry.type}:${entry.name}`).sort()) !== JSON.stringify(directory.names)) changed = true;
+		}
+		if (changed) continue;
+		const issues = [...discoveryIssues, ...validation.issues].slice(0, 100);
+		for (const observed of files) {
+			const parsed = validation.files.find((entry) => entry.path === observed.path)?.file;
+			if (parsed) observed.file = parsed;
+		}
+		if (issues.length > 0) return {
+			status: issues.some((issue) => issue.rule === "future-format") ? "future-format" : "invalid",
+			files,
+			membership,
+			issues,
+			...validation.workspace && !discoveryIssues.some((issue) => issue.path === ".study/settings.json") ? { workspace: {
+				...validation.workspace,
+				blocks: validation.workspace.blocks.filter((block) => !discoveryIssues.some((issue) => issue.path === `.study/blocks/${block.id}.json`)),
+				worksheets: validation.workspace.worksheets.filter((sheet) => !discoveryIssues.some((issue) => issue.path === `.study/worksheets/${sheet.id}.json`))
+			} } : {}
+		};
+		for (const observed of files) {
+			const value = input.find((entry) => entry.path === observed.path)?.value;
+			if (cache.size >= 128) cache.delete(cache.keys().next().value ?? "");
+			while ([...cache.values()].reduce((sum, entry) => sum + entry.bytes.byteLength, observed.bytes.byteLength) > MAX_TOTAL_BYTES && cache.size > 0) cache.delete(cache.keys().next().value ?? "");
+			cache.set(observed.targetKey, {
+				version: observed.version,
+				bytes: observed.bytes,
+				value,
+				...observed.file ? { file: observed.file } : {}
+			});
+		}
+		return {
+			status: validation.workspace?.settings.archivedAt !== void 0 ? "archived" : "valid",
+			files,
+			membership,
+			issues,
+			...validation.workspace ? { workspace: validation.workspace } : {}
+		};
+	}
+	return {
+		status: "changing",
+		files: [],
+		membership: [],
+		issues: [{
+			path: ".study",
+			field: "",
+			rule: "changing-read",
+			correction: "Files changed during three reads. Finish the related edits and query again."
+		}]
+	};
+}
+//#endregion
+//#region lib/types/files/projection.js
+/** Compatibility display projection; normalized evidence remains attached to the official read. */
+/**
+* Project official entities into the existing dashboard's display fields.
+* @param workspace - validated current official files.
+* @param now - explicit query cutoff.
+* @returns display state with the official normalized evidence used by every metric owner.
+*/
+function projectWorkspace(workspace, now) {
+	const { settings, blocks, worksheets, collections } = workspace;
+	const state = stateSchema.parse({
+		format: 1,
+		revision: settings.revision,
+		updatedAt: settings.updatedAt,
+		profile: settings.profile,
+		materials: settings.materials,
+		courses: settings.courses,
+		interests: settings.interests,
+		openmaic: settings.openmaic,
+		...collections ? {
+			exercises: collections.exercises,
+			concepts: collections.concepts,
+			objectives: collections.objectives,
+			relations: collections.relations,
+			teachingQueue: collections.teachingQueue
+		} : {},
+		sessions: blocks.map((block) => ({
+			id: block.id,
+			subject: block.subject,
+			mode: block.mode,
+			startedAt: block.startedAt,
+			...block.intensity ? { intensity: block.intensity } : {},
+			...block.endedAt !== void 0 ? { endedAt: block.endedAt } : {},
+			...block.spentMs !== void 0 ? { spentMs: block.spentMs } : {},
+			...block.reflection !== void 0 ? { reflection: block.reflection } : {},
+			...block.context.scope ? { scope: block.context.scope } : {},
+			...block.context.material ? { materialId: block.context.material.id } : {}
+		})),
+		attempts: blocks.flatMap((block) => block.responses.map((response) => {
+			const question = block.questions.find((question) => question.id === response.questionId);
+			const assessment = block.assessments.find((assessment) => assessment.responseId === response.id);
+			return {
+				id: response.id,
+				questionId: question.id,
+				responseId: response.id,
+				sessionId: block.id,
+				subject: block.subject,
+				topic: question.topic,
+				prompt: question.prompt,
+				response: response.response ?? response.rawResponse,
+				rawResponse: response.rawResponse,
+				result: assessment?.result ?? "unassessed",
+				assistance: response.assistance,
+				feedback: assessment?.feedback ?? "Pending assessment",
+				answerEvidence: assessment?.answerEvidence ?? question.answerEvidence,
+				at: assessment?.assessedAt ?? block.startedAt,
+				...typeof question.objectiveId === "string" ? { objectiveId: question.objectiveId } : {},
+				...question.mistakeId ? { mistakeId: question.mistakeId } : {}
+			};
+		})),
+		worksheets: worksheets.map((sheet) => ({
+			id: sheet.id,
+			subject: sheet.subject,
+			createdAt: sheet.createdAt,
+			...sheet.worksheetKind ? { kind: sheet.worksheetKind } : {},
+			...sheet.discardedAt !== void 0 ? { discardedAt: sheet.discardedAt } : {},
+			items: sheet.items.map((item) => ({
+				id: item.id,
+				prompt: item.prompt,
+				answer: item.answer,
+				explanation: item.explanation,
+				answerEvidence: item.answerEvidence,
+				...typeof item.objectiveId === "string" ? { objectiveId: item.objectiveId } : {},
+				...item.mistakeId ? { mistakeId: item.mistakeId } : {},
+				...item.figure ? { figure: item.figure } : {},
+				...item.space ? { space: item.space } : {}
+			}))
+		})),
+		paperResults: worksheets.flatMap((sheet) => sheet.assessments.map((assessment) => {
+			const response = sheet.responses.find((response) => response.id === assessment.responseId);
+			return {
+				worksheetId: sheet.id,
+				itemId: response.questionId,
+				response: response.response ?? response.rawResponse,
+				result: assessment.result === "stuck" ? "unassessed" : assessment.result,
+				assistance: response.assistance,
+				feedback: assessment.feedback,
+				answerEvidence: assessment.answerEvidence,
+				userConfirmation: assessment.userConfirmation,
+				receivedAt: assessment.assessedAt
+			};
+		})),
+		paperDrafts: worksheets.flatMap((sheet) => sheet.drafts.map((draft) => ({
+			worksheetId: sheet.id,
+			itemId: draft.questionId,
+			response: draft.response,
+			result: draft.result === "stuck" ? "unassessed" : draft.result,
+			assistance: draft.assistance,
+			uncertainties: draft.uncertainties,
+			confidence: draft.confidence,
+			receivedAt: draft.receivedAt
+		}))),
+		mistakes: collections?.mistakes ?? [],
+		rewards: collections?.rewards ?? []
+	});
+	const active = blocks.find((block) => block.endedAt === void 0);
+	const question = active?.questions.find((question) => question.id === active.currentQuestionId);
+	if (active && question) {
+		const candidates = active.responses.filter((response) => response.questionId === question.id);
+		const response = active.currentResponseId ? candidates.find((response) => response.id === active.currentResponseId) : candidates.length === 1 ? candidates[0] : void 0;
+		const actualDate = deriveEvidence(workspace).entries.find((entry) => entry.ownerId === active.id && entry.responseId === response?.id)?.answerDate;
+		state.task = {
+			id: question.id,
+			sessionId: active.id,
+			subject: active.subject,
+			topic: question.topic,
+			prompt: question.prompt,
+			hintLevel: Math.max(0, ...active.hints.filter((hint) => hint.questionId === question.id).map((hint) => hint.level)),
+			...question.figure ? { figure: question.figure } : {},
+			...question.choices ? { choices: question.choices } : {},
+			...question.steps ? { steps: question.steps } : {},
+			...question.phase ? { phase: question.phase } : {},
+			...typeof question.objectiveId === "string" ? { objectiveId: question.objectiveId } : {},
+			...response ? {
+				responseId: response.id,
+				response: response.response ?? response.rawResponse,
+				rawResponse: response.rawResponse,
+				...actualDate?.kind === "instant" ? { answeredAt: actualDate.at } : {}
+			} : {}
+		};
+	}
+	attachEvidence(state, deriveEvidence(workspace));
+	return scheduleMistakes(state, now);
+}
+//#endregion
+//#region lib/types/learning/status.js
+/**
+* Elapsed clocks for the current block and today, computed from sessions only.
+* Reading never closes a session.
+*/
+function timeStatus(state, now) {
+	const active = activeSession(state);
+	const todayMs = todaySpent(state, now);
+	const phase = active ? "studying" : "ready";
+	const blockElapsedMs = active ? Math.max(0, now - active.startedAt) : 0;
+	return {
+		phase,
+		time: {
+			timezone: "Asia/Shanghai",
+			blockElapsed: active ? formatDuration(blockElapsedMs) : null,
+			todayElapsed: formatDuration(todayMs)
+		}
+	};
+}
+/**
+* Summarize elapsed time, course confirmation, rewards and evidence-derived progress.
+* Reading does not close a session; stop records when the learner actually stopped.
+*/
+function studyStatus(state, now) {
+	const time = timeStatus(state, now);
+	const progress = /* @__PURE__ */ new Map();
+	function includeEvidence(subject, topic, at, result, assistance, materialId, objectiveId) {
+		const key = objectiveId ?? JSON.stringify([
+			subject,
+			topic,
+			materialId
+		]);
+		const item = progress.get(key) ?? {
+			subject,
+			topic,
+			...materialId ? { materialId } : {},
+			...objectiveId ? { objectiveId } : {},
+			attempts: 0,
+			independentDays: []
+		};
+		item.attempts += 1;
+		if (at !== void 0 && result === "correct" && assistance === "independent" && !item.independentDays.includes(studyDay(at))) item.independentDays.push(studyDay(at));
+		progress.set(key, item);
+	}
+	for (const entry of evidenceOf(state).entries) {
+		const day = evidenceDay(entry);
+		const goal = entry.objectiveId ? objectiveInfo(state, entry.objectiveId) : void 0;
+		includeEvidence(entry.subject, goal?.title ?? entry.topic, day === void 0 ? void 0 : dayStart(day), entry.result, entry.assistance, void 0, entry.objectiveId);
+	}
+	const interests = interestTagsOf(state.interests?.tags);
+	return {
+		task: state.task ?? null,
+		feedback: state.task ? state.attempts.find((item) => item.sessionId === state.task.sessionId && (state.task.responseId ? item.responseId === state.task.responseId : item.questionId === void 0 && item.id === state.task.id)) ?? null : null,
+		revision: state.revision,
+		profile: state.profile,
+		interests,
+		interestFocus: interestFocus(interests, studyDay(now)),
+		...time,
+		active: activeSession(state) ?? null,
+		openmaic: {
+			baseUrl: effectiveOpenmaicBase(state.openmaic?.baseUrl, process.env.OPENMAIC_BASE),
+			savedBaseUrl: state.openmaic?.baseUrl ?? "",
+			lessonsPath: OPENMAIC_LESSONS_PATH,
+			cookiePath: OPENMAIC_COOKIE_PATH
+		},
+		courses: state.courses,
+		unconfirmedSubjects: [
+			"chinese",
+			"math",
+			"english"
+		].filter((subject) => !state.courses.some((course) => course.subject === subject)),
+		stars: state.rewards.length,
+		todayStars: state.rewards.filter((reward) => reward.day === studyDay(now)).length,
+		dueMistakes: state.mistakes.filter((mistake) => mistake.dueAt !== void 0 && mistake.dueAt <= now).map((mistake) => ({
+			id: mistake.id,
+			subject: mistake.subject,
+			topic: mistake.topic
+		})),
+		pendingMistakes: state.mistakes.filter((mistake) => mistake.confirmedAt === void 0).map((mistake) => mistake.id),
+		progress: [...progress.values()].map((item) => ({
+			...item,
+			level: item.independentDays.length >= 3 ? "independent-on-three-days" : "practising"
+		}))
+	};
+}
+/**
+* Summarise the last seven calendar days for the parent: minutes per day, goals practised and
+* newly mastered, mistake flow, due-review completion and this week's top error causes.
+* Purely derived from stored evidence; nothing is stored per week.
+* @param state - current durable learning state.
+* @param now - host wall-clock time in milliseconds.
+* @param insight - precomputed insight for the same state and time, when the caller already has one.
+*/
+function weeklySummary(state, now, insight) {
+	const days = Array.from({ length: 7 }, (_, index) => studyDay(now - (6 - index) * DAY));
+	const daySet = new Set(days);
+	const minutesByDay = summaryMinutes(state, now);
+	const windowStart = dayStart(days[0]);
+	const index = evidenceOf(state);
+	const entries = evidenceAtCutoff(index, now);
+	const practised = new Set(entries.filter((item) => daySet.has(evidenceDay(item))).flatMap((item) => item.objectiveId ? [item.objectiveId] : []));
+	const checkpoints = [...new Set(entries.map((item) => item.answerDate.kind === "instant" ? item.answerDate.at : dayStart(evidenceDay(item)) + DAY - 1))].filter((at) => at <= now || studyDay(at) === studyDay(now)).sort((a, b) => a - b);
+	const ever = /* @__PURE__ */ new Set();
+	const troubled = /* @__PURE__ */ new Set();
+	const first = /* @__PURE__ */ new Map();
+	const recovered = /* @__PURE__ */ new Map();
+	for (const at of checkpoints) {
+		const currentEntries = entries.filter((item) => item.answerDate.kind === "instant" ? item.answerDate.at === at : dayStart(evidenceDay(item)) + DAY - 1 === at);
+		const beforeAt = currentEntries.some((item) => item.answerDate.kind === "day") ? dayStart(studyDay(at)) : at - 1;
+		const before = structuredClone(state);
+		attachEvidence(before, {
+			entries: index.entries.filter((item) => item.answerDate.kind === "instant" ? item.answerDate.at < at : item.answerDate.kind === "day" ? item.answerDate.day < studyDay(at) : false),
+			stuckSignals: index.stuckSignals.filter((signal) => signal.at <= beforeAt)
+		});
+		scheduleMistakes(before, beforeAt);
+		for (const goal of studyInsight(before, beforeAt).objectives) if (ever.has(goal.id) && (goal.level === "due" || goal.level === "weak")) troubled.add(goal.id);
+		const historical = structuredClone(state);
+		historical.mistakes = historical.mistakes.filter((item) => item.confirmedAt === void 0 || item.confirmedAt <= at);
+		historical.teachingQueue = historical.teachingQueue.filter((item) => item.confirmedAt <= at);
+		historical.sessions = historical.sessions.filter((item) => item.startedAt <= at);
+		attachEvidence(historical, index);
+		scheduleMistakes(historical, at);
+		const historicalInsight = studyInsight(historical, at);
+		const answered = new Set(currentEntries.filter((item) => item.result === "correct" && item.assistance === "independent").flatMap((item) => item.objectiveId ? [item.objectiveId] : []));
+		for (const goal of historicalInsight.objectives) {
+			if (ever.has(goal.id) && (goal.level === "due" || goal.level === "weak")) troubled.add(goal.id);
+			if (goal.level !== "mastered" || !answered.has(goal.id)) continue;
+			if (!ever.has(goal.id)) {
+				first.set(goal.id, studyDay(at));
+				ever.add(goal.id);
+			} else if (troubled.has(goal.id)) {
+				recovered.set(goal.id, studyDay(at));
+				troubled.delete(goal.id);
+			}
+		}
+	}
+	const currentMastered = new Set(insight.objectives.filter((goal) => goal.level === "mastered").map((goal) => goal.id));
+	const practisedGoals = practised.size;
+	const masteredGoals = [...first].filter(([goal, day]) => currentMastered.has(goal) && daySet.has(day)).length;
+	const recoveredGoals = [...recovered].filter(([goal, day]) => currentMastered.has(goal) && daySet.has(day)).length;
+	const newMistakes = state.mistakes.filter((mistake) => mistake.confirmedAt !== void 0 && mistake.confirmedAt >= windowStart && mistake.confirmedAt <= now).length;
+	const replay = state.mistakes.map((mistake) => replayMistake(mistake, index, now, windowStart));
+	const consolidatedMistakes = replay.filter((item) => item.consolidatedDay !== void 0 && daySet.has(item.consolidatedDay)).length;
+	const dueCompletion = {
+		done: replay.filter((item) => item.completed).length,
+		total: replay.filter((item) => item.opportunity).length
+	};
+	const causeCounts = /* @__PURE__ */ new Map();
+	for (const mistake of state.mistakes) {
+		if (mistake.confirmedAt === void 0 || mistake.confirmedAt < windowStart || mistake.confirmedAt > now || mistake.errorType === void 0) continue;
+		causeCounts.set(mistake.errorType, (causeCounts.get(mistake.errorType) ?? 0) + 1);
+	}
+	const errorCauses = [...causeCounts.entries()].map(([type, count]) => ({
+		type,
+		count
+	})).sort((a, b) => b.count - a.count || a.type.localeCompare(b.type)).slice(0, 3);
+	return {
+		minutesByDay,
+		activeDays: minutesByDay.filter((item) => item.minutes > 0).length,
+		practisedGoals,
+		masteredGoals,
+		recoveredGoals,
+		newMistakes,
+		consolidatedMistakes,
+		dueCompletion,
+		errorCauses,
+		suggestion: insight.recommendation
+	};
+}
+/**
+* Cheap elapsed-minute projection for Shanghai today and the preceding six calendar days.
+* @param state - block timing records; answers and grading times are unused.
+* @param now - explicit current clock.
+* @returns per-day minutes with midnight-crossing blocks split across their actual calendar days.
+*/
+function summaryMinutes(state, now) {
+	return Array.from({ length: 7 }, (_, index) => {
+		const day = studyDay(now - (6 - index) * DAY);
+		const start = dayStart(day);
+		const milliseconds = state.sessions.reduce((sum, block) => sum + Math.max(0, Math.min(block.endedAt ?? now, start + DAY, now) - Math.max(block.startedAt, start)), 0);
+		return {
+			day,
+			minutes: Math.round(milliseconds / 6e4)
+		};
+	});
+}
+//#endregion
+//#region lib/types/dashboard.js
+/**
+* Bounded sidebar projection: status, the selected subject's knowledge map with mastery,
+* weak points, the next step and one page of the mistake notebook.
+* @param state - current durable learning state, or undefined before setup.
+* @param now - host wall-clock time in milliseconds.
+* @param options - selected subject, notebook offset and status filter, an optional grade and term to browse another knowledge map, and an optional check-in scope (grade, term, unit).
+* @returns the dashboard payload served to the workbench.
+*/
+function dashboard(state, now, options = {}, interactiveLessons = interactiveLessonsView(state?.openmaic?.baseUrl)) {
+	if (!state) return {
+		serverNow: now,
+		revision: 0,
+		study: null,
+		interactiveLessons
+	};
+	const subject = options.subject ?? "math";
+	const mistakeOffset = options.mistakeOffset ?? 0;
+	const mistakeStatus = options.mistakeStatus ?? "all";
+	const status = studyStatus(state, now);
+	const insight = studyInsight(state, now);
+	const scope = options.mapGrade !== void 0 || options.mapTerm !== void 0 ? {
+		grade: options.mapGrade ?? state.profile.grade,
+		term: options.mapTerm ?? state.profile.term
+	} : void 0;
+	const inStatus = (item) => {
+		if (item.confirmedAt === void 0) return false;
+		if (mistakeStatus === "due") return item.dueAt !== void 0 && item.dueAt <= now;
+		if (mistakeStatus === "reviewing") return item.stage < 4;
+		if (mistakeStatus === "mastered") return item.stage >= 4;
+		return true;
+	};
+	const confirmed = state.mistakes.filter((item) => item.subject === subject && inStatus(item)).reverse();
+	const confirmedOffset = Math.min(mistakeOffset, Math.max(0, Math.ceil(confirmed.length / 20) - 1) * 20);
+	const book = state.mistakes.filter((item) => item.subject === subject && item.confirmedAt !== void 0);
+	const due = status.dueMistakes.filter((item) => item.subject === subject);
+	const pending = state.mistakes.filter((item) => item.subject === subject && item.confirmedAt === void 0);
+	return {
+		serverNow: now,
+		revision: state.revision,
+		study: {
+			...status,
+			progress: status.progress.filter((item) => item.subject === subject).slice(-20),
+			concepts: state.concepts.filter((item) => item.subject === subject).slice(-20).reverse(),
+			objectives: state.objectives.filter((item) => item.subject === subject).slice(-20).reverse(),
+			relations: state.relations.filter((item) => state.concepts.some((concept) => concept.id === item.fromId && concept.subject === subject)).slice(-20),
+			worksheets: state.worksheets.filter((item) => item.subject === subject && item.discardedAt === void 0).slice(-20).reverse().map((sheet) => {
+				const titles = [...new Set(sheet.items.map((item) => objectiveInfo(state, itemObjectiveId(state, sheet, item) ?? "")?.title).filter((title) => title !== void 0))];
+				return {
+					...sheet,
+					objectiveTitle: titles.length <= 2 ? titles.join("、") : `${titles.slice(0, 2).join("、")}等 ${titles.length} 个目标`,
+					open: sheetOpen(state, sheet),
+					results: state.paperResults.filter((item) => item.worksheetId === sheet.id).map((item) => {
+						const question = sheet.items.find((question) => question.id === item.itemId);
+						const errorType = state.mistakes.find((mistake) => mistake.id === question?.mistakeId)?.errorType;
+						return {
+							itemId: item.itemId,
+							result: item.result,
+							response: item.response,
+							assistance: item.assistance,
+							...errorType !== void 0 ? { errorType } : {}
+						};
+					}),
+					drafts: state.paperDrafts.filter((item) => item.worksheetId === sheet.id).map((item) => ({
+						itemId: item.itemId,
+						response: item.response,
+						result: item.result,
+						assistance: item.assistance,
+						uncertainties: item.uncertainties,
+						...item.errorType !== void 0 ? { errorType: item.errorType } : {},
+						...item.confidence !== void 0 ? { confidence: item.confidence } : {}
+					})),
+					sources: sheet.items.map((item) => {
+						const mistake = item.mistakeId ? state.mistakes.find((candidate) => candidate.id === item.mistakeId) : void 0;
+						const fromHere = mistake?.source?.worksheetId === sheet.id && mistake.source.itemId === item.id;
+						return {
+							itemId: item.id,
+							...item.mistakeId && !fromHere ? { mistakeId: item.mistakeId } : {},
+							topic: fromHere ? "" : mistake?.topic ?? "",
+							stage: mistake?.stage ?? 0
+						};
+					})
+				};
+			}),
+			reviewPlan: (({ picks, objectiveFills, remaining, unlinkedDue, openSheets }) => ({
+				picks: picks.length,
+				fills: objectiveFills.length,
+				remaining,
+				unlinkedDue: unlinkedDue.length,
+				openSheets: openSheets.length
+			}))(reviewPlan(state, subject, now, 8, insight)),
+			dueMistakes: due.slice(0, 20),
+			dueCount: due.length,
+			dueTotal: status.dueMistakes.length,
+			dueSubjects: due.length ? [subject] : [],
+			pendingMistakes: pending.slice(0, 20),
+			pendingCount: pending.length,
+			confirmedMistakes: confirmed.slice(confirmedOffset, confirmedOffset + 20),
+			confirmedCount: confirmed.length,
+			confirmedOffset,
+			confirmedSubject: subject,
+			mistakeBook: {
+				due: book.filter((item) => item.dueAt !== void 0 && item.dueAt <= now).length,
+				reviewing: book.filter((item) => item.stage < 4 && (item.dueAt === void 0 || item.dueAt > now)).length,
+				mastered: book.filter((item) => item.stage >= 4).length,
+				pending: pending.length
+			},
+			curriculum: (() => {
+				const view = curriculumView(state, subject, insight, scope);
+				return view === null ? null : lighten(view, options.tab);
+			})(),
+			diagnostic: insight.diagnostics.find((plan) => plan.subject === subject) ?? null,
+			scopedDiagnostic: options.diagGrade !== void 0 || options.diagTerm !== void 0 ? diagnosticFor(state, subject, now, {
+				grade: options.diagGrade ?? state.profile.grade,
+				term: options.diagTerm ?? state.profile.term,
+				...options.diagUnit !== void 0 && options.diagUnit !== "" ? { units: [options.diagUnit] } : {}
+			}, insight) : null,
+			scopedUnits: options.diagGrade !== void 0 || options.diagTerm !== void 0 ? curriculumView(state, subject, insight, {
+				grade: options.diagGrade ?? state.profile.grade,
+				term: options.diagTerm ?? state.profile.term
+			})?.units.map((unit) => ({
+				id: unit.id,
+				name: unit.name
+			})) ?? [] : [],
+			checkIns: checkInHistory(state),
+			...insightSummary(insight),
+			...(() => {
+				const step = insight.subjectSteps[subject];
+				return {
+					recommendation: step.recommendation,
+					dueToday: step.dueToday,
+					dueBacklog: step.dueBacklog,
+					weakPoints: step.weakPoints.slice(0, 3).map((item) => ({
+						id: item.id,
+						subject: item.subject,
+						title: item.title,
+						level: item.level,
+						priority: item.priority,
+						reasons: item.reasons
+					})),
+					understandingReminders: insight.understandingReminders.filter((item) => item.subject === subject)
+				};
+			})(),
+			weekly: weeklySummary(state, now, insight),
+			diagnostics: insight.diagnostics,
+			materials: state.materials.filter((item) => state.courses.some((course) => course.materialId === item.id)),
+			exercises: state.exercises.filter((item) => item.subject === subject).slice(-20).reverse(),
+			workbookDrafts: state.workbookDrafts.filter((item) => item.subject === subject).slice(-20).reverse(),
+			workbookResults: state.workbookResults.filter((item) => item.subject === subject).slice(-20).reverse(),
+			teachingQueue: state.teachingQueue.filter((item) => item.subject === subject).slice(-20).reverse(),
+			recentAttempts: state.attempts.filter((item) => item.subject === subject).slice(-20).reverse()
+		},
+		interactiveLessons
+	};
+}
+/** Drop the heavy map collections unless the map tab asked for them; objectives, units and summary stay for progress dots and goal lists. */
+function lighten(view, tab) {
+	if (tab === void 0 || tab === "map") return view;
+	return {
+		...view,
+		concepts: [],
+		relations: [],
+		ideas: [],
+		order: [],
+		lite: true
+	};
+}
+//#endregion
+//#region lib/types/learning/queries.js
+const workspaceQueryCache = /* @__PURE__ */ new Map();
+function queryWorkspace(read, request, now) {
+	const versions = read.files.map(({ path, targetKey, version }) => ({
+		path,
+		targetKey,
+		version
+	}));
+	const relevantInvalid = request.kind === "files" ? false : request.kind === "settings" || request.kind === "materials" ? read.issues.some((issue) => issue.path === ".study/settings.json") : request.kind === "learning-context" ? read.issues.some((issue) => issue.path === ".study/settings.json" || issue.path.startsWith(".study/blocks")) : read.status !== "valid";
+	if (!read.workspace || relevantInvalid || [
+		"changing",
+		"legacy",
+		"archived",
+		"missing"
+	].includes(read.status)) return {
+		status: read.status,
+		issues: read.issues,
+		versions
+	};
+	const workspace = read.workspace;
+	if (request.kind === "files") return {
+		status: read.status === "valid" ? "valid" : "partial",
+		issues: read.issues,
+		versions,
+		data: workspace
+	};
+	if (request.kind === "settings") return {
+		status: read.status === "valid" ? "valid" : "partial",
+		issues: read.issues,
+		versions,
+		data: workspace.settings
+	};
+	const identity = read.files.find((file) => file.path === ".study/settings.json").targetKey;
+	const signature = JSON.stringify([versions, workspace.nativeSources ?? []]);
+	let cached = workspaceQueryCache.get(identity);
+	if (!cached || cached.signature !== signature || now >= cached.refreshAfter || now < cached.at) {
+		const state = projectWorkspace(workspace, now);
+		cached = {
+			signature,
+			state,
+			at: now,
+			refreshAfter: nextRefreshAfter(state, now),
+			queries: /* @__PURE__ */ new Map()
+		};
+		if (workspaceQueryCache.size >= 8) workspaceQueryCache.clear();
+		workspaceQueryCache.set(identity, cached);
+	}
+	const { state, refreshAfter } = cached;
+	const index = evidenceOf(state);
+	if (request.kind === "learning-context") {
+		const active = workspace.blocks.find((block) => block.endedAt === void 0);
+		const currentQuestion = active?.questions.find((question) => question.id === active.currentQuestionId);
+		const responses = (active?.responses.filter((response) => response.questionId === currentQuestion?.id) ?? []).slice(-20).map((response) => ({
+			...response,
+			answerDate: index.entries.find((item) => item.ownerId === active?.id && item.responseId === response.id)?.answerDate ?? { kind: "unknown" }
+		}));
+		const elements = currentQuestion && typeof currentQuestion.objectiveId === "string" ? objectiveElements(state, currentQuestion.objectiveId) : void 0;
+		return {
+			status: read.status === "valid" ? "valid" : "partial",
+			issues: read.issues,
+			versions,
+			refreshAfter,
+			data: {
+				termId: workspace.settings.termId,
+				activeBlock: active ? {
+					id: active.id,
+					subject: active.subject,
+					mode: active.mode,
+					context: active.context,
+					currentQuestionId: active.currentQuestionId
+				} : null,
+				currentQuestion: currentQuestion ?? null,
+				responses,
+				assessments: active?.assessments.filter((assessment) => responses.some((response) => response.id === assessment.responseId)) ?? [],
+				pendingFacts: index.entries.filter((item) => item.answerDate.kind === "unknown" || item.assistance === "unknown" || !item.objectiveId).map((item) => ({
+					ownerId: item.ownerId,
+					responseId: item.responseId,
+					fields: [
+						...item.answerDate.kind === "unknown" ? ["answerDate"] : [],
+						...item.assistance === "unknown" ? ["assistance"] : [],
+						...item.basisStatus ? ["answerBasis"] : !item.objectiveId ? ["objectiveId"] : []
+					]
+				})).slice(0, 20),
+				seeds: currentQuestion && typeof currentQuestion.objectiveId === "string" ? subjectExercises(active.subject).filter((item) => item.objectiveId === currentQuestion.objectiveId).slice(0, 3) : [],
+				elements: elements ? {
+					...elements,
+					exercises: elements.exercises.slice(0, 3)
+				} : null,
+				legalActions: currentQuestion ? responses.length ? ["request-assessment", "end-block"] : [
+					"answer",
+					"request-hint",
+					"end-block"
+				] : ["start-question"]
+			}
+		};
+	}
+	if (request.kind === "summary") {
+		const summary = cached.summary ??= weeklySummary(state, now, studyInsight(state, now));
+		const minutesByDay = summaryMinutes(state, now);
+		return {
+			status: "valid",
+			versions,
+			refreshAfter,
+			data: {
+				...summary,
+				minutesByDay,
+				activeDays: minutesByDay.filter((item) => item.minutes > 0).length
+			}
+		};
+	}
+	const key = canonical(request);
+	let data = cached.queries.get(key);
+	if (!data) {
+		data = queryStudy(state, request.kind, request.offset ?? 0, request, now);
+		if (cached.queries.size >= 8) cached.queries.clear();
+		cached.queries.set(key, data);
+	}
+	return {
+		status: read.status === "valid" ? "valid" : "partial",
+		issues: read.issues,
+		versions,
+		refreshAfter,
+		data: request.kind === "status" ? {
+			...data,
+			...timeStatus(state, now)
+		} : data
+	};
 }
 /**
 * Bounded history and status queries. Only the requested collection is computed; offset pagination applies to every collection.
@@ -4116,15 +6107,15 @@ async function studyStore(exec, command, expectedRevision) {
 * @param kind - record collection or projection to read.
 * @param offset - zero-based collection offset.
 * @param options - optional exact record ID, subject and unit filters, grade/term for browsing another knowledge map or a cross-grade check-in plan.
+* @param now - explicit query clock; legacy tool callers default to the host clock.
 * @returns the projection or one page of records.
 */
-function queryStudy(state, kind, offset, options = {}) {
+function queryStudy(state, kind, offset, options = {}, now = Date.now()) {
 	if (!state) return {
 		phase: "setup-required",
 		path: ".study/state.json"
 	};
 	const { id, subject, unit } = options;
-	const now = Date.now();
 	if (kind === "status") {
 		const summary = studyStatus(state, now);
 		return {
@@ -4334,11 +6325,65 @@ function queryStudy(state, kind, offset, options = {}) {
 		nextOffset: offset + 20 < selected.length ? offset + 20 : null
 	};
 }
-/** A stale sidebar must reload before it can change learning evidence. */
-var StudyConflict = class extends Error {
-	constructor() {
-		super("学习档案已更新，请刷新后核对再保存。");
+/**
+* Compute the next relevant evidence, diagnosis, due-date or Shanghai-day refresh.
+* @param state - current normalized display state.
+* @param now - explicit query clock.
+* @returns the earliest future projection threshold in milliseconds.
+*/
+function nextRefreshAfter(state, now) {
+	const thresholds = [Date.parse(`${studyDay(now)}T00:00:00+08:00`) + 864e5];
+	for (const entry of evidenceOf(state).entries) {
+		if (entry.answerDate.kind === "unknown") continue;
+		const at = entry.answerDate.kind === "instant" ? entry.answerDate.at : Date.parse(`${entry.answerDate.day}T00:00:00+08:00`) + 864e5;
+		thresholds.push(at + 864e6 + 1, at + 12096e5 + 1, at + 3024e6);
 	}
-};
+	for (const mistake of state.mistakes) if (mistake.dueAt !== void 0) thresholds.push(mistake.dueAt);
+	for (const block of state.sessions) if (block.mode === "diagnose") thresholds.push(block.startedAt + 12096e5);
+	return Math.min(...thresholds.filter((at) => at > now));
+}
+const dashboardCache = /* @__PURE__ */ new WeakMap();
+/**
+* Reuse expensive map/mastery projections until an actual file version or time threshold changes.
+* @param state - version-cached current state, or undefined before setup.
+* @param now - explicit query clock.
+* @param options - selected page and scope.
+* @param lessons - independently read external-classroom projection.
+* @returns current elapsed fields, summary minutes and cached business projections with refreshAfter.
+*/
+function queryDashboard(state, now, options = {}, lessons) {
+	if (!state) return {
+		...dashboard(state, now, options, lessons),
+		refreshAfter: Date.parse(`${studyDay(now)}T00:00:00+08:00`) + 864e5
+	};
+	const key = canonical(options);
+	const entries = dashboardCache.get(state) ?? /* @__PURE__ */ new Map();
+	let cached = entries.get(key);
+	if (!cached || now >= cached.refreshAfter || now < cached.value.serverNow) {
+		cached = {
+			refreshAfter: nextRefreshAfter(state, now),
+			value: dashboard(state, now, options, lessons)
+		};
+		if (entries.size >= 8) entries.clear();
+		entries.set(key, cached);
+		dashboardCache.set(state, entries);
+	}
+	const value = cached.value;
+	return {
+		...value,
+		serverNow: now,
+		refreshAfter: cached.refreshAfter,
+		interactiveLessons: lessons ?? value.interactiveLessons,
+		study: value.study ? {
+			...value.study,
+			...timeStatus(state, now),
+			weekly: {
+				...value.study.weekly,
+				minutesByDay: summaryMinutes(state, now),
+				activeDays: summaryMinutes(state, now).filter((item) => item.minutes > 0).length
+			}
+		} : null
+	};
+}
 //#endregion
-export { studyInsight as _, weeklySummary as a, readInteractiveLessons as c, itemObjectiveId as d, objectiveInfo as f, insightSummary as g, diagnosticFor as h, studyStatus as i, checkInHistory as l, sheetOpen as m, queryStudy as n, updateNotices as o, reviewPlan as p, studyStore as r, interactiveLessonsView as s, StudyConflict as t, curriculumView as u, commandSchema as v };
+export { updateNotices as A, evidenceAtCutoff as B, questionSchema as C, termSettingsSchema as D, responseSourceSchema as E, readLessonFile as F, commandSchema as G, evidenceOf as H, scheduleMistakes as I, stateSchema as K, attachEvidence as L, lessonFileSchema as M, lessonSchema as N, worksheetSchema as O, readInteractiveLessons as P, demonstrablyAfter as R, officialFileSchemas as S, responseSchema as T, canonical as U, evidenceDay as V, archiveTermSchema as W, answerDateSchema as _, projectWorkspace as a, blockSchema as b, backupSchema as c, describeMigration as d, describeRestore as f, validateStudyFiles as g, sourceSha256 as h, queryWorkspace as i, updateStudy as j, migrateStudyFile as k, backupVersions as l, retainObservedBackups as m, queryDashboard as n, readWorkspace as o, readBackups as p, queryStudy as r, applicationStudyFiles as s, nextRefreshAfter as t, describeArchive as u, assessmentSchema as v, questionSourceSchema as w, collectionsSchema as x, assistanceSchema as y, deriveEvidence as z };

@@ -1,4 +1,5 @@
-import { _ as studyInsight, a as weeklySummary, c as readInteractiveLessons, d as itemObjectiveId, f as objectiveInfo, g as insightSummary, h as diagnosticFor, i as studyStatus, l as checkInHistory, m as sheetOpen, p as reviewPlan, r as studyStore, s as interactiveLessonsView, t as StudyConflict, u as curriculumView, v as commandSchema } from "./store-PcpFOtoN.js";
+import { G as commandSchema, P as readInteractiveLessons, n as queryDashboard } from "./queries-6rHAUo8u.js";
+import { n as studyStore, t as StudyConflict } from "./store-S8OaZETN.js";
 import { z } from "zod";
 import { FsError } from "@deepseek-ai/dsh-fs";
 import { SessionId } from "@deepseek-ai/dsh-session";
@@ -39,174 +40,6 @@ const panelActions = new Set(Object.entries({
 	"confirm-workbook": true,
 	"dismiss-teaching": true
 }).filter(([, allowed]) => allowed).map(([action]) => action));
-//#endregion
-//#region lib/types/dashboard.js
-/**
-* Bounded sidebar projection: status, the selected subject's knowledge map with mastery,
-* weak points, the next step and one page of the mistake notebook.
-* @param state - current durable learning state, or undefined before setup.
-* @param now - host wall-clock time in milliseconds.
-* @param options - selected subject, notebook offset and status filter, an optional grade and term to browse another knowledge map, and an optional check-in scope (grade, term, unit).
-* @returns the dashboard payload served to the workbench.
-*/
-function dashboard(state, now, options = {}, interactiveLessons = interactiveLessonsView(state?.openmaic?.baseUrl)) {
-	if (!state) return {
-		serverNow: now,
-		revision: 0,
-		study: null,
-		interactiveLessons
-	};
-	const subject = options.subject ?? "math";
-	const mistakeOffset = options.mistakeOffset ?? 0;
-	const mistakeStatus = options.mistakeStatus ?? "all";
-	const status = studyStatus(state, now);
-	const insight = studyInsight(state, now);
-	const scope = options.mapGrade !== void 0 || options.mapTerm !== void 0 ? {
-		grade: options.mapGrade ?? state.profile.grade,
-		term: options.mapTerm ?? state.profile.term
-	} : void 0;
-	const inStatus = (item) => {
-		if (item.confirmedAt === void 0) return false;
-		if (mistakeStatus === "due") return item.dueAt !== void 0 && item.dueAt <= now;
-		if (mistakeStatus === "reviewing") return item.stage < 4;
-		if (mistakeStatus === "mastered") return item.stage >= 4;
-		return true;
-	};
-	const confirmed = state.mistakes.filter((item) => item.subject === subject && inStatus(item)).reverse();
-	const confirmedOffset = Math.min(mistakeOffset, Math.max(0, Math.ceil(confirmed.length / 20) - 1) * 20);
-	const book = state.mistakes.filter((item) => item.subject === subject && item.confirmedAt !== void 0);
-	const due = status.dueMistakes.filter((item) => item.subject === subject);
-	const pending = state.mistakes.filter((item) => item.subject === subject && item.confirmedAt === void 0);
-	return {
-		serverNow: now,
-		revision: state.revision,
-		study: {
-			...status,
-			progress: status.progress.filter((item) => item.subject === subject).slice(-20),
-			concepts: state.concepts.filter((item) => item.subject === subject).slice(-20).reverse(),
-			objectives: state.objectives.filter((item) => item.subject === subject).slice(-20).reverse(),
-			relations: state.relations.filter((item) => state.concepts.some((concept) => concept.id === item.fromId && concept.subject === subject)).slice(-20),
-			worksheets: state.worksheets.filter((item) => item.subject === subject && item.discardedAt === void 0).slice(-20).reverse().map((sheet) => {
-				const titles = [...new Set(sheet.items.map((item) => objectiveInfo(state, itemObjectiveId(state, sheet, item) ?? "")?.title).filter((title) => title !== void 0))];
-				return {
-					...sheet,
-					objectiveTitle: titles.length <= 2 ? titles.join("、") : `${titles.slice(0, 2).join("、")}等 ${titles.length} 个目标`,
-					open: sheetOpen(state, sheet),
-					results: state.paperResults.filter((item) => item.worksheetId === sheet.id).map((item) => {
-						const question = sheet.items.find((question) => question.id === item.itemId);
-						const errorType = state.mistakes.find((mistake) => mistake.id === question?.mistakeId)?.errorType;
-						return {
-							itemId: item.itemId,
-							result: item.result,
-							response: item.response,
-							assistance: item.assistance,
-							...errorType !== void 0 ? { errorType } : {}
-						};
-					}),
-					drafts: state.paperDrafts.filter((item) => item.worksheetId === sheet.id).map((item) => ({
-						itemId: item.itemId,
-						response: item.response,
-						result: item.result,
-						assistance: item.assistance,
-						uncertainties: item.uncertainties,
-						...item.errorType !== void 0 ? { errorType: item.errorType } : {},
-						...item.confidence !== void 0 ? { confidence: item.confidence } : {}
-					})),
-					sources: sheet.items.map((item) => {
-						const mistake = item.mistakeId ? state.mistakes.find((candidate) => candidate.id === item.mistakeId) : void 0;
-						const fromHere = mistake?.source?.worksheetId === sheet.id && mistake.source.itemId === item.id;
-						return {
-							itemId: item.id,
-							...item.mistakeId && !fromHere ? { mistakeId: item.mistakeId } : {},
-							topic: fromHere ? "" : mistake?.topic ?? "",
-							stage: mistake?.stage ?? 0
-						};
-					})
-				};
-			}),
-			reviewPlan: (({ picks, objectiveFills, remaining, unlinkedDue, openSheets }) => ({
-				picks: picks.length,
-				fills: objectiveFills.length,
-				remaining,
-				unlinkedDue: unlinkedDue.length,
-				openSheets: openSheets.length
-			}))(reviewPlan(state, subject, now, 8, insight)),
-			dueMistakes: due.slice(0, 20),
-			dueCount: due.length,
-			dueTotal: status.dueMistakes.length,
-			dueSubjects: due.length ? [subject] : [],
-			pendingMistakes: pending.slice(0, 20),
-			pendingCount: pending.length,
-			confirmedMistakes: confirmed.slice(confirmedOffset, confirmedOffset + 20),
-			confirmedCount: confirmed.length,
-			confirmedOffset,
-			confirmedSubject: subject,
-			mistakeBook: {
-				due: book.filter((item) => item.dueAt !== void 0 && item.dueAt <= now).length,
-				reviewing: book.filter((item) => item.stage < 4 && (item.dueAt === void 0 || item.dueAt > now)).length,
-				mastered: book.filter((item) => item.stage >= 4).length,
-				pending: pending.length
-			},
-			curriculum: (() => {
-				const view = curriculumView(state, subject, insight, scope);
-				return view === null ? null : lighten(view, options.tab);
-			})(),
-			diagnostic: insight.diagnostics.find((plan) => plan.subject === subject) ?? null,
-			scopedDiagnostic: options.diagGrade !== void 0 || options.diagTerm !== void 0 ? diagnosticFor(state, subject, now, {
-				grade: options.diagGrade ?? state.profile.grade,
-				term: options.diagTerm ?? state.profile.term,
-				...options.diagUnit !== void 0 && options.diagUnit !== "" ? { units: [options.diagUnit] } : {}
-			}, insight) : null,
-			scopedUnits: options.diagGrade !== void 0 || options.diagTerm !== void 0 ? curriculumView(state, subject, insight, {
-				grade: options.diagGrade ?? state.profile.grade,
-				term: options.diagTerm ?? state.profile.term
-			})?.units.map((unit) => ({
-				id: unit.id,
-				name: unit.name
-			})) ?? [] : [],
-			checkIns: checkInHistory(state),
-			...insightSummary(insight),
-			...(() => {
-				const step = insight.subjectSteps[subject];
-				return {
-					recommendation: step.recommendation,
-					dueToday: step.dueToday,
-					dueBacklog: step.dueBacklog,
-					weakPoints: step.weakPoints.slice(0, 3).map((item) => ({
-						id: item.id,
-						subject: item.subject,
-						title: item.title,
-						level: item.level,
-						priority: item.priority,
-						reasons: item.reasons
-					})),
-					understandingReminders: insight.understandingReminders.filter((item) => item.subject === subject)
-				};
-			})(),
-			weekly: weeklySummary(state, now, insight),
-			diagnostics: insight.diagnostics,
-			materials: state.materials.filter((item) => state.courses.some((course) => course.materialId === item.id)),
-			exercises: state.exercises.filter((item) => item.subject === subject).slice(-20).reverse(),
-			workbookDrafts: state.workbookDrafts.filter((item) => item.subject === subject).slice(-20).reverse(),
-			workbookResults: state.workbookResults.filter((item) => item.subject === subject).slice(-20).reverse(),
-			teachingQueue: state.teachingQueue.filter((item) => item.subject === subject).slice(-20).reverse(),
-			recentAttempts: state.attempts.filter((item) => item.subject === subject).slice(-20).reverse()
-		},
-		interactiveLessons
-	};
-}
-/** Drop the heavy map collections unless the map tab asked for them; objectives, units and summary stay for progress dots and goal lists. */
-function lighten(view, tab) {
-	if (tab === void 0 || tab === "map") return view;
-	return {
-		...view,
-		concepts: [],
-		relations: [],
-		ideas: [],
-		order: [],
-		lite: true
-	};
-}
 //#endregion
 //#region lib/types/route.js
 const mutation = z.object({
@@ -322,7 +155,7 @@ async function handleStudyRequest(context, request, response) {
 		}, change, revision);
 		const interactiveLessons = await readInteractiveLessons(agent, abort.signal, state?.openmaic?.baseUrl);
 		send(response, 200, {
-			...dashboard(state, Date.now(), {
+			...queryDashboard(state, Date.now(), {
 				subject,
 				mistakeOffset,
 				mistakeStatus,

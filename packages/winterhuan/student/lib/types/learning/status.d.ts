@@ -1,5 +1,5 @@
 import type { ErrorType, StudyState } from '../schema.ts';
-import type { StudyInsight } from './mastery.ts';
+import { type StudyInsight } from './mastery.ts';
 /** Current session state: either ready to start or actively studying. */
 export type StudyPhase = 'ready' | 'studying';
 /** Elapsed time summary for the current block and today. */
@@ -291,11 +291,12 @@ export declare function studyStatus(state: StudyState, now: number): {
         response?: string | undefined;
         rawResponse?: string | undefined;
         answeredAt?: number | undefined;
+        responseId?: string | undefined;
         stuck?: boolean | undefined;
     } | null;
     feedback: {
         result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
-        assistance: "independent" | "hint" | "worked-example";
+        assistance: "unknown" | "independent" | "hint" | "worked-example";
         id: string;
         sessionId: string;
         subject: "chinese" | "math" | "english";
@@ -503,6 +504,8 @@ export declare function studyStatus(state: StudyState, now: number): {
         } | undefined;
         materialId?: string | undefined;
         rawResponse?: string | undefined;
+        questionId?: string | undefined;
+        responseId?: string | undefined;
     } | null;
     revision: number;
     profile: {
@@ -527,6 +530,7 @@ export interface WeeklySummary {
     activeDays: number;
     practisedGoals: number;
     masteredGoals: number;
+    recoveredGoals: number;
     newMistakes: number;
     consolidatedMistakes: number;
     dueCompletion: {
@@ -548,4 +552,14 @@ export interface WeeklySummary {
  * @param insight - precomputed insight for the same state and time, when the caller already has one.
  */
 export declare function weeklySummary(state: StudyState, now: number, insight: StudyInsight): WeeklySummary;
+/**
+ * Cheap elapsed-minute projection for Shanghai today and the preceding six calendar days.
+ * @param state - block timing records; answers and grading times are unused.
+ * @param now - explicit current clock.
+ * @returns per-day minutes with midnight-crossing blocks split across their actual calendar days.
+ */
+export declare function summaryMinutes(state: StudyState, now: number): {
+    day: string;
+    minutes: number;
+}[];
 //# sourceMappingURL=status.d.ts.map

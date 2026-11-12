@@ -1,84 +1,35 @@
 import type { ToolExecution } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-sandbox-policy'
+import { readBackups, backupVersions, retainObservedBackups } from './files/recovery.ts'
+import { applicationStudyFiles } from './files/application.ts'
+import { readWorkspace, type WorkspaceRead } from './files/read.ts'
+import { projectWorkspace } from './files/projection.ts'
+import { nextRefreshAfter } from './learning/queries.ts'
 import { archiveTermSchema, stateSchema, type StudyState } from './schema.ts'
-import { taughtUnit } from './learning/shared.ts'
 import { scheduleMistakes } from './learning/schedule.ts'
-import { diagnosticFor, insightSummary, studyInsight } from './learning/mastery.ts'
-import { studyStatus } from './learning/status.ts'
-import { checkInHistory, curriculumView, exercisesFor, objectiveElements, reviewPlan } from './learning/view.ts'
 import { updateStudy } from './learning/update/index.ts'
-import { builtinObjectiveAnywhere, curriculumFor, subjectExercises, subjectIdeas } from './curriculum.ts'
 
 const MAX_BYTES = 8_388_608
 
-/**
- * One-time fix for worksheets saved before the place-value rule split borrowing from crossing.
- * A figure that mixed `regroup: 'yes'` with crossed dots had its crosses dropped; the subtraction
- * the author intended stays answerable because the prompt and answer are unchanged.
- */
-function migrateLegacyFigures(parsed: unknown): unknown {
-  if (typeof parsed !== 'object' || parsed === null) return parsed
-  const worksheets = (parsed as { worksheets?: unknown }).worksheets
-  if (!Array.isArray(worksheets)) return parsed
-  for (const worksheet of worksheets) {
-    const items = (worksheet as { items?: unknown }).items
-    if (!Array.isArray(items)) continue
-    for (const item of items) {
-      const figure = (item as { figure?: { kind?: string; regroup?: string; crossTens?: number; crossOnes?: number } }).figure
-      if (figure?.kind === 'place-value' && figure.regroup === 'yes' && ((figure.crossTens ?? 0) > 0 || (figure.crossOnes ?? 0) > 0)) {
-        figure.crossTens = 0
-        figure.crossOnes = 0
-      }
-    }
-  }
-  return parsed
-}
+import { migrateStudyFile } from './files/legacy.ts'
+export { migrateStudyFile } from './files/legacy.ts'
+
+const stateCache = new Map<string, { version: string; state: StudyState }>()
+const entityCache = new Map<string, { signature: string; state: StudyState; at: number; refreshAfter: number }>()
 
 /**
- * Turn a saved hint flag into a hint level and strip retired time-limit fields before parsing.
- * Missing workbook drafts, exercises and the teaching queue are filled by the state schema defaults.
- */
-export function migrateStudyFile(parsed: unknown): unknown {
-  const next = migrateLegacyFigures(parsed)
-  if (typeof next !== 'object' || next === null) return next
-  const root = next as Record<string, unknown>
-  delete root.breakUntil
-  if (typeof root.profile === 'object' && root.profile !== null) {
-    delete (root.profile as Record<string, unknown>).limits
-  }
-  if (Array.isArray(root.sessions)) {
-    for (const session of root.sessions) {
-      if (typeof session === 'object' && session !== null) delete (session as Record<string, unknown>).deadline
-    }
-  }
-  if (Array.isArray(root.attempts)) {
-    for (const attempt of root.attempts) {
-      if (typeof attempt === 'object' && attempt !== null) delete (attempt as Record<string, unknown>).late
-    }
-  }
-  const task = root.task
-  if (typeof task === 'object' && task !== null) {
-    const record = task as { hintRequested?: unknown; hintLevel?: unknown }
-    if (typeof record.hintLevel !== 'number') record.hintLevel = record.hintRequested === true ? 1 : 0
-    delete record.hintRequested
-  }
-  return next
-}
-
-const stateCache = new Map<unknown, { version: unknown; state: StudyState }>()
-
-/**
- * Read or update .study/state.json in the calling Session's filesystem.
- * Reads preserve absence; writes require the observed version and current sandbox policy.
+ * Read validated v2 entities or read/update legacy .study/state.json in the calling Session's filesystem.
+ * Reads preserve absence; legacy writes require the observed version and current sandbox policy.
  * A competing writer causes an error, never an automatic replay of learning evidence.
  * Archiving validates the revision and command before writing; archive creation and state
  * replacement remain separate writes, so a later filesystem failure can leave an archive.
  * Parsed states are cached per observed file version, so unchanged reads skip re-reading
  * and re-validating the file; any write or external change drops the cache entry.
  * @param exec - calling agent and cancellation signal.
- * @param command - optional learning update; omission reads the current state.
+ * @param command - optional legacy learning update; omission reads the current state.
  * @param expectedRevision - revision observed by a submitting panel, checked before writing.
  * @returns the current or updated state, or undefined before setup or after a saved archive is read.
+ * @throws StudyDataUnavailable for invalid v2 files; v2 mutation commands require the separate manual-save owner.
  */
 export async function studyStore(exec: Pick<ToolExecution, 'agent' | 'signal'>, command?: unknown, expectedRevision?: number): Promise<StudyState | undefined> {
   const agent = exec.agent
@@ -88,6 +39,24 @@ export async function studyStore(exec: Pick<ToolExecution, 'agent' | 'signal'>, 
   const policy = agent.ctx.get('sandboxPolicy')
   if (!fs || !policy) throw new Error('学生插件需要 DSH 文件系统和沙箱策略服务。')
   const cwd = agent.session.header.cwd
+  const files = applicationStudyFiles(exec)
+  if (await files.stat('.study/settings.json', exec.signal)) {
+    const backups = await readBackups(files, exec.signal)
+    const read = await readWorkspace(files, exec.signal, backupVersions(backups.backups))
+    if (read.status === 'valid') await retainObservedBackups(files, read, Date.now(), exec.signal)
+    if (read.status === 'archived') return undefined
+    if (read.status !== 'valid' || !read.workspace) throw new StudyDataUnavailable(read)
+    if (command !== undefined) throw new Error('正式实体文件请通过原生聊天编辑，或使用带字段基线的手动保存接口。')
+    const identity = read.files.find(file => file.path === '.study/settings.json')!.targetKey
+    const signature = JSON.stringify(read.files.map(file => [file.targetKey, file.version]))
+    const cached = entityCache.get(identity)
+    const now = Date.now()
+    if (cached?.signature === signature && now >= cached.at && now < cached.refreshAfter) return cached.state
+    const state = projectWorkspace(read.workspace, now)
+    if (entityCache.size >= 8) entityCache.clear()
+    entityCache.set(identity, { signature, state, at: now, refreshAfter: nextRefreshAfter(state, now) })
+    return state
+  }
   const root = await fs.resolve(cwd, { signal: exec.signal })
   const target = await fs.resolve('.study/state.json', { cwd, signal: exec.signal })
   if (!fs.contains(root, target)) throw new Error('学习档案必须位于当前工作区内。')
@@ -95,7 +64,7 @@ export async function studyStore(exec: Pick<ToolExecution, 'agent' | 'signal'>, 
   let state: StudyState | undefined
   if (before) {
     if (before.type !== 'file') throw new Error('.study/state.json 必须是普通文件。')
-    const cached = stateCache.get(target)
+    const cached = stateCache.get(target.targetKey)
     if (cached && cached.version === before.version) {
       state = cached.state
     } else {
@@ -106,7 +75,7 @@ export async function studyStore(exec: Pick<ToolExecution, 'agent' | 'signal'>, 
       state = parsed.archivedAt !== undefined ? undefined : scheduleMistakes(parsed)
       if (state !== undefined) {
         if (stateCache.size >= 8) stateCache.clear()
-        stateCache.set(target, { version: after?.version ?? before.version, state })
+        stateCache.set(target.targetKey, { version: after?.version ?? before.version, state })
       }
     }
   }
@@ -128,146 +97,16 @@ export async function studyStore(exec: Pick<ToolExecution, 'agent' | 'signal'>, 
   const content = `${JSON.stringify(stored, null, 2)}\n`
   if (Buffer.byteLength(content) > MAX_BYTES) throw new Error('本学期学习档案已达到 8 MiB 限制，请备份并使用新工作区。')
   await fs.writeText(target, content, before ? { kind: 'replaceIfVersion', version: before.version } : { kind: 'createIfAbsent' }, exec.signal, policy.resolve({ session: agent.session }))
-  stateCache.delete(target)
+  stateCache.delete(target.targetKey)
   return next
 }
 
-/**
- * Bounded history and status queries. Only the requested collection is computed; offset pagination applies to every collection.
- * @param state - current durable learning state, or undefined before setup.
- * @param kind - record collection or projection to read.
- * @param offset - zero-based collection offset.
- * @param options - optional exact record ID, subject and unit filters, grade/term for browsing another knowledge map or a cross-grade check-in plan.
- * @returns the projection or one page of records.
- */
-export function queryStudy(state: StudyState | undefined, kind: string, offset: number, options: { id?: string; subject?: 'chinese' | 'math' | 'english'; unit?: string; grade?: number; term?: 'first' | 'second' } = {}) {
-  if (!state) return { phase: 'setup-required', path: '.study/state.json' }
-  const { id, subject, unit } = options
-  const now = Date.now()
-  if (kind === 'status') {
-    const summary = studyStatus(state, now)
-    return { ...summary, ...insightSummary(studyInsight(state, now)),
-      progress: summary.progress.slice(0, 20), progressCount: summary.progress.length,
-      dueMistakes: summary.dueMistakes.slice(0, 20), dueMistakeCount: summary.dueMistakes.length,
-      pendingMistakes: summary.pendingMistakes.slice(0, 20), pendingMistakeCount: summary.pendingMistakes.length,
-      teachingQueue: state.teachingQueue.slice(0, 20), teachingQueueCount: state.teachingQueue.length,
-      workbookDrafts: state.workbookDrafts.slice(0, 20), workbookDraftCount: state.workbookDrafts.length,
-      workbookResults: state.workbookResults.slice(-20).reverse(), workbookResultCount: state.workbookResults.length,
-      more: 'The study skill owns what to do next; kind=progress, due, weak, exercises or curriculum with offset pages more records. interests and interestFocus wrap question context; facts stay on the knowledge map. dueToday lists at most two mistakes to clear and dueBacklog is the full overdue count. openmaic.baseUrl is the interactive-lesson service; write lesson records at openmaic.lessonsPath with the shell, not study_update.',
-    }
-  }
-  if (kind === 'curriculum') {
-    if (!subject) throw new Error('知识地图查询需要指定科目（subject）。')
-    const scope = options.grade !== undefined || options.term !== undefined ? { grade: options.grade ?? state.profile.grade, term: options.term ?? state.profile.term } : undefined
-    return { revision: state.revision, curriculum: curriculumView(state, subject, studyInsight(state, now), scope) }
-  }
-  if (kind === 'elements') {
-    if (!subject) throw new Error('知识要素查询需要指定科目（subject）。')
-    if (options.grade !== undefined || options.term !== undefined) throw new Error('知识要素只支持当前学期的知识地图。')
-    const file = curriculumFor(state.profile, subject)
-    if (!file) throw new Error('当前档案没有该科知识地图。')
-    const page = file.objectives
-      .filter(objective => {
-        const unitId = file.concepts.find(concept => concept.id === objective.conceptIds[0])?.unit ?? ''
-        if (!taughtUnit(state, subject, unitId)) return false
-        if (unit !== undefined && unitId !== unit) return false
-        return id === undefined || objective.id === id
-      })
-      .map(objective => {
-        const elements = objectiveElements(state, objective.id)
-        const unitId = file.concepts.find(concept => concept.id === objective.conceptIds[0])?.unit ?? ''
-        return {
-          id: objective.id, title: objective.title, goal: objective.goal, method: objective.method, unit: unitId,
-          errorTypes: elements?.errorTypes ?? [], questionPoints: elements?.questionPoints ?? [], variationAxes: elements?.variationAxes ?? [],
-          misconceptions: elements?.misconceptions ?? [], examples: elements?.examples ?? [], hintLadder: elements?.hintLadder ?? ['', '', ''],
-          exercises: elements?.exercises ?? [],
-          knowledgePoints: file.concepts.filter(concept => objective.conceptIds.includes(concept.id)).map(concept => ({
-            id: concept.id, name: concept.name, definition: concept.definition, example: concept.example,
-            ...((concept.ideaIds?.length ?? 0) > 0 ? { ideas: subjectIdeas(subject).filter(idea => concept.ideaIds?.includes(idea.id)).map(idea => ({ id: idea.id, name: idea.name, definition: idea.definition, example: idea.example })) } : {}),
-            ...(concept.facts !== undefined ? { facts: concept.facts } : {}),
-            ...(concept.misconceptions !== undefined ? { misconceptions: concept.misconceptions } : {}),
-            ...(concept.examples !== undefined ? { examples: concept.examples } : {}),
-          })),
-        }
-      })
-    return {
-      revision: state.revision, subject, objectives: page.slice(offset, offset + 20),
-      nextOffset: offset + 20 < page.length ? offset + 20 : null,
-      more: 'Write questions and hints from these elements, reference exercises and the hint ladder; the full rules live in the study skill.',
-    }
-  }
-  if (kind === 'exercises') {
-    const subjects = subject ? [subject] : (['chinese', 'math', 'english'] as const)
-    const saved = state.exercises.filter(item => !subject || item.subject === subject)
-    const seen = new Set(saved.map(item => item.id))
-    const shipped = subjects.flatMap(sub => subjectExercises(sub)).filter(item => !seen.has(item.id))
-    const all = [...saved.map(item => ({ ...item, source: 'workspace' as const })), ...shipped.map(item => ({ ...item, source: 'shipped' as const }))]
-    const filtered = all.filter(item => {
-      if (id !== undefined && item.id !== id && item.objectiveId !== id) return false
-      if (unit !== undefined) {
-        const objective = builtinObjectiveAnywhere(item.objectiveId)
-        if (objective?.unit !== unit) return false
-      }
-      return true
-    })
-    return {
-      revision: state.revision, total: filtered.length, items: filtered.slice(offset, offset + 20),
-      nextOffset: offset + 20 < filtered.length ? offset + 20 : null,
-    }
-  }
-  if (kind === 'review-sheet') {
-    if (!subject) throw new Error('巩固卷查询需要指定科目（subject）。')
-    return { revision: state.revision, ...reviewPlan(state, subject, now),
-      more: 'Write one new question per pick and one per objectiveFill; variant distance and reuse limits are schema-enforced and explained in the study skill.', }
-  }
-  if (kind === 'diagnose') {
-    const scope = options.grade !== undefined || options.term !== undefined
-      ? { grade: options.grade ?? state.profile.grade, term: options.term ?? state.profile.term, ...(options.unit !== undefined ? { units: [options.unit] } : {}) }
-      : undefined
-    if (scope && !subject) throw new Error('跨年级摸底计划需要指定科目（subject）。')
-    const diagnostics = (scope && subject ? [diagnosticFor(state, subject, now, scope)] : studyInsight(state, now).diagnostics)
-      .filter(plan => !subject || plan.subject === subject)
-      .map(plan => ({
-        ...plan,
-        sample: plan.sample.map(sample => {
-          const exercise = exercisesFor(state, sample.id).find(item => item.role === 'diagnose') ?? exercisesFor(state, sample.id)[0]
-          return { ...sample, ...(exercise !== undefined ? { exercise } : {}) }
-        }),
-      }))
-    return { revision: state.revision, diagnostics,
-      history: checkInHistory(state).filter(item => !subject || item.subject === subject),
-      more: 'Ask one short task per sampled objective and record each answer; the study skill describes the flow and intensities, and grade/term narrows the scope.', }
-  }
-  if (kind === 'weak') {
-    const insight = studyInsight(state, now)
-    return { revision: state.revision, ...insightSummary(insight),
-      weakPoints: insight.weakPoints.map(item => ({ id: item.id, subject: item.subject, title: item.title, goal: item.goal, level: item.level, priority: item.priority, reasons: item.reasons })),
-      practised: insight.objectives.filter(item => item.attempts > 0 || item.activeMistakes > 0).map(item => ({ id: item.id, subject: item.subject, title: item.title, level: item.level, independentDays: item.independentDays, attempts: item.attempts, helpedOrWrong: item.helpedOrWrong, activeMistakes: item.activeMistakes, dueMistakes: item.dueMistakes })),
-      more: 'Use kind=curriculum with a subject for the map behind these weak points.',
-    }
-  }
-  type CollectionItem = (StudyState['mistakes'] | StudyState['concepts'] | StudyState['objectives'] | StudyState['relations'] | StudyState['worksheets'] | StudyState['paperResults'] | StudyState['materials'] | StudyState['sessions'] | StudyState['attempts'] | ReturnType<typeof studyStatus>['progress'])[number]
-  const collections: Record<string, () => CollectionItem[]> = {
-    due: () => state.mistakes.filter(item => item.dueAt !== undefined && item.dueAt <= now),
-    pending: () => state.mistakes.filter(item => item.confirmedAt === undefined),
-    progress: () => studyStatus(state, now).progress,
-    concepts: () => state.concepts, objectives: () => state.objectives, relations: () => state.relations,
-    worksheets: () => state.worksheets.map(sheet => ({ ...sheet, drafts: state.paperDrafts.filter(draft => draft.worksheetId === sheet.id) })),
-    'paper-results': () => state.paperResults, materials: () => state.materials, mistakes: () => state.mistakes,
-    sessions: () => state.sessions, attempts: () => state.attempts,
-  }
-  const chosen = Object.hasOwn(collections, kind) ? collections[kind] : undefined
-  if (chosen === undefined) throw new Error(`未知的查询类型：${kind}。可用的类型见 study_status 工具说明。`)
-  const selected = chosen().filter(item => {
-    if (id && (!('id' in item) || item.id !== id)) return false
-    if (!subject) return true
-    if ('subject' in item) return item.subject === subject
-    if ('fromId' in item) return state.concepts.some(concept => concept.id === item.fromId && concept.subject === subject)
-    if ('worksheetId' in item) return state.worksheets.some(sheet => sheet.id === item.worksheetId && sheet.subject === subject)
-    return true
-  })
-  return { revision: state.revision, total: selected.length, items: selected.slice(offset, offset + 20), nextOffset: offset + 20 < selected.length ? offset + 20 : null }
-}
+export { queryStudy } from './learning/queries.ts'
 
 /** A stale sidebar must reload before it can change learning evidence. */
 export class StudyConflict extends Error { constructor() { super('学习档案已更新，请刷新后核对再保存。') } }
+
+/** Invalid current official files keep prior displays stale until an explicit repair is validated. */
+export class StudyDataUnavailable extends Error {
+  constructor(readonly read: WorkspaceRead) { super(read.issues[0]?.correction ?? 'Current Student files are unavailable.') }
+}

@@ -9,7 +9,7 @@ import { z } from 'zod'
 import { commandSchema } from './schema.ts'
 import { panelActions } from './actions.ts'
 import { studyStore, StudyConflict } from './store.ts'
-import { dashboard } from './dashboard.ts'
+import { queryDashboard as dashboard } from './learning/queries.ts'
 import { readInteractiveLessons } from './openmaic.ts'
 
 const mutation = z.object({ revision: z.number().int().nonnegative(), change: commandSchema }).strict()

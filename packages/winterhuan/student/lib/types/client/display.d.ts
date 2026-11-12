@@ -66,6 +66,7 @@ export declare const assistKeys: {
     readonly independent: "assistIndependent";
     readonly hint: "assistHint";
     readonly 'worked-example': "assistWorked";
+    readonly unknown: "assistUnknown";
 };
 export declare const focusKeys: {
     readonly literacy: "focusLiteracy";

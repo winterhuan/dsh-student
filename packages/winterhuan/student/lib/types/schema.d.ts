@@ -82,6 +82,12 @@ export declare const exerciseRoleSchema: z.ZodEnum<{
 }>;
 /** Pedagogical role of a structured exercise item. */
 export type ExerciseRole = z.infer<typeof exerciseRoleSchema>;
+/** Allowed methods for confirmed custom goals; shared by file validation and settings handlers. */
+export declare const customObjectiveMethods: {
+    readonly chinese: readonly ["recognize", "read-evidence", "express"];
+    readonly math: readonly ["represent", "reason", "verify"];
+    readonly english: readonly ["context", "listen", "speak"];
+};
 /** Printable figures drawn by the SVG renderer; an empty label prints an answer box. */
 export declare const figureSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
     kind: z.ZodLiteral<"bar-model">;
@@ -1476,6 +1482,7 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
             stuck: "stuck";
         }>;
         assistance: z.ZodOptional<z.ZodEnum<{
+            unknown: "unknown";
             independent: "independent";
             hint: "hint";
             "worked-example": "worked-example";
@@ -2662,6 +2669,7 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
             unassessed: "unassessed";
         }>;
         assistance: z.ZodEnum<{
+            unknown: "unknown";
             independent: "independent";
             hint: "hint";
             "worked-example": "worked-example";
@@ -2712,6 +2720,7 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
             }>;
             response: z.ZodOptional<z.ZodString>;
             assistance: z.ZodOptional<z.ZodEnum<{
+                unknown: "unknown";
                 independent: "independent";
                 hint: "hint";
                 "worked-example": "worked-example";
@@ -2758,6 +2767,7 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
         }>;
         response: z.ZodOptional<z.ZodString>;
         assistance: z.ZodOptional<z.ZodEnum<{
+            unknown: "unknown";
             independent: "independent";
             hint: "hint";
             "worked-example": "worked-example";
@@ -2969,6 +2979,7 @@ export declare const stateSchema: z.ZodObject<{
             stuck: "stuck";
         }>;
         assistance: z.ZodEnum<{
+            unknown: "unknown";
             independent: "independent";
             hint: "hint";
             "worked-example": "worked-example";
@@ -3269,6 +3280,8 @@ export declare const stateSchema: z.ZodObject<{
         at: z.ZodNumber;
         materialId: z.ZodOptional<z.ZodString>;
         rawResponse: z.ZodOptional<z.ZodString>;
+        questionId: z.ZodOptional<z.ZodString>;
+        responseId: z.ZodOptional<z.ZodString>;
     }, z.core.$strict>>;
     mistakes: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
@@ -4061,6 +4074,7 @@ export declare const stateSchema: z.ZodObject<{
             unassessed: "unassessed";
         }>;
         assistance: z.ZodEnum<{
+            unknown: "unknown";
             independent: "independent";
             hint: "hint";
             "worked-example": "worked-example";
@@ -4081,6 +4095,7 @@ export declare const stateSchema: z.ZodObject<{
             unassessed: "unassessed";
         }>;
         assistance: z.ZodEnum<{
+            unknown: "unknown";
             independent: "independent";
             hint: "hint";
             "worked-example": "worked-example";
@@ -4493,6 +4508,7 @@ export declare const stateSchema: z.ZodObject<{
         response: z.ZodOptional<z.ZodString>;
         rawResponse: z.ZodOptional<z.ZodString>;
         answeredAt: z.ZodOptional<z.ZodNumber>;
+        responseId: z.ZodOptional<z.ZodString>;
         hintLevel: z.ZodNumber;
         stuck: z.ZodOptional<z.ZodBoolean>;
     }, z.core.$strict>>;

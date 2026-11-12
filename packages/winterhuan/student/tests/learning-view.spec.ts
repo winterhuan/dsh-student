@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { updateStudy } from '../src/learning/update/index.ts'
+import { updateStudy } from './fixtures.ts'
 import { queryStudy } from '../src/store.ts'
 import { NOW, MINUTE, DAY, setup, start, attempt, mistake, confirm, recordAnswer } from './fixtures.ts'
 

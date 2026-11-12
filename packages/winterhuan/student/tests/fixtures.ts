@@ -1,5 +1,50 @@
 import type { Command, StudyState } from '../src/schema.ts'
-import { updateStudy } from '../src/learning/update/index.ts'
+import { updateStudy as applyStudy } from '../src/learning/update/index.ts'
+import { attachEvidence, evidenceOf, type EffectiveEvidence } from '../src/learning/evidence.ts'
+import { scheduleMistakes } from '../src/learning/schedule.ts'
+
+/** Synthetic command clocks explicitly declare actual manual answer dates, separately from assessment time.
+ * Durable-v1 tests keep the production reader and do not use this fixture.
+ */
+export function updateStudy(state: StudyState | undefined, command: Command, now: number): StudyState {
+  const result = applyStudy(state, command, now)
+  if (!state) return result
+  const entries = evidenceOf(state).entries.map(entry => ({ ...entry }))
+  const stuckSignals = evidenceOf(state).stuckSignals.slice()
+  const task = result.task
+  if (command.action === 'answer' && task) {
+    const entry: EffectiveEvidence = { termId: 'synthetic-term', ownerId: task.sessionId, ownerKind: 'block', responseId: task.id, questionId: task.id, subject: task.subject, topic: task.topic,
+      rawResponse: command.response, result: 'unassessed', assistance: task.hintLevel > 0 ? 'hint' : task.phase === 'demo' ? 'worked-example' : 'independent',
+      answerDate: { kind: 'instant', at: now, basis: 'current-manual', sourceVersion: `fixture-answer:${task.sessionId}:${task.id}` }, source: { kind: 'manual', entry: 'current', parentConfirmation: 'Synthetic actual-answer declaration' },
+      ...(task.objectiveId ? { objectiveId: task.objectiveId } : {}), ...(task.mistakeId ? { mistakeId: task.mistakeId } : {}) }
+    const existing = entries.findIndex(item => item.ownerId === task.sessionId && item.responseId === task.id)
+    if (existing < 0) entries.push(entry)
+  }
+  if (command.action === 'record') {
+    const entry = entries.find(item => item.ownerId === command.attempt.sessionId && item.responseId === command.attempt.id)
+    if (entry) { entry.result = command.attempt.result; entry.assistance = command.attempt.assistance ?? entry.assistance }
+  }
+  if (command.action === 'stuck' && task?.objectiveId) stuckSignals.push({ objectiveId: task.objectiveId, at: now })
+  if (command.action === 'grade-sheet' || command.action === 'confirm-paper') {
+    const worksheetId = command.action === 'grade-sheet' ? command.grade.worksheetId : command.worksheetId
+    const results = command.action === 'grade-sheet' ? command.grade.results : command.results
+    for (const item of results) {
+      const sheet = result.worksheets.find(sheet => sheet.id === worksheetId)!
+      const question = sheet.items.find(question => question.id === item.itemId)!
+      const saved = result.paperResults.find(saved => saved.worksheetId === worksheetId && saved.itemId === item.itemId)!
+      const existing = entries.find(entry => entry.ownerKind === 'worksheet' && entry.ownerId === worksheetId && entry.responseId === item.itemId)
+      if (existing) { existing.result = saved.result; existing.assistance = saved.assistance }
+      else entries.push({ termId: 'synthetic-term', ownerId: worksheetId, ownerKind: 'worksheet', responseId: item.itemId, questionId: item.itemId, subject: sheet.subject, topic: question.prompt,
+        rawResponse: saved.response, result: saved.result, assistance: saved.assistance,
+        answerDate: { kind: 'instant', at: now, basis: 'current-manual', sourceVersion: `fixture-paper:${worksheetId}:${item.itemId}` }, source: { kind: 'manual', entry: 'current', parentConfirmation: 'Synthetic actual paper-answer declaration' },
+        ...(question.objectiveId ? { objectiveId: question.objectiveId } : {}), ...(question.mistakeId ? { mistakeId: question.mistakeId } : {}) })
+    }
+  }
+  return scheduleMistakes(attachEvidence(result, { entries, stuckSignals }))
+}
+
+/** Copy an explicitly evidenced synthetic fixture without losing its declared sources. */
+export function copyFixture(state: StudyState): StudyState { return attachEvidence(structuredClone(state), evidenceOf(state)) }
 
 /** Publish, answer and assess a fixture question through the public learning update interface. */
 export function recordAnswer(state: StudyState, input: Extract<Command, { action: 'record' }>['attempt'], now: number): StudyState {

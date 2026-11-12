@@ -89,6 +89,9 @@ export type Outcome = {
     at: number;
     result: string;
     assistance: string;
+    day?: string;
+    precision?: 'day' | 'instant';
+    evidence?: import('./evidence.ts').EffectiveEvidence;
 };
 /** One objective's identity fields, shared by shipped and custom objectives in the insight. */
 export type ObjectiveBase = {

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ParentSettings } from '../src/client/forms.tsx'
 import { StudyDesk } from '../src/client/desk.tsx'
 import { dashboard } from '../src/dashboard.ts'
-import { updateStudy } from '../src/learning/update/index.ts'
+import { updateStudy } from './fixtures.ts'
 import { en } from '../src/client/locales.ts'
 import { NOW, MINUTE, DAY, setup, material, course, start, attempt, mistake, confirm } from './fixtures.ts'
 

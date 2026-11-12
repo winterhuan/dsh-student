@@ -330,6 +330,7 @@ export declare const zh: {
     assistIndependent: string;
     assistHint: string;
     assistWorked: string;
+    assistUnknown: string;
     checkin: string;
     checkinHelp: string;
     coverage: string;

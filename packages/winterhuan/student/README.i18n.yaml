@@ -27,8 +27,8 @@
   en: 555af7fcf92d0617
   zh: 5b0bf80425f19149
 /winterhuan-dsh-student/use-this-package/confirm-the-learner-and-materials:
-  en: 1102c27a5599c2b7
-  zh: 3c42e52556f75c08
+  en: c1d50f21365825e3
+  zh: 2c73295ef51ffd53
 /winterhuan-dsh-student/use-this-package/use-default-textbooks:
   en: afe5c3d6bc358085
   zh: ff855309b1d2e5e1
@@ -39,8 +39,11 @@
   en: 3c4d65b2b702b2f3
   zh: b118b45a92e97041
 /winterhuan-dsh-student/understand-the-implementation:
-  en: 058639de33d9ec47
-  zh: 0b033ad4b0ac43f9
+  en: 68ac4092b48614d0
+  zh: efd1f5828c0434ff
+/winterhuan-dsh-student/understand-the-implementation/validate-native-file-edits:
+  en: 36842cd56f408332
+  zh: 76e1fc7f66b4637f
 /winterhuan-dsh-student/further-exploration:
   en: cad30259753d0801
   zh: ac0ab4abbb8a0ff7
@@ -51,11 +54,11 @@
   en: cc51be71883c8c73
   zh: 3b0cb38a8f2a85a2
 /winterhuan-dsh-student/model-experience/study-guidance-and-records/what-the-model-sees:
-  en: 3f1ed775577d8b8e
-  zh: 82ea36aaecb4dad7
+  en: 028d6d6ae588e202
+  zh: 6336cf1f9cf2af41
 /winterhuan-dsh-student/model-experience/study-guidance-and-records/token-effect:
-  en: 02af75bbc38e4de5
-  zh: 034b20671394ea58
+  en: 21eba169dedf578f
+  zh: a75cf9bb1e50727c
 /winterhuan-dsh-student/model-experience/study-guidance-and-records/kv-cache-effect:
   en: aa76a5796ac4c7e4
   zh: dd36da5b240c25ef

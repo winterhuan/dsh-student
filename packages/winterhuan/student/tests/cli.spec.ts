@@ -1,0 +1,95 @@
+import { execFile } from 'node:child_process'
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { promisify } from 'node:util'
+import { expect, it, onTestFinished } from 'vitest'
+import { nodeStudyFiles, readWorkspace, queryWorkspace } from '../src/files/index.ts'
+import { officialFileSchemas, validateStudyFiles, lessonFileSchema } from '../src/files/index.ts'
+import { authoringExample, authoringSchema } from '../src/files/resources.ts'
+import { figureSchema } from '../src/schema.ts'
+import { NOW, setup } from './fixtures.ts'
+
+const cli = fileURLToPath(new URL('../lib/cli.js', import.meta.url))
+const execute = promisify(execFile)
+
+it('validates actual official bytes without writing and gives independent consumers the saved facts', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-cli-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study'), { recursive: true })
+  const path = join(cwd, '.study/settings.json')
+  const bytes = JSON.stringify({ format: 2, kind: 'term-settings', termId: 'term-cli', revision: 1, updatedAt: NOW, profile: setup.profile, materials: [], courses: [] })
+  await writeFile(path, bytes)
+  const before = await readWorkspace(nodeStudyFiles(cwd), new AbortController().signal)
+  const { stdout } = await execute(process.execPath, [cli, 'validate', '--workspace', cwd], { env: { ...process.env, NODE_OPTIONS: '' } })
+  expect(JSON.parse(stdout)).toMatchObject({ ok: true, files: [{ path: '.study/settings.json', kind: 'term-settings', termId: 'term-cli', version: before.files[0]!.version }] })
+  const after = await readWorkspace(nodeStudyFiles(cwd), new AbortController().signal)
+  expect(after.files.map(file => file.version)).toEqual(before.files.map(file => file.version))
+  expect(await readFile(path, 'utf8')).toBe(bytes)
+  expect(queryWorkspace(after, { kind: 'settings' }, NOW)).toMatchObject({ status: 'valid', data: { termId: 'term-cli', profile: { nickname: setup.profile.nickname } } })
+})
+
+it('generates valid examples for every official file kind from the same strict definitions', () => {
+  const paths = { 'term-settings': '.study/settings.json', block: '.study/blocks/example.json', worksheet: '.study/worksheets/example.json', collections: '.study/collections.json' }
+  const input = Object.entries(officialFileSchemas).map(([kind, schema]) => {
+    const name = kind as keyof typeof officialFileSchemas
+    const value = authoringExample(name)
+    expect(schema.safeParse(value).success).toBe(true)
+    expect(authoringSchema(name).additionalProperties).toBe(false)
+    return { path: paths[name], value }
+  })
+  expect(validateStudyFiles(input)).toMatchObject({ valid: true, issues: [] })
+  expect(lessonFileSchema.safeParse(authoringExample('openmaic-lessons')).success).toBe(true)
+  const figures = authoringExample('figure') as unknown[]
+  expect(figures).toHaveLength(23)
+  for (const figure of figures) expect(figureSchema.safeParse(figure).success).toBe(true)
+})
+
+it('bounds large Unicode diagnostics and explicitly omits success rows after a complete read', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-cli-bounds-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study/blocks'), { recursive: true })
+  const settings = authoringExample('term-settings')
+  await writeFile(join(cwd, '.study/settings.json'), JSON.stringify({ ...(settings as object), ['疑'.repeat(10000)]: true }))
+  const failed = await execute(process.execPath, [cli, 'validate', '--workspace', cwd]).catch(error => error)
+  expect(failed.code).toBe(1)
+  expect(Buffer.byteLength(failed.stdout)).toBeLessThanOrEqual(32768)
+  expect(JSON.parse(failed.stdout).issues[0]).toMatchObject({ path: '.study/settings.json', rule: 'schema' })
+  await writeFile(join(cwd, '.study/settings.json'), JSON.stringify(settings))
+  const block = authoringExample('block') as object
+  await Promise.all(Array.from({ length: 101 }, (_, index) => writeFile(join(cwd, `.study/blocks/block-${index}.json`), JSON.stringify({ ...block, id: `block-${index}`, endedAt: NOW }))))
+  const result = JSON.parse((await execute(process.execPath, [cli, 'validate', '--workspace', cwd])).stdout)
+  expect(result).toMatchObject({ ok: true, fileCount: 102, omittedFiles: 2 })
+  expect(result.files).toHaveLength(100)
+})
+
+it('rejects invalid official input with bounded corrections, preserves its bytes and accepts an explicit repair', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-cli-repair-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study'), { recursive: true })
+  const path = join(cwd, '.study/settings.json')
+  const valid = { format: 2, kind: 'term-settings', termId: 'term-cli', revision: 1, updatedAt: NOW, profile: setup.profile, materials: [], courses: [] }
+  await writeFile(path, JSON.stringify({ ...valid, invented: 'invalid' }))
+  const invalidBytes = await readFile(path, 'utf8')
+  const failed = await execute(process.execPath, [cli, 'validate', '--workspace', cwd]).then(() => { throw new Error('Invalid files must fail.') }, error => error)
+  expect(failed.code).toBe(1)
+  expect(failed.signal).toBeNull()
+  expect(JSON.parse(failed.stdout)).toMatchObject({ ok: false, issues: expect.arrayContaining([{ path: '.study/settings.json', field: '', rule: 'schema', correction: expect.any(String) }]) })
+  expect(failed.stdout.length).toBeLessThan(30000)
+  expect(await readFile(path, 'utf8')).toBe(invalidBytes)
+  expect(queryWorkspace(await readWorkspace(nodeStudyFiles(cwd), new AbortController().signal), { kind: 'settings' }, NOW)).not.toHaveProperty('data')
+  await writeFile(path, JSON.stringify(valid))
+  expect(JSON.parse((await execute(process.execPath, [cli, 'validate', '--workspace', cwd])).stdout).ok).toBe(true)
+})
+
+it('provides source-derived strict authoring schemas and valid examples including all 23 figure variants', async () => {
+  const { stdout } = await execute(process.execPath, [cli, 'schema', 'block'])
+  const schema = JSON.parse(stdout)
+  expect(schema.additionalProperties).toBe(false)
+  expect(schema.properties.termId).toMatchObject({ type: 'string', pattern: '^[a-zA-Z0-9_-]{1,80}$' })
+  const example = JSON.parse((await execute(process.execPath, [cli, 'example', 'worksheet'])).stdout)
+  expect(example).toMatchObject({ kind: 'worksheet', subject: 'math', items: [{ objectiveId: 'm2a-o-sub' }] })
+  const figures = JSON.parse((await execute(process.execPath, [cli, 'example', 'figure'])).stdout)
+  expect(figures.map((figure: { kind: string }) => figure.kind)).toEqual(['bar-model', 'money', 'place-value', 'hundred-chart', 'number-line', 'clock', 'sticks', 'vertical', 'shapes', 'overlap', 'split', 'sequence', 'wall', 'grid', 'dot-array', 'plane', 'solid', 'counter', 'measure', 'compass', 'balance', 'writing', 'sketch'])
+})

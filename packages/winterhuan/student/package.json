@@ -13,6 +13,7 @@
     "directory": "packages/winterhuan/student"
   },
   "main": "lib/index.js",
+  "bin": { "study-validate": "lib/cli.js" },
   "types": "lib/types/index.d.ts",
   "exports": {
     ".": {
@@ -20,6 +21,7 @@
       "default": "./lib/index.js"
     },
     "./package.json": "./package.json",
+    "./cli": "./lib/cli.js",
     "./client": {
       "types": "./lib/types/client/index.d.ts",
       "default": "./lib/client.js"

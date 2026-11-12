@@ -1,12 +1,12 @@
 # 生成 OpenMAIC 互动课
 
-本机 OpenMAIC 已经在运行。这份说明只覆盖：拼 requirement、用 curl 生成、轮询、把课记到工作区、在对话里给出裸 URL、失败重试，以及课后摘要和巩固题。
+在已经配置的 OpenMAIC 服务上操作。这份说明只覆盖：拼 requirement、用 curl 生成、轮询、把课记到工作区、在对话里给出裸 URL、失败重试，以及课后摘要和巩固题。
 
 不要做这些事：clone OpenMAIC、启动或重启它的容器、配置模型密钥、Live Demo、openclaw，以及把 `skills/openmaic` 或 `agent-runtime` 整包拷进学习工作区。不要把课堂嵌进侧栏 iframe。不要做静态导出播放器。
 
 ## 地址、访问码和 cookie
 
-先 `study_status`。使用返回的 `openmaic.baseUrl`。家长在工作台保存的地址优先，否则是运行 DSH 的环境变量 `OPENMAIC_BASE`，都没有时是 `http://localhost:3000`。不要自己再猜端口。
+先 `study_status`。使用有效结果 data.openmaic.baseUrl。家长在工作台保存的地址优先，否则是运行 DSH 的环境变量 `OPENMAIC_BASE`，都没有时是 `http://localhost:3000`。不要自己再猜端口。
 
 访问码只在环境变量 `OPENMAIC_ACCESS_CODE` 非空时使用。先对同一 cookie jar 执行 `POST {base}/api/access-code/verify`，JSON 正文只有 `code`。验证失败就停止，并说明访问码被拒绝。不要把访问码、cookie 文件或 Authorization 头写进档案、`.study/openmaic-lessons.json`、命令回显或对话。
 
@@ -36,7 +36,7 @@ curl -sS -c "$JAR" -b "$JAR" -H 'content-type: application/json' \
   "$BASE/api/access-code/verify"
 node -e 'require("node:fs").rmSync(".study/openmaic-access-body.json", { force: true })'
 node -e 'require("node:fs").writeFileSync(".study/openmaic-generate-body.json", JSON.stringify({ requirement: process.env.REQ }))'
-curl -sS -D - -c "$JAR" -b "$JAR" -H 'content-type: application/json' \
+curl -sS -c "$JAR" -b "$JAR" -H 'content-type: application/json' \
   -d @.study/openmaic-generate-body.json \
   "$BASE/api/generate-classroom"
 node -e 'require("node:fs").rmSync(".study/openmaic-generate-body.json", { force: true })'
@@ -56,53 +56,15 @@ node -e 'require("node:fs").rmSync(".study/openmaic-generate-body.json", { force
 
 ## 记课
 
-课表是 `.study/openmaic-lessons.json`，不是 `.study/state.json`。不要用文件工具改 state.json。用下面的脚本按 `id` 合并一条记录，最多保留 40 条。把要写入的对象放进环境变量 `OPENMAIC_LESSON_JSON`，不要把访问码放进这个对象。
+课程日志是独立的 `.study/openmaic-lessons.json`，严格定义和示例用随包 CLI 的 schema/example openmaic-lessons 按需读取。用原生 read 检查当前日志，直接创建或编辑 lessons 中同一稳定 id 的生命周期记录，再运行 validate；不要吞掉 JSON 错误、清空无效日志或根据展示的二十行覆盖其余课程。日志最多八十行，实际字段与时间格式以生成 schema 为准。
 
-```sh
-OPENMAIC_LESSON_JSON="$PAYLOAD" node --input-type=module <<'EOF'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
-const path = '.study/openmaic-lessons.json'
-const incoming = JSON.parse(process.env.OPENMAIC_LESSON_JSON ?? '{}')
-await mkdir('.study', { recursive: true })
-let file = { format: 1, lessons: [] }
-try { file = JSON.parse(await readFile(path, 'utf8')) } catch { /* a missing log starts empty */ }
-if (!file || file.format !== 1 || !Array.isArray(file.lessons)) file = { format: 1, lessons: [] }
-const now = new Date().toISOString()
-const index = file.lessons.findIndex(item => item.id === incoming.id || (incoming.jobId && item.jobId === incoming.jobId))
-const prior = index >= 0 ? file.lessons[index] : undefined
-const next = { ...prior, ...incoming, id: prior?.id ?? incoming.id, createdAt: prior?.createdAt ?? incoming.createdAt ?? now, updatedAt: now }
-if (index >= 0) file.lessons[index] = next
-else file.lessons.unshift(next)
-file.lessons = file.lessons.slice(0, 40)
-await writeFile(path, `${JSON.stringify(file, null, 2)}\n`)
-EOF
-```
-
-一条记录的形状：
-
-| 字段 | 何时写 |
-|---|---|
-| `format` | 文件顶层，固定为 `1` |
-| `id` | 新建时自定，例如 `om-` 加时间戳，只含字母、数字、下划线和连字符 |
-| `status` | `generating`、`ready` 或 `failed` |
-| `createdAt` / `updatedAt` | ISO 时间，以 `Z` 结尾 |
-| `title` | 短标题，用学习目标的名字 |
-| `requirement` | 发给生成接口的正文 |
-| `subject` / `objectiveId` | 知道时写上 |
-| `base` | 这次使用的 `openmaic.baseUrl` |
-| `jobId` / `pollUrl` | 202 响应 |
-| `runId` / `retryable` / `commandId` | 失败可重试，或 retry 返回了新的 commandId |
-| `classroomId` / `url` / `warning` | 成功时 |
-| `error` | 失败时的短说明 |
-| `summary` | 课后摘要，见下一节 |
-
-`url` 必须是 http 或 https，不能带账号密码。工作台只展示能通过这个形状的记录。
+保留实际 createdAt，更新 updatedAt。生成中记录 jobId 与 pollUrl；失败保存实际错误、retryable 与 runId；成功保存 classroomId、url 和 warning。没有返回的身份或链接保持缺失，不能猜。访问码、cookie 和认证头只在 shell 环境/独立 cookie jar 中，模型可见业务文件不保存它们。服务日志保存和 CLI 校验完成后才报告“课程记录已保存”。
 
 ## 对话里怎么给链接
 
 成功后在对话里先用一句孩子能懂的话说明课好了。下一行只放课堂 URL 原文，单独一行，前后不要加括号、反引号或 Markdown 链接。若有 `warning`，用另一句告诉家长。请家长用系统浏览器打开这一行。工作台的「在浏览器打开」做的是同一件事。
 
-可以问孩子要不要记一段学习时间。要的话，该科已确认学校进度就 `start` 模式 `school`，否则用 `explore`。这只是可选的学习记录外壳，不要说系统会关掉页面。
+可以问孩子要不要记一段学习时间。要的话，该科已确认学校进度就创建 mode 为 school 的 block，否则用 explore，保存历史 context 并校验。这只是可选的学习记录外壳，不要说系统会关掉页面。
 
 ## 失败后重试
 
@@ -124,4 +86,4 @@ curl -sS -c "$JAR" -b "$JAR" "$BASE/api/stages/$CLASSROOM_ID"
 - `outline`：大纲或各场标题连成的短文，不超过 2000 字
 - `scenes`：`{ "title", "summary"? }` 列表
 
-然后出 2 到 5 道巩固题。走现有出题和作答：对话里一次一题，`task` 带上这节课的 `objectiveId`；家长要纸上卷时用 `worksheet`，`kind` 写 `practice`，题量不超过 5。题目要能用摘要和该知识点的 `facts` 核对，不要照抄舞台动画里孩子没看到的句子，也不要另做播放器。出题细则仍以 `questions.md` 为准。
+然后出 2 到 5 道巩固题。走现有出题和作答：对话里一次一题，block.questions 带上这节课的 objectiveId，保存原回答后评价并校验；家长要纸上卷时保存正式 worksheet，worksheetKind 写 practice 并校验，题量不超过 5。题目要能用摘要和该知识点的 `facts` 核对，不要照抄舞台动画里孩子没看到的句子，也不要另做播放器。出题细则仍以 `questions.md` 为准。

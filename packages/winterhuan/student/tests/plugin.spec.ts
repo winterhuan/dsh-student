@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
@@ -9,13 +9,16 @@ import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime, { type ToolRunContext } from '@deepseek-ai/dsh-tools'
 import { apply as applyNativeToolExecutor, inject as nativeToolExecutorInject } from '@deepseek-ai/dsh-tool-executor-native'
 import type { ToolCallId } from '@deepseek-ai/dsh-llm'
+import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
+import SessionQuery from '@deepseek-ai/dsh-session-query'
 import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import * as student from '../src/agent.ts'
 import { createStudySkillProvider } from '../src/skill-provider.ts'
 import { studyStore } from '../src/store.ts'
-import { scheduleMistakes } from '../src/learning/schedule.ts'
-import { stateSchema } from '../src/schema.ts'
-import { setup, material, course, start, attempt, mistake, confirm } from './fixtures.ts'
+import { NOW, setup } from './fixtures.ts'
+import { updateStudy } from '../src/learning/update/index.ts'
+import { authoringExample } from '../src/files/resources.ts'
 
 async function fixture() {
   const cwd = await mkdtemp(join(tmpdir(), 'dsh-student-test-'))
@@ -30,13 +33,12 @@ async function fixture() {
   const plugin = ctx.plugin(student)
   await plugin.await()
   const policy = { resolve: vi.fn(() => undefined) }
-  function execution(name = 'study_update', signal = new AbortController().signal, sessionId = 'student-session'): ToolRunContext {
-    const agent = { session: { id: sessionId, header: { cwd } }, ctx: { root: ctx.root, get: (name: string) => name === 'sandboxPolicy' ? policy : ctx.get(name) } } as Agent
+  function execution(name = 'study_status', signal = new AbortController().signal, sessionId = 'student-session'): ToolRunContext {
+    const agent = { session: { id: sessionId, header: { cwd } }, ctx: { root: ctx, get: (name: string) => name === 'sandboxPolicy' ? policy : ctx.get(name) } } as Agent
     const callId = 'study-call' as ToolRunContext['callId']
     return { agent, signal, callId, rootCallId: callId, name, arguments: {}, token: Symbol('study') as ToolRunContext['token'], deferContext() {}, concludeTurn() {} }
   }
-  async function call(change: unknown) { return ctx.tools.get('study_update')!.execute({ change }, execution()) }
-  return { cwd, ctx, plugin, execution, call, policy }
+  return { cwd, ctx, plugin, execution }
 }
 
 describe('independently loaded student plugin', () => {
@@ -59,178 +61,126 @@ describe('independently loaded student plugin', () => {
     for (const file of ['materials.md', 'teaching.md', 'default-textbooks.md', 'openmaic.md', 'interest-hooks.md']) expect((await readFile(join(skill.resourceBase.path, 'references', file), 'utf8')).length).toBeGreaterThan(100)
     expect(await provider.get({ ...candidate, path: '/etc/passwd' }, {})).toBeUndefined()
     expect(ctx.tools.get('study_status')).toBeDefined()
+    expect(ctx.tools.get('study_update')).toBeUndefined()
     await plugin.dispose()
     expect(await ctx.skills.list()).toEqual([])
     expect(ctx.tools.get('study_update')).toBeUndefined()
     expect(ctx.tools.get('study_status')).toBeUndefined()
   })
 
-  it('runs setup, confirmed schooling, work, stop and photo intake through real native tools', async () => {
-    const { ctx, cwd, execution, call, policy } = await fixture()
-    const query = () => ctx.tools.get('study_status')!.execute({}, execution('study_status'))
-    expect(await query()).toMatchObject({ phase: 'setup-required' })
+  it('reads current official setup and school maps through the registered status tool', async () => {
+    const { ctx, execution, cwd } = await fixture()
+    const status = ctx.tools.get('study_status')!
+    expect(await status.execute({}, execution())).toMatchObject({ status: 'missing', versions: [], native: { status: 'unavailable', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0, reason: expect.any(String) } })
     expect(await readdir(cwd)).toEqual([])
-    await call(setup)
-    await call({ action: 'material', material })
-    await call({ action: 'course', course })
-    await call({ ...start, mode: 'school' })
-    await call({ action: 'task', task: { id: attempt.id, sessionId: attempt.sessionId, subject: attempt.subject, topic: attempt.topic, prompt: attempt.prompt } })
-    await call({ action: 'answer', taskId: attempt.id, response: attempt.response })
-    await call({ action: 'record', attempt })
-    await call({ action: 'stop', sessionId: start.id, reflection: '我学会先凑十。' })
-    await call({ action: 'mistake', mistake })
-    await call(confirm)
-    const bytes = await readFile(join(cwd, '.study/state.json'), 'utf8')
-    const state = stateSchema.parse(JSON.parse(bytes))
-    expect(state.attempts[0]).toMatchObject({ response: attempt.response, materialId: material.id })
-    expect(state.rewards).toHaveLength(2)
-    expect(state.mistakes[0]?.uncertainties).toBe('')
-    expect(policy.resolve).toHaveBeenCalled()
-    expect((JSON.parse(bytes) as { mistakes: { dueAt?: number; stage?: number; independentDays?: string[] }[] }).mistakes[0]?.dueAt).toBeUndefined()
-    const second = execution('study_status', new AbortController().signal, 'resumed-session')
-    expect(await studyStore(second)).toEqual(scheduleMistakes(structuredClone(state)))
-    expect(await query()).toMatchObject({ phase: 'ready', stars: 2 })
+    await mkdir(join(cwd, '.study'))
+    await writeFile(join(cwd, '.study/settings.json'), JSON.stringify({ format: 2, kind: 'term-settings', termId: 'term-tool', revision: 1, updatedAt: NOW, profile: setup.profile, materials: [], courses: [] }))
+    expect(await status.execute({ kind: 'curriculum', subject: 'math' }, execution())).toMatchObject({ status: 'valid', data: { curriculum: { id: 'math-grade2-first' } }, versions: [{ path: '.study/settings.json' }] })
+    expect(await status.execute({ kind: 'curriculum', subject: 'math', grade: 1, term: 'first' }, execution())).toMatchObject({ data: { curriculum: { id: 'math-grade1-first', scope: { current: false } } } })
+    await expect(status.execute({ kind: 'curriculum' }, execution())).rejects.toThrow('科目')
+    await expect(status.execute({ offset: -1 }, execution())).rejects.toThrow('offset')
+  })
+
+  it('preserves legacy source bytes on reads and reports migration state without business writes', async () => {
+    const { ctx, execution, cwd } = await fixture()
+    await mkdir(join(cwd, '.study'))
+    const bytes = JSON.stringify(updateStudy(undefined, setup, NOW))
+    await writeFile(join(cwd, '.study/state.json'), bytes)
+    expect((await studyStore(execution()))?.profile.nickname).toBe(setup.profile.nickname)
+    expect(await ctx.tools.get('study_status')!.execute({}, execution())).toMatchObject({ status: 'legacy' })
     expect(await readFile(join(cwd, '.study/state.json'), 'utf8')).toBe(bytes)
-  })
-
-  it('archives a term through the real file system and resets to setup', async () => {
-    const { ctx, execution, call, cwd } = await fixture()
-    await call(setup)
-    await call({ action: 'mistake', mistake })
-    await call(confirm)
-    await call({ action: 'archive-term', parentConfirmation: '家长确认归档本学期。' })
-    const archive = JSON.parse(await readFile(join(cwd, '.study/archive-2026-2027-first.json'), 'utf8')) as { mistakes: unknown[] }
-    expect(archive.mistakes).toHaveLength(1)
-    const after = JSON.parse(await readFile(join(cwd, '.study/state.json'), 'utf8')) as { archivedAt?: number, mistakes: unknown[] }
-    expect(after.archivedAt).toBeGreaterThan(0)
-    expect(after.mistakes).toHaveLength(0)
-    await expect(ctx.tools.get('study_status')!.execute({}, execution('study_status'))).resolves.toMatchObject({ phase: 'setup-required' })
-    await expect(call({ action: 'archive-term', parentConfirmation: 'again' })).rejects.toThrow('请先建立学习档案')
-  })
-
-  it('rejects a stale archive revision without creating an archive file', async () => {
-    const { execution, cwd } = await fixture()
-    const state = (await studyStore(execution(), setup, 0))!
-    const before = await readFile(join(cwd, '.study/state.json'), 'utf8')
-    const command = { action: 'archive-term', parentConfirmation: '家长确认归档本学期。' }
-    await expect(studyStore(execution(), command, 0)).rejects.toThrow('已更新')
-    expect(await readFile(join(cwd, '.study/state.json'), 'utf8')).toBe(before)
-    expect(await readdir(join(cwd, '.study'))).toEqual(['state.json'])
-    await studyStore(execution(), command, state.revision)
-    expect(await readFile(join(cwd, '.study/archive-2026-2027-first.json'), 'utf8')).toBe(before)
-  })
-
-  it('rejects an archive during active learning without creating an archive file', async () => {
-    const { execution, call, cwd } = await fixture()
-    await call(setup)
-    await call(start)
-    const before = await readFile(join(cwd, '.study/state.json'), 'utf8')
-    const state = stateSchema.parse(JSON.parse(before))
-    await expect(studyStore(execution(), { action: 'archive-term', parentConfirmation: '家长确认归档本学期。' }, state.revision)).rejects.toThrow('先结束当前学习')
-    expect(await readFile(join(cwd, '.study/state.json'), 'utf8')).toBe(before)
     expect(await readdir(join(cwd, '.study'))).toEqual(['state.json'])
   })
 
-  it('reads the shipped knowledge map and weak points through the status tool', async () => {
-    const { ctx, execution, call } = await fixture()
-    await call(setup)
-    const status = ctx.tools.get('study_status')!
-    expect(await status.execute({ kind: 'curriculum', subject: 'math' }, execution('study_status'))).toMatchObject({ curriculum: { id: 'math-grade2-first', units: expect.any(Array) } })
-    await expect(status.execute({ kind: 'curriculum' }, execution('study_status'))).rejects.toThrow('科目')
-    expect(await status.execute({ kind: 'weak' }, execution('study_status'))).toMatchObject({ recommendation: { kind: 'diagnose' }, weakPoints: [], practised: [] })
-    expect(await status.execute({}, execution('study_status'))).toMatchObject({ phase: 'ready', recommendation: { kind: 'diagnose', subject: 'chinese' }, diagnostics: [{ subject: 'chinese', due: true }, { subject: 'math', due: true }, { subject: 'english', due: true }] })
-    expect(await status.execute({ kind: 'diagnose', subject: 'math' }, execution('study_status'))).toMatchObject({ diagnostics: [{ subject: 'math', due: true, recommendedIntensity: 'standard', samples: { light: expect.any(Array), deep: expect.any(Array) } }], history: [] })
-    expect(await status.execute({ kind: 'curriculum', subject: 'math', grade: 1, term: 'first' }, execution('study_status'))).toMatchObject({ curriculum: { id: 'math-grade1-first', scope: { current: false } } })
+  it('keeps the real resident parameter JSON below the accepted ceiling', async () => {
+    const { ctx } = await fixture()
+    const schemas = ctx.tools.schemas().filter(tool => tool.name.startsWith('study_'))
+    expect(schemas.map(tool => tool.name)).toEqual(['study_status'])
+    expect(schemas.reduce((sum, tool) => sum + JSON.stringify(tool.parameters).length, 0)).toBeLessThanOrEqual(30000)
   })
 
-  it('rejects unsupported fields and invalid numeric bounds without writing', async () => {
-    const { cwd, call } = await fixture()
-    await expect(call({ ...setup, profile: { ...setup.profile, schoolYear: '' } })).rejects.toThrow()
-    await expect(call({ ...setup, injected: true })).rejects.toThrow()
-    await expect(call({ ...setup, profile: { ...setup.profile, grade: 0 } })).rejects.toThrow()
-    expect(await readdir(cwd)).toEqual([])
-  })
-
-  it('rejects an unknown error cause and serves the elements query', async () => {
-    const { ctx, execution, call } = await fixture()
-    await call(setup)
-    await expect(call({ action: 'mistake', mistake: { ...mistake, errorType: 'not-a-cause' } })).rejects.toThrow()
-    await expect(call({ action: 'classify-mistake', mistakeId: mistake.id, errorType: 'not-a-cause' })).rejects.toThrow()
-    const status = ctx.tools.get('study_status')!
-    expect(await status.execute({ kind: 'elements', subject: 'math' }, execution('study_status'))).toMatchObject({ objectives: expect.arrayContaining([expect.objectContaining({ id: 'm2a-o-sub' })]) })
-    await expect(status.execute({ kind: 'elements' }, execution('study_status'))).rejects.toThrow('科目')
+  it('keeps the current block version in bounded context and replaces large requested histories with explicit file pointers', async () => {
+    const { ctx, execution, cwd } = await fixture()
+    await mkdir(join(cwd, '.study/blocks'), { recursive: true })
+    await mkdir(join(cwd, '.study/worksheets'))
+    await writeFile(join(cwd, '.study/settings.json'), JSON.stringify(authoringExample('term-settings')))
+    const block = authoringExample('block') as object
+    await Promise.all(Array.from({ length: 101 }, (_, index) => writeFile(join(cwd, `.study/blocks/block-${index}.json`), JSON.stringify({ ...block, id: `block-${index}`, endedAt: NOW }))))
+    await writeFile(join(cwd, '.study/blocks/zzz-active.json'), JSON.stringify({ ...block, id: 'zzz-active' }))
+    const tool = ctx.tools.get('study_status')!
+    const status = await tool.execute({}, execution())
+    expect(status).toMatchObject({ omittedVersions: 83, learningContext: { data: { activeBlock: { id: 'zzz-active' } } } })
+    expect(JSON.stringify(status)).toContain('.study/blocks/zzz-active.json')
+    const catalog = await tool.execute({ kind: 'files' }, execution())
+    expect(catalog).toMatchObject({ data: { total: 103, items: expect.any(Array), nextOffset: 20 } })
+    expect(JSON.stringify(catalog)).not.toContain('questions')
+    const worksheet = authoringExample('worksheet') as { items: object[] }
+    const question = worksheet.items[0]!
+    await writeFile(join(cwd, '.study/worksheets/example.json'), JSON.stringify({ ...worksheet, items: Array.from({ length: 8 }, (_, index) => ({ ...question, id: `q-${index}`, prompt: '题'.repeat(2000), answer: '答'.repeat(2000), explanation: '解'.repeat(2000), answerEvidence: '据'.repeat(2000) })) }))
+    const large = await tool.execute({ kind: 'worksheets', id: 'example' }, execution())
+    expect(large).toMatchObject({ data: { omitted: true, paths: expect.arrayContaining(['.study/worksheets/example.json']) } })
+    const content = [{ type: 'text', text: JSON.stringify(large) }]
+    expect(Buffer.byteLength(JSON.stringify(content))).toBeLessThanOrEqual(32768)
   })
 
   it('returns serializable results through the DSH execution pipeline', async () => {
     const { ctx, execution } = await fixture()
     const callId = 'study-call' as ToolCallId
     const batch = await ctx.tools.execute({
-      calls: [{ type: 'tool-call', id: callId, name: 'study_update', arguments: JSON.stringify({ change: setup }) }],
+      calls: [{ type: 'tool-call', id: callId, name: 'study_status', arguments: '{}'  }],
       signal: new AbortController().signal,
       agent: execution().agent,
     })
     expect(batch.results).toHaveLength(1)
     const result = batch.results[0]!.result
     expect(result.isError).toBe(false)
-    expect(result.content).toEqual([expect.objectContaining({ type: 'text', text: expect.stringContaining('ready') })])
+    expect(result.content).toEqual([expect.objectContaining({ type: 'text', text: expect.stringContaining('missing') })])
   })
 
-  it('rejects stale competing writes with one committed material rather than lost history', async () => {
-    const { ctx, execution, call } = await fixture()
-    await call(setup)
-    const write = ctx.fs.writeText.bind(ctx.fs)
-    let arrived = 0
-    let release: () => void = () => { throw new Error('Barrier not ready') }
-    const bothRead = new Promise<void>(resolve => { release = resolve })
-    const spy = vi.spyOn(ctx.fs, 'writeText').mockImplementation(async (...args) => {
-      arrived += 1
-      if (arrived === 2) release()
-      await bothRead
-      return write(...args)
-    })
-    onTestFinished(() => spy.mockRestore())
-    const results = await Promise.allSettled([
-      studyStore(execution(), { action: 'material', material }),
-      studyStore(execution(), { action: 'material', material: { ...material, id: 'other' } }),
-    ])
-    expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1)
-    const rejected = results.find(result => result.status === 'rejected')
-    expect(rejected?.status === 'rejected' ? rejected.reason : undefined).toMatchObject({ code: 'FS_STALE_VERSION' })
-    expect((await studyStore(execution()))?.materials).toHaveLength(1)
+  it('bounds the complete rendered context while retaining recent native input identities and exact omission counts', async () => {
+    const { ctx, execution, cwd } = await fixture()
+    await ctx.plugin(SessionStore)
+    await ctx.plugin(SessionQuery)
+    const session = ctx.sessions.create(SessionId('student-session'), { meta: { cwd } })
+    for (let index = 0; index < 20; index += 1) {
+      const message = { ...createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: '题"\\'.repeat(600) }] }), id: `native-${index}` }
+      session.append('agent/inbox/spliced', { target: 'next-turn', start: 0, inserted: [message] })
+      session.append('turn/start', { turn: index + 1 })
+      session.append('agent/inbox/spliced', { target: 'next-turn', start: 0, removedCount: 1, inserted: [] })
+      session.append('step/start', { turn: index + 1, step: 1 })
+      session.append('user/message', message, { surfaceOp: 'append' })
+      session.append('step/end', { turn: index + 1, step: 1 })
+      session.append('turn/end', { turn: index + 1, reason: { kind: 'completed' } })
+    }
+    const status = await ctx.tools.get('study_status')!.execute({}, execution()) as { native: { inputs: { messageId: string }[]; omitted: number; admissions: object[]; omittedAdmissions: number } }
+    expect(Buffer.byteLength(JSON.stringify([{ type: 'text', text: JSON.stringify(status) }]))).toBeLessThanOrEqual(32768)
+    expect(status.native.inputs.at(-1)?.messageId).toBe('native-19')
+    expect(status.native.omitted).toBeGreaterThan(0)
+    expect(status.native.inputs.length + status.native.omitted).toBe(20)
+    expect(status.native.admissions.length + status.native.omittedAdmissions).toBe(20)
+    expect(status.native).not.toHaveProperty('observations')
+    expect(await readdir(cwd)).toEqual([])
   })
 
   it('does not follow a learning directory link outside the workspace', async () => {
-    const { cwd, call } = await fixture()
+    const { ctx, execution, cwd } = await fixture()
     const outside = await mkdtemp(join(tmpdir(), 'dsh-student-outside-'))
     onTestFinished(() => rm(outside, { recursive: true, force: true }))
     await symlink(outside, join(cwd, '.study'))
-    await expect(call(setup)).rejects.toThrow('当前工作区内')
+    await expect(ctx.tools.get('study_status')!.execute({}, execution())).rejects.toThrow('当前工作区内')
     expect(await readdir(outside)).toEqual([])
   })
 
-  it('shares sidebar answers across native sessions and rejects stale form revisions', async () => {
-    const { execution, call } = await fixture()
-    await studyStore(execution(), setup, 0)
-    await expect(studyStore(execution(), { ...setup, profile: { ...setup.profile, nickname: '另一昵称' } }, 0)).rejects.toThrow('已更新')
-    await call(start)
-    const task = { id: attempt.id, sessionId: attempt.sessionId, subject: attempt.subject, topic: attempt.topic, prompt: attempt.prompt }
-    await call({ action: 'task', task })
-    const state = (await studyStore(execution()))!
-    await studyStore(execution('study_update', new AbortController().signal, 'second-session'), { action: 'answer', taskId: task.id, response: attempt.response }, state.revision)
-    expect((await studyStore(execution()))?.task?.response).toBe(attempt.response)
-    await call({ action: 'record', attempt })
-    expect((await studyStore(execution()))?.attempts).toHaveLength(1)
-  })
-
-  it('preserves malformed state and stops cancelled writes', async () => {
-    const { cwd, execution, call } = await fixture()
+  it('preserves malformed source bytes and stops cancelled reads', async () => {
+    const { ctx, cwd, execution } = await fixture()
     const controller = new AbortController()
     controller.abort()
-    await expect(studyStore(execution('study_update', controller.signal), setup)).rejects.toMatchObject({ name: 'AbortError' })
+    await expect(studyStore(execution('study_status', controller.signal))).rejects.toMatchObject({ name: 'AbortError' })
     expect(await readdir(cwd)).toEqual([])
-    await call(setup)
+    await mkdir(join(cwd, '.study'))
     await writeFile(join(cwd, '.study/state.json'), '{broken')
-    await expect(call({ action: 'material', material })).rejects.toThrow()
+    expect(await ctx.tools.get('study_status')!.execute({}, execution())).toMatchObject({ status: 'invalid' })
+    await expect(studyStore(execution())).rejects.toThrow()
     expect(await readFile(join(cwd, '.study/state.json'), 'utf8')).toBe('{broken')
   })
 })

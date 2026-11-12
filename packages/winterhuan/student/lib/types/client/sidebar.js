@@ -5,10 +5,12 @@ import { useEffect, useMemo } from 'react';
 import { NS, zh, en } from "./locales.js";
 import { tutorBridge } from "./bridge.js";
 import { StudyDesk } from "./desk.js";
+import { mountStudentResource } from "./resource.js";
 export const name = 'student';
-export const inject = ['slots', 'sessions', 'uiSession', 'locale', 'sidebarRightTabs'];
+export const inject = ['slots', 'sessions', 'uiSession', 'locale', 'sidebarRightTabs', 'remote', 'resources'];
 /** Register the learning desk inside DSH's existing session sidebar. */
-export function apply(context) {
+export async function apply(context) {
+    await mountStudentResource(context);
     context.effect(() => context.locale.register(NS, { zh, en }), 'student: dictionaries');
     const t = context.locale.bind(NS);
     context.effect(() => registerModeTab(context, {

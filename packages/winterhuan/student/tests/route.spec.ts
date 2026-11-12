@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { handleStudyRequest, trustedStudyRequest } from '../src/route.ts'
 import { effectiveOpenmaicBase } from '../src/openmaic.ts'
 import { updateStudy } from '../src/learning/update/index.ts'
-import { studyStore, StudyConflict } from '../src/store.ts'
+import { studyStore } from '../src/store.ts'
 import { NOW, DAY, mistake, setup } from './fixtures.ts'
 
 vi.mock('../src/store.ts', async importOriginal => ({ ...await importOriginal<typeof import('../src/store.ts')>(), studyStore: vi.fn() }))
@@ -17,12 +17,14 @@ async function request({ method = 'GET', body = '', header = {}, session = true,
   let status = 0
   let result: string | Buffer = ''
   const res = Object.assign(new EventEmitter(), { writableEnded: false, writeHead(code: number, headers: Record<string, string>) { status = code }, end(text: string | Buffer) { result = text; this.writableEnded = true } }) as ServerResponse
-  const resolve = vi.fn(async () => session ? { session: { header: { cwd: '/learning', ...(child ? { origin: 'subagent' } : {}) } } } : undefined)
+  const agent = session ? { session: { id: 'test', header: { cwd: '/learning', ...(child ? { origin: 'subagent' } : {}) } } } : undefined
+  const resolve = vi.fn(async () => agent)
+  const get = vi.fn(() => agent)
   type Provider = NonNullable<ReturnType<Context['typert']['lookups']['get']>>
-  const fake: { typert: { lookups: { get(key: string): Pick<Provider, 'resolve'> | undefined } } } = { typert: { lookups: { get: () => ({ resolve }) } } }
+  const fake: { agents: { get: typeof get }; typert: { lookups: { get(key: string): Pick<Provider, 'resolve'> | undefined } } } = { agents: { get }, typert: { lookups: { get: () => ({ resolve }) } } }
   const context = fake as Context
   await handleStudyRequest(context, req, res)
-  return { status, result: JSON.parse(String(result)), resolve }
+  return { status, result: JSON.parse(String(result)), resolve, get }
 }
 
 describe('student workspace boundary', () => {
@@ -33,6 +35,13 @@ describe('student workspace boundary', () => {
   it('does not resolve or read an untrusted request', async () => {
     const result = await request({ header: { origin: 'https://evil.test' } })
     expect(result.status).toBe(403)
+    expect(result.resolve).not.toHaveBeenCalled()
+    expect(studyStore).not.toHaveBeenCalled()
+  })
+  it('keeps missing Agents absent and never invokes the cold activation lookup', async () => {
+    const result = await request({ session: false })
+    expect(result.status).toBe(404)
+    expect(result.get).toHaveBeenCalledWith('test')
     expect(result.resolve).not.toHaveBeenCalled()
     expect(studyStore).not.toHaveBeenCalled()
   })
@@ -54,7 +63,7 @@ describe('student workspace boundary', () => {
   it('returns an absent dashboard without creating a learner', async () => {
     vi.mocked(studyStore).mockResolvedValue(undefined)
     expect((await request()).result).toMatchObject({ revision: 0, study: null })
-    expect(studyStore).toHaveBeenCalledWith(expect.anything(), undefined, undefined)
+    expect(studyStore).toHaveBeenCalledWith(expect.anything())
   })
   it('returns the requested page of confirmed mistakes through the workspace route', async () => {
     const state = updateStudy(undefined, setup, NOW)
@@ -112,29 +121,12 @@ describe('student workspace boundary', () => {
     const full = await request({ path: '/student/workspace?sessionId=test&subject=math' })
     expect(full.result.study.curriculum).toMatchObject({ lite: false })
   })
-  it('requires revisions, bounds payloads, and disallows client-authored assessments', async () => {
-    expect((await request({ method: 'POST', body: JSON.stringify({ change: setup }) })).status).toBe(400)
-    expect((await request({ method: 'POST', body: 'x'.repeat(65_537) })).status).toBe(413)
-    expect((await request({ method: 'POST', body: JSON.stringify({ revision: 0, change: { action: 'task', task: { id: 'q', sessionId: 's', subject: 'math', topic: 'sum', prompt: '1+1?' } } }) })).status).toBe(403)
-    expect((await request({ method: 'POST', body: JSON.stringify({ revision: 0, change: { action: 'paper-draft', paperDraft: { worksheetId: 'w', itemId: 'q', response: '2', result: 'correct', assistance: 'independent', uncertainties: '' } } }) })).status).toBe(403)
-    expect((await request({ method: 'POST', body: JSON.stringify({ revision: 0, change: { action: 'workbook-draft', draft: { id: 'wb', subject: 'math', prompt: '20-( )>6', outcome: 'stuck', uncertainties: '' } } }) })).status).toBe(403)
+  it('rejects every HTTP mutation before resolving or reading the workspace', async () => {
+    for (const body of ['', '{invalid', JSON.stringify({ revision: 7, change: setup })]) {
+      const result = await request({ method: 'POST', body })
+      expect(result.status).toBe(404)
+      expect(result.resolve).not.toHaveBeenCalled()
+    }
     expect(studyStore).not.toHaveBeenCalled()
-    for (const change of [
-      { action: 'school-progress', subject: 'math', unitId: 'm2a-u-mul', posture: 'keep-up', preview: 'off', pace: 'teaching', parentConfirmation: '家长确认学校进度。' },
-      { action: 'classify-mistake', mistakeId: 'error-1', errorType: 'carry-borrow' },
-      { action: 'confirm-paper', worksheetId: 'w', results: [{ itemId: 'q', result: 'correct' }], userConfirmation: '家长核对照片。' },
-      { action: 'stuck', taskId: 'q' },
-      { action: 'confirm-workbook', id: 'wb', userConfirmation: '家长确认练习册。' },
-      { action: 'dismiss-teaching', id: 'tq-wb' },
-      { action: 'openmaic-settings', baseUrl: 'http://localhost:3000', parentConfirmation: '家长确认 OpenMAIC 地址。' },
-      { action: 'interests', tags: ['购物超市钱', '运动球类', '动物宠物'], parentConfirmation: '家长确认兴趣标签。' },
-    ]) expect((await request({ method: 'POST', body: JSON.stringify({ revision: 0, change }) })).status).toBe(200)
-  })
-  it('passes the observed revision and reports conflicts without retrying writes', async () => {
-    vi.mocked(studyStore).mockRejectedValue(new StudyConflict())
-    const result = await request({ method: 'POST', body: JSON.stringify({ revision: 7, change: setup }) })
-    expect(result.status).toBe(409)
-    expect(studyStore).toHaveBeenCalledTimes(1)
-    expect(studyStore).toHaveBeenCalledWith(expect.anything(), setup, 7)
   })
 })

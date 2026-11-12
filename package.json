@@ -75,7 +75,7 @@
   },
   "name": "@winterhuan/dsh-student-workspace",
   "scripts": {
-    "build:host": "tsc -b tsconfig.host.json",
+    "build:host": "tsc -b tsconfig.host.json && tsdown --config-loader native --env.DSH_BUILD_FACE host",
     "build:client": "tsc -b tsconfig.client.json && tsdown --config-loader native --env.DSH_BUILD_FACE client",
     "build": "pnpm run build:host && pnpm run build:client",
     "typecheck": "pnpm run build:host && tsc -b tsconfig.client.json && tsc -p tsconfig.scripts.json",

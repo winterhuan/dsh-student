@@ -1,3 +1,4 @@
+import { StudyBackupRetention } from "./backup-retention.js";
 /**
  * Bind official-file reads and guarded manual writes to the calling execution world.
  * @param exec - current registered agent and cancellation signal.
@@ -13,6 +14,7 @@ export function applicationStudyFiles(exec) {
         throw new Error('Student requires the DSH filesystem and sandbox policy services.');
     const fs = availableFs;
     const cwd = agent.session.header.cwd;
+    const retention = agent.ctx.root.get('studentBackups') ?? new StudyBackupRetention(agent.ctx.root);
     async function target(path, signal) {
         const root = await fs.resolve(cwd, { signal });
         const resolved = await fs.resolve(path, { cwd, signal });
@@ -21,6 +23,7 @@ export function applicationStudyFiles(exec) {
         return resolved;
     }
     return {
+        backupRetention: retention,
         async stat(path, signal) { const resolved = await target(path, signal); const info = await fs.stat(resolved, signal); return info ? { ...info, targetKey: resolved.targetKey } : undefined; },
         async list(path, signal) { const resolved = await target(path, signal); if (!await fs.stat(resolved, signal))
             return []; return (await fs.listDir(resolved, signal)).map(entry => ({ name: entry.name, type: entry.type })); },

@@ -10,13 +10,15 @@ import { useEffect, useMemo } from 'react'
 import { NS, zh, en } from './locales.ts'
 import { tutorBridge } from './bridge.ts'
 import { StudyDesk } from './desk.tsx'
+import { mountStudentResource } from './resource.ts'
 
 export const name = 'student'
-export const inject = ['slots', 'sessions', 'uiSession', 'locale', 'sidebarRightTabs']
+export const inject = ['slots', 'sessions', 'uiSession', 'locale', 'sidebarRightTabs', 'remote', 'resources']
 type Props = PropsRuntime<'sidebar.right.pane.tab'> & PropsLocale<typeof NS>
 
 /** Register the learning desk inside DSH's existing session sidebar. */
-export function apply(context: Context): void {
+export async function apply(context: Context): Promise<void> {
+  await mountStudentResource(context)
   context.effect(() => context.locale.register(NS, { zh, en }), 'student: dictionaries')
   const t = context.locale.bind(NS)
   context.effect(() => registerModeTab(context, {

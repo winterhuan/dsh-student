@@ -172,6 +172,10 @@ export async function readBackups(fs, signal) {
  * @returns verified retained candidates and explicit backup failures.
  */
 export async function retainObservedBackups(fs, read, now, signal) {
+    const identity = read.files.find(file => file.path === '.study/settings.json')?.targetKey;
+    return fs.backupRetention && identity ? fs.backupRetention.run(identity, retentionSignal => retainBackups(fs, read, now, retentionSignal), signal) : retainBackups(fs, read, now, signal);
+}
+async function retainBackups(fs, read, now, signal) {
     const existing = await readBackups(fs, signal);
     if (!fs.write || !fs.remove || read.status !== 'valid')
         return existing;

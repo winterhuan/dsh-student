@@ -6,6 +6,7 @@ export * from "./node.js";
 export * from "./application.js";
 export * from "./manual.js";
 export * from "./recovery.js";
+export * from "./backup-retention.js";
 export * from "./lessons.js";
 export * from "./projection.js";
 export * from "../learning/evidence.js";

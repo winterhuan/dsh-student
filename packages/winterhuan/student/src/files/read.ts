@@ -5,11 +5,14 @@ import { stateSchema } from '../schema.ts'
 import { migrateStudyFile } from './legacy.ts'
 import { validateStudyFiles, type FileIssue, type ParsedFile, type ValidationResult, type ValidatedWorkspace, type NativeInputObservation } from './validation.ts'
 import type { OfficialFile } from './schema.ts'
+import type { BackupRetentionQueue } from './backup-retention.ts'
 
 /** Stable observation supplied by the execution-world filesystem. */
 export interface FileObservation extends FsInfo { targetKey: FsTargetKey }
 /** Narrow filesystem adapter. Read-only clients omit write and backup facilities. */
 export interface StudyFiles {
+  /** Application adapters share the Host's retention queue; read-only adapters omit it. */
+  backupRetention?: BackupRetentionQueue
   stat(path: string, signal: AbortSignal): Promise<FileObservation | undefined>
   list(path: string, signal: AbortSignal): Promise<{ name: string; type: FsInfo['type'] }[]>
   read(path: string, signal: AbortSignal, limit: number): Promise<Uint8Array>

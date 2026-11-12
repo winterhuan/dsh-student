@@ -31,7 +31,7 @@ async function fixture() {
   await plugin.await()
   const policy = { resolve: vi.fn(() => undefined) }
   function execution(name = 'study_update', signal = new AbortController().signal, sessionId = 'student-session'): ToolRunContext {
-    const agent = { session: { id: sessionId, header: { cwd } }, ctx: { get: (name: string) => name === 'sandboxPolicy' ? policy : ctx.get(name) } } as Agent
+    const agent = { session: { id: sessionId, header: { cwd } }, ctx: { root: ctx.root, get: (name: string) => name === 'sandboxPolicy' ? policy : ctx.get(name) } } as Agent
     const callId = 'study-call' as ToolRunContext['callId']
     return { agent, signal, callId, rootCallId: callId, name, arguments: {}, token: Symbol('study') as ToolRunContext['token'], deferContext() {}, concludeTurn() {} }
   }

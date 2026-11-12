@@ -25,7 +25,7 @@ async function fixture() {
   const ctx = new Context()
   onTestFinished(() => ctx.fiber.dispose())
   await ctx.plugin(LocalFileSystem, { cwd })
-  const agent = { session: { header: { cwd } }, ctx: { get: (name: string) => name === 'sandboxPolicy' ? { resolve: () => undefined } : ctx.get(name) } } as Agent
+  const agent = { session: { header: { cwd } }, ctx: { root: ctx.root, get: (name: string) => name === 'sandboxPolicy' ? { resolve: () => undefined } : ctx.get(name) } } as Agent
   const signal = new AbortController().signal
   const fs = applicationStudyFiles({ agent, signal })
   const read = await readWorkspace(fs, signal)

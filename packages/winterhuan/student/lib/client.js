@@ -8,7 +8,10 @@ window.__ModuleLoader__.load({
 		let _deepseek_ai_dsh_client_ui_primitives = require("@deepseek-ai/dsh-client-ui-primitives");
 		let react = require("react");
 		let react_dom = require("react-dom");
-		//#region \0dsh-global-css:/Users/winter/dsh-creative/.worktrees/student-native-chat-parent/plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
+		let _deepseek_ai_dsh_api_gateway_client = require("@deepseek-ai/dsh-api-gateway/client");
+		require("@deepseek-ai/cordis");
+		let zod = require("zod");
+		//#region \0dsh-global-css:/Users/winter/dsh-creative/.worktrees/student-native-chat-transport/plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
 		const css = ".student-desk{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font:13px/1.5 var(--dsw-font-family);flex-direction:column;gap:12px;padding:0 12px 20px;display:flex;overflow:auto}.student-top{z-index:2;background:var(--dsw-alias-bg-base);border-bottom:1px solid var(--dsw-alias-border-l2);flex-direction:column;gap:8px;margin:0 -12px;padding:10px 12px 8px;display:flex;position:sticky;top:0}.student-toolbar{align-items:center;gap:8px;display:flex}.student-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;display:grid}.student-subjects{background:var(--dsw-alias-bg-layer-1);border-radius:8px;flex:1;gap:2px;padding:2px;display:flex}.student-subjects button{background:0 0;border:0;flex:1}.student-quiet{background:0 0;border:0;flex:none;padding:6px 8px}.student-desk section{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);border-radius:10px;flex-direction:column;gap:8px;padding:12px;display:flex}.student-desk details{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:10px;padding:10px 12px}.student-desk h3{margin:0;font-size:13px;font-weight:500}.student-desk p{overflow-wrap:anywhere;white-space:pre-wrap;margin:0}.student-desk form,.student-desk fieldset,.student-desk label{flex-direction:column;gap:8px;min-width:0;display:flex}.student-desk fieldset{border:0;margin:0;padding:0}.student-desk button,.student-desk input,.student-desk select,.student-desk textarea{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);box-sizing:border-box;border-radius:8px;min-width:0;max-width:100%;padding:8px}.student-desk button{cursor:pointer}.student-desk .student-subjects button,.student-desk .student-quiet{background:0 0;border:0}.student-desk button:hover:enabled:not([aria-pressed=true]):not(.student-primary){background:var(--dsw-alias-button-ghost-active-fill)}.student-desk .student-tabs button[aria-pressed=true],.student-desk .student-views button[aria-pressed=true],.student-desk .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-desk .student-tabs button[aria-pressed=true]:hover:enabled,.student-desk .student-views button[aria-pressed=true]:hover:enabled,.student-desk .student-primary:hover:enabled{background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-foreground)}.student-desk .student-subjects button[aria-pressed=true],.student-desk .student-segments button[aria-pressed=true],.student-desk .student-segments button[aria-checked=true]{background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);box-shadow:inset 0 0 0 1px var(--dsw-alias-state-business-primary)}.student-desk :disabled{opacity:.6;cursor:default}.student-desk :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.student-desk textarea{resize:vertical;min-height:72px}.student-desk .student-check{flex-direction:row;align-items:flex-start}.student-desk .student-check input{flex:none}.student-desk img{object-fit:contain;background:var(--dsw-alias-bg-base);border-radius:8px;width:100%;max-height:240px}.student-status{gap:6px}.student-desk .student-question{background:var(--dsw-alias-bg-base);border-radius:8px;padding:12px;font-size:16px;line-height:1.45}.student-desk summary{cursor:pointer;overflow-wrap:anywhere;font-weight:500}.student-desk .student-pages{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-plan{border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-1))}.student-desk details>details,.student-desk details>div,.student-desk details>p{margin-top:8px}.student-muted{color:var(--dsw-alias-label-secondary)}.student-unit{border-top:1px solid var(--dsw-alias-border-l2);padding-top:8px}.student-choices{flex-direction:column;gap:8px;display:flex}.student-choices button{text-align:left;width:100%;padding:12px 14px;font-size:15px}.student-result{font-size:15px;font-weight:500}.student-scope{flex-wrap:wrap;align-items:flex-end;gap:8px;display:flex}.student-scope label{flex:120px}.student-segments{flex-wrap:wrap;gap:6px;display:flex}.student-desk .student-grade{border-top:1px solid var(--dsw-alias-border-l2);padding:8px 0}.student-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px;height:8px;display:flex;overflow:hidden}.student-bar span{height:100%;display:block}.student-level-mastered,.student-fill-mastered{background:var(--dsw-alias-state-success-primary)}.student-level-practising,.student-fill-practising{background:var(--dsw-alias-state-business-primary)}.student-level-stalled,.student-fill-stalled{background:var(--dsw-alias-state-warn-primary)}.student-level-weak,.student-fill-weak{background:var(--dsw-alias-state-error-primary)}.student-level-due,.student-fill-due{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, var(--dsw-alias-state-warn-primary))}.student-level-untouched,.student-fill-untouched{background:var(--dsw-alias-label-tertiary)}.student-legend{flex-wrap:wrap;gap:8px 12px;display:flex}.student-dot{vertical-align:middle;border-radius:50%;width:8px;height:8px;margin-right:4px;display:inline-block}.student-chips{flex-direction:column;gap:6px;display:flex}.student-chip{text-align:left;border-radius:8px;align-items:center;gap:6px;width:100%;padding:8px 10px;display:flex}.student-views{grid-template-columns:1fr 1fr;gap:6px;display:grid}.student-pair{grid-template-columns:1fr 1fr;gap:8px;display:grid}.student-mastery{align-items:center;gap:6px;display:flex}.student-mastery span{border-radius:50%;width:10px;height:10px}.student-simon{flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-simon li{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 8px}.student-simon-done{opacity:.7}.student-simon-current{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, var(--dsw-alias-bg-base));font-weight:500}.student-steps{flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-map-inline{border:1px solid var(--dsw-alias-border-l2);border-left:3px solid var(--dsw-alias-state-business-primary);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base));border-radius:8px;margin:4px 0 8px;padding:8px 10px}.student-map-links{margin-top:8px}.student-mindmap-unit{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:8px;margin:8px 0;padding:10px}.student-mindmap-unit>summary{cursor:pointer;font-weight:500}.student-mindmap-branch{border-left:2px solid var(--dsw-alias-border-l2);flex-direction:column;gap:6px;margin:8px 0 0;padding:0 0 0 12px;list-style:none;display:flex}.student-mindmap-node{flex-direction:column;gap:4px;display:flex}.student-mindmap-concept{text-align:left;align-items:center;gap:6px;width:100%;display:flex}.student-mindmap-concept[aria-pressed=true]{background:var(--dsw-alias-bg-layer-2,transparent)}.student-mindmap-concept.student-level-mastered{box-shadow:inset 3px 0 0 var(--dsw-alias-state-success-primary)}.student-mindmap-concept.student-level-practising{box-shadow:inset 3px 0 0 var(--dsw-alias-state-business-primary)}.student-mindmap-concept.student-level-stalled{box-shadow:inset 3px 0 0 var(--dsw-alias-state-warn-primary)}.student-mindmap-concept.student-level-weak,.student-mindmap-concept.student-level-due{box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}.student-figure svg{width:100%;height:auto;max-height:220px;color:var(--dsw-alias-label-primary)}.student-figure circle,.student-figure rect,.student-figure line,.student-figure path,.student-figure polyline,.student-figure polygon{fill:none;stroke:currentColor;stroke-width:1.4px}.student-figure text{fill:currentColor;stroke:none}.student-figure .student-fill{fill:currentColor}.student-desk progress{width:100%;height:8px}.student-desk progress::-webkit-progress-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px}.student-desk progress::-webkit-progress-value{background:var(--dsw-alias-state-business-primary);border-radius:999px}.student-sheet-portal{font:13px/1.5 var(--dsw-font-family)}.student-sheet-portal button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);cursor:pointer;border-radius:8px;padding:8px}.student-sheet-portal .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-sheet-portal .student-quiet{background:0 0;border:0}.student-sheet-backdrop{z-index:1000;box-sizing:border-box;background:color-mix(in srgb, var(--dsw-alias-label-primary) 32%, transparent);justify-content:center;align-items:flex-start;padding:32px 16px;display:flex;position:fixed;inset:0;overflow:auto}.student-sheet-dialog{box-sizing:border-box;background:var(--dsw-alias-bg-base);border-radius:10px;flex-direction:column;gap:8px;width:min(720px,100%);padding:12px;display:flex}.student-sheet-toolbar{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.student-sheet-toolbar .student-muted{flex:200px;margin:0}.student-sheet-scroll{overflow:auto}.student-sheet{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);color:#333;font:14px/1.6 var(--dsw-font-family);background:#fff;border-radius:8px;flex-direction:column;gap:12px;padding:24px;display:flex}.student-url{user-select:text;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.student-sheet h2{text-align:center;margin:0;font-size:18px;font-weight:500}.student-sheet-meta{text-align:center;margin:0;font-size:12px}.student-sheet-item{break-inside:avoid;flex-direction:column;gap:8px;display:flex}.student-sheet-item>p{white-space:pre-wrap;margin:0}.student-sheet .student-figure svg{color:#333;width:100%;height:auto;max-height:260px}.student-sheet-lines{flex-direction:column;display:flex}.student-sheet-rule{border-bottom:1px solid #b9c0c7;height:22px}.student-sheet-box{border:1px dashed #b9c0c7;border-radius:4px;height:84px}@page{size:A4;margin:12mm 14mm}@media print{body>:not(.student-sheet-portal){display:none!important}.student-sheet-backdrop{background:0 0;padding:0;display:block;position:static;overflow:visible}.student-sheet-dialog{display:contents}.student-sheet-toolbar{display:none}.student-sheet-scroll{overflow:visible}.student-sheet{border:0;border-radius:0;width:100%;padding:0}.student-sheet-item{page-break-inside:avoid}}";
 		const tagId = "@winterhuan/dsh-student/plugin.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
@@ -6362,6 +6365,2741 @@ window.__ModuleLoader__.load({
 			] });
 		}
 		//#endregion
+		//#region ../../../node_modules/.pnpm/@deepseek-ai+dsh-typert-protocol@0.2.2-rc.1_@deepseek-ai+cordis@4.1.0/node_modules/@deepseek-ai/dsh-typert-protocol/lib/index.js
+		/** The one Remote failure class shared by owners, the Gateway, and consumers. */
+		/**
+		* One Remote call failure: a real Error carrying its stable code and typed
+		* details. Owners throw it at the failure point; the Host Gateway encodes it
+		* onto the wire unchanged; the Client face rebuilds an instance for the
+		* `RemoteResult` error branch, so `throw result.error` keeps throw semantics.
+		* Discrimination is always by `code`, never by instanceof.
+		*/
+		var RemoteError = class extends Error {
+			code;
+			details;
+			/** Structural marker: cross-realm/bundle identification never uses instanceof. */
+			isDSHRemoteError = true;
+			/**
+			* @param code - stable failure code declared in {@link RemoteErrorDetailsMap}.
+			* @param message - human diagnostic carried across the wire.
+			* @param details - structured payload typed by the code.
+			* @param options - standard Error options (`cause` survives in-process only).
+			*/
+			constructor(code, message, details, options) {
+				super(message, options);
+				this.code = code;
+				this.details = details;
+				this.name = "RemoteError";
+			}
+		};
+		//#endregion
+		//#region ../../../node_modules/.pnpm/@deepseek-ai+dsh-typert-protocol@0.2.2-rc.1_@deepseek-ai+cordis@4.1.0/node_modules/@deepseek-ai/dsh-typert-protocol/lib/types/remote-info.js
+		/** Lazy assembly of generated Remote definitions using caller-supplied Zod; no runtime imports. */
+		/**
+		* Retain one generated definition per endpoint without constructing parsers or projections.
+		* The class instance builds its shared descriptor/method index on first access;
+		* input schemas and JSON Schema projections are cached only when requested.
+		* @param spec - compiler-produced method facts and Zod factories.
+		* @param zod - the generated artifact's Zod runtime for named-input parsers.
+		* @returns a lazy, mountable info instance with no registration or transport effects.
+		*/
+		function createTypertRemoteInfo(spec, zod) {
+			return new RemoteInfo(spec, zod);
+		}
+		var RemoteInfo = class {
+			spec;
+			zod;
+			index;
+			constructor(spec, zod) {
+				this.spec = spec;
+				this.zod = zod;
+			}
+			get package() {
+				return this.spec.package;
+			}
+			get descriptors() {
+				return this.resolve().descriptors;
+			}
+			get methods() {
+				return this.resolve().methods;
+			}
+			resolve() {
+				if (this.index !== void 0) return this.index;
+				const zod = this.zod;
+				const descriptors = [];
+				const methods = Object.create(null);
+				for (const [endpoint, definition] of Object.entries(this.spec.methods)) {
+					const separator = endpoint.indexOf("/");
+					const namespace = endpoint.slice(0, separator);
+					const method = endpoint.slice(separator + 1);
+					const parameters = definition.parameters.map((parameter) => ({
+						...parameter,
+						wire: parameter.wire ?? parameter.name
+					}));
+					const descriptor = {
+						...definition,
+						id: `${this.spec.package}#${endpoint}`,
+						namespace,
+						method,
+						parameters,
+						result: definition.result.description === void 0 ? definition.result : new ResultValue(definition.result)
+					};
+					if (definition.invocation.kind === "direct") {
+						const inputs = [];
+						methods[endpoint] = Object.assign(descriptor, {
+							input(options) {
+								const strict = options?.strict === true;
+								return inputs[strict ? 1 : 0] ??= new NamedInput(parameters, strict, zod);
+							},
+							invoke(remote, input, signal) {
+								const named = input;
+								const values = parameters.map((parameter) => named[parameter.wire]);
+								if (definition.cancellation !== void 0) values.push(signal);
+								const receiver = Reflect.get(remote, namespace);
+								return Reflect.get(receiver, method).apply(receiver, values);
+							}
+						});
+					}
+					descriptors.push(descriptor);
+				}
+				return this.index = {
+					descriptors,
+					methods
+				};
+			}
+		};
+		function optional(parameter) {
+			return parameter.source === "json" && parameter.acceptsUndefined === true;
+		}
+		var NamedInput = class {
+			parameters;
+			strict;
+			zod;
+			schema;
+			projection;
+			constructor(parameters, strict, zod) {
+				this.parameters = parameters;
+				this.strict = strict;
+				this.zod = zod;
+			}
+			codec(parameter) {
+				return this.strict ? parameter.strictCodec : parameter.codec;
+			}
+			create = () => this.schema ??= this.zod.strictObject(Object.fromEntries(this.parameters.map((parameter) => {
+				const value = this.codec(parameter).create();
+				return [parameter.wire, optional(parameter) ? value.optional() : value.nonoptional()];
+			})));
+			get jsonSchema() {
+				return this.project().jsonSchema;
+			}
+			get jsonSchemaError() {
+				return this.project().jsonSchemaError;
+			}
+			project() {
+				if (this.projection !== void 0) return this.projection;
+				const unavailable = this.parameters.find((parameter) => this.codec(parameter).jsonSchema === void 0);
+				if (unavailable !== void 0) return this.projection = { jsonSchemaError: this.codec(unavailable).jsonSchemaError ?? `No JSON Schema for parameter ${unavailable.wire}` };
+				return this.projection = { jsonSchema: {
+					type: "object",
+					properties: Object.fromEntries(this.parameters.map((parameter) => [parameter.wire, {
+						...this.codec(parameter).jsonSchema,
+						...parameter.description === void 0 ? {} : { description: parameter.description }
+					}])),
+					required: this.parameters.filter((parameter) => !optional(parameter)).map((parameter) => parameter.wire),
+					additionalProperties: false
+				} };
+			}
+		};
+		var ResultValue = class {
+			spec;
+			projection;
+			constructor(spec) {
+				this.spec = spec;
+			}
+			get mode() {
+				return this.spec.mode;
+			}
+			get typeSymbol() {
+				return this.spec.typeSymbol;
+			}
+			get create() {
+				return this.spec.create;
+			}
+			get decode() {
+				return this.spec.decode;
+			}
+			get encode() {
+				return this.spec.encode;
+			}
+			get description() {
+				return this.spec.description;
+			}
+			get jsonSchemaError() {
+				return this.spec.jsonSchemaError;
+			}
+			get jsonSchema() {
+				if (this.projection === void 0) {
+					const schema = this.spec.jsonSchema;
+					this.projection = { value: schema === void 0 ? void 0 : {
+						...schema,
+						description: this.spec.description
+					} };
+				}
+				return this.projection.value;
+			}
+		};
+		//#endregion
+		//#region lib/typert.remote-client.js
+		let StudentJsonValueRemoteCodec$schema$value;
+		const StudentJsonValueRemoteCodec$schema = () => StudentJsonValueRemoteCodec$schema$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema()))
+		]);
+		let StudentJsonValueRemoteCodec$schema2$value;
+		const StudentJsonValueRemoteCodec$schema2 = () => StudentJsonValueRemoteCodec$schema2$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2()))
+		]);
+		let StudentJsonValueRemoteCodec$schema3$value;
+		const StudentJsonValueRemoteCodec$schema3 = () => StudentJsonValueRemoteCodec$schema3$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema3())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema3()))
+		]);
+		let StudentJsonValueRemoteCodec$schema4$value;
+		const StudentJsonValueRemoteCodec$schema4 = () => StudentJsonValueRemoteCodec$schema4$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4()))
+		]);
+		let StudentJsonValueRemoteCodec$schema5$value;
+		const StudentJsonValueRemoteCodec$schema5 = () => StudentJsonValueRemoteCodec$schema5$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5()))
+		]);
+		let _winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema$value;
+		const _winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema = () => _winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_inspectSubmission_parameter_1$schema$value;
+		const _winterhuan_dsh_student_student_inspectSubmission_parameter_1$schema = () => _winterhuan_dsh_student_student_inspectSubmission_parameter_1$schema$value ??= zod.z.object({
+			"requestId": zod.z.string(),
+			"response": zod.z.union([zod.z.undefined(), zod.z.object({
+				"termId": zod.z.string(),
+				"owner": zod.z.union([zod.z.object({
+					"kind": zod.z.literal("block"),
+					"id": zod.z.string()
+				}), zod.z.object({
+					"kind": zod.z.literal("worksheet"),
+					"id": zod.z.string()
+				})]),
+				"responseId": zod.z.string()
+			})]).optional()
+		});
+		let _winterhuan_dsh_student_student_inspectSubmission_result$schema$value;
+		const _winterhuan_dsh_student_student_inspectSubmission_result$schema = () => _winterhuan_dsh_student_student_inspectSubmission_result$schema$value ??= zod.z.object({
+			"requestId": zod.z.string(),
+			"admission": zod.z.union([zod.z.literal("unknown"), zod.z.literal("accepted")]),
+			"nativeStates": zod.z.array(zod.z.union([
+				zod.z.literal("pending"),
+				zod.z.literal("consumed"),
+				zod.z.literal("claimed"),
+				zod.z.literal("removed")
+			])),
+			"nativeSourceStatus": zod.z.union([zod.z.literal("available"), zod.z.literal("unavailable")]),
+			"cut": zod.z.union([zod.z.undefined(), zod.z.object({
+				"sessionId": zod.z.string(),
+				"cursor": zod.z.number(),
+				"source": zod.z.union([zod.z.literal("live"), zod.z.literal("prepared")]),
+				"inheritedEventCount": zod.z.number(),
+				"revision": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+			})]).optional(),
+			"answer": zod.z.union([
+				zod.z.literal("unavailable"),
+				zod.z.literal("missing"),
+				zod.z.literal("saved"),
+				zod.z.literal("not-requested")
+			]),
+			"assessment": zod.z.union([
+				zod.z.literal("pending"),
+				zod.z.literal("unavailable"),
+				zod.z.literal("valid"),
+				zod.z.literal("not-requested")
+			]),
+			"readStatus": zod.z.union([
+				zod.z.literal("valid"),
+				zod.z.literal("missing"),
+				zod.z.literal("invalid"),
+				zod.z.literal("future-format"),
+				zod.z.literal("changing"),
+				zod.z.literal("legacy"),
+				zod.z.literal("archived")
+			]),
+			"versions": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"targetKey": zod.z.string(),
+				"version": zod.z.string()
+			})),
+			"issues": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			}))
+		});
+		let _winterhuan_dsh_student_student_manualContext_parameter_0$schema$value;
+		const _winterhuan_dsh_student_student_manualContext_parameter_0$schema = () => _winterhuan_dsh_student_student_manualContext_parameter_0$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_manualContext_parameter_1$schema$value;
+		const _winterhuan_dsh_student_student_manualContext_parameter_1$schema = () => _winterhuan_dsh_student_student_manualContext_parameter_1$schema$value ??= zod.z.union([
+			zod.z.object({
+				"kind": zod.z.literal("settings"),
+				"command": zod.z.object({
+					"action": zod.z.literal("setup"),
+					"profile": zod.z.object({
+						"region": zod.z.string(),
+						"grade": zod.z.number(),
+						"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+						"schoolYear": zod.z.string(),
+						"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")]),
+						"nickname": zod.z.string(),
+						"schoolAlias": zod.z.string(),
+						"parentConfirmation": zod.z.string()
+					})
+				}),
+				"editedProfileFields": zod.z.array(zod.z.union([
+					zod.z.literal("region"),
+					zod.z.literal("schoolYear"),
+					zod.z.literal("grade"),
+					zod.z.literal("term"),
+					zod.z.literal("schoolSystem"),
+					zod.z.literal("nickname"),
+					zod.z.literal("schoolAlias"),
+					zod.z.literal("parentConfirmation")
+				]))
+			}),
+			zod.z.object({
+				"kind": zod.z.literal("settings"),
+				"command": zod.z.union([
+					zod.z.object({
+						"action": zod.z.literal("configure-course"),
+						"material": zod.z.object({
+							"id": zod.z.string(),
+							"subject": zod.z.union([
+								zod.z.literal("math"),
+								zod.z.literal("chinese"),
+								zod.z.literal("english")
+							]),
+							"scope": zod.z.object({
+								"region": zod.z.string(),
+								"grade": zod.z.number(),
+								"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+								"schoolYear": zod.z.string(),
+								"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")])
+							}),
+							"title": zod.z.string(),
+							"publisher": zod.z.string(),
+							"edition": zod.z.string(),
+							"editionStatus": zod.z.union([zod.z.literal("unconfirmed"), zod.z.literal("identified")]),
+							"kind": zod.z.union([
+								zod.z.literal("official-textbook"),
+								zod.z.literal("school-material"),
+								zod.z.literal("reference"),
+								zod.z.literal("generated")
+							]),
+							"locator": zod.z.string(),
+							"evidence": zod.z.string()
+						}),
+						"course": zod.z.object({
+							"subject": zod.z.union([
+								zod.z.literal("math"),
+								zod.z.literal("chinese"),
+								zod.z.literal("english")
+							]),
+							"materialId": zod.z.string(),
+							"unit": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						}),
+						"progress": zod.z.union([zod.z.undefined(), zod.z.object({
+							"unitId": zod.z.string(),
+							"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+							"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+							"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+							"parentConfirmation": zod.z.string()
+						})]).optional()
+					}),
+					zod.z.object({
+						"unitId": zod.z.string(),
+						"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+						"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+						"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+						"parentConfirmation": zod.z.string(),
+						"action": zod.z.literal("school-progress"),
+						"subject": zod.z.union([
+							zod.z.literal("math"),
+							zod.z.literal("chinese"),
+							zod.z.literal("english")
+						])
+					}),
+					zod.z.object({
+						"action": zod.z.literal("openmaic-settings"),
+						"baseUrl": zod.z.string(),
+						"parentConfirmation": zod.z.string()
+					}),
+					zod.z.object({
+						"action": zod.z.literal("interests"),
+						"tags": zod.z.array(zod.z.string()),
+						"parentConfirmation": zod.z.string()
+					})
+				]),
+				"editedProfileFields": zod.z.undefined().optional()
+			}),
+			zod.z.object({
+				"kind": zod.z.literal("worksheet-assessments"),
+				"worksheetId": zod.z.string(),
+				"assessments": zod.z.array(zod.z.object({
+					"id": zod.z.string(),
+					"responseId": zod.z.string(),
+					"result": zod.z.union([
+						zod.z.literal("correct"),
+						zod.z.literal("partial"),
+						zod.z.literal("incorrect"),
+						zod.z.literal("unassessed"),
+						zod.z.literal("stuck")
+					]),
+					"assistance": zod.z.union([
+						zod.z.literal("unknown"),
+						zod.z.literal("independent"),
+						zod.z.literal("hint"),
+						zod.z.literal("worked-example")
+					]),
+					"feedback": zod.z.string(),
+					"answerEvidence": zod.z.string(),
+					"assessedAt": zod.z.number(),
+					"correctedAt": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+					"userConfirmation": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+					"errorType": zod.z.union([
+						zod.z.undefined(),
+						zod.z.literal("pattern"),
+						zod.z.literal("place-value"),
+						zod.z.literal("carry-borrow"),
+						zod.z.literal("operation-choice"),
+						zod.z.literal("calculation"),
+						zod.z.literal("unit-quantity"),
+						zod.z.literal("reading-task"),
+						zod.z.literal("geometry-feature"),
+						zod.z.literal("money-measure"),
+						zod.z.literal("reasoning-incomplete"),
+						zod.z.literal("pinyin-tone"),
+						zod.z.literal("character-form"),
+						zod.z.literal("character-usage"),
+						zod.z.literal("word-meaning"),
+						zod.z.literal("reading-evidence"),
+						zod.z.literal("order"),
+						zod.z.literal("expression-incomplete"),
+						zod.z.literal("punctuation"),
+						zod.z.literal("listening"),
+						zod.z.literal("spelling"),
+						zod.z.literal("word-form"),
+						zod.z.literal("sentence-pattern"),
+						zod.z.literal("usage-context"),
+						zod.z.literal("spoken-response"),
+						zod.z.literal("writing-complete")
+					]).optional()
+				})),
+				"answerDate": zod.z.union([
+					zod.z.undefined(),
+					zod.z.object({ "kind": zod.z.literal("unknown") }),
+					zod.z.object({
+						"kind": zod.z.literal("day"),
+						"day": zod.z.string(),
+						"parentConfirmation": zod.z.string()
+					})
+				]).optional(),
+				"responseUpdates": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+					"responseId": zod.z.string(),
+					"assistance": zod.z.union([
+						zod.z.undefined(),
+						zod.z.literal("unknown"),
+						zod.z.literal("independent"),
+						zod.z.literal("hint"),
+						zod.z.literal("worked-example")
+					]).optional(),
+					"answerDate": zod.z.union([
+						zod.z.undefined(),
+						zod.z.object({ "kind": zod.z.literal("unknown") }),
+						zod.z.object({
+							"kind": zod.z.literal("day"),
+							"day": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						})
+					]).optional(),
+					"userConfirmation": zod.z.string()
+				}))]).optional()
+			})
+		]);
+		let _winterhuan_dsh_student_student_manualContext_result$schema$value;
+		const _winterhuan_dsh_student_student_manualContext_result$schema = () => _winterhuan_dsh_student_student_manualContext_result$schema$value ??= zod.z.object({
+			"readStatus": zod.z.union([
+				zod.z.literal("valid"),
+				zod.z.literal("missing"),
+				zod.z.literal("invalid"),
+				zod.z.literal("future-format"),
+				zod.z.literal("changing"),
+				zod.z.literal("legacy"),
+				zod.z.literal("archived")
+			]),
+			"termId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"versions": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"targetKey": zod.z.string(),
+				"version": zod.z.string()
+			})),
+			"baseline": zod.z.record(zod.z.string(), zod.z.union([
+				zod.z.literal(null),
+				zod.z.string(),
+				zod.z.number(),
+				zod.z.literal(false),
+				zod.z.literal(true),
+				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5()))
+			])),
+			"issues": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			}))
+		});
+		let _winterhuan_dsh_student_student_query_parameter_0$schema$value;
+		const _winterhuan_dsh_student_student_query_parameter_0$schema = () => _winterhuan_dsh_student_student_query_parameter_0$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_query_parameter_1$schema$value;
+		const _winterhuan_dsh_student_student_query_parameter_1$schema = () => _winterhuan_dsh_student_student_query_parameter_1$schema$value ??= zod.z.union([zod.z.object({
+			"kind": zod.z.union([
+				zod.z.literal("learning-context"),
+				zod.z.literal("summary"),
+				zod.z.literal("files"),
+				zod.z.literal("settings"),
+				zod.z.literal("status"),
+				zod.z.literal("curriculum"),
+				zod.z.literal("elements"),
+				zod.z.literal("exercises"),
+				zod.z.literal("review-sheet"),
+				zod.z.literal("diagnose"),
+				zod.z.literal("weak"),
+				zod.z.literal("due"),
+				zod.z.literal("pending"),
+				zod.z.literal("progress"),
+				zod.z.literal("concepts"),
+				zod.z.literal("objectives"),
+				zod.z.literal("relations"),
+				zod.z.literal("worksheets"),
+				zod.z.literal("paper-results"),
+				zod.z.literal("materials"),
+				zod.z.literal("mistakes"),
+				zod.z.literal("sessions"),
+				zod.z.literal("attempts")
+			]),
+			"subject": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("math"),
+				zod.z.literal("chinese"),
+				zod.z.literal("english")
+			]).optional(),
+			"id": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"unit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"grade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+			"term": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("first"),
+				zod.z.literal("second")
+			]).optional(),
+			"offset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional()
+		}), zod.z.object({
+			"kind": zod.z.literal("dashboard"),
+			"options": zod.z.union([zod.z.undefined(), zod.z.object({
+				"subject": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("math"),
+					zod.z.literal("chinese"),
+					zod.z.literal("english")
+				]).optional(),
+				"mistakeOffset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mistakeStatus": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("due"),
+					zod.z.literal("all"),
+					zod.z.literal("reviewing"),
+					zod.z.literal("mastered")
+				]).optional(),
+				"mapGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mapTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"diagTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagUnit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+				"tab": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("mistakes"),
+					zod.z.literal("map"),
+					zod.z.literal("today"),
+					zod.z.literal("parent")
+				]).optional()
+			})]).optional()
+		})]);
+		let _winterhuan_dsh_student_student_query_result$schema$value;
+		const _winterhuan_dsh_student_student_query_result$schema = () => _winterhuan_dsh_student_student_query_result$schema$value ??= zod.z.object({
+			"data": zod.z.union([
+				zod.z.literal(null),
+				zod.z.string(),
+				zod.z.number(),
+				zod.z.literal(false),
+				zod.z.literal(true),
+				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema3())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema3()))
+			]),
+			"readAt": zod.z.number(),
+			"refreshAfter": zod.z.number(),
+			"token": zod.z.string(),
+			"native": zod.z.object({
+				"status": zod.z.union([zod.z.literal("available"), zod.z.literal("unavailable")]),
+				"cut": zod.z.union([zod.z.undefined(), zod.z.object({
+					"sessionId": zod.z.string(),
+					"cursor": zod.z.number(),
+					"source": zod.z.union([zod.z.literal("live"), zod.z.literal("prepared")]),
+					"inheritedEventCount": zod.z.number(),
+					"revision": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+				})]).optional(),
+				"inputs": zod.z.array(zod.z.object({
+					"status": zod.z.literal("consumed"),
+					"messageId": zod.z.string(),
+					"requestId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+					"inputVersion": zod.z.string(),
+					"consumedSeq": zod.z.number(),
+					"rawResponse": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+					"textUnavailable": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+					"receipt": zod.z.union([zod.z.object({
+						"kind": zod.z.literal("known"),
+						"at": zod.z.number(),
+						"seq": zod.z.number()
+					}), zod.z.object({
+						"kind": zod.z.literal("unknown"),
+						"reason": zod.z.string()
+					})]),
+					"attachments": zod.z.array(zod.z.object({
+						"kind": zod.z.union([zod.z.literal("file"), zod.z.literal("image")]),
+						"attachmentId": zod.z.string()
+					})),
+					"omittedAttachments": zod.z.number()
+				})),
+				"admissions": zod.z.array(zod.z.object({
+					"messageId": zod.z.string(),
+					"requestId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+					"status": zod.z.union([
+						zod.z.literal("pending"),
+						zod.z.literal("consumed"),
+						zod.z.literal("claimed"),
+						zod.z.literal("removed")
+					])
+				})),
+				"omitted": zod.z.number(),
+				"omittedAdmissions": zod.z.number(),
+				"reason": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+			}),
+			"backupIssues": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			})),
+			"status": zod.z.union([
+				zod.z.literal("partial"),
+				zod.z.literal("valid"),
+				zod.z.literal("missing"),
+				zod.z.literal("invalid"),
+				zod.z.literal("future-format"),
+				zod.z.literal("changing"),
+				zod.z.literal("legacy"),
+				zod.z.literal("archived")
+			]),
+			"versions": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"targetKey": zod.z.string(),
+				"version": zod.z.string()
+			})),
+			"issues": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			}))]).optional()
+		});
+		let _winterhuan_dsh_student_student_saveManual_parameter_0$schema$value;
+		const _winterhuan_dsh_student_student_saveManual_parameter_0$schema = () => _winterhuan_dsh_student_student_saveManual_parameter_0$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_saveManual_parameter_1$schema$value;
+		const _winterhuan_dsh_student_student_saveManual_parameter_1$schema = () => _winterhuan_dsh_student_student_saveManual_parameter_1$schema$value ??= zod.z.object({
+			"baseline": zod.z.record(zod.z.string(), zod.z.union([
+				zod.z.literal(null),
+				zod.z.string(),
+				zod.z.number(),
+				zod.z.literal(false),
+				zod.z.literal(true),
+				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2()))
+			])),
+			"intent": zod.z.union([
+				zod.z.object({
+					"kind": zod.z.literal("settings"),
+					"command": zod.z.object({
+						"action": zod.z.literal("setup"),
+						"profile": zod.z.object({
+							"region": zod.z.string(),
+							"grade": zod.z.number(),
+							"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+							"schoolYear": zod.z.string(),
+							"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")]),
+							"nickname": zod.z.string(),
+							"schoolAlias": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						})
+					}),
+					"editedProfileFields": zod.z.array(zod.z.union([
+						zod.z.literal("region"),
+						zod.z.literal("schoolYear"),
+						zod.z.literal("grade"),
+						zod.z.literal("term"),
+						zod.z.literal("schoolSystem"),
+						zod.z.literal("nickname"),
+						zod.z.literal("schoolAlias"),
+						zod.z.literal("parentConfirmation")
+					]))
+				}),
+				zod.z.object({
+					"kind": zod.z.literal("settings"),
+					"command": zod.z.union([
+						zod.z.object({
+							"action": zod.z.literal("configure-course"),
+							"material": zod.z.object({
+								"id": zod.z.string(),
+								"subject": zod.z.union([
+									zod.z.literal("math"),
+									zod.z.literal("chinese"),
+									zod.z.literal("english")
+								]),
+								"scope": zod.z.object({
+									"region": zod.z.string(),
+									"grade": zod.z.number(),
+									"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+									"schoolYear": zod.z.string(),
+									"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")])
+								}),
+								"title": zod.z.string(),
+								"publisher": zod.z.string(),
+								"edition": zod.z.string(),
+								"editionStatus": zod.z.union([zod.z.literal("unconfirmed"), zod.z.literal("identified")]),
+								"kind": zod.z.union([
+									zod.z.literal("official-textbook"),
+									zod.z.literal("school-material"),
+									zod.z.literal("reference"),
+									zod.z.literal("generated")
+								]),
+								"locator": zod.z.string(),
+								"evidence": zod.z.string()
+							}),
+							"course": zod.z.object({
+								"subject": zod.z.union([
+									zod.z.literal("math"),
+									zod.z.literal("chinese"),
+									zod.z.literal("english")
+								]),
+								"materialId": zod.z.string(),
+								"unit": zod.z.string(),
+								"parentConfirmation": zod.z.string()
+							}),
+							"progress": zod.z.union([zod.z.undefined(), zod.z.object({
+								"unitId": zod.z.string(),
+								"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+								"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+								"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+								"parentConfirmation": zod.z.string()
+							})]).optional()
+						}),
+						zod.z.object({
+							"unitId": zod.z.string(),
+							"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+							"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+							"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+							"parentConfirmation": zod.z.string(),
+							"action": zod.z.literal("school-progress"),
+							"subject": zod.z.union([
+								zod.z.literal("math"),
+								zod.z.literal("chinese"),
+								zod.z.literal("english")
+							])
+						}),
+						zod.z.object({
+							"action": zod.z.literal("openmaic-settings"),
+							"baseUrl": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						}),
+						zod.z.object({
+							"action": zod.z.literal("interests"),
+							"tags": zod.z.array(zod.z.string()),
+							"parentConfirmation": zod.z.string()
+						})
+					]),
+					"editedProfileFields": zod.z.undefined().optional()
+				}),
+				zod.z.object({
+					"kind": zod.z.literal("worksheet-assessments"),
+					"worksheetId": zod.z.string(),
+					"assessments": zod.z.array(zod.z.object({
+						"id": zod.z.string(),
+						"responseId": zod.z.string(),
+						"result": zod.z.union([
+							zod.z.literal("correct"),
+							zod.z.literal("partial"),
+							zod.z.literal("incorrect"),
+							zod.z.literal("unassessed"),
+							zod.z.literal("stuck")
+						]),
+						"assistance": zod.z.union([
+							zod.z.literal("unknown"),
+							zod.z.literal("independent"),
+							zod.z.literal("hint"),
+							zod.z.literal("worked-example")
+						]),
+						"feedback": zod.z.string(),
+						"answerEvidence": zod.z.string(),
+						"assessedAt": zod.z.number(),
+						"correctedAt": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+						"userConfirmation": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+						"errorType": zod.z.union([
+							zod.z.undefined(),
+							zod.z.literal("pattern"),
+							zod.z.literal("place-value"),
+							zod.z.literal("carry-borrow"),
+							zod.z.literal("operation-choice"),
+							zod.z.literal("calculation"),
+							zod.z.literal("unit-quantity"),
+							zod.z.literal("reading-task"),
+							zod.z.literal("geometry-feature"),
+							zod.z.literal("money-measure"),
+							zod.z.literal("reasoning-incomplete"),
+							zod.z.literal("pinyin-tone"),
+							zod.z.literal("character-form"),
+							zod.z.literal("character-usage"),
+							zod.z.literal("word-meaning"),
+							zod.z.literal("reading-evidence"),
+							zod.z.literal("order"),
+							zod.z.literal("expression-incomplete"),
+							zod.z.literal("punctuation"),
+							zod.z.literal("listening"),
+							zod.z.literal("spelling"),
+							zod.z.literal("word-form"),
+							zod.z.literal("sentence-pattern"),
+							zod.z.literal("usage-context"),
+							zod.z.literal("spoken-response"),
+							zod.z.literal("writing-complete")
+						]).optional()
+					})),
+					"answerDate": zod.z.union([
+						zod.z.undefined(),
+						zod.z.object({ "kind": zod.z.literal("unknown") }),
+						zod.z.object({
+							"kind": zod.z.literal("day"),
+							"day": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						})
+					]).optional(),
+					"responseUpdates": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+						"responseId": zod.z.string(),
+						"assistance": zod.z.union([
+							zod.z.undefined(),
+							zod.z.literal("unknown"),
+							zod.z.literal("independent"),
+							zod.z.literal("hint"),
+							zod.z.literal("worked-example")
+						]).optional(),
+						"answerDate": zod.z.union([
+							zod.z.undefined(),
+							zod.z.object({ "kind": zod.z.literal("unknown") }),
+							zod.z.object({
+								"kind": zod.z.literal("day"),
+								"day": zod.z.string(),
+								"parentConfirmation": zod.z.string()
+							})
+						]).optional(),
+						"userConfirmation": zod.z.string()
+					}))]).optional()
+				})
+			]),
+			"termId": zod.z.string(),
+			"expectedVersions": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"version": zod.z.string()
+			}))
+		});
+		let _winterhuan_dsh_student_student_saveManual_result$schema$value;
+		const _winterhuan_dsh_student_student_saveManual_result$schema = () => _winterhuan_dsh_student_student_saveManual_result$schema$value ??= zod.z.object({
+			"status": zod.z.union([
+				zod.z.literal("unknown"),
+				zod.z.literal("invalid"),
+				zod.z.literal("saved"),
+				zod.z.literal("unchanged"),
+				zod.z.literal("conflict"),
+				zod.z.literal("old-term")
+			]),
+			"current": zod.z.record(zod.z.string(), zod.z.union([
+				zod.z.literal(null),
+				zod.z.string(),
+				zod.z.number(),
+				zod.z.literal(false),
+				zod.z.literal(true),
+				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema()))
+			])),
+			"termId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"versions": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"targetKey": zod.z.string(),
+				"version": zod.z.string()
+			})),
+			"readStatus": zod.z.union([
+				zod.z.literal("valid"),
+				zod.z.literal("missing"),
+				zod.z.literal("invalid"),
+				zod.z.literal("future-format"),
+				zod.z.literal("changing"),
+				zod.z.literal("legacy"),
+				zod.z.literal("archived")
+			]),
+			"issues": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			})),
+			"reason": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+		});
+		let _winterhuan_dsh_student_student_watch_parameter_0$schema$value;
+		const _winterhuan_dsh_student_student_watch_parameter_0$schema = () => _winterhuan_dsh_student_student_watch_parameter_0$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_watch_parameter_1$schema$value;
+		const _winterhuan_dsh_student_student_watch_parameter_1$schema = () => _winterhuan_dsh_student_student_watch_parameter_1$schema$value ??= zod.z.union([zod.z.object({
+			"kind": zod.z.union([
+				zod.z.literal("learning-context"),
+				zod.z.literal("summary"),
+				zod.z.literal("files"),
+				zod.z.literal("settings"),
+				zod.z.literal("status"),
+				zod.z.literal("curriculum"),
+				zod.z.literal("elements"),
+				zod.z.literal("exercises"),
+				zod.z.literal("review-sheet"),
+				zod.z.literal("diagnose"),
+				zod.z.literal("weak"),
+				zod.z.literal("due"),
+				zod.z.literal("pending"),
+				zod.z.literal("progress"),
+				zod.z.literal("concepts"),
+				zod.z.literal("objectives"),
+				zod.z.literal("relations"),
+				zod.z.literal("worksheets"),
+				zod.z.literal("paper-results"),
+				zod.z.literal("materials"),
+				zod.z.literal("mistakes"),
+				zod.z.literal("sessions"),
+				zod.z.literal("attempts")
+			]),
+			"subject": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("math"),
+				zod.z.literal("chinese"),
+				zod.z.literal("english")
+			]).optional(),
+			"id": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"unit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"grade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+			"term": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("first"),
+				zod.z.literal("second")
+			]).optional(),
+			"offset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional()
+		}), zod.z.object({
+			"kind": zod.z.literal("dashboard"),
+			"options": zod.z.union([zod.z.undefined(), zod.z.object({
+				"subject": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("math"),
+					zod.z.literal("chinese"),
+					zod.z.literal("english")
+				]).optional(),
+				"mistakeOffset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mistakeStatus": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("due"),
+					zod.z.literal("all"),
+					zod.z.literal("reviewing"),
+					zod.z.literal("mastered")
+				]).optional(),
+				"mapGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mapTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"diagTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagUnit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+				"tab": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("mistakes"),
+					zod.z.literal("map"),
+					zod.z.literal("today"),
+					zod.z.literal("parent")
+				]).optional()
+			})]).optional()
+		})]);
+		let _winterhuan_dsh_student_student_watch_result$schema$value;
+		const _winterhuan_dsh_student_student_watch_result$schema = () => _winterhuan_dsh_student_student_watch_result$schema$value ??= zod.z.union([zod.z.object({
+			"kind": zod.z.literal("snapshot"),
+			"value": zod.z.object({
+				"data": zod.z.union([
+					zod.z.literal(null),
+					zod.z.string(),
+					zod.z.number(),
+					zod.z.literal(false),
+					zod.z.literal(true),
+					zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4())),
+					zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4()))
+				]),
+				"readAt": zod.z.number(),
+				"refreshAfter": zod.z.number(),
+				"token": zod.z.string(),
+				"native": zod.z.object({
+					"status": zod.z.union([zod.z.literal("available"), zod.z.literal("unavailable")]),
+					"cut": zod.z.union([zod.z.undefined(), zod.z.object({
+						"sessionId": zod.z.string(),
+						"cursor": zod.z.number(),
+						"source": zod.z.union([zod.z.literal("live"), zod.z.literal("prepared")]),
+						"inheritedEventCount": zod.z.number(),
+						"revision": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+					})]).optional(),
+					"inputs": zod.z.array(zod.z.object({
+						"status": zod.z.literal("consumed"),
+						"messageId": zod.z.string(),
+						"requestId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+						"inputVersion": zod.z.string(),
+						"consumedSeq": zod.z.number(),
+						"rawResponse": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+						"textUnavailable": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+						"receipt": zod.z.union([zod.z.object({
+							"kind": zod.z.literal("known"),
+							"at": zod.z.number(),
+							"seq": zod.z.number()
+						}), zod.z.object({
+							"kind": zod.z.literal("unknown"),
+							"reason": zod.z.string()
+						})]),
+						"attachments": zod.z.array(zod.z.object({
+							"kind": zod.z.union([zod.z.literal("file"), zod.z.literal("image")]),
+							"attachmentId": zod.z.string()
+						})),
+						"omittedAttachments": zod.z.number()
+					})),
+					"admissions": zod.z.array(zod.z.object({
+						"messageId": zod.z.string(),
+						"requestId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+						"status": zod.z.union([
+							zod.z.literal("pending"),
+							zod.z.literal("consumed"),
+							zod.z.literal("claimed"),
+							zod.z.literal("removed")
+						])
+					})),
+					"omitted": zod.z.number(),
+					"omittedAdmissions": zod.z.number(),
+					"reason": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+				}),
+				"backupIssues": zod.z.array(zod.z.object({
+					"path": zod.z.string(),
+					"field": zod.z.string(),
+					"rule": zod.z.string(),
+					"correction": zod.z.string()
+				})),
+				"status": zod.z.union([
+					zod.z.literal("partial"),
+					zod.z.literal("valid"),
+					zod.z.literal("missing"),
+					zod.z.literal("invalid"),
+					zod.z.literal("future-format"),
+					zod.z.literal("changing"),
+					zod.z.literal("legacy"),
+					zod.z.literal("archived")
+				]),
+				"versions": zod.z.array(zod.z.object({
+					"path": zod.z.string(),
+					"targetKey": zod.z.string(),
+					"version": zod.z.string()
+				})),
+				"issues": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+					"path": zod.z.string(),
+					"field": zod.z.string(),
+					"rule": zod.z.string(),
+					"correction": zod.z.string()
+				}))]).optional()
+			})
+		}), zod.z.object({
+			"kind": zod.z.literal("failure"),
+			"message": zod.z.string()
+		})]);
+		let closed$StudentJsonValueRemoteCodec$schema$value;
+		const closed$StudentJsonValueRemoteCodec$schema = () => closed$StudentJsonValueRemoteCodec$schema$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))
+		]);
+		let _winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema$value;
+		const _winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema = () => _winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_inspectSubmission_parameter_1_strict$schema$value;
+		const _winterhuan_dsh_student_student_inspectSubmission_parameter_1_strict$schema = () => _winterhuan_dsh_student_student_inspectSubmission_parameter_1_strict$schema$value ??= zod.z.strictObject({
+			"requestId": zod.z.string(),
+			"response": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+				"termId": zod.z.string(),
+				"owner": zod.z.union([zod.z.strictObject({
+					"kind": zod.z.literal("block"),
+					"id": zod.z.string()
+				}), zod.z.strictObject({
+					"kind": zod.z.literal("worksheet"),
+					"id": zod.z.string()
+				})]),
+				"responseId": zod.z.string()
+			})]).optional()
+		});
+		let _winterhuan_dsh_student_student_manualContext_parameter_0_strict$schema$value;
+		const _winterhuan_dsh_student_student_manualContext_parameter_0_strict$schema = () => _winterhuan_dsh_student_student_manualContext_parameter_0_strict$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_manualContext_parameter_1_strict$schema$value;
+		const _winterhuan_dsh_student_student_manualContext_parameter_1_strict$schema = () => _winterhuan_dsh_student_student_manualContext_parameter_1_strict$schema$value ??= zod.z.union([
+			zod.z.strictObject({
+				"kind": zod.z.literal("settings"),
+				"command": zod.z.strictObject({
+					"action": zod.z.literal("setup"),
+					"profile": zod.z.strictObject({
+						"region": zod.z.string(),
+						"grade": zod.z.number(),
+						"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+						"schoolYear": zod.z.string(),
+						"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")]),
+						"nickname": zod.z.string(),
+						"schoolAlias": zod.z.string(),
+						"parentConfirmation": zod.z.string()
+					})
+				}),
+				"editedProfileFields": zod.z.array(zod.z.union([
+					zod.z.literal("region"),
+					zod.z.literal("schoolYear"),
+					zod.z.literal("grade"),
+					zod.z.literal("term"),
+					zod.z.literal("schoolSystem"),
+					zod.z.literal("nickname"),
+					zod.z.literal("schoolAlias"),
+					zod.z.literal("parentConfirmation")
+				]))
+			}),
+			zod.z.strictObject({
+				"kind": zod.z.literal("settings"),
+				"command": zod.z.union([
+					zod.z.strictObject({
+						"action": zod.z.literal("configure-course"),
+						"material": zod.z.strictObject({
+							"id": zod.z.string(),
+							"subject": zod.z.union([
+								zod.z.literal("math"),
+								zod.z.literal("chinese"),
+								zod.z.literal("english")
+							]),
+							"scope": zod.z.strictObject({
+								"region": zod.z.string(),
+								"grade": zod.z.number(),
+								"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+								"schoolYear": zod.z.string(),
+								"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")])
+							}),
+							"title": zod.z.string(),
+							"publisher": zod.z.string(),
+							"edition": zod.z.string(),
+							"editionStatus": zod.z.union([zod.z.literal("unconfirmed"), zod.z.literal("identified")]),
+							"kind": zod.z.union([
+								zod.z.literal("official-textbook"),
+								zod.z.literal("school-material"),
+								zod.z.literal("reference"),
+								zod.z.literal("generated")
+							]),
+							"locator": zod.z.string(),
+							"evidence": zod.z.string()
+						}),
+						"course": zod.z.strictObject({
+							"subject": zod.z.union([
+								zod.z.literal("math"),
+								zod.z.literal("chinese"),
+								zod.z.literal("english")
+							]),
+							"materialId": zod.z.string(),
+							"unit": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						}),
+						"progress": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+							"unitId": zod.z.string(),
+							"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+							"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+							"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+							"parentConfirmation": zod.z.string()
+						})]).optional()
+					}),
+					zod.z.strictObject({
+						"unitId": zod.z.string(),
+						"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+						"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+						"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+						"parentConfirmation": zod.z.string(),
+						"action": zod.z.literal("school-progress"),
+						"subject": zod.z.union([
+							zod.z.literal("math"),
+							zod.z.literal("chinese"),
+							zod.z.literal("english")
+						])
+					}),
+					zod.z.strictObject({
+						"action": zod.z.literal("openmaic-settings"),
+						"baseUrl": zod.z.string(),
+						"parentConfirmation": zod.z.string()
+					}),
+					zod.z.strictObject({
+						"action": zod.z.literal("interests"),
+						"tags": zod.z.array(zod.z.string()),
+						"parentConfirmation": zod.z.string()
+					})
+				]),
+				"editedProfileFields": zod.z.undefined().optional()
+			}),
+			zod.z.strictObject({
+				"kind": zod.z.literal("worksheet-assessments"),
+				"worksheetId": zod.z.string(),
+				"assessments": zod.z.array(zod.z.strictObject({
+					"id": zod.z.string(),
+					"responseId": zod.z.string(),
+					"result": zod.z.union([
+						zod.z.literal("correct"),
+						zod.z.literal("partial"),
+						zod.z.literal("incorrect"),
+						zod.z.literal("unassessed"),
+						zod.z.literal("stuck")
+					]),
+					"assistance": zod.z.union([
+						zod.z.literal("unknown"),
+						zod.z.literal("independent"),
+						zod.z.literal("hint"),
+						zod.z.literal("worked-example")
+					]),
+					"feedback": zod.z.string(),
+					"answerEvidence": zod.z.string(),
+					"assessedAt": zod.z.number(),
+					"correctedAt": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+					"userConfirmation": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+					"errorType": zod.z.union([
+						zod.z.undefined(),
+						zod.z.literal("pattern"),
+						zod.z.literal("place-value"),
+						zod.z.literal("carry-borrow"),
+						zod.z.literal("operation-choice"),
+						zod.z.literal("calculation"),
+						zod.z.literal("unit-quantity"),
+						zod.z.literal("reading-task"),
+						zod.z.literal("geometry-feature"),
+						zod.z.literal("money-measure"),
+						zod.z.literal("reasoning-incomplete"),
+						zod.z.literal("pinyin-tone"),
+						zod.z.literal("character-form"),
+						zod.z.literal("character-usage"),
+						zod.z.literal("word-meaning"),
+						zod.z.literal("reading-evidence"),
+						zod.z.literal("order"),
+						zod.z.literal("expression-incomplete"),
+						zod.z.literal("punctuation"),
+						zod.z.literal("listening"),
+						zod.z.literal("spelling"),
+						zod.z.literal("word-form"),
+						zod.z.literal("sentence-pattern"),
+						zod.z.literal("usage-context"),
+						zod.z.literal("spoken-response"),
+						zod.z.literal("writing-complete")
+					]).optional()
+				})),
+				"answerDate": zod.z.union([
+					zod.z.undefined(),
+					zod.z.strictObject({ "kind": zod.z.literal("unknown") }),
+					zod.z.strictObject({
+						"kind": zod.z.literal("day"),
+						"day": zod.z.string(),
+						"parentConfirmation": zod.z.string()
+					})
+				]).optional(),
+				"responseUpdates": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.strictObject({
+					"responseId": zod.z.string(),
+					"assistance": zod.z.union([
+						zod.z.undefined(),
+						zod.z.literal("unknown"),
+						zod.z.literal("independent"),
+						zod.z.literal("hint"),
+						zod.z.literal("worked-example")
+					]).optional(),
+					"answerDate": zod.z.union([
+						zod.z.undefined(),
+						zod.z.strictObject({ "kind": zod.z.literal("unknown") }),
+						zod.z.strictObject({
+							"kind": zod.z.literal("day"),
+							"day": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						})
+					]).optional(),
+					"userConfirmation": zod.z.string()
+				}))]).optional()
+			})
+		]);
+		let _winterhuan_dsh_student_student_query_parameter_0_strict$schema$value;
+		const _winterhuan_dsh_student_student_query_parameter_0_strict$schema = () => _winterhuan_dsh_student_student_query_parameter_0_strict$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_query_parameter_1_strict$schema$value;
+		const _winterhuan_dsh_student_student_query_parameter_1_strict$schema = () => _winterhuan_dsh_student_student_query_parameter_1_strict$schema$value ??= zod.z.union([zod.z.strictObject({
+			"kind": zod.z.union([
+				zod.z.literal("learning-context"),
+				zod.z.literal("summary"),
+				zod.z.literal("files"),
+				zod.z.literal("settings"),
+				zod.z.literal("status"),
+				zod.z.literal("curriculum"),
+				zod.z.literal("elements"),
+				zod.z.literal("exercises"),
+				zod.z.literal("review-sheet"),
+				zod.z.literal("diagnose"),
+				zod.z.literal("weak"),
+				zod.z.literal("due"),
+				zod.z.literal("pending"),
+				zod.z.literal("progress"),
+				zod.z.literal("concepts"),
+				zod.z.literal("objectives"),
+				zod.z.literal("relations"),
+				zod.z.literal("worksheets"),
+				zod.z.literal("paper-results"),
+				zod.z.literal("materials"),
+				zod.z.literal("mistakes"),
+				zod.z.literal("sessions"),
+				zod.z.literal("attempts")
+			]),
+			"subject": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("math"),
+				zod.z.literal("chinese"),
+				zod.z.literal("english")
+			]).optional(),
+			"id": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"unit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"grade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+			"term": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("first"),
+				zod.z.literal("second")
+			]).optional(),
+			"offset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional()
+		}), zod.z.strictObject({
+			"kind": zod.z.literal("dashboard"),
+			"options": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+				"subject": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("math"),
+					zod.z.literal("chinese"),
+					zod.z.literal("english")
+				]).optional(),
+				"mistakeOffset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mistakeStatus": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("due"),
+					zod.z.literal("all"),
+					zod.z.literal("reviewing"),
+					zod.z.literal("mastered")
+				]).optional(),
+				"mapGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mapTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"diagTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagUnit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+				"tab": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("mistakes"),
+					zod.z.literal("map"),
+					zod.z.literal("today"),
+					zod.z.literal("parent")
+				]).optional()
+			})]).optional()
+		})]);
+		let _winterhuan_dsh_student_student_saveManual_parameter_0_strict$schema$value;
+		const _winterhuan_dsh_student_student_saveManual_parameter_0_strict$schema = () => _winterhuan_dsh_student_student_saveManual_parameter_0_strict$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema$value;
+		const _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema = () => _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema$value ??= zod.z.strictObject({
+			"baseline": zod.z.record(zod.z.string(), zod.z.union([
+				zod.z.literal(null),
+				zod.z.string(),
+				zod.z.number(),
+				zod.z.literal(false),
+				zod.z.literal(true),
+				zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))
+			])),
+			"intent": zod.z.union([
+				zod.z.strictObject({
+					"kind": zod.z.literal("settings"),
+					"command": zod.z.strictObject({
+						"action": zod.z.literal("setup"),
+						"profile": zod.z.strictObject({
+							"region": zod.z.string(),
+							"grade": zod.z.number(),
+							"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+							"schoolYear": zod.z.string(),
+							"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")]),
+							"nickname": zod.z.string(),
+							"schoolAlias": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						})
+					}),
+					"editedProfileFields": zod.z.array(zod.z.union([
+						zod.z.literal("region"),
+						zod.z.literal("schoolYear"),
+						zod.z.literal("grade"),
+						zod.z.literal("term"),
+						zod.z.literal("schoolSystem"),
+						zod.z.literal("nickname"),
+						zod.z.literal("schoolAlias"),
+						zod.z.literal("parentConfirmation")
+					]))
+				}),
+				zod.z.strictObject({
+					"kind": zod.z.literal("settings"),
+					"command": zod.z.union([
+						zod.z.strictObject({
+							"action": zod.z.literal("configure-course"),
+							"material": zod.z.strictObject({
+								"id": zod.z.string(),
+								"subject": zod.z.union([
+									zod.z.literal("math"),
+									zod.z.literal("chinese"),
+									zod.z.literal("english")
+								]),
+								"scope": zod.z.strictObject({
+									"region": zod.z.string(),
+									"grade": zod.z.number(),
+									"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+									"schoolYear": zod.z.string(),
+									"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")])
+								}),
+								"title": zod.z.string(),
+								"publisher": zod.z.string(),
+								"edition": zod.z.string(),
+								"editionStatus": zod.z.union([zod.z.literal("unconfirmed"), zod.z.literal("identified")]),
+								"kind": zod.z.union([
+									zod.z.literal("official-textbook"),
+									zod.z.literal("school-material"),
+									zod.z.literal("reference"),
+									zod.z.literal("generated")
+								]),
+								"locator": zod.z.string(),
+								"evidence": zod.z.string()
+							}),
+							"course": zod.z.strictObject({
+								"subject": zod.z.union([
+									zod.z.literal("math"),
+									zod.z.literal("chinese"),
+									zod.z.literal("english")
+								]),
+								"materialId": zod.z.string(),
+								"unit": zod.z.string(),
+								"parentConfirmation": zod.z.string()
+							}),
+							"progress": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+								"unitId": zod.z.string(),
+								"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+								"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+								"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+								"parentConfirmation": zod.z.string()
+							})]).optional()
+						}),
+						zod.z.strictObject({
+							"unitId": zod.z.string(),
+							"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+							"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+							"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+							"parentConfirmation": zod.z.string(),
+							"action": zod.z.literal("school-progress"),
+							"subject": zod.z.union([
+								zod.z.literal("math"),
+								zod.z.literal("chinese"),
+								zod.z.literal("english")
+							])
+						}),
+						zod.z.strictObject({
+							"action": zod.z.literal("openmaic-settings"),
+							"baseUrl": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						}),
+						zod.z.strictObject({
+							"action": zod.z.literal("interests"),
+							"tags": zod.z.array(zod.z.string()),
+							"parentConfirmation": zod.z.string()
+						})
+					]),
+					"editedProfileFields": zod.z.undefined().optional()
+				}),
+				zod.z.strictObject({
+					"kind": zod.z.literal("worksheet-assessments"),
+					"worksheetId": zod.z.string(),
+					"assessments": zod.z.array(zod.z.strictObject({
+						"id": zod.z.string(),
+						"responseId": zod.z.string(),
+						"result": zod.z.union([
+							zod.z.literal("correct"),
+							zod.z.literal("partial"),
+							zod.z.literal("incorrect"),
+							zod.z.literal("unassessed"),
+							zod.z.literal("stuck")
+						]),
+						"assistance": zod.z.union([
+							zod.z.literal("unknown"),
+							zod.z.literal("independent"),
+							zod.z.literal("hint"),
+							zod.z.literal("worked-example")
+						]),
+						"feedback": zod.z.string(),
+						"answerEvidence": zod.z.string(),
+						"assessedAt": zod.z.number(),
+						"correctedAt": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+						"userConfirmation": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+						"errorType": zod.z.union([
+							zod.z.undefined(),
+							zod.z.literal("pattern"),
+							zod.z.literal("place-value"),
+							zod.z.literal("carry-borrow"),
+							zod.z.literal("operation-choice"),
+							zod.z.literal("calculation"),
+							zod.z.literal("unit-quantity"),
+							zod.z.literal("reading-task"),
+							zod.z.literal("geometry-feature"),
+							zod.z.literal("money-measure"),
+							zod.z.literal("reasoning-incomplete"),
+							zod.z.literal("pinyin-tone"),
+							zod.z.literal("character-form"),
+							zod.z.literal("character-usage"),
+							zod.z.literal("word-meaning"),
+							zod.z.literal("reading-evidence"),
+							zod.z.literal("order"),
+							zod.z.literal("expression-incomplete"),
+							zod.z.literal("punctuation"),
+							zod.z.literal("listening"),
+							zod.z.literal("spelling"),
+							zod.z.literal("word-form"),
+							zod.z.literal("sentence-pattern"),
+							zod.z.literal("usage-context"),
+							zod.z.literal("spoken-response"),
+							zod.z.literal("writing-complete")
+						]).optional()
+					})),
+					"answerDate": zod.z.union([
+						zod.z.undefined(),
+						zod.z.strictObject({ "kind": zod.z.literal("unknown") }),
+						zod.z.strictObject({
+							"kind": zod.z.literal("day"),
+							"day": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						})
+					]).optional(),
+					"responseUpdates": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.strictObject({
+						"responseId": zod.z.string(),
+						"assistance": zod.z.union([
+							zod.z.undefined(),
+							zod.z.literal("unknown"),
+							zod.z.literal("independent"),
+							zod.z.literal("hint"),
+							zod.z.literal("worked-example")
+						]).optional(),
+						"answerDate": zod.z.union([
+							zod.z.undefined(),
+							zod.z.strictObject({ "kind": zod.z.literal("unknown") }),
+							zod.z.strictObject({
+								"kind": zod.z.literal("day"),
+								"day": zod.z.string(),
+								"parentConfirmation": zod.z.string()
+							})
+						]).optional(),
+						"userConfirmation": zod.z.string()
+					}))]).optional()
+				})
+			]),
+			"termId": zod.z.string(),
+			"expectedVersions": zod.z.array(zod.z.strictObject({
+				"path": zod.z.string(),
+				"version": zod.z.string()
+			}))
+		});
+		let _winterhuan_dsh_student_student_watch_parameter_0_strict$schema$value;
+		const _winterhuan_dsh_student_student_watch_parameter_0_strict$schema = () => _winterhuan_dsh_student_student_watch_parameter_0_strict$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_watch_parameter_1_strict$schema$value;
+		const _winterhuan_dsh_student_student_watch_parameter_1_strict$schema = () => _winterhuan_dsh_student_student_watch_parameter_1_strict$schema$value ??= zod.z.union([zod.z.strictObject({
+			"kind": zod.z.union([
+				zod.z.literal("learning-context"),
+				zod.z.literal("summary"),
+				zod.z.literal("files"),
+				zod.z.literal("settings"),
+				zod.z.literal("status"),
+				zod.z.literal("curriculum"),
+				zod.z.literal("elements"),
+				zod.z.literal("exercises"),
+				zod.z.literal("review-sheet"),
+				zod.z.literal("diagnose"),
+				zod.z.literal("weak"),
+				zod.z.literal("due"),
+				zod.z.literal("pending"),
+				zod.z.literal("progress"),
+				zod.z.literal("concepts"),
+				zod.z.literal("objectives"),
+				zod.z.literal("relations"),
+				zod.z.literal("worksheets"),
+				zod.z.literal("paper-results"),
+				zod.z.literal("materials"),
+				zod.z.literal("mistakes"),
+				zod.z.literal("sessions"),
+				zod.z.literal("attempts")
+			]),
+			"subject": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("math"),
+				zod.z.literal("chinese"),
+				zod.z.literal("english")
+			]).optional(),
+			"id": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"unit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"grade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+			"term": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("first"),
+				zod.z.literal("second")
+			]).optional(),
+			"offset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional()
+		}), zod.z.strictObject({
+			"kind": zod.z.literal("dashboard"),
+			"options": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+				"subject": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("math"),
+					zod.z.literal("chinese"),
+					zod.z.literal("english")
+				]).optional(),
+				"mistakeOffset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mistakeStatus": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("due"),
+					zod.z.literal("all"),
+					zod.z.literal("reviewing"),
+					zod.z.literal("mastered")
+				]).optional(),
+				"mapGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mapTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"diagTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagUnit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+				"tab": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("mistakes"),
+					zod.z.literal("map"),
+					zod.z.literal("today"),
+					zod.z.literal("parent")
+				]).optional()
+			})]).optional()
+		})]);
+		const TYPERT_REMOTE = createTypertRemoteInfo({
+			package: "@winterhuan/dsh-student",
+			methods: {
+				"student/inspectSubmission": {
+					service: "student",
+					description: "Inspect an uncertain submission before deliberate recovery; this method never submits input.",
+					invocation: { kind: "direct" },
+					parameters: [{
+						name: "sessionId",
+						description: "registered main native Session identity.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema,
+							jsonSchema: { "type": "string" }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema,
+							jsonSchema: { "type": "string" }
+						}
+					}, {
+						name: "request",
+						description: "original native request and optional term/owner/response identity.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSubmissionRequest",
+							create: _winterhuan_dsh_student_student_inspectSubmission_parameter_1$schema,
+							jsonSchema: {
+								"type": "object",
+								"properties": {
+									"requestId": { "type": "string" },
+									"response": {
+										"type": "object",
+										"properties": {
+											"termId": { "type": "string" },
+											"owner": { "oneOf": [{
+												"type": "object",
+												"properties": {
+													"kind": {
+														"type": "string",
+														"const": "block"
+													},
+													"id": { "type": "string" }
+												},
+												"required": ["kind", "id"],
+												"additionalProperties": true
+											}, {
+												"type": "object",
+												"properties": {
+													"kind": {
+														"type": "string",
+														"const": "worksheet"
+													},
+													"id": { "type": "string" }
+												},
+												"required": ["kind", "id"],
+												"additionalProperties": true
+											}] },
+											"responseId": { "type": "string" }
+										},
+										"required": [
+											"termId",
+											"owner",
+											"responseId"
+										],
+										"additionalProperties": true
+									}
+								},
+								"required": ["requestId"],
+								"additionalProperties": true
+							}
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSubmissionRequest",
+							create: _winterhuan_dsh_student_student_inspectSubmission_parameter_1_strict$schema,
+							jsonSchema: {
+								"type": "object",
+								"properties": {
+									"requestId": { "type": "string" },
+									"response": {
+										"type": "object",
+										"properties": {
+											"termId": { "type": "string" },
+											"owner": { "oneOf": [{
+												"type": "object",
+												"properties": {
+													"kind": {
+														"type": "string",
+														"const": "block"
+													},
+													"id": { "type": "string" }
+												},
+												"required": ["kind", "id"],
+												"additionalProperties": false
+											}, {
+												"type": "object",
+												"properties": {
+													"kind": {
+														"type": "string",
+														"const": "worksheet"
+													},
+													"id": { "type": "string" }
+												},
+												"required": ["kind", "id"],
+												"additionalProperties": false
+											}] },
+											"responseId": { "type": "string" }
+										},
+										"required": [
+											"termId",
+											"owner",
+											"responseId"
+										],
+										"additionalProperties": false
+									}
+								},
+								"required": ["requestId"],
+								"additionalProperties": false
+							}
+						}
+					}],
+					cancellation: { parameter: "signal" },
+					result: {
+						mode: "strict",
+						typeSymbol: "@winterhuan/dsh-student/types#StudentSubmissionInspection",
+						create: _winterhuan_dsh_student_student_inspectSubmission_result$schema,
+						description: "admission, saved-answer and valid-assessment facts separately; omitted admission remains unknown.",
+						jsonSchema: {
+							"type": "object",
+							"properties": {
+								"requestId": { "type": "string" },
+								"admission": {
+									"type": "string",
+									"enum": ["unknown", "accepted"]
+								},
+								"nativeStates": {
+									"type": "array",
+									"items": {
+										"type": "string",
+										"enum": [
+											"pending",
+											"consumed",
+											"claimed",
+											"removed"
+										]
+									}
+								},
+								"nativeSourceStatus": {
+									"type": "string",
+									"enum": ["available", "unavailable"]
+								},
+								"cut": {
+									"type": "object",
+									"properties": {
+										"sessionId": { "type": "string" },
+										"cursor": { "type": "number" },
+										"source": {
+											"type": "string",
+											"enum": ["live", "prepared"]
+										},
+										"inheritedEventCount": { "type": "number" },
+										"revision": { "type": "string" }
+									},
+									"required": [
+										"sessionId",
+										"cursor",
+										"source",
+										"inheritedEventCount"
+									],
+									"additionalProperties": true
+								},
+								"answer": {
+									"type": "string",
+									"enum": [
+										"unavailable",
+										"missing",
+										"saved",
+										"not-requested"
+									]
+								},
+								"assessment": {
+									"type": "string",
+									"enum": [
+										"pending",
+										"unavailable",
+										"valid",
+										"not-requested"
+									]
+								},
+								"readStatus": {
+									"type": "string",
+									"enum": [
+										"valid",
+										"missing",
+										"invalid",
+										"future-format",
+										"changing",
+										"legacy",
+										"archived"
+									]
+								},
+								"versions": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"path": { "type": "string" },
+											"targetKey": { "type": "string" },
+											"version": { "type": "string" }
+										},
+										"required": [
+											"path",
+											"targetKey",
+											"version"
+										],
+										"additionalProperties": true
+									}
+								},
+								"issues": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"path": { "type": "string" },
+											"field": { "type": "string" },
+											"rule": { "type": "string" },
+											"correction": { "type": "string" }
+										},
+										"required": [
+											"path",
+											"field",
+											"rule",
+											"correction"
+										],
+										"additionalProperties": true
+									}
+								}
+							},
+							"required": [
+								"requestId",
+								"admission",
+								"nativeStates",
+								"nativeSourceStatus",
+								"answer",
+								"assessment",
+								"readStatus",
+								"versions",
+								"issues"
+							],
+							"additionalProperties": true
+						}
+					},
+					sourceLocation: {
+						"file": "packages/winterhuan/student/src/remote-service.ts",
+						"line": 129,
+						"column": 9
+					}
+				},
+				"student/manualContext": {
+					service: "student",
+					description: "Capture the shared owner's edited-field values from one actual read.",
+					invocation: { kind: "direct" },
+					parameters: [{
+						name: "sessionId",
+						description: "registered main native Session identity.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_manualContext_parameter_0$schema,
+							jsonSchema: { "type": "string" }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_manualContext_parameter_0_strict$schema,
+							jsonSchema: { "type": "string" }
+						}
+					}, {
+						name: "intent",
+						description: "typed manual operation; setup must identify editedProfileFields.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student#student/manualContext:intent",
+							create: _winterhuan_dsh_student_student_manualContext_parameter_1$schema,
+							jsonSchemaError: "typert tool schema: unsupported undefined value"
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student#student/manualContext:intent",
+							create: _winterhuan_dsh_student_student_manualContext_parameter_1_strict$schema,
+							jsonSchemaError: "typert tool schema: unsupported undefined value"
+						}
+					}],
+					cancellation: { parameter: "signal" },
+					result: {
+						mode: "strict",
+						typeSymbol: "@winterhuan/dsh-student/types#StudentManualContext",
+						create: _winterhuan_dsh_student_student_manualContext_result$schema,
+						description: "exact current term identity, observed versions, draft baseline and read issues.",
+						jsonSchemaError: "typert tool schema: recursive selected type requires a supported JSON value declaration"
+					},
+					sourceLocation: {
+						"file": "packages/winterhuan/student/src/remote-service.ts",
+						"line": 99,
+						"column": 9
+					}
+				},
+				"student/query": {
+					service: "student",
+					description: "Read a shared validated Student projection without activating an absent Agent.",
+					invocation: { kind: "direct" },
+					parameters: [{
+						name: "sessionId",
+						description: "native Session identity resolved through the registered main Agent lookup.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_query_parameter_0$schema,
+							jsonSchema: { "type": "string" }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_query_parameter_0_strict$schema,
+							jsonSchema: { "type": "string" }
+						}
+					}, {
+						name: "request",
+						description: "shared projection selector; it never names a learning block as a Session.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentQueryRequest",
+							create: _winterhuan_dsh_student_student_query_parameter_1$schema,
+							jsonSchema: { "oneOf": [{
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"enum": [
+											"learning-context",
+											"summary",
+											"files",
+											"settings",
+											"status",
+											"curriculum",
+											"elements",
+											"exercises",
+											"review-sheet",
+											"diagnose",
+											"weak",
+											"due",
+											"pending",
+											"progress",
+											"concepts",
+											"objectives",
+											"relations",
+											"worksheets",
+											"paper-results",
+											"materials",
+											"mistakes",
+											"sessions",
+											"attempts"
+										]
+									},
+									"subject": {
+										"type": "string",
+										"enum": [
+											"math",
+											"chinese",
+											"english"
+										]
+									},
+									"id": { "type": "string" },
+									"unit": { "type": "string" },
+									"grade": { "type": "number" },
+									"term": {
+										"type": "string",
+										"enum": ["first", "second"]
+									},
+									"offset": { "type": "number" }
+								},
+								"required": ["kind"],
+								"additionalProperties": true
+							}, {
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"const": "dashboard"
+									},
+									"options": {
+										"type": "object",
+										"properties": {
+											"subject": {
+												"type": "string",
+												"enum": [
+													"math",
+													"chinese",
+													"english"
+												]
+											},
+											"mistakeOffset": { "type": "number" },
+											"mistakeStatus": {
+												"type": "string",
+												"enum": [
+													"due",
+													"all",
+													"reviewing",
+													"mastered"
+												]
+											},
+											"mapGrade": { "type": "number" },
+											"mapTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagGrade": { "type": "number" },
+											"diagTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagUnit": { "type": "string" },
+											"tab": {
+												"type": "string",
+												"enum": [
+													"mistakes",
+													"map",
+													"today",
+													"parent"
+												]
+											}
+										},
+										"required": [],
+										"additionalProperties": true
+									}
+								},
+								"required": ["kind"],
+								"additionalProperties": true
+							}] }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentQueryRequest",
+							create: _winterhuan_dsh_student_student_query_parameter_1_strict$schema,
+							jsonSchema: { "oneOf": [{
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"enum": [
+											"learning-context",
+											"summary",
+											"files",
+											"settings",
+											"status",
+											"curriculum",
+											"elements",
+											"exercises",
+											"review-sheet",
+											"diagnose",
+											"weak",
+											"due",
+											"pending",
+											"progress",
+											"concepts",
+											"objectives",
+											"relations",
+											"worksheets",
+											"paper-results",
+											"materials",
+											"mistakes",
+											"sessions",
+											"attempts"
+										]
+									},
+									"subject": {
+										"type": "string",
+										"enum": [
+											"math",
+											"chinese",
+											"english"
+										]
+									},
+									"id": { "type": "string" },
+									"unit": { "type": "string" },
+									"grade": { "type": "number" },
+									"term": {
+										"type": "string",
+										"enum": ["first", "second"]
+									},
+									"offset": { "type": "number" }
+								},
+								"required": ["kind"],
+								"additionalProperties": false
+							}, {
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"const": "dashboard"
+									},
+									"options": {
+										"type": "object",
+										"properties": {
+											"subject": {
+												"type": "string",
+												"enum": [
+													"math",
+													"chinese",
+													"english"
+												]
+											},
+											"mistakeOffset": { "type": "number" },
+											"mistakeStatus": {
+												"type": "string",
+												"enum": [
+													"due",
+													"all",
+													"reviewing",
+													"mastered"
+												]
+											},
+											"mapGrade": { "type": "number" },
+											"mapTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagGrade": { "type": "number" },
+											"diagTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagUnit": { "type": "string" },
+											"tab": {
+												"type": "string",
+												"enum": [
+													"mistakes",
+													"map",
+													"today",
+													"parent"
+												]
+											}
+										},
+										"required": [],
+										"additionalProperties": false
+									}
+								},
+								"required": ["kind"],
+								"additionalProperties": false
+							}] }
+						}
+					}],
+					cancellation: { parameter: "signal" },
+					result: {
+						mode: "strict",
+						typeSymbol: "@winterhuan/dsh-student/types#StudentQueryResult",
+						create: _winterhuan_dsh_student_student_query_result$schema,
+						description: "current projection, actual file versions, cut and explicit partial or unavailable status.",
+						jsonSchemaError: "typert tool schema: recursive selected type requires a supported JSON value declaration"
+					},
+					sourceLocation: {
+						"file": "packages/winterhuan/student/src/remote-service.ts",
+						"line": 50,
+						"column": 9
+					}
+				},
+				"student/saveManual": {
+					service: "student",
+					description: "Save an explicit manual draft through the shared guarded filesystem owner.",
+					invocation: { kind: "direct" },
+					parameters: [{
+						name: "sessionId",
+						description: "registered main native Session identity.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_saveManual_parameter_0$schema,
+							jsonSchema: { "type": "string" }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_saveManual_parameter_0_strict$schema,
+							jsonSchema: { "type": "string" }
+						}
+					}, {
+						name: "request",
+						description: "actual observed term, file versions, edited fields and retained baseline.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentManualSaveRequest",
+							create: _winterhuan_dsh_student_student_saveManual_parameter_1$schema,
+							jsonSchemaError: "typert tool schema: recursive selected type requires a supported JSON value declaration"
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentManualSaveRequest",
+							create: _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema,
+							jsonSchemaError: "typert tool schema: recursive selected type requires a supported JSON value declaration"
+						}
+					}],
+					cancellation: { parameter: "signal" },
+					result: {
+						mode: "strict",
+						typeSymbol: "@winterhuan/dsh-student/types#StudentManualReply",
+						create: _winterhuan_dsh_student_student_saveManual_result$schema,
+						description: "thin save outcome, current edited values and versions for subsequent draft saves.",
+						jsonSchemaError: "typert tool schema: recursive selected type requires a supported JSON value declaration"
+					},
+					sourceLocation: {
+						"file": "packages/winterhuan/student/src/remote-service.ts",
+						"line": 114,
+						"column": 9
+					}
+				},
+				"student/watch": {
+					service: "student",
+					description: "Follow current files and time thresholds; unchanged version/cut/projection tokens produce no frame.",
+					mode: "stream",
+					invocation: { kind: "direct" },
+					parameters: [{
+						name: "sessionId",
+						description: "registered main native Session identity, authorized before the stream opens.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_watch_parameter_0$schema,
+							jsonSchema: { "type": "string" }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_watch_parameter_0_strict$schema,
+							jsonSchema: { "type": "string" }
+						}
+					}, {
+						name: "request",
+						description: "shared bounded projection selector.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentQueryRequest",
+							create: _winterhuan_dsh_student_student_watch_parameter_1$schema,
+							jsonSchema: { "oneOf": [{
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"enum": [
+											"learning-context",
+											"summary",
+											"files",
+											"settings",
+											"status",
+											"curriculum",
+											"elements",
+											"exercises",
+											"review-sheet",
+											"diagnose",
+											"weak",
+											"due",
+											"pending",
+											"progress",
+											"concepts",
+											"objectives",
+											"relations",
+											"worksheets",
+											"paper-results",
+											"materials",
+											"mistakes",
+											"sessions",
+											"attempts"
+										]
+									},
+									"subject": {
+										"type": "string",
+										"enum": [
+											"math",
+											"chinese",
+											"english"
+										]
+									},
+									"id": { "type": "string" },
+									"unit": { "type": "string" },
+									"grade": { "type": "number" },
+									"term": {
+										"type": "string",
+										"enum": ["first", "second"]
+									},
+									"offset": { "type": "number" }
+								},
+								"required": ["kind"],
+								"additionalProperties": true
+							}, {
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"const": "dashboard"
+									},
+									"options": {
+										"type": "object",
+										"properties": {
+											"subject": {
+												"type": "string",
+												"enum": [
+													"math",
+													"chinese",
+													"english"
+												]
+											},
+											"mistakeOffset": { "type": "number" },
+											"mistakeStatus": {
+												"type": "string",
+												"enum": [
+													"due",
+													"all",
+													"reviewing",
+													"mastered"
+												]
+											},
+											"mapGrade": { "type": "number" },
+											"mapTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagGrade": { "type": "number" },
+											"diagTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagUnit": { "type": "string" },
+											"tab": {
+												"type": "string",
+												"enum": [
+													"mistakes",
+													"map",
+													"today",
+													"parent"
+												]
+											}
+										},
+										"required": [],
+										"additionalProperties": true
+									}
+								},
+								"required": ["kind"],
+								"additionalProperties": true
+							}] }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentQueryRequest",
+							create: _winterhuan_dsh_student_student_watch_parameter_1_strict$schema,
+							jsonSchema: { "oneOf": [{
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"enum": [
+											"learning-context",
+											"summary",
+											"files",
+											"settings",
+											"status",
+											"curriculum",
+											"elements",
+											"exercises",
+											"review-sheet",
+											"diagnose",
+											"weak",
+											"due",
+											"pending",
+											"progress",
+											"concepts",
+											"objectives",
+											"relations",
+											"worksheets",
+											"paper-results",
+											"materials",
+											"mistakes",
+											"sessions",
+											"attempts"
+										]
+									},
+									"subject": {
+										"type": "string",
+										"enum": [
+											"math",
+											"chinese",
+											"english"
+										]
+									},
+									"id": { "type": "string" },
+									"unit": { "type": "string" },
+									"grade": { "type": "number" },
+									"term": {
+										"type": "string",
+										"enum": ["first", "second"]
+									},
+									"offset": { "type": "number" }
+								},
+								"required": ["kind"],
+								"additionalProperties": false
+							}, {
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"const": "dashboard"
+									},
+									"options": {
+										"type": "object",
+										"properties": {
+											"subject": {
+												"type": "string",
+												"enum": [
+													"math",
+													"chinese",
+													"english"
+												]
+											},
+											"mistakeOffset": { "type": "number" },
+											"mistakeStatus": {
+												"type": "string",
+												"enum": [
+													"due",
+													"all",
+													"reviewing",
+													"mastered"
+												]
+											},
+											"mapGrade": { "type": "number" },
+											"mapTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagGrade": { "type": "number" },
+											"diagTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagUnit": { "type": "string" },
+											"tab": {
+												"type": "string",
+												"enum": [
+													"mistakes",
+													"map",
+													"today",
+													"parent"
+												]
+											}
+										},
+										"required": [],
+										"additionalProperties": false
+									}
+								},
+								"required": ["kind"],
+								"additionalProperties": false
+							}] }
+						}
+					}],
+					cancellation: { parameter: "signal" },
+					result: {
+						mode: "strict",
+						typeSymbol: "@winterhuan/dsh-student/types#StudentWatchFrame",
+						create: _winterhuan_dsh_student_student_watch_result$schema,
+						description: "an initial snapshot and later changes or recoverable read-failure frames.",
+						jsonSchemaError: "typert tool schema: recursive selected type requires a supported JSON value declaration"
+					},
+					sourceLocation: {
+						"file": "packages/winterhuan/student/src/remote-service.ts",
+						"line": 72,
+						"column": 10
+					}
+				}
+			}
+		}, zod.z);
+		//#endregion
+		//#region lib/types/client/resource.js
+		/**
+		* Address one shared query in a native Session; block and term identities remain in query data.
+		* @param sessionId - native Session identity.
+		* @param request - bounded shared query selector.
+		* @returns the resource URI accepted by the Student provider.
+		*/
+		function studentResourceAddress(sessionId, request) {
+			return `dsh-resource://student/session/${encodeURIComponent(sessionId)}?query=${encodeURIComponent(JSON.stringify(request))}`;
+		}
+		/**
+		* Follow generated Host snapshots through the native reconnect supervisor.
+		* @param remote - mounted Student Remote and native stream supervisor.
+		* @returns one provider owner; disposal waits for its physical stream iterators.
+		*/
+		function createStudentResourceOwner(remote) {
+			const streams = /* @__PURE__ */ new Set();
+			let disposed = false;
+			return {
+				provider: {
+					protocol: "student",
+					async *open(address, { signal }) {
+						if (signal.aborted || disposed) return;
+						let input;
+						try {
+							const uri = new URL(address);
+							const parts = uri.pathname.split("/");
+							if (uri.protocol !== "dsh-resource:" || uri.hostname !== "student" || parts.length !== 3 || parts[1] !== "session" || !parts[2] || uri.hash || uri.searchParams.getAll("query").length !== 1) throw new Error("Invalid Student address.");
+							input = TYPERT_REMOTE.methods["student/query"].input({ strict: true }).create().parse({
+								sessionId: decodeURIComponent(parts[2]),
+								request: JSON.parse(uri.searchParams.get("query"))
+							});
+						} catch (_error) {
+							yield {
+								ok: false,
+								error: new RemoteError("student/invalid-address", "Invalid Student resource address.", {})
+							};
+							return;
+						}
+						let carrier = Promise.withResolvers();
+						const stream = remote.$stream({
+							name: "Student resource",
+							open: (generationSignal) => remote.student.watch(input.sessionId, input.request, AbortSignal.any([signal, generationSignal])),
+							ended: () => new _deepseek_ai_dsh_api_gateway_client.RemoteStreamCarrierError("Student resource stream ended before cancellation."),
+							carrierFailed: (error) => carrier.resolve(error)
+						});
+						streams.add(stream);
+						const abort = () => {
+							stream.dispose();
+						};
+						signal.addEventListener("abort", abort, { once: true });
+						const iterator = stream[Symbol.asyncIterator]();
+						let pending = iterator.next();
+						try {
+							while (true) {
+								const outcome = await Promise.race([pending.then((result) => ({
+									kind: "frame",
+									result
+								})), carrier.promise.then((error) => ({
+									kind: "carrier",
+									error
+								}))]);
+								if (outcome.kind === "carrier") {
+									carrier = Promise.withResolvers();
+									if (!signal.aborted && !disposed) yield {
+										ok: false,
+										error: new RemoteError("student/unavailable", outcome.error.message, {})
+									};
+									continue;
+								}
+								if (outcome.result.done) return;
+								const item = outcome.result.value;
+								pending = iterator.next();
+								if (signal.aborted || disposed || item.signal.aborted) return;
+								const frame = item.value;
+								item.accept();
+								if (frame.kind === "failure") {
+									yield {
+										ok: false,
+										error: new RemoteError("student/unavailable", frame.message, {})
+									};
+									continue;
+								}
+								const value = frame.value;
+								if (value.status !== "valid" && value.status !== "partial" && value.status !== "missing" && value.status !== "legacy" && value.status !== "archived") yield {
+									ok: false,
+									error: new RemoteError("student/unavailable", value.issues?.[0]?.correction ?? "Current Student files are unavailable.", {})
+								};
+								else yield {
+									ok: true,
+									value
+								};
+							}
+						} catch (error) {
+							if (!signal.aborted && !disposed) yield {
+								ok: false,
+								error: error instanceof RemoteError ? error : new RemoteError("student/unavailable", error instanceof Error ? error.message : "Student resource disconnected.", {})
+							};
+						} finally {
+							signal.removeEventListener("abort", abort);
+							await stream.dispose();
+							await pending.catch(() => {});
+							streams.delete(stream);
+						}
+					}
+				},
+				async dispose() {
+					disposed = true;
+					await Promise.all([...streams].map((stream) => stream.dispose()));
+				}
+			};
+		}
+		/**
+		* Mount the generated namespace and register its provider under one awaited Client lifetime.
+		* @param ctx - Client Context with native Remote and resources services.
+		* @param contribution - generated Student descriptors; defaults to the packaged contribution.
+		* @returns once both namespace and provider are installed; cleanup is registered on ctx.
+		*/
+		async function mountStudentResource(ctx, contribution = TYPERT_REMOTE) {
+			const remoteDispose = await ctx.remote.$mount(contribution);
+			const owner = createStudentResourceOwner(ctx.remote);
+			try {
+				const release = ctx.resources.register(owner.provider);
+				ctx.effect(() => async () => {
+					release();
+					await owner.dispose();
+					await remoteDispose();
+				}, "student: resource transport");
+			} catch (error) {
+				await owner.dispose();
+				await remoteDispose();
+				throw error;
+			}
+		}
+		//#endregion
 		//#region lib/types/client/sidebar.js
 		const name = "student";
 		const inject = [
@@ -6369,10 +9107,13 @@ window.__ModuleLoader__.load({
 			"sessions",
 			"uiSession",
 			"locale",
-			"sidebarRightTabs"
+			"sidebarRightTabs",
+			"remote",
+			"resources"
 		];
 		/** Register the learning desk inside DSH's existing session sidebar. */
-		function apply(context) {
+		async function apply(context) {
+			await mountStudentResource(context);
 			context.effect(() => context.locale.register(NS, {
 				zh,
 				en
@@ -6415,8 +9156,11 @@ window.__ModuleLoader__.load({
 		}
 		//#endregion
 		exports.apply = apply;
+		exports.createStudentResourceOwner = createStudentResourceOwner;
 		exports.inject = inject;
+		exports.mountStudentResource = mountStudentResource;
 		exports.name = name;
+		exports.studentResourceAddress = studentResourceAddress;
 		return module.exports;
 	}
 });

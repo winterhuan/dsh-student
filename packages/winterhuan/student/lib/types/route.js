@@ -1,12 +1,9 @@
 import { FsError } from '@deepseek-ai/dsh-fs';
 import { SessionId } from '@deepseek-ai/dsh-session';
 import { z } from 'zod';
-import { commandSchema } from "./schema.js";
-import { panelActions } from "./actions.js";
-import { studyStore, StudyConflict } from "./store.js";
+import { studyStore } from "./store.js";
 import { queryDashboard as dashboard } from "./learning/queries.js";
 import { readInteractiveLessons } from "./openmaic.js";
-const mutation = z.object({ revision: z.number().int().nonnegative(), change: commandSchema }).strict();
 /** Browser requests must address the local DSH host and originate from the same authority. */
 export function trustedStudyRequest(request) {
     try {
@@ -27,21 +24,7 @@ function send(response, status, value) {
     response.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' });
     response.end(JSON.stringify(value));
 }
-async function body(request, limit) {
-    if (!request.headers['content-type']?.startsWith('application/json'))
-        throw new Error('请求必须使用 JSON');
-    const chunks = [];
-    let size = 0;
-    for await (const chunk of request) {
-        const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-        size += bytes.length;
-        if (size > limit)
-            throw new Error('提交内容过长');
-        chunks.push(bytes);
-    }
-    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
-}
-/** The UI can submit learner actions and the parent's marks on a printed sheet; tutor assessment and rewards stay with the model tools. */
+/** Read-only local browser projection retains same-authority and registered main-Session checks. */
 export async function handleStudyRequest(context, request, response) {
     const abort = new AbortController();
     const onClose = () => { if (!response.writableEnded)
@@ -53,7 +36,7 @@ export async function handleStudyRequest(context, request, response) {
             return;
         }
         const url = new URL(request.url ?? '/', 'http://localhost');
-        if (url.pathname !== '/student/workspace' || !['GET', 'POST'].includes(request.method ?? '')) {
+        if (url.pathname !== '/student/workspace' || request.method !== 'GET') {
             send(response, 404, { error: '学习接口不存在' });
             return;
         }
@@ -73,27 +56,12 @@ export async function handleStudyRequest(context, request, response) {
         const diagTerm = url.searchParams.has('diagTerm') ? z.enum(['first', 'second']).parse(url.searchParams.get('diagTerm')) : undefined;
         const diagUnit = url.searchParams.has('diagUnit') ? z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u).parse(url.searchParams.get('diagUnit')) : undefined;
         const tab = url.searchParams.has('tab') ? z.enum(['today', 'map', 'mistakes', 'parent']).parse(url.searchParams.get('tab')) : undefined;
-        const agent = await context.typert.lookups.get('agent')?.resolve(SessionId(rawId));
-        if (!agent || agent.session.header.parentSession || agent.session.header.origin === 'subagent') {
+        const agent = context.agents.get(SessionId(rawId));
+        if (!agent || agent.session.id !== rawId || agent.session.header.parentSession || agent.session.header.origin === 'subagent') {
             send(response, 404, { error: '请在主会话中打开学习工作区' });
             return;
         }
-        let change;
-        let revision;
-        if (request.method === 'POST') {
-            if (!request.headers['content-type']?.startsWith('application/json')) {
-                send(response, 415, { error: '请求必须使用 JSON' });
-                return;
-            }
-            const input = mutation.parse(await body(request, 65_536));
-            if (!panelActions.has(input.change.action)) {
-                send(response, 403, { error: '该操作需要学习助手核对' });
-                return;
-            }
-            change = input.change;
-            revision = input.revision;
-        }
-        const state = await studyStore({ agent, signal: abort.signal }, change, revision);
+        const state = await studyStore({ agent, signal: abort.signal });
         // The browser never calls OpenMAIC. A cross-origin fetch to :3000 would drop the anonymous cookie.
         // The tutor shell writes the lesson log; this response only reads it, including on an unchanged poll,
         // because that write does not bump the study revision.
@@ -102,8 +70,8 @@ export async function handleStudyRequest(context, request, response) {
         send(response, 200, { ...dashboard(state, Date.now(), { subject, mistakeOffset, mistakeStatus, ...(tab !== undefined ? { tab } : {}), ...(mapGrade !== undefined ? { mapGrade } : {}), ...(mapTerm !== undefined ? { mapTerm } : {}), ...(diagGrade !== undefined ? { diagGrade } : {}), ...(diagTerm !== undefined ? { diagTerm } : {}), ...(diagUnit !== undefined ? { diagUnit } : {}) }), interactiveLessons });
     }
     catch (error) {
-        const conflict = error instanceof StudyConflict || (error instanceof FsError && ['FS_STALE_VERSION', 'FS_NOT_OBSERVED'].includes(error.code));
-        send(response, conflict ? 409 : error instanceof Error && error.message === '提交内容过长' ? 413 : 400, { error: error instanceof z.ZodError ? '请填写完整且有效的学习资料' : error instanceof Error ? error.message : '学习档案暂时无法读取' });
+        const conflict = error instanceof FsError && ['FS_STALE_VERSION', 'FS_NOT_OBSERVED'].includes(error.code);
+        send(response, conflict ? 409 : 400, { error: error instanceof z.ZodError ? '请填写完整且有效的学习资料' : error instanceof Error ? error.message : '学习档案暂时无法读取' });
     }
     finally {
         response.off('close', onClose);
@@ -111,7 +79,7 @@ export async function handleStudyRequest(context, request, response) {
 }
 /** Optional web integration leaves the same plugin usable in terminal sessions. */
 export function registerStudyRoute(context) {
-    context.inject(['webServer', 'typert'], ctx => {
+    context.inject(['webServer', 'agents'], ctx => {
         ctx.effect(() => ctx.webServer.register({ kind: 'prefix', path: '/student', handler: (request, response) => handleStudyRequest(ctx, request, response) }), 'student: workspace API');
     });
 }

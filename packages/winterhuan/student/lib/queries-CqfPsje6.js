@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { Service } from "@deepseek-ai/cordis";
 //#region lib/types/interests.js
 /** Example tags used when a profile has not saved its own list. */
 const DEFAULT_INTEREST_TAGS = [
@@ -5022,6 +5023,10 @@ async function readBackups(fs, signal) {
 * @returns verified retained candidates and explicit backup failures.
 */
 async function retainObservedBackups(fs, read, now, signal) {
+	const identity = read.files.find((file) => file.path === ".study/settings.json")?.targetKey;
+	return fs.backupRetention && identity ? fs.backupRetention.run(identity, (retentionSignal) => retainBackups(fs, read, now, retentionSignal), signal) : retainBackups(fs, read, now, signal);
+}
+async function retainBackups(fs, read, now, signal) {
 	const existing = await readBackups(fs, signal);
 	if (!fs.write || !fs.remove || read.status !== "valid") return existing;
 	const backups = existing.backups.slice();
@@ -5157,6 +5162,42 @@ function describeArchive(source, archive, active) {
 	};
 }
 //#endregion
+//#region lib/types/files/backup-retention.js
+/** Host-lifetime serialization keeps independently observed backup versions within shared bounds. */
+/** Serializes retention and waits for all owned operations during Host teardown. */
+var StudyBackupRetention = class extends Service {
+	tails = /* @__PURE__ */ new Map();
+	lifetime = new AbortController();
+	/** @param ctx - Host context whose lifetime owns all backup operations. */
+	constructor(ctx) {
+		super(ctx, "studentBackups");
+		ctx.effect(() => async () => {
+			this.lifetime.abort();
+			await Promise.all(this.tails.values());
+		}, "student: backup retention");
+	}
+	async run(identity, operation, signal) {
+		this.lifetime.signal.throwIfAborted();
+		const combined = AbortSignal.any([signal, this.lifetime.signal]);
+		combined.throwIfAborted();
+		const operationResult = (this.tails.get(identity) ?? Promise.resolve()).then(() => {
+			combined.throwIfAborted();
+			return operation(combined);
+		});
+		const completed = operationResult.then(() => {}, () => {});
+		this.tails.set(identity, completed);
+		completed.then(() => {
+			if (this.tails.get(identity) === completed) this.tails.delete(identity);
+		});
+		return new Promise((resolve, reject) => {
+			const abort = () => reject(combined.reason);
+			combined.addEventListener("abort", abort, { once: true });
+			operationResult.then(resolve, reject).finally(() => combined.removeEventListener("abort", abort));
+			if (combined.aborted) abort();
+		});
+	}
+};
+//#endregion
 //#region lib/types/files/application.js
 /**
 * Bind official-file reads and guarded manual writes to the calling execution world.
@@ -5171,6 +5212,7 @@ function applicationStudyFiles(exec) {
 	if (!availableFs || !policy) throw new Error("Student requires the DSH filesystem and sandbox policy services.");
 	const fs = availableFs;
 	const cwd = agent.session.header.cwd;
+	const retention = agent.ctx.root.get("studentBackups") ?? new StudyBackupRetention(agent.ctx.root);
 	async function target(path, signal) {
 		const root = await fs.resolve(cwd, { signal });
 		const resolved = await fs.resolve(path, {
@@ -5181,6 +5223,7 @@ function applicationStudyFiles(exec) {
 		return resolved;
 	}
 	return {
+		backupRetention: retention,
 		async stat(path, signal) {
 			const resolved = await target(path, signal);
 			const info = await fs.stat(resolved, signal);
@@ -6386,4 +6429,4 @@ function queryDashboard(state, now, options = {}, lessons) {
 	};
 }
 //#endregion
-export { updateNotices as A, evidenceAtCutoff as B, questionSchema as C, termSettingsSchema as D, responseSourceSchema as E, readLessonFile as F, commandSchema as G, evidenceOf as H, scheduleMistakes as I, stateSchema as K, attachEvidence as L, lessonFileSchema as M, lessonSchema as N, worksheetSchema as O, readInteractiveLessons as P, demonstrablyAfter as R, officialFileSchemas as S, responseSchema as T, canonical as U, evidenceDay as V, archiveTermSchema as W, answerDateSchema as _, projectWorkspace as a, blockSchema as b, backupSchema as c, describeMigration as d, describeRestore as f, validateStudyFiles as g, sourceSha256 as h, queryWorkspace as i, updateStudy as j, migrateStudyFile as k, backupVersions as l, retainObservedBackups as m, queryDashboard as n, readWorkspace as o, readBackups as p, queryStudy as r, applicationStudyFiles as s, nextRefreshAfter as t, describeArchive as u, assessmentSchema as v, questionSourceSchema as w, collectionsSchema as x, assistanceSchema as y, deriveEvidence as z };
+export { migrateStudyFile as A, deriveEvidence as B, officialFileSchemas as C, responseSourceSchema as D, responseSchema as E, readInteractiveLessons as F, archiveTermSchema as G, evidenceDay as H, readLessonFile as I, commandSchema as K, scheduleMistakes as L, updateStudy as M, lessonFileSchema as N, termSettingsSchema as O, lessonSchema as P, attachEvidence as R, collectionsSchema as S, questionSourceSchema as T, evidenceOf as U, evidenceAtCutoff as V, canonical as W, validateStudyFiles as _, projectWorkspace as a, assistanceSchema as b, StudyBackupRetention as c, describeArchive as d, describeMigration as f, sourceSha256 as g, retainObservedBackups as h, queryWorkspace as i, updateNotices as j, worksheetSchema as k, backupSchema as l, readBackups as m, queryDashboard as n, readWorkspace as o, describeRestore as p, stateSchema as q, queryStudy as r, applicationStudyFiles as s, nextRefreshAfter as t, backupVersions as u, answerDateSchema as v, questionSchema as w, blockSchema as x, assessmentSchema as y, demonstrablyAfter as z };

@@ -13,6 +13,29 @@ import type { StudentQueryResult } from '../src/types.ts'
 const t = (key: keyof typeof en) => en[key]
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); window.localStorage.clear(); window.sessionStorage.clear() })
 
+it('uses the confirmed save baseline when immediately reopening before the live resource refresh', async () => {
+  const submit = vi.fn().mockResolvedValue({ baseline: JSON.stringify({ nickname: 'First save', region: 'Saved region' }), currentValues: { nickname: 'First save', region: 'Saved region' }, observation: 'saved-v2' })
+  const form = (observation = 'old-v1', region = 'Original region') => <SaveForm revision={1} observation={observation} baseline={JSON.stringify({ nickname: 'Original', region })} currentValues={{ nickname: 'Original', region }} entity="profile" draftScope="immediate-reopen" t={t} submit={submit}><label>Nickname<input name="nickname" defaultValue="Original" /></label><label>Region<input name="region" defaultValue={region} /></label></SaveForm>
+  const mounted = render(form())
+  fireEvent.change(screen.getByLabelText('Nickname'), { target: { value: 'First save' } })
+  fireEvent.click(screen.getByRole('button', { name: en.save }))
+  await screen.findByRole('status')
+  mounted.unmount()
+  const reopened = render(form())
+  expect((screen.getByLabelText('Nickname') as HTMLInputElement).value).toBe('First save')
+  fireEvent.change(screen.getByLabelText('Nickname'), { target: { value: 'Second save' } })
+  reopened.unmount()
+  const edited = render(form())
+  expect((screen.getByLabelText('Nickname') as HTMLInputElement).value).toBe('Second save')
+  expect((screen.getByLabelText('Region') as HTMLInputElement).value).toBe('Saved region')
+  edited.rerender(form('saved-v3', 'Newest region'))
+  expect((screen.getByLabelText('Nickname') as HTMLInputElement).value).toBe('Second save')
+  expect((screen.getByLabelText('Region') as HTMLInputElement).value).toBe('Newest region')
+  fireEvent.click(screen.getByRole('button', { name: en.save }))
+  await waitFor(() => expect(submit).toHaveBeenCalledTimes(2))
+  expect(JSON.parse(submit.mock.calls[1]![2]).baseline).toBe(JSON.stringify({ nickname: 'First save', region: 'Saved region' }))
+})
+
 it('lets a parent resolve a changed baseline while retaining or adopting current values', async () => {
   const submit = vi.fn().mockRejectedValueOnce(new Error('Current name changed')).mockResolvedValue(undefined)
   const form = (name: string) => <SaveForm revision={2} baseline={JSON.stringify({ nickname: name })} currentValues={{ nickname: name }} entity="profile" draftScope="conflict" t={t} submit={submit}>
@@ -127,7 +150,7 @@ it('retains a worksheet correction draft and separates its original assessment, 
 it('shows the inherited worksheet day and saves an explicit unknown override without changing the original answer', async () => {
   const response = { id: 'r1', questionId: 'q1', rawResponse: '24', assistance: 'unknown', source: { kind: 'paper', imagePaths: [], parentConfirmation: 'Confirmed answer' } }
   const sheet = { format: 2, kind: 'worksheet', termId: 'term-one', id: 'sheet-one', subject: 'math', origin: 'prepared', createdAt: NOW, context: {}, answerDate: { kind: 'day', day: '2026-11-10', parentConfirmation: 'Confirmed day' }, items: [{ id: 'q1', objectiveId: 'm2a-o-sub', source: { kind: 'authored', description: 'Original' }, topic: 'Subtraction', prompt: '52 - 28?', answer: '24', explanation: 'Subtract', answerEvidence: '24 + 28 = 52' }], responses: [response], assessments: [], drafts: [] }
-  const useResource = () => ({ status: 'live' as const, failure: undefined, value: { data: { worksheets: [sheet] } } as StudentQueryResult })
+  const useResource = () => ({ status: 'live' as const, failure: undefined, value: { versions: [], data: { worksheets: [sheet] } } as StudentQueryResult })
   const save = vi.fn().mockResolvedValue(undefined)
   render(<WorksheetCorrections sessionId="native-paper" termId="term-one" draftScope="inherited-day" {...{ useResource, save, t }} disabled={false} />)
   fireEvent.click(screen.getByText(en.manualWorksheet))
@@ -138,4 +161,28 @@ it('shows the inherited worksheet day and saves an explicit unknown override wit
   expect(save.mock.calls[0]![0]).toMatchObject({ kind: 'worksheet-assessments', worksheetId: 'sheet-one', assessments: [], responseUpdates: [{ responseId: 'r1', answerDate: { kind: 'unknown' } }] })
   expect(save.mock.calls[0]![1]).toEqual({ 'response:r1': { answerDate: null } })
   expect(screen.getByText(`${en.learnerAnswer}: 24`)).toBeTruthy()
+})
+
+it('shows unresolved help, source and effective answer date beside the learning path', () => {
+  const body = dashboard(updateStudy(undefined, setup, NOW), NOW)
+  const useResource = (address: string) => ({ status: 'live' as const, failure: undefined, value: { status: 'valid', token: 'one', readAt: NOW, refreshAfter: NOW + 1000, versions: [], native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [], data: new URL(address).searchParams.get('query')?.includes('learning-context') ? { termId: 'term-one', pendingFacts: [{ ownerId: 'earlier-block', responseId: 'earlier-response', fields: ['answerDate', 'assistance', 'source'] }] } : body } as StudentQueryResult })
+  render(<StudyDesk {...{ useResource }} remote={{ inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() }} sessionId="current-native" visible running={false} ask={vi.fn()} t={t} />)
+  expect(screen.getByText(en.answerDateUnknown, { exact: false })).toBeTruthy()
+  expect(screen.getByText(en.assistanceUnknown, { exact: false })).toBeTruthy()
+  expect(screen.getByText('Answer source awaiting verification', { exact: false })).toBeTruthy()
+  expect(screen.getByText('earlier-response', { exact: false })).toBeTruthy()
+})
+
+it('saves a worksheet-wide answer day while retaining per-response overrides', async () => {
+  const sheet = { format: 2, kind: 'worksheet', termId: 'term-one', id: 'sheet-one', subject: 'math', origin: 'prepared', createdAt: NOW, context: {}, answerDate: { kind: 'unknown' }, items: [{ id: 'q1', objectiveId: 'm2a-o-sub', source: { kind: 'authored', description: 'Original' }, topic: 'Subtraction', prompt: '52 - 28?', answer: '24', explanation: 'Subtract', answerEvidence: '24 + 28 = 52' }], responses: [{ id: 'r1', questionId: 'q1', rawResponse: '24', assistance: 'unknown', answerDate: { kind: 'unknown' }, source: { kind: 'paper', imagePaths: [], parentConfirmation: 'Confirmed answer' } }], assessments: [], drafts: [] }
+  const useResource = () => ({ status: 'live' as const, failure: undefined, value: { versions: [], data: { worksheets: [sheet] } } as StudentQueryResult })
+  const save = vi.fn().mockResolvedValue(undefined)
+  render(<WorksheetCorrections sessionId="native-paper" termId="term-one" draftScope="whole-sheet-day" {...{ useResource, save, t }} disabled={false} />)
+  fireEvent.click(screen.getByText(en.manualWorksheet))
+  fireEvent.change(screen.getByLabelText('Worksheet answer day'), { target: { value: '2026-11-11' } })
+  fireEvent.submit(screen.getByLabelText('Worksheet answer day').closest('form')!)
+  await waitFor(() => expect(save).toHaveBeenCalledOnce())
+  expect(save.mock.calls[0]![0]).toMatchObject({ kind: 'worksheet-assessments', worksheetId: 'sheet-one', assessments: [], answerDate: { kind: 'day', day: '2026-11-11' } })
+  expect(save.mock.calls[0]![1]).toEqual({ answerDate: { kind: 'unknown' } })
+  expect((screen.getByLabelText(en.actualAnswerDay) as HTMLInputElement).value).toBe('')
 })

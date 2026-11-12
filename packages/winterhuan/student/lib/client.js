@@ -11,7 +11,7 @@ window.__ModuleLoader__.load({
 		let _deepseek_ai_dsh_api_gateway_client = require("@deepseek-ai/dsh-api-gateway/client");
 		require("@deepseek-ai/cordis");
 		let react_dom = require("react-dom");
-		//#region \0dsh-global-css:/Users/winter/dsh-creative/.worktrees/student-native-chat-acceptance-parent/plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
+		//#region \0dsh-global-css:/Users/winter/dsh-creative/.worktrees/student-native-chat-parent/plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
 		const css = ".student-desk{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font:13px/1.5 var(--dsw-font-family);flex-direction:column;gap:12px;padding:0 12px 20px;display:flex;overflow:auto}.student-top{z-index:2;background:var(--dsw-alias-bg-base);border-bottom:1px solid var(--dsw-alias-border-l2);flex-direction:column;gap:8px;margin:0 -12px;padding:10px 12px 8px;display:flex;position:sticky;top:0}.student-toolbar{align-items:center;gap:8px;display:flex}.student-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;display:grid}.student-subjects{background:var(--dsw-alias-bg-layer-1);border-radius:8px;flex:1;gap:2px;padding:2px;display:flex}.student-subjects button{background:0 0;border:0;flex:1}.student-quiet{background:0 0;border:0;flex:none;padding:6px 8px}.student-desk section{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);border-radius:10px;flex-direction:column;gap:8px;padding:12px;display:flex}.student-desk details{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:10px;padding:10px 12px}.student-desk h3{margin:0;font-size:13px;font-weight:500}.student-desk p{overflow-wrap:anywhere;white-space:pre-wrap;margin:0}.student-desk form,.student-desk fieldset,.student-desk label{flex-direction:column;gap:8px;min-width:0;display:flex}.student-desk fieldset{border:0;margin:0;padding:0}.student-desk button,.student-desk input,.student-desk select,.student-desk textarea{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);box-sizing:border-box;border-radius:8px;min-width:0;max-width:100%;padding:8px}.student-desk button{cursor:pointer}.student-desk .student-subjects button,.student-desk .student-quiet{background:0 0;border:0}.student-desk button:hover:enabled:not([aria-pressed=true]):not(.student-primary){background:var(--dsw-alias-button-ghost-active-fill)}.student-desk .student-tabs button[aria-pressed=true],.student-desk .student-views button[aria-pressed=true],.student-desk .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-desk .student-tabs button[aria-pressed=true]:hover:enabled,.student-desk .student-views button[aria-pressed=true]:hover:enabled,.student-desk .student-primary:hover:enabled{background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-foreground)}.student-desk .student-subjects button[aria-pressed=true],.student-desk .student-segments button[aria-pressed=true],.student-desk .student-segments button[aria-checked=true]{background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);box-shadow:inset 0 0 0 1px var(--dsw-alias-state-business-primary)}.student-desk :disabled{opacity:.6;cursor:default}.student-desk :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.student-desk textarea{resize:vertical;min-height:72px}.student-desk .student-check{flex-direction:row;align-items:flex-start}.student-desk .student-check input{flex:none}.student-desk img{object-fit:contain;background:var(--dsw-alias-bg-base);border-radius:8px;width:100%;max-height:240px}.student-status{gap:6px}.student-desk .student-question{background:var(--dsw-alias-bg-base);border-radius:8px;padding:12px;font-size:16px;line-height:1.45}.student-desk summary{cursor:pointer;overflow-wrap:anywhere;font-weight:500}.student-desk .student-pages{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-plan{border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-1))}.student-desk details>details,.student-desk details>div,.student-desk details>p{margin-top:8px}.student-muted{color:var(--dsw-alias-label-secondary)}.student-unit{border-top:1px solid var(--dsw-alias-border-l2);padding-top:8px}.student-choices{flex-direction:column;gap:8px;display:flex}.student-choices button{text-align:left;width:100%;padding:12px 14px;font-size:15px}.student-result{font-size:15px;font-weight:500}.student-scope{flex-wrap:wrap;align-items:flex-end;gap:8px;display:flex}.student-scope label{flex:120px}.student-segments{flex-wrap:wrap;gap:6px;display:flex}.student-desk .student-grade{border-top:1px solid var(--dsw-alias-border-l2);padding:8px 0}.student-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px;height:8px;display:flex;overflow:hidden}.student-bar span{height:100%;display:block}.student-level-mastered,.student-fill-mastered{background:var(--dsw-alias-state-success-primary)}.student-level-practising,.student-fill-practising{background:var(--dsw-alias-state-business-primary)}.student-level-stalled,.student-fill-stalled{background:var(--dsw-alias-state-warn-primary)}.student-level-weak,.student-fill-weak{background:var(--dsw-alias-state-error-primary)}.student-level-due,.student-fill-due{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, var(--dsw-alias-state-warn-primary))}.student-level-untouched,.student-fill-untouched{background:var(--dsw-alias-label-tertiary)}.student-legend{flex-wrap:wrap;gap:8px 12px;display:flex}.student-dot{vertical-align:middle;border-radius:50%;width:8px;height:8px;margin-right:4px;display:inline-block}.student-chips{flex-direction:column;gap:6px;display:flex}.student-chip{text-align:left;border-radius:8px;align-items:center;gap:6px;width:100%;padding:8px 10px;display:flex}.student-views{grid-template-columns:1fr 1fr;gap:6px;display:grid}.student-pair{grid-template-columns:1fr 1fr;gap:8px;display:grid}.student-mastery{align-items:center;gap:6px;display:flex}.student-mastery span{border-radius:50%;width:10px;height:10px}.student-simon{flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-simon li{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 8px}.student-simon-done{opacity:.7}.student-simon-current{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, var(--dsw-alias-bg-base));font-weight:500}.student-steps{flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-map-inline{border:1px solid var(--dsw-alias-border-l2);border-left:3px solid var(--dsw-alias-state-business-primary);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base));border-radius:8px;margin:4px 0 8px;padding:8px 10px}.student-map-links{margin-top:8px}.student-mindmap-unit{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:8px;margin:8px 0;padding:10px}.student-mindmap-unit>summary{cursor:pointer;font-weight:500}.student-mindmap-branch{border-left:2px solid var(--dsw-alias-border-l2);flex-direction:column;gap:6px;margin:8px 0 0;padding:0 0 0 12px;list-style:none;display:flex}.student-mindmap-node{flex-direction:column;gap:4px;display:flex}.student-mindmap-concept{text-align:left;align-items:center;gap:6px;width:100%;display:flex}.student-mindmap-concept[aria-pressed=true]{background:var(--dsw-alias-bg-layer-2,transparent)}.student-mindmap-concept.student-level-mastered{box-shadow:inset 3px 0 0 var(--dsw-alias-state-success-primary)}.student-mindmap-concept.student-level-practising{box-shadow:inset 3px 0 0 var(--dsw-alias-state-business-primary)}.student-mindmap-concept.student-level-stalled{box-shadow:inset 3px 0 0 var(--dsw-alias-state-warn-primary)}.student-mindmap-concept.student-level-weak,.student-mindmap-concept.student-level-due{box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}.student-figure svg{width:100%;height:auto;max-height:220px;color:var(--dsw-alias-label-primary)}.student-figure circle,.student-figure rect,.student-figure line,.student-figure path,.student-figure polyline,.student-figure polygon{fill:none;stroke:currentColor;stroke-width:1.4px}.student-figure text{fill:currentColor;stroke:none}.student-figure .student-fill{fill:currentColor}.student-desk progress{width:100%;height:8px}.student-desk progress::-webkit-progress-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px}.student-desk progress::-webkit-progress-value{background:var(--dsw-alias-state-business-primary);border-radius:999px}.student-sheet-portal{font:13px/1.5 var(--dsw-font-family)}.student-sheet-portal button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);cursor:pointer;border-radius:8px;padding:8px}.student-sheet-portal .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-sheet-portal .student-quiet{background:0 0;border:0}.student-sheet-backdrop{z-index:1000;box-sizing:border-box;background:color-mix(in srgb, var(--dsw-alias-label-primary) 32%, transparent);justify-content:center;align-items:flex-start;padding:32px 16px;display:flex;position:fixed;inset:0;overflow:auto}.student-sheet-dialog{box-sizing:border-box;background:var(--dsw-alias-bg-base);border-radius:10px;flex-direction:column;gap:8px;width:min(720px,100%);padding:12px;display:flex}.student-sheet-toolbar{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.student-sheet-toolbar .student-muted{flex:200px;margin:0}.student-sheet-scroll{overflow:auto}.student-sheet{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);color:#333;font:14px/1.6 var(--dsw-font-family);background:#fff;border-radius:8px;flex-direction:column;gap:12px;padding:24px;display:flex}.student-url{user-select:text;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.student-sheet h2{text-align:center;margin:0;font-size:18px;font-weight:500}.student-sheet-meta{text-align:center;margin:0;font-size:12px}.student-sheet-item{break-inside:avoid;flex-direction:column;gap:8px;display:flex}.student-sheet-item>p{white-space:pre-wrap;margin:0}.student-sheet .student-figure svg{color:#333;width:100%;height:auto;max-height:260px}.student-sheet-lines{flex-direction:column;display:flex}.student-sheet-rule{border-bottom:1px solid #b9c0c7;height:22px}.student-sheet-box{border:1px dashed #b9c0c7;border-radius:4px;height:84px}@page{size:A4;margin:12mm 14mm}@media print{body>:not(.student-sheet-portal){display:none!important}.student-sheet-backdrop{background:0 0;padding:0;display:block;position:static;overflow:visible}.student-sheet-dialog{display:contents}.student-sheet-toolbar{display:none}.student-sheet-scroll{overflow:visible}.student-sheet{border:0;border-radius:0;width:100%;padding:0}.student-sheet-item{page-break-inside:avoid}}";
 		const tagId = "@winterhuan/dsh-student/plugin.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
@@ -69,6 +69,8 @@ window.__ModuleLoader__.load({
 			"manualWorksheetHelp": "保留原答和题目依据；仅保存你修改的评估、帮助或实际作答日期",
 			"assistanceLabel": "作答时使用的帮助",
 			"actualAnswerDay": "实际作答日期",
+			"worksheetAnswerDay": "整张练习单作答日期",
+			"worksheetAnswerDayHelp": "未单独填写日期的回答使用此日期；逐题日期或待核对覆盖值保持不变",
 			"answerDayHelp": "填写家长确认的实际日期；留空表示日期待核对，不使用照片接收或评分日期",
 			"workedExampleHelp": "看过示范",
 			"assistanceUnknown": "帮助情况待核对",
@@ -92,6 +94,10 @@ window.__ModuleLoader__.load({
 			"intentAdmitted": "请求已交给对话；档案保存以核验结果为准",
 			"switchBlock": "切换学习，保留未完成回答",
 			"answerDateUnknown": "作答日期待核对",
+			"pendingFacts": "待核对的作答记录",
+			"answerSourceUnknown": "作答来源待核对",
+			"answerBasisUnknown": "题目依据待核对",
+			"answerGoalUnknown": "学习目标待核对",
 			"currentValues": "当前已保存值",
 			"manualConflict": "相关内容已更新，草稿已保留；请核对当前值后决定",
 			"manualOldTerm": "这是旧学期草稿，不能写入当前学期",
@@ -590,6 +596,8 @@ window.__ModuleLoader__.load({
 			"manualWorksheetHelp": "Keep the original answer and question basis; save only the assessment, assistance or actual answer day you edit",
 			"assistanceLabel": "Help used",
 			"actualAnswerDay": "Actual answer day",
+			"worksheetAnswerDay": "Worksheet answer day",
+			"worksheetAnswerDayHelp": "Responses without their own date use this day; per-response dates and unknown overrides stay unchanged",
 			"answerDayHelp": "Enter the parent-confirmed actual day. An empty field means unknown; receipt and assessment dates do not supply it",
 			"workedExampleHelp": "Used a worked example",
 			"assistanceUnknown": "Assistance awaiting verification",
@@ -613,6 +621,10 @@ window.__ModuleLoader__.load({
 			"intentAdmitted": "Request sent to chat; saved records require independent verification",
 			"switchBlock": "Switch learning and keep unfinished answers",
 			"answerDateUnknown": "Answer date awaiting verification",
+			"pendingFacts": "Response facts awaiting verification",
+			"answerSourceUnknown": "Answer source awaiting verification",
+			"answerBasisUnknown": "Question basis awaiting verification",
+			"answerGoalUnknown": "Learning goal awaiting verification",
 			"currentValues": "Current saved values",
 			"manualConflict": "Relevant values changed. Your draft is retained; compare the current values before continuing",
 			"manualOldTerm": "This draft belongs to an earlier term and cannot change the current term",
@@ -5042,6 +5054,61 @@ window.__ModuleLoader__.load({
 		}
 		//#endregion
 		//#region lib/types/client/forms.js
+		function savedSettingsForm(result, entity, original, subject) {
+			if (!result.manual) return result;
+			const current = result.manual.current;
+			const observation = result.manual.versions.find((file) => file.path === ".study/settings.json").version;
+			const retained = JSON.parse(original).baseline;
+			const values = (value) => value && typeof value === "object" ? Object.fromEntries(Object.entries(value).filter((entry) => [
+				"string",
+				"number",
+				"boolean"
+			].includes(typeof entry[1]))) : {};
+			if (entity === "profile") {
+				const profile = JSON.parse(retained) ?? {};
+				for (const [key, value] of Object.entries(current)) if (key.startsWith("profile:")) profile[key.slice(8)] = value;
+				return {
+					baseline: JSON.stringify(profile),
+					currentValues: values(profile),
+					observation
+				};
+			}
+			if (entity === "course") {
+				const baseline = JSON.parse(retained);
+				const course = current[`course:${subject}`];
+				baseline.course = course;
+				const fields = values(course);
+				if (course && typeof course === "object" && "progress" in course && course.progress && typeof course.progress === "object" && "unitId" in course.progress && typeof course.progress.unitId === "string") fields.unitId = course.progress.unitId;
+				if (subject) fields.subject = subject;
+				return {
+					baseline: JSON.stringify(baseline),
+					currentValues: fields,
+					observation
+				};
+			}
+			if (entity === "progress") {
+				const progress = current[`progress:${subject}`];
+				return {
+					baseline: JSON.stringify(progress),
+					currentValues: values(progress),
+					observation
+				};
+			}
+			if (entity === "openmaic") {
+				const config = current.openmaic;
+				const baseUrl = config && typeof config === "object" && "baseUrl" in config && typeof config.baseUrl === "string" ? config.baseUrl : "";
+				return {
+					baseline: baseUrl,
+					currentValues: { baseUrl },
+					observation
+				};
+			}
+			return {
+				baseline: JSON.stringify(current.interests ?? []),
+				currentValues: {},
+				observation
+			};
+		}
 		const subjects$1 = [
 			"chinese",
 			"math",
@@ -5060,7 +5127,7 @@ window.__ModuleLoader__.load({
 				maxLength: 2e3
 			})] });
 		}
-		function SaveForm({ revision, baseline, submit, children, t, disabled = false, button = "save", entity = "confirmation", draftScope, currentValues, resetValues }) {
+		function SaveForm({ revision, baseline, submit, children, t, disabled = false, button = "save", entity = "confirmation", draftScope, currentValues, resetValues, observation = `${revision}:${baseline}` }) {
 			const storage = useDraftStorage(entity, draftScope);
 			const form = (0, react.useRef)(null);
 			const [base, setBase] = (0, react.useState)({
@@ -5069,6 +5136,7 @@ window.__ModuleLoader__.load({
 			});
 			const dirty = (0, react.useRef)(false);
 			const edited = (0, react.useRef)(/* @__PURE__ */ new Set());
+			const confirmed = (0, react.useRef)();
 			(0, react.useEffect)(() => {
 				const retained = storage.read();
 				if (!retained || !form.current) return;
@@ -5078,23 +5146,40 @@ window.__ModuleLoader__.load({
 					if (Array.isArray(entry.edited)) {
 						for (const name of entry.edited) if (typeof name === "string") edited.current.add(name);
 					}
+					if (entry.confirmedFrom !== void 0 && entry.confirmedFrom !== observation && !edited.current.size) {
+						storage.clear();
+						return;
+					}
+					if (entry.confirmedFrom === observation) confirmed.current = {
+						from: observation,
+						snapshot: {
+							baseline: entry.baseline,
+							currentValues: entry.values,
+							observation: entry.observation
+						}
+					};
 					for (const input of form.current.querySelectorAll("input,textarea,select")) {
 						if (!(input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement || input instanceof HTMLSelectElement)) continue;
-						if (!edited.current.has(input.name)) continue;
+						if (!confirmed.current && !edited.current.has(input.name)) continue;
 						const value = entry.values[input.name];
 						if (input instanceof HTMLInputElement && input.type === "checkbox") input.checked = value === true || value === "on";
-						else if (typeof value === "string") input.value = value;
+						else if (typeof value === "string" || typeof value === "number") input.value = String(value);
 					}
 					setBase({
 						revision: entry.revision,
 						baseline: entry.baseline
 					});
-					dirty.current = true;
+					dirty.current = edited.current.size > 0 || !confirmed.current;
 				} catch {
 					storage.clear();
 				}
 			}, []);
 			(0, react.useEffect)(() => {
+				if (confirmed.current?.from === observation) return;
+				if (confirmed.current) {
+					confirmed.current = void 0;
+					if (!dirty.current) storage.clear();
+				}
 				setBase((previous) => !dirty.current || previous.baseline === baseline ? {
 					revision,
 					baseline
@@ -5106,7 +5191,11 @@ window.__ModuleLoader__.load({
 					if (input instanceof HTMLInputElement && input.type === "checkbox") input.checked = value === true;
 					else input.value = String(value);
 				}
-			}, [revision, baseline]);
+			}, [
+				revision,
+				baseline,
+				observation
+			]);
 			function retain(event) {
 				const target = event.target;
 				if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) edited.current.add(target.name);
@@ -5117,7 +5206,9 @@ window.__ModuleLoader__.load({
 				storage.write(JSON.stringify({
 					...base,
 					edited: [...edited.current],
-					values
+					values,
+					confirmedFrom: confirmed.current?.from,
+					observation: confirmed.current?.snapshot.observation
 				}));
 				setSaved(false);
 			}
@@ -5161,17 +5252,41 @@ window.__ModuleLoader__.load({
 				setSaved(false);
 				setError("");
 				try {
-					await submit(values, base.revision, JSON.stringify({
+					const result = await submit(values, base.revision, JSON.stringify({
 						baseline: base.baseline,
 						editedFields: [...edited.current]
 					}));
-					setBase({
-						revision,
-						baseline
-					});
 					dirty.current = false;
 					edited.current.clear();
 					storage.clear();
+					if (result && "baseline" in result) {
+						confirmed.current = {
+							from: observation,
+							snapshot: result
+						};
+						setBase({
+							revision,
+							baseline: result.baseline
+						});
+						for (const input of form.current?.querySelectorAll("input,textarea,select") ?? []) {
+							if (!(input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement || input instanceof HTMLSelectElement)) continue;
+							const value = result.currentValues[input.name];
+							if (value === void 0) continue;
+							if (input instanceof HTMLInputElement && input.type === "checkbox") input.checked = value === true;
+							else input.value = String(value);
+						}
+						storage.write(JSON.stringify({
+							revision,
+							baseline: result.baseline,
+							edited: [],
+							values: result.currentValues,
+							confirmedFrom: observation,
+							observation: result.observation
+						}));
+					} else setBase({
+						revision,
+						baseline
+					});
 					setSaved(true);
 				} catch (reason) {
 					setError(reason instanceof Error ? reason.message : t("networkError"));
@@ -5218,7 +5333,7 @@ window.__ModuleLoader__.load({
 			});
 		}
 		/** Parent-confirmed setup or in-place profile update, plus an atomic textbook/course update. */
-		function ParentSettings({ data, change, t, curriculum = null, subject = "math", onSubject, draftScope }) {
+		function ParentSettings({ data, change, t, curriculum = null, subject = "math", onSubject, draftScope, observation }) {
 			const [progressError, setProgressError] = (0, react.useState)("");
 			const study = data.study;
 			const profile = study?.profile;
@@ -5228,6 +5343,7 @@ window.__ModuleLoader__.load({
 			return (0, react_jsx_runtime.jsxs)("section", { children: [
 				(0, react_jsx_runtime.jsx)("p", { children: t("parentHelp") }),
 				(0, react_jsx_runtime.jsxs)(SaveForm, {
+					observation,
 					draftScope,
 					entity: "profile",
 					currentValues: profile ?? {},
@@ -5246,7 +5362,7 @@ window.__ModuleLoader__.load({
 							schoolSystem: form.get("schoolSystem") === "six-three" ? "six-three" : "five-four",
 							parentConfirmation: t("profileConfirm")
 						}
-					}, revision, original),
+					}, revision, original).then((result) => savedSettingsForm(result, "profile", original)),
 					children: [
 						(0, react_jsx_runtime.jsx)(Field, {
 							name: "nickname",
@@ -5325,6 +5441,7 @@ window.__ModuleLoader__.load({
 						course.unit
 					] }, course.subject)),
 					(0, react_jsx_runtime.jsxs)(SaveForm, {
+						observation,
 						draftScope,
 						entity: `course:${subject}`,
 						currentValues: {
@@ -5385,7 +5502,7 @@ window.__ModuleLoader__.load({
 									pace: existing?.pace ?? "teaching",
 									parentConfirmation: t("confirmSchoolProgress")
 								} } : {}
-							}, revision, original);
+							}, revision, original).then((result) => savedSettingsForm(result, "course", original, courseSubject));
 						},
 						children: [(0, react_jsx_runtime.jsxs)("label", { children: [t("subject"), (0, react_jsx_runtime.jsx)("select", {
 							name: "subject",
@@ -5431,6 +5548,7 @@ window.__ModuleLoader__.load({
 							}, item))
 						}),
 						study.courses.some((course) => course.subject === subject) ? (0, react_jsx_runtime.jsxs)(SaveForm, {
+							observation,
 							draftScope,
 							entity: `progress:${subject}`,
 							currentValues: study.courses.find((course) => course.subject === subject)?.progress ?? {},
@@ -5455,7 +5573,7 @@ window.__ModuleLoader__.load({
 									preview: form.get("preview") === "on" ? "on" : "off",
 									pace: move === "review" ? "review" : "teaching",
 									parentConfirmation: t("confirmSchoolProgress")
-								}, revision, original);
+								}, revision, original).then((result) => savedSettingsForm(result, "progress", original, subject));
 							},
 							children: [
 								(0, react_jsx_runtime.jsxs)("label", { children: [t("schoolFrontier"), (0, react_jsx_runtime.jsx)("select", {
@@ -5520,7 +5638,8 @@ window.__ModuleLoader__.load({
 						revision: data.revision,
 						change,
 						t,
-						draftScope
+						draftScope,
+						observation
 					}),
 					(0, react_jsx_runtime.jsx)("h3", { children: t("openmaicTitle") }),
 					(0, react_jsx_runtime.jsx)("p", {
@@ -5533,6 +5652,7 @@ window.__ModuleLoader__.load({
 						data.interactiveLessons.baseUrl
 					] }),
 					(0, react_jsx_runtime.jsxs)(SaveForm, {
+						observation,
 						draftScope,
 						entity: "openmaic",
 						currentValues: { baseUrl: study.openmaic?.savedBaseUrl ?? "" },
@@ -5543,7 +5663,7 @@ window.__ModuleLoader__.load({
 							action: "openmaic-settings",
 							baseUrl: read(form, "baseUrl"),
 							parentConfirmation: t("openmaicConfirm")
-						}, revision, original),
+						}, revision, original).then((result) => savedSettingsForm(result, "openmaic", original)),
 						children: [(0, react_jsx_runtime.jsx)(Field, {
 							name: "baseUrl",
 							label: t("openmaicBase"),
@@ -5577,7 +5697,7 @@ window.__ModuleLoader__.load({
 			] });
 		}
 		/** Parent theme tags. The saved list is edited here; an empty profile shows the example tags from status. */
-		function InterestsForm({ tags, revision, change, t, draftScope }) {
+		function InterestsForm({ tags, revision, change, t, draftScope, observation }) {
 			const storage = useDraftStorage("interests-values", draftScope);
 			const [draft, setDraft] = (0, react.useState)(() => {
 				try {
@@ -5592,6 +5712,7 @@ window.__ModuleLoader__.load({
 				storage.write(JSON.stringify(next));
 			}
 			return (0, react_jsx_runtime.jsxs)(SaveForm, {
+				observation,
 				draftScope,
 				entity: "interests",
 				resetValues: () => {
@@ -5611,7 +5732,9 @@ window.__ModuleLoader__.load({
 						parentConfirmation: t("interestConfirm")
 					}, nextRevision, original);
 					storage.clear();
-					return result;
+					const saved = savedSettingsForm(result, "interests", original);
+					if ("baseline" in saved) setDraft(JSON.parse(saved.baseline));
+					return saved;
 				},
 				children: [
 					(0, react_jsx_runtime.jsx)("h3", { children: t("interestsTitle") }),
@@ -5889,18 +6012,61 @@ window.__ModuleLoader__.load({
 						role: "alert",
 						children: t("staleData")
 					}),
-					sheets.flatMap((sheet) => sheet.responses.map((response) => (0, react_jsx_runtime.jsx)(Correction, {
+					sheets.map((sheet) => (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsxs)(SaveForm, {
+						observation: resource.value?.versions.find((file) => file.path === `.study/worksheets/${sheet.id}.json`)?.version,
+						entity: `worksheet:${sheet.id}:date`,
+						draftScope,
+						t,
+						disabled: disabled || resource.status !== "live",
+						currentValues: { answerDay: sheet.answerDate?.kind === "day" ? sheet.answerDate.day : "" },
+						revision: 0,
+						baseline: JSON.stringify(sheet.answerDate ?? null),
+						submit: async (form, _revision, retained) => {
+							const original = JSON.parse(retained);
+							const day = String(form.get("answerDay") ?? "");
+							const result = await save({
+								kind: "worksheet-assessments",
+								worksheetId: sheet.id,
+								assessments: [],
+								answerDate: day ? {
+									kind: "day",
+									day,
+									parentConfirmation: t("gradeConfirmation")
+								} : { kind: "unknown" }
+							}, { answerDate: JSON.parse(original.baseline) });
+							if (result) {
+								const date = answerDateSchema.parse(result.current.answerDate);
+								return {
+									baseline: JSON.stringify(date),
+									currentValues: { answerDay: date.kind === "day" ? date.day : "" },
+									observation: result.versions.find((file) => file.path === `.study/worksheets/${sheet.id}.json`).version
+								};
+							}
+						},
+						children: [(0, react_jsx_runtime.jsxs)("label", { children: [
+							t("worksheetAnswerDay"),
+							" · ",
+							sheet.id,
+							(0, react_jsx_runtime.jsx)("input", {
+								name: "answerDay",
+								type: "date",
+								"aria-label": t("worksheetAnswerDay"),
+								defaultValue: sheet.answerDate?.kind === "day" ? sheet.answerDate.day : ""
+							})
+						] }), (0, react_jsx_runtime.jsx)("p", { children: t("worksheetAnswerDayHelp") })]
+					}), sheet.responses.map((response) => (0, react_jsx_runtime.jsx)(Correction, {
 						sheet,
 						response,
 						draftScope,
 						save,
 						t,
+						observation: resource.value?.versions.find((file) => file.path === `.study/worksheets/${sheet.id}.json`)?.version,
 						disabled: disabled || resource.status !== "live"
-					}, `${sheet.id}:${response.id}`)))
+					}, response.id))] }, sheet.id))
 				]
 			});
 		}
-		function Correction({ sheet, response, draftScope, save, t, disabled }) {
+		function Correction({ sheet, response, draftScope, save, t, disabled, observation }) {
 			const assessment = sheet.assessments.find((item) => item.responseId === response.id);
 			const question = sheet.items.find((item) => item.id === response.questionId);
 			const answerDate = response.answerDate ?? sheet.answerDate;
@@ -5921,6 +6087,7 @@ window.__ModuleLoader__.load({
 					draftScope,
 					t,
 					disabled,
+					observation,
 					currentValues: {
 						result: assessment?.result ?? "unassessed",
 						feedback: assessment?.feedback ?? question.explanation,
@@ -5996,12 +6163,37 @@ window.__ModuleLoader__.load({
 								...dateChanged ? { answerDate: before.answerDate ?? null } : {}
 							};
 						}
-						await save({
+						const result = await save({
 							kind: "worksheet-assessments",
 							worksheetId: sheet.id,
 							assessments,
 							...responseUpdates.length ? { responseUpdates } : {}
 						}, baseline);
+						if (result) {
+							const updated = result.current[`response:${response.id}`];
+							const nextResponse = responseSchema.parse({
+								...before,
+								...updated && typeof updated === "object" ? updated : {}
+							});
+							const savedAssessment = result.current[`assessment:${response.id}`];
+							const nextAssessment = savedAssessment ? assessmentSchema.parse(savedAssessment) : oldAssessment;
+							const date = nextResponse.answerDate ?? sheet.answerDate;
+							return {
+								baseline: JSON.stringify({
+									response: nextResponse,
+									assessment: nextAssessment ?? null
+								}),
+								currentValues: {
+									result: nextAssessment?.result ?? "unassessed",
+									feedback: nextAssessment?.feedback ?? question.explanation,
+									answerEvidence: nextAssessment?.answerEvidence ?? question.answerEvidence,
+									assistance: nextResponse.assistance,
+									answerDay: date?.kind === "day" ? date.day : "",
+									errorType: nextAssessment?.errorType ?? ""
+								},
+								observation: result.versions.find((file) => file.path === `.study/worksheets/${sheet.id}.json`).version
+							};
+						}
 					},
 					children: [
 						(0, react_jsx_runtime.jsxs)("label", { children: [t("draftChoice"), (0, react_jsx_runtime.jsx)("select", {
@@ -10347,7 +10539,7 @@ window.__ModuleLoader__.load({
 				if (result.value.status === "conflict") throw new Error(`${t("manualConflict")} · ${t("currentValues")}: ${JSON.stringify(result.value.current)}`);
 				if (result.value.status === "old-term") throw new Error(t("manualOldTerm"));
 				if (result.value.status !== "saved" && result.value.status !== "unchanged") throw new Error(result.value.reason ?? t("manualInvalid"));
-				return data;
+				return Object.assign({}, data, { manual: result.value });
 			}
 			async function saveWorksheet(intent, baseline) {
 				if (!workspace.termId || workspace.stale) throw new Error(t("manualInvalid"));
@@ -10365,6 +10557,7 @@ window.__ModuleLoader__.load({
 				if (result.value.status === "conflict") throw new Error(`${t("manualConflict")} · ${t("currentValues")}: ${JSON.stringify(result.value.current)}`);
 				if (result.value.status === "old-term") throw new Error(t("manualOldTerm"));
 				if (result.value.status !== "saved" && result.value.status !== "unchanged") throw new Error(result.value.reason ?? t("manualInvalid"));
+				return result.value;
 			}
 			async function act(command, _withTutor = false, prompt = continuePrompt) {
 				try {
@@ -10548,6 +10741,15 @@ window.__ModuleLoader__.load({
 			].includes(key) ? t("intentAdmitted") : t(key);
 			const parentSettings = view === "parent" && parentTab === "parent";
 			const draftScope = `student:draft:${sessionId}:${workspace.termId ?? "setup"}`;
+			const context = workspace.context;
+			const pendingFacts = context && typeof context === "object" && "pendingFacts" in context && Array.isArray(context.pendingFacts) ? context.pendingFacts : [];
+			const pendingLabels = {
+				answerDate: "answerDateUnknown",
+				assistance: "assistanceUnknown",
+				source: "answerSourceUnknown",
+				answerBasis: "answerBasisUnknown",
+				objectiveId: "answerGoalUnknown"
+			};
 			return (0, react_jsx_runtime.jsxs)("main", {
 				className: "student-desk",
 				"aria-label": t("title"),
@@ -10634,6 +10836,18 @@ window.__ModuleLoader__.load({
 					sendError && (0, react_jsx_runtime.jsx)("p", {
 						role: "alert",
 						children: sendError
+					}),
+					study && pendingFacts.length > 0 && (0, react_jsx_runtime.jsxs)("section", {
+						"aria-label": t("pendingFacts"),
+						children: [(0, react_jsx_runtime.jsx)("h3", { children: t("pendingFacts") }), pendingFacts.map((item) => {
+							if (!item || typeof item !== "object" || !("responseId" in item) || typeof item.responseId !== "string" || !("fields" in item) || !Array.isArray(item.fields)) return null;
+							const labels = item.fields.flatMap((field) => typeof field === "string" && field in pendingLabels ? [t(pendingLabels[field])] : []);
+							return (0, react_jsx_runtime.jsxs)("p", { children: [
+								item.responseId,
+								" · ",
+								labels.join(" · ")
+							] }, JSON.stringify([item.ownerId, item.responseId]));
+						})]
 					}),
 					submissions.length > 0 && (0, react_jsx_runtime.jsxs)("details", {
 						className: "student-fold",
@@ -10863,6 +11077,7 @@ window.__ModuleLoader__.load({
 								(0, react_jsx_runtime.jsx)("p", { children: t("manualSummary") }),
 								(0, react_jsx_runtime.jsx)(ParentSettings, {
 									draftScope,
+									observation: workspace.value?.versions.find((file) => file.path === ".study/settings.json")?.version,
 									data,
 									change: manual,
 									t,

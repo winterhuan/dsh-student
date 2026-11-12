@@ -7,7 +7,7 @@ import TypertRegistry from '@deepseek-ai/dsh-typert-registry'
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { expect, it, onTestFinished } from 'vitest'
+import { expect, it, onTestFinished, vi } from 'vitest'
 import StudentRemote from '../src/remote-service.ts'
 import { NOW, setup } from './fixtures.ts'
 import type { ManualSaveRequest } from '../src/files/manual.ts'
@@ -17,11 +17,11 @@ import { readWorkspace } from '../src/files/read.ts'
 import { retainObservedBackups, readBackups } from '../src/files/recovery.ts'
 import { StudyBackupRetention } from '../src/files/backup-retention.ts'
 import { resolveNativeSources } from '../src/native-source.ts'
-import { blockSchema } from '../src/files/schema.ts'
+import { blockSchema, collectionsSchema } from '../src/files/schema.ts'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import type { SessionRequestId } from '@deepseek-ai/dsh-api-session-controller'
 
-async function fixture(maxWireBytes = 1_048_576) {
+async function fixture(maxWireBytes = 1_048_576, child = false) {
   const cwd = await mkdtemp(join(tmpdir(), 'student-transport-'))
   onTestFinished(() => rm(cwd, { recursive: true, force: true }))
   const ctx = new Context()
@@ -33,14 +33,48 @@ async function fixture(maxWireBytes = 1_048_576) {
   await mkdir(join(cwd, '.study'))
   await writeFile(join(cwd, '.study/settings.json'), JSON.stringify({ format: 2, kind: 'term-settings', termId: 'term-1', revision: 1, updatedAt: NOW, profile: setup.profile, materials: [], courses: [] }))
   const id = SessionId('student-main')
-  const session = ctx.sessions.create(id, { meta: { cwd } })
+  const session = ctx.sessions.create(id, { meta: { cwd, ...(child ? { origin: 'subagent' as const } : {}) } })
   // This registered lookup is the external native Agent seat; no model is driven by this fixture.
   const agent = { session, ctx: { root: ctx.root, get: (name: string) => name === 'sandboxPolicy' ? { resolve: () => undefined } : ctx.get(name) } } as Agent
-  ctx.provide('agents', { get: (wire: SessionId) => wire === id ? agent : undefined } as Context['agents'])
-  ctx.typert.lookups.register('agent', { parameter: 'agent', wire: 'agentId', resource: 'session', hostTypeSymbol: '@deepseek-ai/dsh-agent#Agent', wireTypeSymbol: '@deepseek-ai/dsh-session#SessionId', resolve: wire => wire === id ? agent : undefined })
+  const get = vi.fn((wire: SessionId) => wire === id ? agent : undefined)
+  const resolve = vi.fn((wire: SessionId) => wire === id ? agent : undefined)
+  ctx.provide('agents', { get } as Context['agents'])
+  ctx.typert.lookups.register('agent', { parameter: 'agent', wire: 'agentId', resource: 'session', hostTypeSymbol: '@deepseek-ai/dsh-agent#Agent', wireTypeSymbol: '@deepseek-ai/dsh-session#SessionId', resolve })
   await ctx.plugin(StudentRemote, { refreshIntervalMs: 3000, maxWireBytes })
-  return { cwd, ctx, id, agent, signal: new AbortController().signal }
+  return { cwd, ctx, id, agent, get, resolve, signal: new AbortController().signal }
 }
+
+it('rejects absent and child Agents without invoking the cold activation lookup', async () => {
+  const { ctx, id, get, resolve, signal } = await fixture(1_048_576, true)
+  for (const target of [SessionId('absent'), id]) await expect(ctx.student.query(target, { kind: 'dashboard' }, signal)).rejects.toMatchObject({ code: 'student/main-session-required' })
+  expect(get.mock.calls.map(([target]) => target)).toEqual(['absent', id])
+  expect(resolve).not.toHaveBeenCalled()
+})
+
+it('reads paged and filtered notebooks and browsed maps through the resource Remote query', async () => {
+  const { ctx, id, cwd, signal } = await fixture()
+  const mistakes = Array.from({ length: 21 }, (_, index) => ({ id: `error-${index}`, subject: 'math', topic: 'Subtraction', prompt: '18 - 7?', learnerAnswer: '10', correction: '11', explanation: 'Subtract seven', answerEvidence: '11 + 7 = 18', uncertainties: '', objectiveId: 'm2a-o-sub', confirmedAt: NOW, userConfirmation: 'Parent checked' }))
+  await writeFile(join(cwd, '.study/collections.json'), JSON.stringify(collectionsSchema.parse({ format: 2, kind: 'collections', termId: 'term-1', mistakes, rewards: [], teachingQueue: [] })))
+  const page = await ctx.student.query(id, { kind: 'dashboard', options: { mistakeOffset: 20, subject: 'math', tab: 'mistakes' } }, signal)
+  expect(page).toMatchObject({ status: 'valid', data: { study: { confirmedCount: 21, confirmedOffset: 20, confirmedMistakes: [{ id: 'error-0' }] } } })
+  expect(await ctx.student.query(id, { kind: 'dashboard', options: { subject: 'math', mistakeStatus: 'mastered' } }, signal)).toMatchObject({ data: { study: { confirmedCount: 0 } } })
+  expect(await ctx.student.query(id, { kind: 'dashboard', options: { subject: 'math', mapGrade: 1, mapTerm: 'second', tab: 'map' } }, signal)).toMatchObject({ data: { study: { curriculum: { id: 'math-grade1-second', lite: false, scope: { current: false } } } } })
+  expect(await ctx.student.query(id, { kind: 'dashboard', options: { subject: 'math', tab: 'today' } }, signal)).toMatchObject({ data: { study: { curriculum: { lite: true, concepts: [] } } } })
+})
+
+it('refreshes due counts through Remote when the Shanghai day changes without file edits', async () => {
+  const { ctx, id, cwd, signal } = await fixture()
+  const mistake = { id: 'error-one', subject: 'math', topic: 'Subtraction', prompt: '18 - 7?', learnerAnswer: '10', correction: '11', explanation: 'Subtract seven', answerEvidence: '11 + 7 = 18', uncertainties: '', objectiveId: 'm2a-o-sub', confirmedAt: NOW, userConfirmation: 'Parent checked' }
+  await writeFile(join(cwd, '.study/collections.json'), JSON.stringify(collectionsSchema.parse({ format: 2, kind: 'collections', termId: 'term-1', mistakes: [mistake], rewards: [], teachingQueue: [] })))
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(NOW)
+  onTestFinished(() => clock.mockRestore())
+  const first = await ctx.student.query(id, { kind: 'dashboard', options: { subject: 'math', tab: 'today' } }, signal)
+  expect(first).toMatchObject({ data: { study: { dueCount: 0 } } })
+  clock.mockReturnValue(NOW + 86_400_000)
+  const due = await ctx.student.query(id, { kind: 'dashboard', options: { subject: 'math', tab: 'today' } }, signal)
+  expect(due).toMatchObject({ data: { study: { dueCount: 1 } } })
+  expect(due.versions).toEqual(first.versions)
+})
 it('reads validated settings through the registered main Session identity with explicit file versions', async () => {
   const { ctx, id, signal } = await fixture()
   const result = await ctx.student.query(id, { kind: 'settings' }, signal)

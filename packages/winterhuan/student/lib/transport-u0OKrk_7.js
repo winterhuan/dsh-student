@@ -1,5 +1,5 @@
-import { y as applicationStudyFiles } from "./queries-CLXWsuKo.js";
-import { P as canonical, d as backupVersions, g as retainObservedBackups, h as readBackups, v as readWorkspace } from "./openmaic-r1L3C9Ms.js";
+import { y as applicationStudyFiles } from "./queries-BM6TEYxy.js";
+import { P as canonical, d as backupVersions, g as retainObservedBackups, h as readBackups, v as readWorkspace } from "./openmaic-DQGP2eA0.js";
 import { createHash } from "node:crypto";
 import { KNOWN_SESSION_EVENT_TYPES } from "@deepseek-ai/dsh-session";
 //#region lib/types/native-source.js

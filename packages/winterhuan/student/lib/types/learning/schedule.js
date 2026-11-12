@@ -25,7 +25,7 @@ export function replayMistake(mistake, index, now, windowStart) {
     let consolidatedDay;
     const registerOpportunity = (at) => { if (windowStart !== undefined && dueAt <= at && dueAt <= now && Math.max(dueAt, windowStart) <= at)
         opportunity = true; };
-    const rows = evidenceAtCutoff(index, now).filter(item => item.mistakeId === mistake.id && demonstrablyAfter(item, mistake.confirmedAt));
+    const rows = evidenceAtCutoff(index, now).filter(item => item.mistakeId === mistake.id && item.subject === mistake.subject && item.objectiveId === mistake.objectiveId && demonstrablyAfter(item, mistake.confirmedAt));
     const groups = new Map();
     for (const row of rows) {
         const day = evidenceDay(row);

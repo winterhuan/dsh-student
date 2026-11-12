@@ -116,7 +116,6 @@ export const backupSchema = z.object({ format: z.literal(1), kind: z.literal('ob
   observedAt: z.number().int().nonnegative(), sha256: z.string().regex(/^[a-f0-9]{64}$/u), bytesBase64: z.string().max(11_184_812) }).strict()
 /** Stored backup bytes and source observation. */
 export type ObservedBackup = z.infer<typeof backupSchema>
-const backupCache = new Map<string, { version: string; backup: ObservedBackup }>()
 /**
  * Inspect existing backup candidates without restoring or deleting original invalid files.
  * @param fs - read-capable workspace adapter.
@@ -124,6 +123,7 @@ const backupCache = new Map<string, { version: string; backup: ObservedBackup }>
  * @returns byte-verified backup records and bounded per-file failures.
  */
 export async function readBackups(fs: StudyFiles, signal: AbortSignal): Promise<{ backups: { path: string; backup: ObservedBackup }[]; issues: FileIssue[] }> {
+  const backupCache = fs.cache?.backups ?? new Map<string, { version: string; backup: ObservedBackup }>()
   const backups: { path: string; backup: ObservedBackup }[] = []
   const issues: FileIssue[] = []
   const entries = await fs.list('.study/backups', signal)

@@ -1,5 +1,6 @@
-import { a as projectWorkspace, c as sheetOpen, d as attachEvidence, g as evidenceOf, l as dayStart, o as itemObjectiveId, s as objectiveOf, u as scheduleMistakes } from "./queries-BZMV7lLe.js";
-import { B as sameSavedAnswer, F as choiceMismatch, G as spent, I as foldText, K as studyDay, M as DAY, N as activeSession, P as canonical, R as matchChoice, U as scopeSelects, V as sameScope, W as showValue, Z as builtinObjectiveIn, at as commandSchema, ct as stateSchema, d as backupVersions, et as curriculumFor, g as retainObservedBackups, h as readBackups, lt as errorTypesBySubject, ot as customObjectiveMethods, s as normalizeOpenmaicBase, ut as DEFAULT_INTEREST_TAGS, v as readWorkspace, y as validateStudyFiles, z as requireValue } from "./openmaic-N9F1Z3na.js";
+import { c as itemObjectiveId, d as dayStart, f as scheduleMistakes, l as objectiveOf, p as attachEvidence, s as projectWorkspace, u as sheetOpen, v as evidenceOf } from "./queries-DiF4-X5v.js";
+import { B as sameSavedAnswer, F as choiceMismatch, G as spent, I as foldText, K as studyDay, M as DAY, N as activeSession, P as canonical, R as matchChoice, U as scopeSelects, V as sameScope, W as showValue, Z as builtinObjectiveIn, at as commandSchema, ct as stateSchema, d as backupVersions, et as curriculumFor, g as retainObservedBackups, h as readBackups, lt as errorTypesBySubject, ot as customObjectiveMethods, s as normalizeOpenmaicBase, ut as DEFAULT_INTEREST_TAGS, v as readWorkspace, y as validateStudyFiles, z as requireValue } from "./openmaic-LJGZi6qr.js";
+import { z } from "zod";
 //#region lib/types/learning/update/context.js
 function alignRecord(task, attempt) {
 	if (task.response === void 0) throw new Error(`请先用 answer 保存原始回答，再记录反馈。当前题目 id：${task.id}。`);
@@ -1122,6 +1123,7 @@ function updateStudy(previous, input, now) {
 }
 //#endregion
 //#region lib/types/files/manual.js
+/** Typed application-owned manual saves share official validation and current-version CAS. */
 /**
 * Capture exactly the fields a typed manual intent edits.
 * @param read - current valid relevant owner.
@@ -1129,6 +1131,9 @@ function updateStudy(previous, input, now) {
 * @returns edited field values suitable for the draft baseline and conflict display.
 */
 function manualFields(read, intent) {
+	return z.record(z.string(), z.json()).parse(JSON.parse(JSON.stringify(editedFields(read, intent))));
+}
+function editedFields(read, intent) {
 	const workspace = read.workspace;
 	if (!workspace) return {};
 	if (intent.kind === "worksheet-assessments") {
@@ -1254,7 +1259,10 @@ async function saveManual(fs, request, now, signal) {
 				response.assistance = update.assistance;
 				response.assistanceConfirmation = update.userConfirmation;
 			}
-			if (update.answerDate) response.answerDate = update.answerDate;
+			if (update.answerDate) {
+				response.answerDate = update.answerDate;
+				response.answerDateConfirmation = update.userConfirmation;
+			}
 		}
 		for (const assessment of request.intent.assessments) {
 			const existing = next.assessments.findIndex((item) => item.responseId === assessment.responseId);

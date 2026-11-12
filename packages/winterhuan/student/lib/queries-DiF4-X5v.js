@@ -1,4 +1,5 @@
-import { $ as builtinObjectivesIn, H as schoolGate, J as todaySpent, K as studyDay, L as formatDuration, M as DAY, N as activeSession, P as canonical, Q as builtinObjectives, U as scopeSelects, X as builtinObjectiveAnywhere, Y as builtinObjective, ct as stateSchema, dt as interestFocus, et as curriculumFor, ft as interestTagsOf, i as interactiveLessonsView, n as OPENMAIC_LESSONS_PATH, nt as subjectExercises, q as taughtUnit, r as effectiveOpenmaicBase, rt as subjectIdeas, t as OPENMAIC_COOKIE_PATH, tt as exercisesForObjective } from "./openmaic-N9F1Z3na.js";
+import { $ as builtinObjectivesIn, H as schoolGate, J as todaySpent, K as studyDay, L as formatDuration, M as DAY, N as activeSession, P as canonical, Q as builtinObjectives, U as scopeSelects, X as builtinObjectiveAnywhere, Y as builtinObjective, ct as stateSchema, dt as interestFocus, et as curriculumFor, ft as interestTagsOf, i as interactiveLessonsView, mt as StudyReadCacheOwner, n as OPENMAIC_LESSONS_PATH, nt as subjectExercises, pt as StudyReadCache, q as taughtUnit, r as effectiveOpenmaicBase, rt as subjectIdeas, t as OPENMAIC_COOKIE_PATH, tt as exercisesForObjective } from "./openmaic-LJGZi6qr.js";
+import { z } from "zod";
 import { Service } from "@deepseek-ai/cordis";
 //#region lib/types/files/backup-retention.js
 /** Host-lifetime serialization keeps independently observed backup versions within shared bounds. */
@@ -51,6 +52,7 @@ function applicationStudyFiles(exec) {
 	const fs = availableFs;
 	const cwd = agent.session.header.cwd;
 	const retention = agent.ctx.root.get("studentBackups") ?? new StudyBackupRetention(agent.ctx.root);
+	const cache = agent.ctx.root.get("studentReadCache") ?? new StudyReadCacheOwner(agent.ctx.root);
 	async function target(path, signal) {
 		const root = await fs.resolve(cwd, { signal });
 		const resolved = await fs.resolve(path, {
@@ -61,6 +63,7 @@ function applicationStudyFiles(exec) {
 		return resolved;
 	}
 	return {
+		cache: cache.cache,
 		backupRetention: retention,
 		async stat(path, signal) {
 			const resolved = await target(path, signal);
@@ -91,11 +94,11 @@ function applicationStudyFiles(exec) {
 }
 //#endregion
 //#region lib/types/learning/evidence.js
-const indexes = /* @__PURE__ */ new WeakMap();
+const EVIDENCE = Symbol("studentEvidence");
 /**
 * Derive effective facts once from validated block and worksheet owners.
 * @param workspace - current validated entity files.
-* @returns one fact per saved response, including unassessed and unknown facts.
+* @returns one fact per saved response, including unassessed facts and unknown dates, help or unverified native sources; confirmed paper days retain day precision.
 */
 function deriveEvidence(workspace) {
 	const entries = [];
@@ -125,6 +128,7 @@ function deriveEvidence(workspace) {
 				result: question.basisStatus ? "unassessed" : assessment?.result ?? "unassessed",
 				assistance: response.assistance,
 				source: response.source,
+				sourceStatus: source.kind === "unknown" || source.kind === "native" && (!matchedNative || source.receiptAt !== void 0 && source.receiptAt !== matchedNative.receiptAt) ? "unknown" : "known",
 				answerDate,
 				...assessment ? { assessedAt: assessment.assessedAt } : {}
 			});
@@ -149,7 +153,10 @@ function deriveEvidence(workspace) {
 * @returns the same display state.
 */
 function attachEvidence(state, index) {
-	indexes.set(state, index);
+	Object.defineProperty(state, EVIDENCE, {
+		value: index,
+		configurable: true
+	});
 	return state;
 }
 /**
@@ -158,7 +165,7 @@ function attachEvidence(state, index) {
 * @returns normalized facts for every domain projection.
 */
 function evidenceOf(state) {
-	const attached = indexes.get(state);
+	const attached = state[EVIDENCE];
 	if (attached) return attached;
 	const entries = state.attempts.map((item) => ({
 		termId: "legacy",
@@ -172,6 +179,7 @@ function evidenceOf(state) {
 		result: item.result,
 		assistance: "unknown",
 		answerDate: { kind: "unknown" },
+		sourceStatus: "known",
 		source: {
 			kind: "legacy",
 			sourcePath: ".study/state.json",
@@ -197,6 +205,7 @@ function evidenceOf(state) {
 			result: item.result,
 			assistance: "unknown",
 			answerDate: { kind: "unknown" },
+			sourceStatus: "known",
 			source: {
 				kind: "legacy",
 				sourcePath: ".study/state.json",
@@ -283,7 +292,7 @@ function replayMistake(mistake, index, now, windowStart) {
 	const registerOpportunity = (at) => {
 		if (windowStart !== void 0 && dueAt <= at && dueAt <= now && Math.max(dueAt, windowStart) <= at) opportunity = true;
 	};
-	const rows = evidenceAtCutoff(index, now).filter((item) => item.mistakeId === mistake.id && demonstrablyAfter(item, mistake.confirmedAt));
+	const rows = evidenceAtCutoff(index, now).filter((item) => item.mistakeId === mistake.id && item.subject === mistake.subject && item.objectiveId === mistake.objectiveId && demonstrablyAfter(item, mistake.confirmedAt));
 	const groups = /* @__PURE__ */ new Map();
 	for (const row of rows) {
 		const day = evidenceDay(row);
@@ -1357,7 +1366,8 @@ function weeklySummary(state, now, insight) {
 			stuckSignals: index.stuckSignals.filter((signal) => signal.at <= beforeAt)
 		});
 		scheduleMistakes(before, beforeAt);
-		for (const goal of studyInsight(before, beforeAt).objectives) if (ever.has(goal.id) && (goal.level === "due" || goal.level === "weak")) troubled.add(goal.id);
+		for (const goal of studyInsight(before, beforeAt).objectives) if (goal.level === "mastered") ever.add(goal.id);
+		else if (ever.has(goal.id) && (goal.level === "due" || goal.level === "weak")) troubled.add(goal.id);
 		const historical = structuredClone(state);
 		historical.mistakes = historical.mistakes.filter((item) => item.confirmedAt === void 0 || item.confirmedAt <= at);
 		historical.teachingQueue = historical.teachingQueue.filter((item) => item.confirmedAt <= at);
@@ -1733,7 +1743,53 @@ function projectWorkspace(workspace, now) {
 }
 //#endregion
 //#region lib/types/learning/queries.js
-const workspaceQueryCache = /* @__PURE__ */ new Map();
+function workspaceProjection(read, now) {
+	const workspaceQueryCache = (read.cache ??= new StudyReadCache()).queries;
+	const workspace = read.workspace;
+	const identity = read.files.find((file) => file.path === ".study/settings.json").targetKey;
+	const signature = JSON.stringify([read.files.map(({ path, targetKey, version }) => ({
+		path,
+		targetKey,
+		version
+	})), workspace.nativeSources ?? []]);
+	let cached = workspaceQueryCache.get(identity);
+	if (!cached || cached.signature !== signature || now >= cached.refreshAfter || now < cached.at) {
+		const state = projectWorkspace(workspace, now);
+		cached = {
+			signature,
+			state,
+			at: now,
+			refreshAfter: nextRefreshAfter(state, now),
+			queries: /* @__PURE__ */ new Map()
+		};
+		if (workspaceQueryCache.size >= 8) workspaceQueryCache.clear();
+		workspaceQueryCache.set(identity, cached);
+	}
+	return cached;
+}
+/**
+* Read a dashboard using the same version- and time-bound projection as other workspace queries.
+* @param read - independently validated current files.
+* @param now - caller clock.
+* @param options - selected dashboard page and scope.
+* @param lessons - separately read classroom status.
+* @returns current data only for a fully valid workspace; failures retain their file issues.
+*/
+function queryWorkspaceDashboard(read, now, options = {}, lessons) {
+	const facts = {
+		status: read.status,
+		versions: read.files.map(({ path, targetKey, version }) => ({
+			path,
+			targetKey,
+			version
+		})),
+		issues: read.issues
+	};
+	return read.status === "valid" && read.workspace ? {
+		...facts,
+		data: queryDashboard(workspaceProjection(read, now).state, now, options, lessons)
+	} : facts;
+}
 function queryWorkspace(read, request, now) {
 	const versions = read.files.map(({ path, targetKey, version }) => ({
 		path,
@@ -1764,21 +1820,7 @@ function queryWorkspace(read, request, now) {
 		versions,
 		data: workspace.settings
 	};
-	const identity = read.files.find((file) => file.path === ".study/settings.json").targetKey;
-	const signature = JSON.stringify([versions, workspace.nativeSources ?? []]);
-	let cached = workspaceQueryCache.get(identity);
-	if (!cached || cached.signature !== signature || now >= cached.refreshAfter || now < cached.at) {
-		const state = projectWorkspace(workspace, now);
-		cached = {
-			signature,
-			state,
-			at: now,
-			refreshAfter: nextRefreshAfter(state, now),
-			queries: /* @__PURE__ */ new Map()
-		};
-		if (workspaceQueryCache.size >= 8) workspaceQueryCache.clear();
-		workspaceQueryCache.set(identity, cached);
-	}
+	const cached = workspaceProjection(read, now);
 	const { state, refreshAfter } = cached;
 	const index = evidenceOf(state);
 	if (request.kind === "learning-context") {
@@ -1832,12 +1874,13 @@ function queryWorkspace(read, request, now) {
 					source: currentQuestion?.source,
 					facts: elements?.facts ?? []
 				} : null,
-				pendingFacts: index.entries.filter((item) => item.answerDate.kind === "unknown" || item.assistance === "unknown" || !item.objectiveId).map((item) => ({
+				pendingFacts: index.entries.filter((item) => item.answerDate.kind === "unknown" || item.assistance === "unknown" || item.sourceStatus === "unknown" || !item.objectiveId).map((item) => ({
 					ownerId: item.ownerId,
 					responseId: item.responseId,
 					fields: [
 						...item.answerDate.kind === "unknown" ? ["answerDate"] : [],
 						...item.assistance === "unknown" ? ["assistance"] : [],
+						...item.sourceStatus === "unknown" ? ["source"] : [],
 						...item.basisStatus ? ["answerBasis"] : !item.objectiveId ? ["objectiveId"] : []
 					]
 				})).slice(0, 20),
@@ -2140,7 +2183,7 @@ function nextRefreshAfter(state, now) {
 	for (const block of state.sessions) if (block.mode === "diagnose") thresholds.push(block.startedAt + 12096e5);
 	return Math.min(...thresholds.filter((at) => at > now));
 }
-const dashboardCache = /* @__PURE__ */ new WeakMap();
+const DASHBOARD_CACHE = Symbol("studentDashboardCache");
 /**
 * Reuse expensive map/mastery projections until an actual file version or time threshold changes.
 * @param state - version-cached current state, or undefined before setup.
@@ -2155,7 +2198,8 @@ function queryDashboard(state, now, options = {}, lessons) {
 		refreshAfter: Date.parse(`${studyDay(now)}T00:00:00+08:00`) + 864e5
 	};
 	const key = canonical(options);
-	const entries = dashboardCache.get(state) ?? /* @__PURE__ */ new Map();
+	const owner = state;
+	const entries = owner[DASHBOARD_CACHE] ?? /* @__PURE__ */ new Map();
 	let cached = entries.get(key);
 	if (!cached || now >= cached.refreshAfter || now < cached.value.serverNow) {
 		cached = {
@@ -2164,7 +2208,10 @@ function queryDashboard(state, now, options = {}, lessons) {
 		};
 		if (entries.size >= 8) entries.clear();
 		entries.set(key, cached);
-		dashboardCache.set(state, entries);
+		Object.defineProperty(owner, DASHBOARD_CACHE, {
+			value: entries,
+			configurable: true
+		});
 	}
 	const value = cached.value;
 	return {
@@ -2183,5 +2230,13 @@ function queryDashboard(state, now, options = {}, lessons) {
 		} : null
 	};
 }
+/**
+* Serialize a shared query projection for both CLI and typed Remote consumers.
+* @param result - shared query facts and projection.
+* @returns JSON-compatible data without absent optional fields.
+*/
+function queryJsonData(result) {
+	return result.data === void 0 ? null : z.json().parse(JSON.parse(JSON.stringify(result.data)));
+}
 //#endregion
-export { applicationStudyFiles as _, projectWorkspace as a, sheetOpen as c, attachEvidence as d, demonstrablyAfter as f, evidenceOf as g, evidenceDay as h, queryWorkspace as i, dayStart as l, evidenceAtCutoff as m, queryDashboard as n, itemObjectiveId as o, deriveEvidence as p, queryStudy as r, objectiveOf as s, nextRefreshAfter as t, scheduleMistakes as u, StudyBackupRetention as v };
+export { evidenceDay as _, queryWorkspace as a, StudyBackupRetention as b, itemObjectiveId as c, dayStart as d, scheduleMistakes as f, evidenceAtCutoff as g, deriveEvidence as h, queryStudy as i, objectiveOf as l, demonstrablyAfter as m, queryDashboard as n, queryWorkspaceDashboard as o, attachEvidence as p, queryJsonData as r, projectWorkspace as s, nextRefreshAfter as t, sheetOpen as u, evidenceOf as v, applicationStudyFiles as y };

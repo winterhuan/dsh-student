@@ -17,17 +17,19 @@ export async function apply(context) {
         id: '@winterhuan/dsh-student', kind: 'student', title: () => t('title'),
         guide: [{ id: 'student', order: 24, title: () => t('title'), description: () => t('description'), icon: IconPlayOutlineRegular }],
     }), 'student: sidebar');
-    function Sidebar({ sessionId, useTabInfo, useSession, useSessions, t }) {
-        const preset = useSessions(state => state.byId[sessionId]?.projectionValues?.agentPreset);
-        const { tab } = useTabInfo();
-        useEffect(() => { if (typeof preset === 'string' && preset !== 'student')
-            tab.actions.close(); }, [preset, tab.actions]);
-        const running = useSession(snapshot => snapshot.running);
-        const ask = useMemo(() => tutorBridge(context, sessionId, t('sessionError'), t('sendError')), [sessionId, t]);
-        if (preset !== 'student')
-            return null;
-        return _jsx(StudyDesk, { sessionId: sessionId, visible: tab.visible, running: !!running, ask: ask, t: t }, sessionId);
-    }
-    context.slots.inject('sidebar.right.pane.tab', () => context.slots.register({ name: 'sidebar.right.pane.tab', key: '@winterhuan/dsh-student', locale: NS }, Sidebar));
+    context.inject(['remote.student'], scope => {
+        function Sidebar({ sessionId, useTabInfo, useSession, useSessions, useResource, t }) {
+            const preset = useSessions(state => state.byId[sessionId]?.projectionValues?.agentPreset);
+            const { tab } = useTabInfo();
+            useEffect(() => { if (typeof preset === 'string' && preset !== 'student')
+                tab.actions.close(); }, [preset, tab.actions]);
+            const running = useSession(snapshot => snapshot.running);
+            const ask = useMemo(() => tutorBridge(context, sessionId, t('sessionError'), t('sendError')), [sessionId, t]);
+            if (preset !== 'student')
+                return null;
+            return _jsx(StudyDesk, { sessionId: sessionId, visible: tab.visible, running: !!running, ask: ask, t: t, useResource: useResource, remote: scope.remote.student }, sessionId);
+        }
+        scope.slots.inject('sidebar.right.pane.tab', () => context.slots.register({ name: 'sidebar.right.pane.tab', key: '@winterhuan/dsh-student', locale: NS }, Sidebar));
+    });
 }
 //# sourceMappingURL=sidebar.js.map

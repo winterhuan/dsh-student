@@ -8,8 +8,6 @@ import { scheduleMistakes } from "./learning/schedule.js";
 const MAX_BYTES = 8_388_608;
 import { migrateStudyFile } from "./files/legacy.js";
 export { migrateStudyFile } from "./files/legacy.js";
-const stateCache = new Map();
-const entityCache = new Map();
 /**
  * Read validated v2 files or preserved legacy v1 bytes in the calling Session's filesystem.
  * Reads preserve absence and legacy bytes; current valid v2 observations can retain bounded backups.
@@ -28,6 +26,8 @@ export async function studyStore(exec) {
         throw new Error('学生插件需要 DSH 文件系统和沙箱策略服务。');
     const cwd = agent.session.header.cwd;
     const files = applicationStudyFiles(exec);
+    const stateCache = files.cache.legacy;
+    const entityCache = files.cache.entities;
     if (await files.stat('.study/settings.json', exec.signal)) {
         const backups = await readBackups(files, exec.signal);
         const read = await readWorkspace(files, exec.signal, backupVersions(backups.backups));

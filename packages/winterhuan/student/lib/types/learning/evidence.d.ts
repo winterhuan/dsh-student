@@ -19,6 +19,7 @@ export interface EffectiveEvidence {
     answerDate: AnswerDate;
     basisStatus?: 'legacy-pending';
     source: LearnerResponse['source'];
+    sourceStatus: 'known' | 'unknown';
     assessedAt?: number;
 }
 /** Shared normalized response facts and separately preserved current help signals. */
@@ -32,7 +33,7 @@ export interface EvidenceIndex {
 /**
  * Derive effective facts once from validated block and worksheet owners.
  * @param workspace - current validated entity files.
- * @returns one fact per saved response, including unassessed and unknown facts.
+ * @returns one fact per saved response, including unassessed facts and unknown dates, help or unverified native sources; confirmed paper days retain day precision.
  */
 export declare function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex;
 /**

@@ -1,7 +1,7 @@
 import type { CheckInIntensity } from '../learning/mastery.ts';
 import type { Translate } from './locales.ts';
 /** Natural-language tutor requests. The study skill owns the teaching rules. */
-export declare const continuePrompt = "\u8BF7\u52A0\u8F7D study \u6280\u80FD\uFF0C\u67E5\u8BE2 study_status\uFF0C\u7EE7\u7EED\u5F53\u524D\u5B66\u4E60\u6BB5\u3002\u5148\u5904\u7406\u672A\u53CD\u9988\u7684\u7B54\u6848\u6216\u63D0\u793A\uFF0C\u518D\u51FA\u4E0B\u4E00\u9898\u3002\u4E00\u6B21\u4E00\u9898\u3002\u6CA1\u6709\u65F6\u957F\u9650\u5236\uFF0C\u5B69\u5B50\u60F3\u7EE7\u7EED\u5C31\u7EE7\u7EED\uFF1B\u60F3\u4F11\u606F\u5C31 stop\u3002";
+export declare const continuePrompt = "\u8BF7\u52A0\u8F7D study \u6280\u80FD\uFF0C\u67E5\u8BE2 study_status\uFF0C\u7EE7\u7EED\u5F53\u524D\u5B66\u4E60\u6BB5\u3002\u5148\u5904\u7406\u672A\u53CD\u9988\u7684\u7B54\u6848\u6216\u63D0\u793A\uFF0C\u4FDD\u7559\u5F53\u524D\u9898\u76EE\uFF1B\u53EA\u6709\u660E\u786E\u8981\u6C42\u4E0B\u4E00\u9898\u65F6\u624D\u6362\u9898\u3002\u4E00\u6B21\u4E00\u9898\u3002\u6CA1\u6709\u65F6\u957F\u9650\u5236\uFF0C\u5B69\u5B50\u60F3\u7EE7\u7EED\u5C31\u7EE7\u7EED\uFF1B\u60F3\u4F11\u606F\u5C31 stop\u3002";
 /** Ask the child to teach the idea back like a little teacher (Feynman). */
 export declare function feynmanPrompt(topic: string | undefined): string;
 export declare const reviewPrompt = "\u8BF7\u52A0\u8F7D study \u6280\u80FD\uFF0C\u67E5\u8BE2 study_status \u548C\u5230\u671F\u9519\u9898\u3002\u672C\u6BB5\u590D\u4E60\u5230\u671F\u9519\u9898\uFF1A\u5148\u505A\u53D8\u5F0F\uFF0C\u4E0D\u5C55\u793A\u5DF2\u4FDD\u5B58\u7B54\u6848\u3002task \u5199\u4E0A mistakeId \u548C objectiveId\u3002\u4E00\u6B21\u4E00\u9898\u3002";
@@ -51,4 +51,6 @@ export declare function openmaicRetryPrompt(runId: string): string;
 export declare function openmaicReviewPrompt(classroomId: string): string;
 /** Transcribe a workbook photo that is not tied to a saved worksheet. */
 export declare const workbookPhotoPrompt = "\u8BF7\u52A0\u8F7D study \u6280\u80FD\u3002\u8FD9\u662F\u7EC3\u4E60\u518C\u7167\u7247\uFF0C\u4E8B\u5148\u6CA1\u6709\u7EC3\u4E60\u5355\u3002\u7528 workbook-draft \u6309\u9898\u4FDD\u5B58\u8349\u7A3F\uFF1A\u4E0D\u4F1A\u7528 stuck\uFF0C\u63D0\u793A\u540E\u624D\u5BF9\u7528 hinted\uFF0C\u72EC\u7ACB\u505A\u9519\u7528 independent-wrong\uFF0C\u72EC\u7ACB\u505A\u5BF9\u7528 independent-correct\u3002\u80FD\u5BF9\u5E94\u76EE\u6807\u5C31\u5199 objectiveId\u3002\u4E0D\u8981\u76F4\u63A5\u5165\u5E93\uFF0C\u7B49\u5BB6\u957F\u786E\u8BA4\u3002";
+/** Complete panel intention; official file validation determines business completion. */
+export declare function nativeIntentPrompt(intent: object, request: string): string;
 //# sourceMappingURL=prompts.d.ts.map

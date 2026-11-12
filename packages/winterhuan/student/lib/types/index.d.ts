@@ -2,8 +2,6 @@ import type { Context } from '@deepseek-ai/cordis';
 import type { StudentTransportConfig } from './types.ts';
 import type z from '@deepseek-ai/schemastery';
 export * from './remote-service.ts';
-export * from './native-source.ts';
-export * from './transport.ts';
 export type * from './types.ts';
 /** Independent student plugin identity. */
 export declare const name = "student";

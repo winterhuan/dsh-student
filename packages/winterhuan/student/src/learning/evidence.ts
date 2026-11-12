@@ -10,16 +10,17 @@ export interface EffectiveEvidence {
   subject: StudyState['sessions'][number]['subject']; topic: string; objectiveId?: string; mistakeId?: string
   rawResponse: string; result: Assessment['result']; assistance: LearnerResponse['assistance']; answerDate: AnswerDate
   basisStatus?: 'legacy-pending'
-  source: LearnerResponse['source']; assessedAt?: number
+  source: LearnerResponse['source']; sourceStatus: 'known' | 'unknown'; assessedAt?: number
 }
 /** Shared normalized response facts and separately preserved current help signals. */
 export interface EvidenceIndex { entries: EffectiveEvidence[]; stuckSignals: { objectiveId: string; at: number }[] }
-const indexes = new WeakMap<StudyState, EvidenceIndex>()
+const EVIDENCE = Symbol('studentEvidence')
+type EvidenceState = StudyState & { [EVIDENCE]?: EvidenceIndex }
 
 /**
  * Derive effective facts once from validated block and worksheet owners.
  * @param workspace - current validated entity files.
- * @returns one fact per saved response, including unassessed and unknown facts.
+ * @returns one fact per saved response, including unassessed facts and unknown dates, help or unverified native sources; confirmed paper days retain day precision.
  */
 export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
   const entries: EffectiveEvidence[] = []
@@ -41,6 +42,7 @@ export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
         ...(question.basisStatus ? { basisStatus: question.basisStatus } : {}),
         ...(question.mistakeId ? { mistakeId: question.mistakeId } : {}), rawResponse: response.rawResponse,
         result: question.basisStatus ? 'unassessed' : assessment?.result ?? 'unassessed', assistance: response.assistance, source: response.source,
+        sourceStatus: source.kind === 'unknown' || source.kind === 'native' && (!matchedNative || source.receiptAt !== undefined && source.receiptAt !== matchedNative.receiptAt) ? 'unknown' : 'known',
         answerDate,
         ...(assessment ? { assessedAt: assessment.assessedAt } : {}) })
     }
@@ -58,7 +60,7 @@ export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
  * @param index - normalized facts from the official files.
  * @returns the same display state.
  */
-export function attachEvidence(state: StudyState, index: EvidenceIndex): StudyState { indexes.set(state, index); return state }
+export function attachEvidence(state: StudyState, index: EvidenceIndex): StudyState { Object.defineProperty(state, EVIDENCE, { value: index, configurable: true }); return state }
 
 /**
  * Read the shared index. Legacy grading and receipt fields do not establish actual answer dates.
@@ -66,11 +68,11 @@ export function attachEvidence(state: StudyState, index: EvidenceIndex): StudySt
  * @returns normalized facts for every domain projection.
  */
 export function evidenceOf(state: StudyState): EvidenceIndex {
-  const attached = indexes.get(state)
+  const attached = (state as EvidenceState)[EVIDENCE]
   if (attached) return attached
   const entries: EffectiveEvidence[] = state.attempts.map(item => ({ termId: 'legacy', ownerId: item.sessionId, ownerKind: 'block', responseId: item.id, questionId: item.id,
     subject: item.subject, topic: item.topic, rawResponse: item.rawResponse ?? item.response, result: item.result, assistance: 'unknown',
-    answerDate: { kind: 'unknown' }, source: { kind: 'legacy', sourcePath: '.study/state.json', row: `attempts:${item.sessionId}:${item.id}` },
+    answerDate: { kind: 'unknown' }, sourceStatus: 'known', source: { kind: 'legacy', sourcePath: '.study/state.json', row: `attempts:${item.sessionId}:${item.id}` },
     ...(item.objectiveId ? { objectiveId: item.objectiveId } : {}), ...(item.mistakeId ? { mistakeId: item.mistakeId } : {}) }))
   for (const item of state.paperResults) {
     const sheet = state.worksheets.find(sheet => sheet.id === item.worksheetId)
@@ -79,7 +81,7 @@ export function evidenceOf(state: StudyState): EvidenceIndex {
     const goal = question.objectiveId ?? sheet.objectiveId
     entries.push({ termId: 'legacy', ownerId: sheet.id, ownerKind: 'worksheet', responseId: item.itemId, questionId: item.itemId,
       subject: sheet.subject, topic: question.prompt, rawResponse: item.response, result: item.result, assistance: 'unknown',
-      answerDate: { kind: 'unknown' }, source: { kind: 'legacy', sourcePath: '.study/state.json', row: `paperResults:${sheet.id}:${item.itemId}` },
+      answerDate: { kind: 'unknown' }, sourceStatus: 'known', source: { kind: 'legacy', sourcePath: '.study/state.json', row: `paperResults:${sheet.id}:${item.itemId}` },
       ...(goal ? { objectiveId: goal } : {}), ...(question.mistakeId ? { mistakeId: question.mistakeId } : {}) })
   }
   return { entries, stuckSignals: [] }

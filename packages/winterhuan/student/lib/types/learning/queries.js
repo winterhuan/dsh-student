@@ -6,7 +6,35 @@ import { projectWorkspace } from "../files/projection.js";
 import { diagnosticFor, insightSummary, studyInsight } from "./mastery.js";
 import { studyStatus, weeklySummary, timeStatus, summaryMinutes } from "./status.js";
 import { builtinObjectiveAnywhere, curriculumFor, subjectExercises, subjectIdeas } from "../curriculum.js";
-const workspaceQueryCache = new Map();
+import { z } from 'zod';
+import { StudyReadCache } from "../files/cache.js";
+function workspaceProjection(read, now) {
+    const workspaceQueryCache = (read.cache ??= new StudyReadCache()).queries;
+    const workspace = read.workspace;
+    const identity = read.files.find(file => file.path === '.study/settings.json').targetKey;
+    const signature = JSON.stringify([read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), workspace.nativeSources ?? []]);
+    let cached = workspaceQueryCache.get(identity);
+    if (!cached || cached.signature !== signature || now >= cached.refreshAfter || now < cached.at) {
+        const state = projectWorkspace(workspace, now);
+        cached = { signature, state, at: now, refreshAfter: nextRefreshAfter(state, now), queries: new Map() };
+        if (workspaceQueryCache.size >= 8)
+            workspaceQueryCache.clear();
+        workspaceQueryCache.set(identity, cached);
+    }
+    return cached;
+}
+/**
+ * Read a dashboard using the same version- and time-bound projection as other workspace queries.
+ * @param read - independently validated current files.
+ * @param now - caller clock.
+ * @param options - selected dashboard page and scope.
+ * @param lessons - separately read classroom status.
+ * @returns current data only for a fully valid workspace; failures retain their file issues.
+ */
+export function queryWorkspaceDashboard(read, now, options = {}, lessons) {
+    const facts = { status: read.status, versions: read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), issues: read.issues };
+    return read.status === 'valid' && read.workspace ? { ...facts, data: queryDashboard(workspaceProjection(read, now).state, now, options, lessons) } : facts;
+}
 export function queryWorkspace(read, request, now) {
     const versions = read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version }));
     const relevantInvalid = request.kind === 'files' ? false : request.kind === 'settings' || request.kind === 'materials' ? read.issues.some(issue => issue.path === '.study/settings.json') : request.kind === 'learning-context' ? read.issues.some(issue => issue.path === '.study/settings.json' || issue.path.startsWith('.study/blocks')) : read.status !== 'valid';
@@ -17,16 +45,7 @@ export function queryWorkspace(read, request, now) {
         return { status: read.status === 'valid' ? 'valid' : 'partial', issues: read.issues, versions, data: workspace };
     if (request.kind === 'settings')
         return { status: read.status === 'valid' ? 'valid' : 'partial', issues: read.issues, versions, data: workspace.settings };
-    const identity = read.files.find(file => file.path === '.study/settings.json').targetKey;
-    const signature = JSON.stringify([versions, workspace.nativeSources ?? []]);
-    let cached = workspaceQueryCache.get(identity);
-    if (!cached || cached.signature !== signature || now >= cached.refreshAfter || now < cached.at) {
-        const state = projectWorkspace(workspace, now);
-        cached = { signature, state, at: now, refreshAfter: nextRefreshAfter(state, now), queries: new Map() };
-        if (workspaceQueryCache.size >= 8)
-            workspaceQueryCache.clear();
-        workspaceQueryCache.set(identity, cached);
-    }
+    const cached = workspaceProjection(read, now);
     const { state, refreshAfter } = cached;
     const index = evidenceOf(state);
     if (request.kind === 'learning-context') {
@@ -48,7 +67,7 @@ export function queryWorkspace(read, request, now) {
                 activeBlock: active ? { id: active.id, subject: active.subject, mode: active.mode, context: active.context, currentQuestionId: active.currentQuestionId } : null, currentQuestion: currentQuestion ?? null, responses,
                 assessments: active?.assessments.filter(assessment => responses.some(response => response.id === assessment.responseId)) ?? [], savedResponse, savedAssessment, pendingAssessment: savedResponse !== null && savedAssessment === null,
                 target: target ? { id: target.id, title: target.title, goal: target.goal, method: target.method, source: currentQuestion?.source, facts: elements?.facts ?? [] } : null,
-                pendingFacts: index.entries.filter(item => item.answerDate.kind === 'unknown' || item.assistance === 'unknown' || !item.objectiveId).map(item => ({ ownerId: item.ownerId, responseId: item.responseId, fields: [...(item.answerDate.kind === 'unknown' ? ['answerDate'] : []), ...(item.assistance === 'unknown' ? ['assistance'] : []), ...(item.basisStatus ? ['answerBasis'] : !item.objectiveId ? ['objectiveId'] : [])] })).slice(0, 20),
+                pendingFacts: index.entries.filter(item => item.answerDate.kind === 'unknown' || item.assistance === 'unknown' || item.sourceStatus === 'unknown' || !item.objectiveId).map(item => ({ ownerId: item.ownerId, responseId: item.responseId, fields: [...(item.answerDate.kind === 'unknown' ? ['answerDate'] : []), ...(item.assistance === 'unknown' ? ['assistance'] : []), ...(item.sourceStatus === 'unknown' ? ['source'] : []), ...(item.basisStatus ? ['answerBasis'] : !item.objectiveId ? ['objectiveId'] : [])] })).slice(0, 20),
                 seeds: currentQuestion && typeof currentQuestion.objectiveId === 'string' ? subjectExercises(active.subject).filter(item => item.objectiveId === currentQuestion.objectiveId).slice(0, 3) : [],
                 elements: elements ? { ...elements, exercises: elements.exercises.slice(0, 3) } : null,
                 legalActions: active ? currentQuestion ? savedResponse ? savedAssessment ? ['next-question', 'end-block', 'switch-block'] : ['request-assessment', 'end-block', 'switch-block'] : ['answer', 'request-hint', 'end-block', 'switch-block'] : ['start-question', 'end-block', 'switch-block'] : ['start-block'], } };
@@ -242,7 +261,7 @@ export function nextRefreshAfter(state, now) {
             thresholds.push(block.startedAt + 14 * 86_400_000);
     return Math.min(...thresholds.filter(at => at > now));
 }
-const dashboardCache = new WeakMap();
+const DASHBOARD_CACHE = Symbol('studentDashboardCache');
 /**
  * Reuse expensive map/mastery projections until an actual file version or time threshold changes.
  * @param state - version-cached current state, or undefined before setup.
@@ -255,17 +274,26 @@ export function queryDashboard(state, now, options = {}, lessons) {
     if (!state)
         return { ...dashboard(state, now, options, lessons), refreshAfter: Date.parse(`${studyDay(now)}T00:00:00+08:00`) + 86_400_000 };
     const key = canonical(options);
-    const entries = dashboardCache.get(state) ?? new Map();
+    const owner = state;
+    const entries = owner[DASHBOARD_CACHE] ?? new Map();
     let cached = entries.get(key);
     if (!cached || now >= cached.refreshAfter || now < cached.value.serverNow) {
         cached = { refreshAfter: nextRefreshAfter(state, now), value: dashboard(state, now, options, lessons) };
         if (entries.size >= 8)
             entries.clear();
         entries.set(key, cached);
-        dashboardCache.set(state, entries);
+        Object.defineProperty(owner, DASHBOARD_CACHE, { value: entries, configurable: true });
     }
     const value = cached.value;
     return { ...value, serverNow: now, refreshAfter: cached.refreshAfter, interactiveLessons: lessons ?? value.interactiveLessons,
         study: value.study ? { ...value.study, ...timeStatus(state, now), weekly: { ...value.study.weekly, minutesByDay: summaryMinutes(state, now), activeDays: summaryMinutes(state, now).filter(item => item.minutes > 0).length } } : null };
+}
+/**
+ * Serialize a shared query projection for both CLI and typed Remote consumers.
+ * @param result - shared query facts and projection.
+ * @returns JSON-compatible data without absent optional fields.
+ */
+export function queryJsonData(result) {
+    return result.data === undefined ? null : z.json().parse(JSON.parse(JSON.stringify(result.data)));
 }
 //# sourceMappingURL=queries.js.map

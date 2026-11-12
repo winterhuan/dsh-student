@@ -5,6 +5,7 @@ import type { TermSettings } from '../files/schema.ts';
 import type { StudyState } from '../schema.ts';
 import { dashboard } from '../dashboard.ts';
 import type { InteractiveLessons } from '../openmaic.ts';
+import type { StudentJsonValue } from '../types.ts';
 /** Bounded read query; an explicit clock belongs to the caller. */
 export interface WorkspaceQuery {
     kind: 'learning-context' | 'summary' | 'files' | 'settings' | 'status' | 'curriculum' | 'elements' | 'exercises' | 'review-sheet' | 'diagnose' | 'weak' | 'due' | 'pending' | 'progress' | 'concepts' | 'objectives' | 'relations' | 'worksheets' | 'paper-results' | 'materials' | 'mistakes' | 'sessions' | 'attempts';
@@ -23,6 +24,15 @@ export interface WorkspaceQueryResult<T = unknown> {
     refreshAfter?: number;
     data?: T;
 }
+/**
+ * Read a dashboard using the same version- and time-bound projection as other workspace queries.
+ * @param read - independently validated current files.
+ * @param now - caller clock.
+ * @param options - selected dashboard page and scope.
+ * @param lessons - separately read classroom status.
+ * @returns current data only for a fully valid workspace; failures retain their file issues.
+ */
+export declare function queryWorkspaceDashboard(read: WorkspaceRead, now: number, options?: Parameters<typeof dashboard>[2], lessons?: InteractiveLessons): WorkspaceQueryResult<ReturnType<typeof queryDashboard>>;
 /**
  * Query current validated facts. Settings and materials remain explicitly partial when unrelated entities fail.
  * @param read - one consistent workspace read.
@@ -75,4 +85,10 @@ export declare function nextRefreshAfter(state: StudyState, now: number): number
 export declare function queryDashboard(state: StudyState | undefined, now: number, options?: Parameters<typeof dashboard>[2], lessons?: InteractiveLessons): ReturnType<typeof dashboard> & {
     refreshAfter: number;
 };
+/**
+ * Serialize a shared query projection for both CLI and typed Remote consumers.
+ * @param result - shared query facts and projection.
+ * @returns JSON-compatible data without absent optional fields.
+ */
+export declare function queryJsonData(result: WorkspaceQueryResult): StudentJsonValue;
 //# sourceMappingURL=queries.d.ts.map

@@ -1,4 +1,3 @@
-/** Typed application-owned manual saves share official validation and current-version CAS. */
 import type { FsVersion } from '@deepseek-ai/dsh-fs';
 import type { Command } from '../schema.ts';
 import { type StudyFiles, type WorkspaceRead } from './read.ts';
@@ -53,7 +52,7 @@ export interface ManualSaveRequest {
 /** Outcomes keep current edited values available for retained-draft conflicts. */
 export interface ManualSaveResult {
     status: 'saved' | 'unchanged' | 'conflict' | 'invalid' | 'old-term' | 'unknown';
-    current: ManualBaseline;
+    current: Record<string, import('../types.ts').StudentJsonValue>;
     read: WorkspaceRead;
     reason?: string;
 }
@@ -63,7 +62,7 @@ export interface ManualSaveResult {
  * @param intent - intended settings save or worksheet corrections.
  * @returns edited field values suitable for the draft baseline and conflict display.
  */
-export declare function manualFields(read: WorkspaceRead, intent: ManualSaveRequest['intent']): ManualBaseline;
+export declare function manualFields(read: WorkspaceRead, intent: ManualSaveRequest['intent']): Record<string, import('../types.ts').StudentJsonValue>;
 /**
  * Save a manual draft after checking edited-field baselines, term and every related actual file version.
  * Unrelated version changes may rebase; a relevant change returns current values and preserves the caller's draft.

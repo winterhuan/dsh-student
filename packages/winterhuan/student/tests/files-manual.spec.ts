@@ -94,18 +94,22 @@ it('profile changes preserve the active school context while a future incompatib
   expect(await readWorkspace(fs, signal)).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ rule: 'future-course-confirmation' })]) })
 })
 
-it('confirms unknown paper assistance and an actual calendar date while correcting the same original response', async () => {
+it.each(['unknown', 'independent'] as const)('confirms paper help from %s and corrects the actual date without replacing the original response', async assistance => {
   const { fs, signal, cwd } = await fixture()
   await mkdir(join(cwd, '.study/worksheets'))
   const sheet = worksheetSchema.parse({ format: 2, kind: 'worksheet', termId: 'term-1', id: 'sheet-1', subject: 'math', origin: 'prepared', createdAt: NOW, context: { profile: setup.profile },
     items: [{ id: 'q1', objectiveId: 'm2a-o-sub', topic: 'Subtraction', prompt: '18 - 7?', answer: '11', explanation: 'Subtract seven', answerEvidence: '11 + 7 = 18', source: { kind: 'authored', description: 'Original' } }],
-    responses: [{ id: 'r1', questionId: 'q1', rawResponse: '11', assistance: 'unknown', source: { kind: 'paper', imagePaths: ['attachments/a.png'], parentConfirmation: 'Parent confirmed original response' }, answerDate: { kind: 'unknown' } }],
-    assessments: [{ id: 'a1', responseId: 'r1', result: 'correct', assistance: 'unknown', feedback: 'Correct', answerEvidence: 'Verified', assessedAt: NOW, userConfirmation: 'Parent confirmed' }], drafts: [] })
+    answerDate: { kind: 'day', day: '2026-10-01', parentConfirmation: 'Actual worksheet day confirmed' },
+    responses: [{ id: 'r1', questionId: 'q1', rawResponse: '11', assistance, source: { kind: 'paper', imagePaths: ['attachments/a.png'], parentConfirmation: 'Parent confirmed original response' } }],
+    assessments: [{ id: 'a1', responseId: 'r1', result: 'correct', assistance, feedback: 'Correct', answerEvidence: 'Verified', assessedAt: NOW, userConfirmation: 'Parent confirmed' }], drafts: [] })
   await writeFile(join(cwd, '.study/worksheets/sheet-1.json'), JSON.stringify(sheet))
   const read = await readWorkspace(fs, signal)
   const intent = { kind: 'worksheet-assessments' as const, worksheetId: sheet.id, assessments: [{ ...sheet.assessments[0]!, assistance: 'hint' as const }], responseUpdates: [{ responseId: sheet.responses[0]!.id, assistance: 'hint' as const, answerDate: { kind: 'day' as const, day: '2026-10-01', parentConfirmation: 'Actual day confirmed' }, userConfirmation: 'A hint was used' }] }
   const result = await saveManual(fs, { termId: read.workspace!.settings.termId, expectedVersions: read.files.map(({ path, version }) => ({ path, version })), baseline: manualFields(read, intent), intent }, NOW + 1, signal)
   expect(result).toMatchObject({ status: 'saved', read: { workspace: { worksheets: [{ responses: [{ id: 'r1', rawResponse: '11', assistance: 'hint', answerDate: { kind: 'day', day: '2026-10-01' } }], assessments: [{ responseId: 'r1', assessedAt: NOW, correctedAt: NOW + 1 }] }] } } })
+  const corrected = { kind: 'worksheet-assessments' as const, worksheetId: sheet.id, assessments: [], responseUpdates: [{ responseId: sheet.responses[0]!.id, answerDate: { kind: 'unknown' as const }, userConfirmation: 'Parent confirms the previous date is unverified' }] }
+  const cleared = await saveManual(fs, { termId: read.workspace!.settings.termId, expectedVersions: result.read.files.map(({ path, version }) => ({ path, version })), baseline: manualFields(result.read, corrected), intent: corrected }, NOW + 2, signal)
+  expect(cleared).toMatchObject({ status: 'saved', read: { workspace: { worksheets: [{ responses: [{ id: 'r1', rawResponse: '11', assistance: 'hint', answerDate: { kind: 'unknown' } }] }] } } })
 })
 
 it('rebases unrelated edits, retains current values on relevant conflict and rejects equal-revision old terms', async () => {

@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { expect, it, onTestFinished } from 'vitest'
 import { readWorkspace } from '../src/files/read.ts'
 import { nodeStudyFiles } from '../src/files/node.ts'
-import { queryWorkspace } from '../src/learning/queries.ts'
+import { queryWorkspace, queryWorkspaceDashboard } from '../src/learning/queries.ts'
 import { validateStudyFiles } from '../src/files/validation.ts'
 import type { z } from 'zod'
 import type { blockSchema } from '../src/files/schema.ts'
@@ -36,9 +36,23 @@ it('reads saved original answers without turning unknown dates or assistance int
   const read = await readWorkspace(files, new AbortController().signal)
   expect(read.status).toBe('valid')
   const result = queryWorkspace(read, { kind: 'learning-context' }, NOW)
-  expect(result).toMatchObject({ status: 'valid', data: { currentQuestion: { id: 'q1' }, responses: [{ rawResponse: '15', answerDate: { kind: 'unknown' } }], pendingFacts: [{ responseId: 'r1', fields: ['answerDate', 'assistance'] }], seeds: expect.any(Array) } })
+  expect(result).toMatchObject({ status: 'valid', data: { currentQuestion: { id: 'q1' }, responses: [{ rawResponse: '15', answerDate: { kind: 'unknown' } }], pendingFacts: [{ responseId: 'r1', fields: ['answerDate', 'assistance', 'source'] }], seeds: expect.any(Array) } })
   const summary = queryWorkspace(read, { kind: 'summary' }, NOW)
   expect(summary).toMatchObject({ data: { practisedGoals: 0, masteredGoals: 0, dueCompletion: { done: 0, total: 0 } } })
+})
+
+it('reuses dashboard curriculum across independent reads until files or the Shanghai day change', async () => {
+  const { files, settings, save } = await workspace()
+  const read = () => readWorkspace(files, new AbortController().signal)
+  const first = queryWorkspaceDashboard(await read(), NOW, { tab: 'map', subject: 'math' })
+  const repeated = queryWorkspaceDashboard(await read(), NOW + 1000, { tab: 'map', subject: 'math' })
+  expect(repeated.data?.study?.curriculum).toBe(first.data?.study?.curriculum)
+  expect(repeated.data?.serverNow).toBe(NOW + 1000)
+  expect(queryWorkspaceDashboard(await read(), NOW + 86_400_000, { tab: 'map', subject: 'math' }).data?.study?.curriculum).not.toBe(first.data?.study?.curriculum)
+  await save('.study/settings.json', { ...settings, profile: { ...settings.profile, nickname: 'Updated name' } })
+  const updated = queryWorkspaceDashboard(await read(), NOW + 1000, { tab: 'map', subject: 'math' })
+  expect(updated.data?.study?.profile.nickname).toBe('Updated name')
+  expect(updated.data?.study?.curriculum).not.toBe(first.data?.study?.curriculum)
 })
 
 it('keeps the selected goal and current response while distinguishing pending and saved assessment actions', async () => {
@@ -91,6 +105,14 @@ it('distinguishes first mastery from repeating a goal mastered before the Shangh
   expect(queryWorkspace(await readWorkspace(fresh.files, new AbortController().signal), { kind: 'summary' }, SUMMARY_NOW)).toMatchObject({ data: { masteredGoals: 1 } })
 })
 
+it('does not label a repeat as first mastery when old unordered difficulty aged out before the new answer', async () => {
+  const { files, block, save } = await workspace()
+  block.responses = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-03', '2026-10-25'].map((day, index) => ({ id: `r${index}`, questionId: 'q1', rawResponse: index === 3 ? '14' : '15', assistance: 'independent', answerDate: { kind: 'day', day, parentConfirmation: 'Actual day confirmed' }, source: { kind: 'manual', entry: 'historical', parentConfirmation: 'Confirmed' } }))
+  block.assessments = block.responses.map((response, index) => ({ id: `a${index}`, responseId: response.id, result: index === 3 ? 'incorrect' : 'correct', assistance: 'independent', feedback: 'Checked', answerEvidence: 'Verified', assessedAt: NOW }))
+  await save('.study/blocks/block-1.json', block)
+  expect(queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'summary' }, Date.parse('2026-10-25T20:00:00+08:00'))).toMatchObject({ data: { masteredGoals: 0, recoveredGoals: 0, practisedGoals: 1 } })
+})
+
 it('rejects an orphan assessment and selected-scope bypass through the actual file reader', async () => {
   const { files, block, save } = await workspace()
   block.assessments[0]!.responseId = 'absent'
@@ -99,6 +121,42 @@ it('rejects an orphan assessment and selected-scope bypass through the actual fi
   const read = await readWorkspace(files, new AbortController().signal)
   expect(read).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ rule: 'response-reference' }), expect.objectContaining({ rule: 'effective-scope' })]) })
   expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).not.toHaveProperty('data')
+})
+
+it('does not infer independent work from a date that cannot place an unbound hint after the answer', async () => {
+  const { files, block, save } = await workspace()
+  block.hints = [{ questionId: 'q1', level: 1, at: NOW }]
+  block.responses[0]!.assistance = 'independent'; block.assessments[0]!.assistance = 'independent'
+  for (const answerDate of [{ kind: 'day' as const, day: '2026-10-05', parentConfirmation: 'Actual day confirmed' }, { kind: 'unknown' as const }]) {
+    block.responses[0]!.answerDate = answerDate
+    await save('.study/blocks/block-1.json', block)
+    expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ rule: 'known-help' })]) })
+  }
+  block.hints[0]!.responseId = 'other-response'
+  block.responses.push({ ...block.responses[0]!, id: 'other-response', assistance: 'hint' })
+  await save('.study/blocks/block-1.json', block)
+  expect((await readWorkspace(files, new AbortController().signal)).status).toBe('valid')
+})
+
+it('rejects a new question bound to another goal mistake but preserves an observed historical binding after reclassification', async () => {
+  const { files, block, save } = await workspace()
+  block.questions[0]!.mistakeId = 'm1'
+  block.questions[0]!.source = { kind: 'mistake', mistakeId: 'm1', description: 'Original subtraction mistake' }
+  block.responses[0]!.assistance = 'independent'; block.assessments[0]!.assistance = 'independent'
+  block.responses[0]!.answerDate = { kind: 'day', day: '2026-10-05', parentConfirmation: 'Actual date confirmed' }
+  const mistake = { id: 'm1', subject: 'math', topic: 'Subtraction', prompt: '18 - 7?', learnerAnswer: '10', correction: '11', explanation: 'Subtract seven', answerEvidence: '11 + 7 = 18', uncertainties: '', objectiveId: 'm2a-o-sub', confirmedAt: Date.parse('2026-10-01T09:00:00+08:00'), userConfirmation: 'Confirmed' }
+  const collection = (objectiveId: string) => collectionsSchema.parse({ format: 2, kind: 'collections', termId: 'term-1', mistakes: [{ ...mistake, objectiveId }], rewards: [], teachingQueue: [] })
+  await save('.study/blocks/block-1.json', block)
+  await save('.study/collections.json', collection('m2a-o-add'))
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ rule: 'mistake-source' })]) })
+  await save('.study/collections.json', collection('m2a-o-sub'))
+  const original = await readWorkspace(files, new AbortController().signal)
+  expect(queryWorkspace(original, { kind: 'mistakes' }, SUMMARY_NOW)).toMatchObject({ data: { items: [expect.objectContaining({ stage: 1 })] } })
+  await save('.study/collections.json', collection('m2a-o-add'))
+  const reclassified = await readWorkspace(files, new AbortController().signal)
+  expect(reclassified.status).toBe('valid')
+  expect(queryWorkspace(reclassified, { kind: 'learning-context' }, SUMMARY_NOW)).toMatchObject({ data: { target: { id: 'm2a-o-sub' } } })
+  expect(queryWorkspace(reclassified, { kind: 'mistakes' }, SUMMARY_NOW)).toMatchObject({ data: { items: [expect.objectContaining({ stage: 0, independentDays: [] })] } })
 })
 
 it('keeps question content and original response immutable against a preserved observed version', async () => {
@@ -146,12 +204,29 @@ it('keeps native dates pending without an independently matched consumed input a
   block.responses[0]!.answerDate = { kind: 'instant', at: SUMMARY_NOW, basis: 'native-input', sourceVersion: 'version-2' }
   block.responses[0]!.assistance = 'independent'; block.assessments[0]!.assistance = 'independent'
   await save('.study/blocks/block-1.json', block)
-  expect(queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'summary' }, SUMMARY_NOW)).toMatchObject({ data: { practisedGoals: 0 } })
+  const unmatched = await readWorkspace(files, new AbortController().signal)
+  expect(queryWorkspace(unmatched, { kind: 'summary' }, SUMMARY_NOW)).toMatchObject({ data: { practisedGoals: 0 } })
+  expect(queryWorkspace(unmatched, { kind: 'learning-context' }, SUMMARY_NOW)).toMatchObject({ data: { pendingFacts: [{ responseId: 'r1', fields: ['answerDate', 'source'] }] } })
   const matched = await readWorkspace(files, new AbortController().signal, [], [{ sessionId: 'session-1', messageId: 'message-1', inputVersion: 'version-2', rawResponse: '15', receiptAt: SUMMARY_NOW }])
   expect(queryWorkspace(matched, { kind: 'summary' }, SUMMARY_NOW)).toMatchObject({ data: { practisedGoals: 1 } })
+  expect(queryWorkspace(matched, { kind: 'learning-context' }, SUMMARY_NOW)).toMatchObject({ data: { pendingFacts: [] } })
   block.responses[0]!.answerDate = { kind: 'instant', at: SUMMARY_NOW, basis: 'current-manual', sourceVersion: 'version-2' }
   const validation = validateStudyFiles([{ path: '.study/settings.json', value: matched.workspace!.settings }, { path: '.study/blocks/block-1.json', value: block }])
   expect(validation.issues).toContainEqual(expect.objectContaining({ rule: 'current-manual-source' }))
+})
+
+it('reports an unknown response source while preserving a parent-confirmed paper day without native matching', async () => {
+  for (const source of [{ kind: 'unknown' as const }, { kind: 'paper' as const, imagePaths: ['attachments/paper.png'], parentConfirmation: 'Parent confirms the original paper answer' }]) {
+    const { files, block, save } = await workspace()
+    block.responses[0]!.source = source
+    block.responses[0]!.answerDate = { kind: 'day', day: '2026-10-05', parentConfirmation: 'Parent confirms the actual day' }
+    block.responses[0]!.assistance = 'independent'; block.assessments[0]!.assistance = 'independent'
+    await save('.study/blocks/block-1.json', block)
+    const read = await readWorkspace(files, new AbortController().signal)
+    const context = queryWorkspace(read, { kind: 'learning-context' }, SUMMARY_NOW)
+    expect(context).toMatchObject({ data: { savedResponse: { answerDate: { kind: 'day', day: '2026-10-05' } }, pendingFacts: source.kind === 'unknown' ? [{ responseId: 'r1', fields: ['source'] }] : [] } })
+    if (source.kind === 'paper') expect(queryWorkspace(read, { kind: 'summary' }, NOW)).toMatchObject({ data: { practisedGoals: 1 } })
+  }
 })
 
 it('keeps unrelated valid block facts readable when a worksheet is corrupt', async () => {

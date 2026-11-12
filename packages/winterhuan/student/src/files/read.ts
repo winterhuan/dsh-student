@@ -6,11 +6,14 @@ import { migrateStudyFile } from './legacy.ts'
 import { validateStudyFiles, type FileIssue, type ParsedFile, type ValidationResult, type ValidatedWorkspace, type NativeInputObservation } from './validation.ts'
 import type { OfficialFile } from './schema.ts'
 import type { BackupRetentionQueue } from './backup-retention.ts'
+import { StudyReadCache } from './cache.ts'
 
 /** Stable observation supplied by the execution-world filesystem. */
 export interface FileObservation extends FsInfo { targetKey: FsTargetKey }
 /** Narrow filesystem adapter. Read-only clients omit write and backup facilities. */
 export interface StudyFiles {
+  /** Cache ownership follows this adapter or its application Host. */
+  cache?: StudyReadCache
   /** Application adapters share the Host's retention queue; read-only adapters omit it. */
   backupRetention?: BackupRetentionQueue
   stat(path: string, signal: AbortSignal): Promise<FileObservation | undefined>
@@ -23,6 +26,8 @@ export interface StudyFiles {
 export interface ObservedFile { path: string; targetKey: FsTargetKey; version: FsVersion; bytes: Uint8Array; file?: OfficialFile }
 /** Validated read; invalid entities remain inspectable and never acquire a current workspace projection. */
 export interface WorkspaceRead {
+  /** Derived queries reuse the same adapter's validated source observations. */
+  cache?: StudyReadCache
   status: 'valid' | 'missing' | 'invalid' | 'future-format' | 'changing' | 'legacy' | 'archived'
   files: ObservedFile[]
   membership: { path: string; names: string[] }[]
@@ -32,7 +37,6 @@ export interface WorkspaceRead {
 }
 const MAX_FILE_BYTES = 8_388_608
 const MAX_TOTAL_BYTES = 33_554_432
-const cache = new Map<string, { version: FsVersion; bytes: Uint8Array; value: unknown; file?: OfficialFile }>()
 
 /**
  * Read a stable set of official files, checking membership and actual versions on both sides.
@@ -43,6 +47,12 @@ const cache = new Map<string, { version: FsVersion; bytes: Uint8Array; value: un
  * @returns validated facts or an explicit incomplete, invalid or changing result.
  */
 export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior: readonly { path: string; file: OfficialFile }[] = [], nativeSources: readonly NativeInputObservation[] = []): Promise<WorkspaceRead> {
+  const owner = fs.cache ??= new StudyReadCache()
+  return { ...await readWorkspaceFiles(fs, signal, prior, nativeSources, owner), cache: owner }
+}
+
+async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: readonly { path: string; file: OfficialFile }[], nativeSources: readonly NativeInputObservation[], owner: StudyReadCache): Promise<WorkspaceRead> {
+  const cache = owner.files
   for (let attempt = 0; attempt < 3; attempt += 1) {
     signal.throwIfAborted()
     const membership: WorkspaceRead['membership'] = []

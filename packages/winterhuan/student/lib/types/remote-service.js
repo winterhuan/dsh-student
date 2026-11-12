@@ -36,10 +36,8 @@ var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, 
 import { createHash } from 'node:crypto';
 import { setTimeout } from 'node:timers/promises';
 import z from '@deepseek-ai/schemastery';
-import { z as json } from 'zod';
 import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol';
-import { queryWorkspace, queryDashboard } from "./learning/queries.js";
-import { projectWorkspace } from "./files/projection.js";
+import { queryWorkspace, queryWorkspaceDashboard, queryJsonData } from "./learning/queries.js";
 import { readInteractiveLessons } from "./openmaic.js";
 import { readStudentWorkspace } from "./transport.js";
 import { applicationStudyFiles } from "./files/application.js";
@@ -92,11 +90,11 @@ let StudentRemote = (() => {
             const { read, native, backupIssues } = await readStudentWorkspace({ agent, signal });
             const now = Date.now();
             const query = request.kind === 'dashboard'
-                ? { status: read.status, versions: this.readFacts(read).versions, issues: read.issues, ...(read.status === 'valid' && read.workspace ? { data: queryDashboard(projectWorkspace(read.workspace, now), now, request.options, await readInteractiveLessons(agent, signal, read.workspace.settings.openmaic?.baseUrl)) } : {}) }
+                ? queryWorkspaceDashboard(read, now, request.options, read.workspace ? await readInteractiveLessons(agent, signal, read.workspace.settings.openmaic?.baseUrl) : undefined)
                 : queryWorkspace(read, request, now);
             const { observations: _observations, ...view } = native;
-            const { data, ...facts } = query;
-            const result = { ...facts, data: data === undefined ? null : json.json().parse(JSON.parse(JSON.stringify(data))), readAt: now, refreshAfter: query.refreshAfter ?? now + this.config.refreshIntervalMs, token: createHash('sha256').update(JSON.stringify([query, view, backupIssues])).digest('hex'), native: view, backupIssues };
+            const { data: _data, ...facts } = query;
+            const result = { ...facts, data: queryJsonData(query), readAt: now, refreshAfter: query.refreshAfter ?? now + this.config.refreshIntervalMs, token: createHash('sha256').update(JSON.stringify([query, view, backupIssues])).digest('hex'), native: view, backupIssues };
             signal.throwIfAborted();
             return this.wire(result);
         }
@@ -147,7 +145,7 @@ let StudentRemote = (() => {
             const agent = await this.mainAgent(sessionId, signal);
             this.wire(intent);
             const { read } = await readStudentWorkspace({ agent, signal });
-            return this.wire({ ...this.readFacts(read), baseline: json.record(json.string(), json.json()).parse(JSON.parse(JSON.stringify(manualFields(read, intent)))) });
+            return this.wire({ ...this.readFacts(read), baseline: manualFields(read, intent) });
         }
         /**
          * Save an explicit manual draft through the shared guarded filesystem owner.
@@ -161,7 +159,7 @@ let StudentRemote = (() => {
             this.wire(request);
             const result = await saveManual(applicationStudyFiles({ agent, signal }), request, Date.now(), signal);
             signal.throwIfAborted();
-            return this.wire({ ...this.readFacts(result.read), status: result.status, current: json.record(json.string(), json.json()).parse(JSON.parse(JSON.stringify(result.current))), ...(result.reason === undefined ? {} : { reason: result.reason }) });
+            return this.wire({ ...this.readFacts(result.read), status: result.status, current: result.current, ...(result.reason === undefined ? {} : { reason: result.reason }) });
         }
         /**
          * Inspect an uncertain submission before deliberate recovery; this method never submits input.

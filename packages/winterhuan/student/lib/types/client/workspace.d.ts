@@ -1,6 +1,7 @@
-import type { Dashboard, MistakeStatus } from '../dashboard.ts';
-import type { Command } from '../schema.ts';
-/** Query identity for one visible workbench: the open tab, notebook page, subject, notebook filter, an optional knowledge-map scope and an optional check-in scope. */
+import type { ResourceSnapshot } from '@deepseek-ai/dsh-client-resources/client';
+import type { MistakeStatus } from '../dashboard.ts';
+import type { StudentQueryResult, StudentSessionId, StudentJsonValue } from '../types.ts';
+/** One dashboard selection; browsing and diagnostic ranges do not change the active block. */
 export interface StudyQuery {
     tab: 'today' | 'map' | 'mistakes' | 'parent';
     offset: number;
@@ -12,13 +13,11 @@ export interface StudyQuery {
     diagTerm?: 'first' | 'second';
     diagUnit?: string;
 }
-/** One workspace response, including an error returned by the route. */
-type PollResponse = Dashboard & {
-    error?: string;
-};
-/** Poll visible workbenches; preserve data on failure and discard obsolete responses. */
-export declare function useStudy(sessionId: string, visible: boolean, networkError: string, query: StudyQuery): {
-    data: {
+/** Native resource hook supplied by the enclosing DSH slot. */
+export type UseStudentResource = (address: string) => ResourceSnapshot<StudentQueryResult>;
+/** Read validated dashboard and stable learning identities through the shared resource lifetime. */
+export declare function useStudy(sessionId: StudentSessionId, visible: boolean, networkError: string, query: StudyQuery, useResource: UseStudentResource): {
+    data: (StudentJsonValue & ({
         serverNow: number;
         revision: number;
         study: null;
@@ -1375,12 +1374,12 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
             interestFocus: string;
         };
         interactiveLessons: import("../openmaic.ts").InteractiveLessons;
-    } | undefined;
+    })) | undefined;
+    context: StudentJsonValue | undefined;
+    termId: string | undefined;
+    value: StudentQueryResult | undefined;
+    stale: boolean;
     error: string;
-    busy: boolean;
-    reload: () => Promise<void>;
-    change: (command: Command, revision?: number) => Promise<PollResponse>;
     offset: import("react").MutableRefObject<number>;
 };
-export {};
 //# sourceMappingURL=workspace.d.ts.map

@@ -3,12 +3,15 @@ import type { FsInfo, FsTargetKey, FsVersion, FsWriteIntent } from '@deepseek-ai
 import { type FileIssue, type ValidatedWorkspace, type NativeInputObservation } from './validation.ts';
 import type { OfficialFile } from './schema.ts';
 import type { BackupRetentionQueue } from './backup-retention.ts';
+import { StudyReadCache } from './cache.ts';
 /** Stable observation supplied by the execution-world filesystem. */
 export interface FileObservation extends FsInfo {
     targetKey: FsTargetKey;
 }
 /** Narrow filesystem adapter. Read-only clients omit write and backup facilities. */
 export interface StudyFiles {
+    /** Cache ownership follows this adapter or its application Host. */
+    cache?: StudyReadCache;
     /** Application adapters share the Host's retention queue; read-only adapters omit it. */
     backupRetention?: BackupRetentionQueue;
     stat(path: string, signal: AbortSignal): Promise<FileObservation | undefined>;
@@ -30,6 +33,8 @@ export interface ObservedFile {
 }
 /** Validated read; invalid entities remain inspectable and never acquire a current workspace projection. */
 export interface WorkspaceRead {
+    /** Derived queries reuse the same adapter's validated source observations. */
+    cache?: StudyReadCache;
     status: 'valid' | 'missing' | 'invalid' | 'future-format' | 'changing' | 'legacy' | 'archived';
     files: ObservedFile[];
     membership: {

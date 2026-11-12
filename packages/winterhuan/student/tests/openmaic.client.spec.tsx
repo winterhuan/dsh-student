@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { StudyDesk } from '../src/client/desk.tsx'
+import { StudyDesk as RealStudyDesk } from '../src/client/desk.tsx'
+import { studentClientFixture } from './student-client-fixture.tsx'
+import type { ComponentProps } from 'react'
 import { ParentSettings } from '../src/client/forms.tsx'
 import { LessonsPanel } from '../src/client/lessons-view.tsx'
 import { en } from '../src/client/locales.ts'
@@ -10,7 +12,10 @@ import { updateStudy } from '../src/learning/update/index.ts'
 import { NOW, setup } from './fixtures.ts'
 
 const t = (key: keyof typeof en) => en[key]
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); window.sessionStorage.clear() })
+
+let backend: ReturnType<typeof studentClientFixture>
+function StudyDesk(props: Omit<ComponentProps<typeof RealStudyDesk>, 'useResource' | 'remote'>) { return <RealStudyDesk {...props} useResource={backend.useResource} remote={backend.remote} /> }
 
 const ready = {
   id: 'om-1', status: 'ready' as const, createdAt: '2026-10-28T06:00:00.000Z', updatedAt: '2026-10-28T06:05:00.000Z',
@@ -46,7 +51,7 @@ describe('interactive lesson desk', () => {
 
   it('asks the tutor to generate from the student page', async () => {
     const ask = vi.fn().mockResolvedValue(undefined)
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(dashboard(updateStudy(undefined, setup, Date.now()), Date.now())), { headers: { 'content-type': 'application/json' } })))
+    backend = studentClientFixture(updateStudy(undefined, setup, Date.now()))
     render(<StudyDesk sessionId="om" visible running={false} ask={ask} t={t} />)
     fireEvent.click(await screen.findByRole('button', { name: en.openLesson }))
     await waitFor(() => expect(ask).toHaveBeenCalledWith(expect.stringContaining('references/openmaic.md'), undefined))
@@ -65,7 +70,7 @@ describe('interactive lesson desk', () => {
     if (!form) throw new Error('missing form')
     fireEvent.click(within(form).getByRole('button', { name: 'Save' }))
     await screen.findAllByText('Saved')
-    expect(change).toHaveBeenCalledWith({ action: 'openmaic-settings', baseUrl: 'http://127.0.0.1:3000/', parentConfirmation: en.openmaicConfirm }, 1)
+    expect(change).toHaveBeenCalledWith({ action: 'openmaic-settings', baseUrl: 'http://127.0.0.1:3000/', parentConfirmation: en.openmaicConfirm }, 1, expect.any(String))
   })
 
   it('pins go to class when a lesson is ready and shows generating', async () => {
@@ -73,7 +78,7 @@ describe('interactive lesson desk', () => {
     const base = dashboard(updateStudy(undefined, setup, Date.now()), Date.now())
     const generating = { ...ready, id: 'om-gen', status: 'generating' as const, title: '正在生成', url: undefined, classroomId: undefined, summary: undefined }
     const body = { ...base, interactiveLessons: { ...base.interactiveLessons, lessons: [ready, generating] } }
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } })))
+    backend = studentClientFixture(updateStudy(undefined, setup, Date.now()), body.interactiveLessons)
     render(<StudyDesk sessionId="ready-lesson" visible running={false} ask={vi.fn()} t={t} />)
     expect(await screen.findByText(/Generating · 正在生成/)).toBeTruthy()
     expect((screen.getByRole('button', { name: en.openLesson }) as HTMLButtonElement).disabled).toBe(true)
@@ -90,6 +95,6 @@ describe('interactive lesson desk', () => {
     if (!form) throw new Error('missing form')
     fireEvent.click(within(form).getByRole('button', { name: 'Save' }))
     await screen.findAllByText('Saved')
-    expect(change).toHaveBeenCalledWith({ action: 'interests', tags: ['购物超市钱', '运动球类', '动物宠物', '故事角色动画', '积木拼搭手工', '天文观测'], parentConfirmation: en.interestConfirm }, 1)
+    expect(change).toHaveBeenCalledWith({ action: 'interests', tags: ['购物超市钱', '运动球类', '动物宠物', '故事角色动画', '积木拼搭手工', '天文观测'], parentConfirmation: en.interestConfirm }, 1, expect.any(String))
   })
 })

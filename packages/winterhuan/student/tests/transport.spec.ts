@@ -173,7 +173,7 @@ it('retains an earlier Session answer while its receipt stays pending outside th
   const response = { termId: block.termId, owner: { kind: 'block' as const, id: block.id }, responseId: block.responses[0]!.id }
   expect(await ctx.student.inspectSubmission(id, { requestId: 'prior-request', response }, signal)).toMatchObject({ admission: 'unknown', answer: 'saved', assessment: 'valid' })
   const learning = await ctx.student.query(id, { kind: 'learning-context' }, signal)
-  expect(learning).toMatchObject({ native: { cut: { sessionId: id }, inputs: [] }, data: { responses: [{ rawResponse: '15', answerDate: { kind: 'unknown' } }], pendingFacts: [{ responseId: 'r1', fields: ['answerDate'] }] } })
+  expect(learning).toMatchObject({ native: { cut: { sessionId: id }, inputs: [] }, data: { responses: [{ rawResponse: '15', answerDate: { kind: 'unknown' } }], pendingFacts: [{ responseId: 'r1', fields: ['answerDate', 'source'] }] } })
   expect(await ctx.student.query(id, { kind: 'summary' }, signal)).toMatchObject({ data: { practisedGoals: 0, masteredGoals: 0 } })
   expect(await readFile(path, 'utf8')).toBe(original)
   block.assessments[0]!.responseId = 'absent' as typeof block.responses[0]['id']

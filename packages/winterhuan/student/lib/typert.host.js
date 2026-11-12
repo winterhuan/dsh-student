@@ -845,7 +845,7 @@ const $remote = createTypertRemoteInfo({
         description: 'admission, saved-answer and valid-assessment facts separately; omitted admission remains unknown.',
         jsonSchema: {"type":"object","properties":{"requestId":{"type":"string"},"admission":{"type":"string","enum":["unknown","accepted"]},"nativeStates":{"type":"array","items":{"type":"string","enum":["pending","consumed","claimed","removed"]}},"nativeSourceStatus":{"type":"string","enum":["available","unavailable"]},"cut":{"type":"object","properties":{"sessionId":{"type":"string"},"cursor":{"type":"number"},"source":{"type":"string","enum":["live","prepared"]},"inheritedEventCount":{"type":"number"},"revision":{"type":"string"}},"required":["sessionId","cursor","source","inheritedEventCount"],"additionalProperties":true},"answer":{"type":"string","enum":["unavailable","missing","saved","not-requested"]},"assessment":{"type":"string","enum":["pending","unavailable","valid","not-requested"]},"readStatus":{"type":"string","enum":["valid","missing","invalid","future-format","changing","legacy","archived"]},"versions":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"targetKey":{"type":"string"},"version":{"type":"string"}},"required":["path","targetKey","version"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}}},"required":["requestId","admission","nativeStates","nativeSourceStatus","answer","assessment","readStatus","versions","issues"],"additionalProperties":true},
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":129,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":127,"column":9},
     },
     'student/manualContext': {
       service: 'student',
@@ -895,7 +895,7 @@ const $remote = createTypertRemoteInfo({
         description: 'exact current term identity, observed versions, draft baseline and read issues.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":99,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":97,"column":9},
     },
     'student/query': {
       service: 'student',
@@ -945,7 +945,7 @@ const $remote = createTypertRemoteInfo({
         description: 'current projection, actual file versions, cut and explicit partial or unavailable status.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":50,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":48,"column":9},
     },
     'student/saveManual': {
       service: 'student',
@@ -995,7 +995,7 @@ const $remote = createTypertRemoteInfo({
         description: 'thin save outcome, current edited values and versions for subsequent draft saves.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":114,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":112,"column":9},
     },
     'student/watch': {
       service: 'student',
@@ -1046,7 +1046,7 @@ const $remote = createTypertRemoteInfo({
         description: 'an initial snapshot and later changes or recoverable read-failure frames.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":72,"column":10},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":70,"column":10},
     },
   },
 }, z)
@@ -1146,7 +1146,7 @@ export const TYPERT = {
           },
           {
             "name": "ManualSaveResult",
-            "declaration": "export interface ManualSaveResult {\n    status: 'saved' | 'unchanged' | 'conflict' | 'invalid' | 'old-term' | 'unknown';\n    current: ManualBaseline;\n    read: WorkspaceRead;\n    reason?: string;\n}"
+            "declaration": "export interface ManualSaveResult {\n    status: 'saved' | 'unchanged' | 'conflict' | 'invalid' | 'old-term' | 'unknown';\n    current: Record<string, import('../types.ts').StudentJsonValue>;\n    read: WorkspaceRead;\n    reason?: string;\n}"
           },
           {
             "name": "ManualSettingsCommand",
@@ -1183,6 +1183,10 @@ export const TYPERT = {
           {
             "name": "NativeSourceView",
             "declaration": "export interface NativeSourceView {\n    status: 'available' | 'unavailable';\n    cut?: NativeSourceCut;\n    inputs: NativeConsumedInput[];\n    admissions: NativeAdmission[];\n    omitted: number;\n    omittedAdmissions: number;\n    reason?: string;\n}"
+          },
+          {
+            "name": "ObservedBackup",
+            "declaration": "export type ObservedBackup = z.infer<typeof backupSchema>;"
           },
           {
             "name": "ObservedFile",
@@ -1237,6 +1241,14 @@ export const TYPERT = {
             "declaration": "export type StudentWatchFrame = { kind: 'snapshot'; value: StudentQueryResult; } | { kind: 'failure'; message: string; };"
           },
           {
+            "name": "StudyReadCache",
+            "declaration": "export class StudyReadCache {\n    readonly files: Map<string, { version: FsVersion; bytes: Uint8Array; value: unknown; file?: OfficialFile; }>;\n    readonly backups: Map<string, { version: string; backup: ObservedBackup; }>;\n    readonly queries: Map<string, WorkspaceProjectionCache>;\n    readonly legacy: Map<string, { version: string; state: StudyState; }>;\n    readonly entities: Map<string, { signature: string; state: StudyState; at: number; refreshAfter: number; }>;\n    clear(): void;\n}"
+          },
+          {
+            "name": "StudyState",
+            "declaration": "export type StudyState = z.infer<typeof stateSchema>;"
+          },
+          {
             "name": "TermId",
             "declaration": "export type TermId = Branded<'StudentTermId'>;"
           },
@@ -1257,6 +1269,10 @@ export const TYPERT = {
             "declaration": "export type WorksheetId = Branded<'StudentWorksheetId'>;"
           },
           {
+            "name": "WorkspaceProjectionCache",
+            "declaration": "export interface WorkspaceProjectionCache {\n    signature: string;\n    state: StudyState;\n    at: number;\n    refreshAfter: number;\n    summary?: ReturnType<typeof weeklySummary>;\n    queries: Map<string, Record<string, unknown>>;\n}"
+          },
+          {
             "name": "WorkspaceQuery",
             "declaration": "export interface WorkspaceQuery {\n    kind: 'learning-context' | 'summary' | 'files' | 'settings' | 'status' | 'curriculum' | 'elements' | 'exercises' | 'review-sheet' | 'diagnose' | 'weak' | 'due' | 'pending' | 'progress' | 'concepts' | 'objectives' | 'relations' | 'worksheets' | 'paper-results' | 'materials' | 'mistakes' | 'sessions' | 'attempts';\n    subject?: 'math' | 'chinese' | 'english';\n    id?: string;\n    unit?: string;\n    grade?: number;\n    term?: 'first' | 'second';\n    offset?: number;\n}"
           },
@@ -1266,7 +1282,7 @@ export const TYPERT = {
           },
           {
             "name": "WorkspaceRead",
-            "declaration": "export interface WorkspaceRead {\n    status: 'valid' | 'missing' | 'invalid' | 'future-format' | 'changing' | 'legacy' | 'archived';\n    files: ObservedFile[];\n    membership: { path: string; names: string[]; }[];\n    issues: FileIssue[];\n    workspace?: ValidatedWorkspace;\n    legacy?: unknown;\n}"
+            "declaration": "export interface WorkspaceRead {\n    cache?: StudyReadCache;\n    status: 'valid' | 'missing' | 'invalid' | 'future-format' | 'changing' | 'legacy' | 'archived';\n    files: ObservedFile[];\n    membership: { path: string; names: string[]; }[];\n    issues: FileIssue[];\n    workspace?: ValidatedWorkspace;\n    legacy?: unknown;\n}"
           }
         ]
       },

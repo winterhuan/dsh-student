@@ -76,7 +76,13 @@ it('marks a lost carrier stale and opens a fresh baseline after the native gener
       const source = (async function* () {
         try {
           yield { kind: 'snapshot' as const, value: snapshot(`generation-${current}`) }
-          if (current === 1) { await lose.promise; generation.set(undefined); throw new RemoteStreamCarrierError('Carrier lost') }
+          if (current === 1) {
+            const abort = () => lose.resolve()
+            signal?.addEventListener('abort', abort, { once: true })
+            try { if (!signal?.aborted) await lose.promise } finally { signal?.removeEventListener('abort', abort) }
+            if (signal?.aborted) return
+            generation.set(undefined); throw new RemoteStreamCarrierError('Carrier lost')
+          }
           await new Promise<void>(resolve => { if (signal?.aborted) resolve(); else signal?.addEventListener('abort', () => resolve(), { once: true }) })
         } finally { closed++ }
       })()

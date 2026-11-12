@@ -2,9 +2,9 @@ import { createHash } from 'node:crypto';
 import { stateSchema } from "../schema.js";
 import { migrateStudyFile } from "./legacy.js";
 import { validateStudyFiles } from "./validation.js";
+import { StudyReadCache } from "./cache.js";
 const MAX_FILE_BYTES = 8_388_608;
 const MAX_TOTAL_BYTES = 33_554_432;
-const cache = new Map();
 /**
  * Read a stable set of official files, checking membership and actual versions on both sides.
  * @param fs - filesystem adapter in the caller's execution world.
@@ -14,6 +14,11 @@ const cache = new Map();
  * @returns validated facts or an explicit incomplete, invalid or changing result.
  */
 export async function readWorkspace(fs, signal, prior = [], nativeSources = []) {
+    const owner = fs.cache ??= new StudyReadCache();
+    return { ...await readWorkspaceFiles(fs, signal, prior, nativeSources, owner), cache: owner };
+}
+async function readWorkspaceFiles(fs, signal, prior, nativeSources, owner) {
+    const cache = owner.files;
     for (let attempt = 0; attempt < 3; attempt += 1) {
         signal.throwIfAborted();
         const membership = [];

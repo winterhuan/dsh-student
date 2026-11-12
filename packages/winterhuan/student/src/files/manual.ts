@@ -1,4 +1,5 @@
 /** Typed application-owned manual saves share official validation and current-version CAS. */
+import { z } from 'zod'
 import type { FsVersion } from '@deepseek-ai/dsh-fs'
 import type { Command } from '../schema.ts'
 import { updateStudy } from '../learning/update/index.ts'
@@ -30,7 +31,7 @@ export interface ManualSaveRequest {
   intent: ManualSettingsIntent | ManualWorksheetIntent
 }
 /** Outcomes keep current edited values available for retained-draft conflicts. */
-export interface ManualSaveResult { status: 'saved' | 'unchanged' | 'conflict' | 'invalid' | 'old-term' | 'unknown'; current: ManualBaseline; read: WorkspaceRead; reason?: string }
+export interface ManualSaveResult { status: 'saved' | 'unchanged' | 'conflict' | 'invalid' | 'old-term' | 'unknown'; current: Record<string, import('../types.ts').StudentJsonValue>; read: WorkspaceRead; reason?: string }
 
 /**
  * Capture exactly the fields a typed manual intent edits.
@@ -38,7 +39,11 @@ export interface ManualSaveResult { status: 'saved' | 'unchanged' | 'conflict' |
  * @param intent - intended settings save or worksheet corrections.
  * @returns edited field values suitable for the draft baseline and conflict display.
  */
-export function manualFields(read: WorkspaceRead, intent: ManualSaveRequest['intent']): ManualBaseline {
+export function manualFields(read: WorkspaceRead, intent: ManualSaveRequest['intent']): Record<string, import('../types.ts').StudentJsonValue> {
+  return z.record(z.string(), z.json()).parse(JSON.parse(JSON.stringify(editedFields(read, intent))))
+}
+
+function editedFields(read: WorkspaceRead, intent: ManualSaveRequest['intent']): ManualBaseline {
   const workspace = read.workspace
   if (!workspace) return {}
   if (intent.kind === 'worksheet-assessments') {
@@ -107,7 +112,7 @@ export async function saveManual(fs: StudyFiles, request: ManualSaveRequest, now
       const response = next.responses.find(response => response.id === update.responseId)
       if (!response || !update.userConfirmation.trim()) return { status: 'invalid', current, read }
       if (update.assistance) { response.assistance = update.assistance; response.assistanceConfirmation = update.userConfirmation }
-      if (update.answerDate) response.answerDate = update.answerDate
+      if (update.answerDate) { response.answerDate = update.answerDate; response.answerDateConfirmation = update.userConfirmation }
     }
     for (const assessment of request.intent.assessments) {
       const existing = next.assessments.findIndex(item => item.responseId === assessment.responseId)

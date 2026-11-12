@@ -11,7 +11,8 @@ type Goal = {
 };
 type Act = (command: Command, withTutor?: boolean, prompt?: string) => Promise<void>;
 /** The learner's page: one recommended next step, the current question, and a folded set of other ways to practise. */
-export declare function TodayView({ study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom }: {
+export declare function TodayView({ study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom, draftScope }: {
+    draftScope?: string;
     study: Study;
     subject: Subject;
     activity: Activity;

@@ -117,7 +117,10 @@ export function weeklySummary(state: StudyState, now: number, insight: StudyInsi
     const before = structuredClone(state)
     attachEvidence(before, { entries: index.entries.filter(item => item.answerDate.kind === 'instant' ? item.answerDate.at < at : item.answerDate.kind === 'day' ? item.answerDate.day < studyDay(at) : false), stuckSignals: index.stuckSignals.filter(signal => signal.at <= beforeAt) })
     scheduleMistakes(before, beforeAt)
-    for (const goal of studyInsight(before, beforeAt).objectives) if (ever.has(goal.id) && (goal.level === 'due' || goal.level === 'weak')) troubled.add(goal.id)
+    for (const goal of studyInsight(before, beforeAt).objectives) {
+      if (goal.level === 'mastered') ever.add(goal.id)
+      else if (ever.has(goal.id) && (goal.level === 'due' || goal.level === 'weak')) troubled.add(goal.id)
+    }
     const historical = structuredClone(state)
     historical.mistakes = historical.mistakes.filter(item => item.confirmedAt === undefined || item.confirmedAt <= at)
     historical.teachingQueue = historical.teachingQueue.filter(item => item.confirmedAt <= at)

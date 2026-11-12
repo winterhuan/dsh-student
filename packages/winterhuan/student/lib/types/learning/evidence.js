@@ -1,9 +1,9 @@
 import { studyDay } from "./shared.js";
-const indexes = new WeakMap();
+const EVIDENCE = Symbol('studentEvidence');
 /**
  * Derive effective facts once from validated block and worksheet owners.
  * @param workspace - current validated entity files.
- * @returns one fact per saved response, including unassessed and unknown facts.
+ * @returns one fact per saved response, including unassessed facts and unknown dates, help or unverified native sources; confirmed paper days retain day precision.
  */
 export function deriveEvidence(workspace) {
     const entries = [];
@@ -26,6 +26,7 @@ export function deriveEvidence(workspace) {
                 ...(question.basisStatus ? { basisStatus: question.basisStatus } : {}),
                 ...(question.mistakeId ? { mistakeId: question.mistakeId } : {}), rawResponse: response.rawResponse,
                 result: question.basisStatus ? 'unassessed' : assessment?.result ?? 'unassessed', assistance: response.assistance, source: response.source,
+                sourceStatus: source.kind === 'unknown' || source.kind === 'native' && (!matchedNative || source.receiptAt !== undefined && source.receiptAt !== matchedNative.receiptAt) ? 'unknown' : 'known',
                 answerDate,
                 ...(assessment ? { assessedAt: assessment.assessedAt } : {}) });
         }
@@ -44,19 +45,19 @@ export function deriveEvidence(workspace) {
  * @param index - normalized facts from the official files.
  * @returns the same display state.
  */
-export function attachEvidence(state, index) { indexes.set(state, index); return state; }
+export function attachEvidence(state, index) { Object.defineProperty(state, EVIDENCE, { value: index, configurable: true }); return state; }
 /**
  * Read the shared index. Legacy grading and receipt fields do not establish actual answer dates.
  * @param state - current display state or handler result.
  * @returns normalized facts for every domain projection.
  */
 export function evidenceOf(state) {
-    const attached = indexes.get(state);
+    const attached = state[EVIDENCE];
     if (attached)
         return attached;
     const entries = state.attempts.map(item => ({ termId: 'legacy', ownerId: item.sessionId, ownerKind: 'block', responseId: item.id, questionId: item.id,
         subject: item.subject, topic: item.topic, rawResponse: item.rawResponse ?? item.response, result: item.result, assistance: 'unknown',
-        answerDate: { kind: 'unknown' }, source: { kind: 'legacy', sourcePath: '.study/state.json', row: `attempts:${item.sessionId}:${item.id}` },
+        answerDate: { kind: 'unknown' }, sourceStatus: 'known', source: { kind: 'legacy', sourcePath: '.study/state.json', row: `attempts:${item.sessionId}:${item.id}` },
         ...(item.objectiveId ? { objectiveId: item.objectiveId } : {}), ...(item.mistakeId ? { mistakeId: item.mistakeId } : {}) }));
     for (const item of state.paperResults) {
         const sheet = state.worksheets.find(sheet => sheet.id === item.worksheetId);
@@ -66,7 +67,7 @@ export function evidenceOf(state) {
         const goal = question.objectiveId ?? sheet.objectiveId;
         entries.push({ termId: 'legacy', ownerId: sheet.id, ownerKind: 'worksheet', responseId: item.itemId, questionId: item.itemId,
             subject: sheet.subject, topic: question.prompt, rawResponse: item.response, result: item.result, assistance: 'unknown',
-            answerDate: { kind: 'unknown' }, source: { kind: 'legacy', sourcePath: '.study/state.json', row: `paperResults:${sheet.id}:${item.itemId}` },
+            answerDate: { kind: 'unknown' }, sourceStatus: 'known', source: { kind: 'legacy', sourcePath: '.study/state.json', row: `paperResults:${sheet.id}:${item.itemId}` },
             ...(goal ? { objectiveId: goal } : {}), ...(question.mistakeId ? { mistakeId: question.mistakeId } : {}) });
     }
     return { entries, stuckSignals: [] };

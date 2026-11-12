@@ -15,7 +15,7 @@ export function updateStudy(state: StudyState | undefined, command: Command, now
   if (command.action === 'answer' && task) {
     const entry: EffectiveEvidence = { termId: 'synthetic-term', ownerId: task.sessionId, ownerKind: 'block', responseId: task.id, questionId: task.id, subject: task.subject, topic: task.topic,
       rawResponse: command.response, result: 'unassessed', assistance: task.hintLevel > 0 ? 'hint' : task.phase === 'demo' ? 'worked-example' : 'independent',
-      answerDate: { kind: 'instant', at: now, basis: 'current-manual', sourceVersion: `fixture-answer:${task.sessionId}:${task.id}` }, source: { kind: 'manual', entry: 'current', parentConfirmation: 'Synthetic actual-answer declaration' },
+      answerDate: { kind: 'instant', at: now, basis: 'current-manual', sourceVersion: `fixture-answer:${task.sessionId}:${task.id}` }, sourceStatus: 'known', source: { kind: 'manual', entry: 'current', parentConfirmation: 'Synthetic actual-answer declaration' },
       ...(task.objectiveId ? { objectiveId: task.objectiveId } : {}), ...(task.mistakeId ? { mistakeId: task.mistakeId } : {}) }
     const existing = entries.findIndex(item => item.ownerId === task.sessionId && item.responseId === task.id)
     if (existing < 0) entries.push(entry)
@@ -36,7 +36,7 @@ export function updateStudy(state: StudyState | undefined, command: Command, now
       if (existing) { existing.result = saved.result; existing.assistance = saved.assistance }
       else entries.push({ termId: 'synthetic-term', ownerId: worksheetId, ownerKind: 'worksheet', responseId: item.itemId, questionId: item.itemId, subject: sheet.subject, topic: question.prompt,
         rawResponse: saved.response, result: saved.result, assistance: saved.assistance,
-        answerDate: { kind: 'instant', at: now, basis: 'current-manual', sourceVersion: `fixture-paper:${worksheetId}:${item.itemId}` }, source: { kind: 'manual', entry: 'current', parentConfirmation: 'Synthetic actual paper-answer declaration' },
+        answerDate: { kind: 'instant', at: now, basis: 'current-manual', sourceVersion: `fixture-paper:${worksheetId}:${item.itemId}` }, sourceStatus: 'known', source: { kind: 'manual', entry: 'current', parentConfirmation: 'Synthetic actual paper-answer declaration' },
         ...(question.objectiveId ? { objectiveId: question.objectiveId } : {}), ...(question.mistakeId ? { mistakeId: question.mistakeId } : {}) })
     }
   }

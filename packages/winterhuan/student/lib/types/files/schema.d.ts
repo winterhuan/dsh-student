@@ -412,6 +412,7 @@ export declare const responseSchema: z.ZodObject<{
         "worked-example": "worked-example";
     }>;
     assistanceConfirmation: z.ZodOptional<z.ZodString>;
+    answerDateConfirmation: z.ZodOptional<z.ZodString>;
     answerDate: z.ZodOptional<z.ZodDiscriminatedUnion<[z.ZodObject<{
         kind: z.ZodLiteral<"unknown">;
     }, z.core.$strict>, z.ZodObject<{
@@ -1025,6 +1026,7 @@ export declare const blockSchema: z.ZodObject<{
             "worked-example": "worked-example";
         }>;
         assistanceConfirmation: z.ZodOptional<z.ZodString>;
+        answerDateConfirmation: z.ZodOptional<z.ZodString>;
         answerDate: z.ZodOptional<z.ZodDiscriminatedUnion<[z.ZodObject<{
             kind: z.ZodLiteral<"unknown">;
         }, z.core.$strict>, z.ZodObject<{
@@ -1533,6 +1535,7 @@ export declare const worksheetSchema: z.ZodObject<{
             "worked-example": "worked-example";
         }>;
         assistanceConfirmation: z.ZodOptional<z.ZodString>;
+        answerDateConfirmation: z.ZodOptional<z.ZodString>;
         answerDate: z.ZodOptional<z.ZodDiscriminatedUnion<[z.ZodObject<{
             kind: z.ZodLiteral<"unknown">;
         }, z.core.$strict>, z.ZodObject<{
@@ -2677,6 +2680,7 @@ export declare const officialFileSchemas: {
                 "worked-example": "worked-example";
             }>;
             assistanceConfirmation: z.ZodOptional<z.ZodString>;
+            answerDateConfirmation: z.ZodOptional<z.ZodString>;
             answerDate: z.ZodOptional<z.ZodDiscriminatedUnion<[z.ZodObject<{
                 kind: z.ZodLiteral<"unknown">;
             }, z.core.$strict>, z.ZodObject<{
@@ -3184,6 +3188,7 @@ export declare const officialFileSchemas: {
                 "worked-example": "worked-example";
             }>;
             assistanceConfirmation: z.ZodOptional<z.ZodString>;
+            answerDateConfirmation: z.ZodOptional<z.ZodString>;
             answerDate: z.ZodOptional<z.ZodDiscriminatedUnion<[z.ZodObject<{
                 kind: z.ZodLiteral<"unknown">;
             }, z.core.$strict>, z.ZodObject<{

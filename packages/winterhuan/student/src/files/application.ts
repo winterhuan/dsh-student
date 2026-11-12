@@ -3,6 +3,7 @@ import type { ToolExecution } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-sandbox-policy'
 import type { StudyFiles } from './read.ts'
 import { StudyBackupRetention } from './backup-retention.ts'
+import { StudyReadCacheOwner } from './cache.ts'
 
 /**
  * Bind official-file reads and guarded manual writes to the calling execution world.
@@ -18,6 +19,7 @@ export function applicationStudyFiles(exec: Pick<ToolExecution, 'agent' | 'signa
   const fs = availableFs
   const cwd = agent.session.header.cwd
   const retention = agent.ctx.root.get('studentBackups') ?? new StudyBackupRetention(agent.ctx.root)
+  const cache = agent.ctx.root.get('studentReadCache') ?? new StudyReadCacheOwner(agent.ctx.root)
   async function target(path: string, signal: AbortSignal) {
     const root = await fs.resolve(cwd, { signal })
     const resolved = await fs.resolve(path, { cwd, signal })
@@ -25,6 +27,7 @@ export function applicationStudyFiles(exec: Pick<ToolExecution, 'agent' | 'signa
     return resolved
   }
   return {
+    cache: cache.cache,
     backupRetention: retention,
     async stat(path, signal) { const resolved = await target(path, signal); const info = await fs.stat(resolved, signal); return info ? { ...info, targetKey: resolved.targetKey } : undefined },
     async list(path, signal) { const resolved = await target(path, signal); if (!await fs.stat(resolved, signal)) return []; return (await fs.listDir(resolved, signal)).map(entry => ({ name: entry.name, type: entry.type })) },

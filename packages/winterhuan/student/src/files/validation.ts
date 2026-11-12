@@ -1,6 +1,6 @@
 /** Pure parsed-file and cross-entity validation, shared by every Student consumer. */
 import { z } from 'zod'
-import { canonical, sameScope, scopeSelects } from '../learning/shared.ts'
+import { canonical, sameScope, scopeSelects, studyDay } from '../learning/shared.ts'
 import { builtinObjectiveAnywhere, curriculumFor, subjectExercises } from '../curriculum.ts'
 import { officialFileSchemas, type OfficialFile, type TermSettings, type LearningBlock, type WorksheetFile, type CollectionsFile } from './schema.ts'
 import { customObjectiveMethods } from '../schema.ts'
@@ -118,6 +118,18 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
         const sourceId = question.source.exerciseId
         if (![...(workspace.collections?.exercises ?? []), ...subjectExercises(file.subject)].some(item => item.id === sourceId && item.objectiveId === question.objectiveId)) fail(path, `questions.${i}.source`, 'exercise-source', 'Reference a saved or shipped exercise for this goal.')
       }
+      if (question.source.kind === 'mistake' && question.source.mistakeId !== question.mistakeId) fail(path, `questions.${i}.source`, 'mistake-source', 'Use the same mistake identity for the source and frozen review binding.')
+      if (question.mistakeId) {
+        const mistake = workspace.collections?.mistakes.find(item => item.id === question.mistakeId)
+        const frozen = prior.some(entry => {
+          if (entry.path !== path || entry.file.kind !== file.kind || (entry.file.kind !== 'block' && entry.file.kind !== 'worksheet')) return false
+          const oldQuestions = entry.file.kind === 'block' ? entry.file.questions : entry.file.items
+          const old = oldQuestions.find(item => item.id === question.id)
+          const used = entry.file.responses.some(response => response.questionId === question.id) || (entry.file.kind === 'worksheet' && entry.file.drafts.some(draft => draft.questionId === question.id))
+          return used && canonical(old) === canonical(question)
+        })
+        if (!frozen && (!mistake || mistake.subject !== file.subject || mistake.objectiveId !== question.objectiveId || mistake.confirmedAt === undefined || !mistake.userConfirmation)) fail(path, `questions.${i}.mistakeId`, 'mistake-source', 'Bind new review content to a confirmed mistake of the same subject and goal; preserve validated used content for historical bindings.')
+      }
     }
     for (const [i, response] of file.responses.entries()) {
       const question = questions.find(item => item.id === response.questionId)
@@ -126,7 +138,12 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
       if (response.answerDate?.kind === 'instant' && response.answerDate.basis === 'native-input' && (response.source.kind !== 'native' || response.source.receiptAt !== response.answerDate.at || response.source.inputVersion !== response.answerDate.sourceVersion)) fail(path, `responses.${i}.answerDate`, 'native-input-version', 'Use the matching consumed native input version and receipt time, or retain an unknown date.')
       if (response.answerDate?.kind === 'instant' && response.answerDate.basis === 'current-manual' && (response.source.kind !== 'manual' || response.source.entry !== 'current')) fail(path, `responses.${i}.answerDate`, 'current-manual-source', 'Use a confirmed current manual response; historical and paper entry retain day precision or an unknown date.')
       if (file.kind === 'worksheet' && file.answerDate?.kind === 'instant') fail(path, 'answerDate', 'worksheet-date-precision', 'Use a parent-confirmed calendar date for a worksheet-wide date.')
-      if (file.kind === 'block' && file.hints.some(hint => hint.questionId === response.questionId && (hint.responseId === response.id || (response.answerDate?.kind === 'instant' && hint.at <= response.answerDate.at))) && !['hint', 'worked-example'].includes(response.assistance)) fail(path, `responses.${i}.assistance`, 'known-help', 'Preserve the help used for this response.')
+      if (file.kind === 'block') {
+        const hints = file.hints.filter(hint => hint.questionId === response.questionId)
+        const known = hints.some(hint => hint.responseId === response.id || (!hint.responseId && response.answerDate?.kind === 'instant' && hint.at <= response.answerDate.at))
+        const ambiguous = hints.some(hint => !hint.responseId && (response.answerDate?.kind === 'day' ? studyDay(hint.at) <= response.answerDate.day : response.answerDate?.kind !== 'instant'))
+        if (known && !['hint', 'worked-example'].includes(response.assistance) || ambiguous && response.assistance === 'independent') fail(path, `responses.${i}.assistance`, 'known-help', 'Preserve known help; associate a question hint with its actual response before claiming an independently answered attempt with uncertain order.')
+      }
     }
     for (const [i, assessment] of file.assessments.entries()) {
       const response = file.responses.find(item => item.id === assessment.responseId)
@@ -149,10 +166,11 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
       }
       for (const response of old.file.responses) {
         const current = file.responses.find(item => item.id === response.id)
-        const { assistance: oldHelp, assistanceConfirmation: _oldConfirmation, answerDate: oldDate, ...original } = response
-        const { assistance: newHelp, assistanceConfirmation: newConfirmation, answerDate: newDate, ...comparable } = current ?? response
-        const helpChanged = newHelp !== oldHelp && !(oldHelp === 'unknown' && newConfirmation)
-        const dateChanged = canonical(oldDate) !== canonical(newDate) && !(oldDate?.kind !== 'instant' && newDate?.kind === 'day' && newDate.parentConfirmation)
+        const { assistance: oldHelp, assistanceConfirmation: _oldConfirmation, answerDate: oldDate, answerDateConfirmation: _oldDateConfirmation, ...original } = response
+        const { assistance: newHelp, assistanceConfirmation: newConfirmation, answerDate: newDate, answerDateConfirmation: dateConfirmation, ...comparable } = current ?? response
+        const greaterHelp = oldHelp === 'independent' && ['hint', 'worked-example'].includes(newHelp) || oldHelp === 'hint' && newHelp === 'worked-example'
+        const helpChanged = newHelp !== oldHelp && !((oldHelp === 'unknown' || greaterHelp) && newConfirmation)
+        const dateChanged = canonical(oldDate) !== canonical(newDate) && !(oldDate?.kind !== 'instant' && (newDate?.kind === 'day' && newDate.parentConfirmation || newDate?.kind === 'unknown' && dateConfirmation))
         if (!current || canonical(comparable) !== canonical(original) || helpChanged || dateChanged) fail(path, 'responses', 'original-response', 'Preserve original response identity and wording; confirm unknown help or actual paper dates explicitly and correct assessment separately.')
       }
     }

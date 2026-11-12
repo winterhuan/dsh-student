@@ -100,15 +100,11 @@ export function createStudentResourceOwner(remote) {
  */
 export async function mountStudentResource(ctx, contribution = TYPERT_REMOTE) {
     const remoteDispose = await ctx.remote.$mount(contribution);
-    const owner = createStudentResourceOwner(ctx.remote);
-    try {
-        const release = ctx.resources.register(owner.provider);
-        ctx.effect(() => async () => { release(); await owner.dispose(); await remoteDispose(); }, 'student: resource transport');
-    }
-    catch (error) {
-        await owner.dispose();
-        await remoteDispose();
-        throw error;
-    }
+    ctx.effect(() => remoteDispose, 'student: remote namespace');
+    ctx.inject(['remote.student'], scope => {
+        const owner = createStudentResourceOwner({ student: scope.remote.student, $stream: options => scope.remote.$stream(options) });
+        const release = scope.resources.register(owner.provider);
+        scope.effect(() => async () => { release(); await owner.dispose(); }, 'student: resource transport');
+    });
 }
 //# sourceMappingURL=resource.js.map

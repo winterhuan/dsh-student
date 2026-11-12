@@ -49,6 +49,7 @@ export const questionSchema = z.object({ id, objectiveId: target, mistakeId: id.
 /** Original learner wording and its actual date; assessments cannot replace these fields. */
 export const responseSchema = z.object({ id: responseId, questionId: id, rawResponse: text, response: text.optional(), assistance: assistanceSchema,
     assistanceConfirmation: text.optional(),
+    answerDateConfirmation: text.optional(),
     answerDate: answerDateSchema.optional(), source: responseSourceSchema }).strict();
 /** The current assessment of one response. A correction replaces this entry under the same response identity. */
 export const assessmentSchema = z.object({ id, responseId, result: z.enum(['correct', 'partial', 'incorrect', 'unassessed', 'stuck']),

@@ -1,65 +1,29 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
+import type { ResourceSnapshot } from '@deepseek-ai/dsh-client-resources/client'
 import type { Dashboard, MistakeStatus } from '../dashboard.ts'
-import type { Command } from '../schema.ts'
+import type { StudentQueryResult, StudentSessionId, StudentJsonValue } from '../types.ts'
+import { studentResourceAddress } from './resource.ts'
 
-/** Query identity for one visible workbench: the open tab, notebook page, subject, notebook filter, an optional knowledge-map scope and an optional check-in scope. */
+/** One dashboard selection; browsing and diagnostic ranges do not change the active block. */
 export interface StudyQuery { tab: 'today' | 'map' | 'mistakes' | 'parent'; offset: number; subject: 'chinese' | 'math' | 'english'; status: MistakeStatus; mapGrade?: number; mapTerm?: 'first' | 'second'; diagGrade?: number; diagTerm?: 'first' | 'second'; diagUnit?: string }
+/** Native resource hook supplied by the enclosing DSH slot. */
+export type UseStudentResource = (address: string) => ResourceSnapshot<StudentQueryResult>
 
-/** One workspace response, including an error returned by the route. */
-type PollResponse = Dashboard & { error?: string }
-
-/** Poll visible workbenches; preserve data on failure and discard obsolete responses. */
-export function useStudy(sessionId: string, visible: boolean, networkError: string, query: StudyQuery) {
-  const [data, setData] = useState<Dashboard>()
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
-  const latest = useRef(0)
-  const alive = useRef(true)
-  const writing = useRef(false)
+/** Read validated dashboard and stable learning identities through the shared resource lifetime. */
+export function useStudy(sessionId: StudentSessionId, visible: boolean, networkError: string, query: StudyQuery, useResource: UseStudentResource) {
+  const { offset: mistakeOffset, status: mistakeStatus, ...options } = query
+  const resource = useResource(visible ? studentResourceAddress(sessionId, { kind: 'dashboard', options: { ...options, mistakeOffset, mistakeStatus } }) : '')
+  const context = useResource(visible ? studentResourceAddress(sessionId, { kind: 'learning-context' }) : '')
+  const data = resource.value && dashboardValue(resource.value.data) ? resource.value.data : undefined
   const offset = useRef(0)
-  const controllers = useRef(new Set<AbortController>())
-  const request = useCallback(async (change?: Command, revision?: number) => {
-    const sequence = ++latest.current
-    const controller = new AbortController()
-    controllers.current.add(controller)
-    try {
-      const scope = `${query.mapGrade !== undefined ? `&mapGrade=${query.mapGrade}` : ''}${query.mapTerm !== undefined ? `&mapTerm=${query.mapTerm}` : ''}${query.diagGrade !== undefined ? `&diagGrade=${query.diagGrade}` : ''}${query.diagTerm !== undefined ? `&diagTerm=${query.diagTerm}` : ''}${query.diagUnit !== undefined && query.diagUnit !== '' ? `&diagUnit=${encodeURIComponent(query.diagUnit)}` : ''}`
-      const response = await fetch(`/student/workspace?sessionId=${encodeURIComponent(sessionId)}&tab=${query.tab}&mistakeOffset=${query.offset}&subject=${query.subject}&mistakeStatus=${query.status}${scope}`, {
-        signal: controller.signal, ...(change ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ revision, change }) } : {}),
-      })
-      const value = await response.json() as PollResponse
-      if (!response.ok) throw new Error(value.error ?? networkError)
-      if (alive.current && sequence === latest.current) {
-        offset.current = value.serverNow - Date.now()
-        setData(value)
-        setError('')
-      }
-      return value
-    } catch (reason) {
-      if (alive.current && !controller.signal.aborted && sequence === latest.current) setError(reason instanceof Error ? reason.message : networkError)
-      throw reason
-    } finally { controllers.current.delete(controller) }
-  }, [sessionId, networkError, query.tab, query.offset, query.subject, query.status, query.mapGrade, query.mapTerm, query.diagGrade, query.diagTerm, query.diagUnit])
-  const reload = useCallback(async () => {
-    if (writing.current) return
-    await request().catch(() => {})
-  }, [request])
-  useEffect(() => {
-    alive.current = true
-    return () => { alive.current = false; latest.current++; for (const controller of controllers.current) controller.abort() }
-  }, [])
-  useEffect(() => {
-    if (!visible) return
-    void reload()
-    const timer = window.setInterval(() => { if (document.visibilityState !== 'hidden') void reload() }, 3000)
-    return () => window.clearInterval(timer)
-  }, [visible, reload])
-  const change = useCallback(async (command: Command, revision = data?.revision ?? 0) => {
-    if (writing.current) throw new Error(networkError)
-    writing.current = true
-    setBusy(true)
-    try { return await request(command, revision) }
-    finally { writing.current = false; if (alive.current) setBusy(false) }
-  }, [request, data?.revision, networkError])
-  return { data, error, busy, reload, change, offset }
+  if (data) offset.current = data.serverNow - Date.now()
+  const facts = context.value?.data
+  const termId = facts && typeof facts === 'object' && 'termId' in facts && typeof facts.termId === 'string' ? facts.termId : undefined
+  const stale = resource.status === 'failed' || context.status === 'failed'
+  return { data, context: facts, termId, value: resource.value, stale, error: stale ? networkError : '', offset }
+}
+
+// The shared Host dashboard query validates all business content; this checks its wire discriminator.
+function dashboardValue(value: StudentJsonValue): value is StudentJsonValue & Dashboard {
+  return value !== null && typeof value === 'object' && 'serverNow' in value && typeof value.serverNow === 'number' && 'revision' in value && 'study' in value && 'interactiveLessons' in value
 }

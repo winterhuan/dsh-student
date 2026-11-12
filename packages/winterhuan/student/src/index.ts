@@ -4,9 +4,8 @@ import StudentRemote from './remote-service.ts'
 import type { StudentTransportConfig } from './types.ts'
 import type z from '@deepseek-ai/schemastery'
 import { StudyBackupRetention } from './files/backup-retention.ts'
+import { StudyReadCacheOwner } from './files/cache.ts'
 export * from './remote-service.ts'
-export * from './native-source.ts'
-export * from './transport.ts'
 export type * from './types.ts'
 
 /** Independent student plugin identity. */
@@ -20,5 +19,6 @@ export const Config: z<StudentTransportConfig> = StudentRemote.Config
 export function apply(context: Context, config: StudentTransportConfig): void {
   registerStudyRoute(context)
   context.plugin(StudyBackupRetention)
+  context.plugin(StudyReadCacheOwner)
   context.plugin(StudentRemote, config)
 }

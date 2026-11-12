@@ -1,3 +1,5 @@
+/** Typed application-owned manual saves share official validation and current-version CAS. */
+import { z } from 'zod';
 import { updateStudy } from "../learning/update/index.js";
 import { canonical } from "../learning/shared.js";
 import { projectWorkspace } from "./projection.js";
@@ -11,6 +13,9 @@ import { readBackups, backupVersions, retainObservedBackups } from "./recovery.j
  * @returns edited field values suitable for the draft baseline and conflict display.
  */
 export function manualFields(read, intent) {
+    return z.record(z.string(), z.json()).parse(JSON.parse(JSON.stringify(editedFields(read, intent))));
+}
+function editedFields(read, intent) {
     const workspace = read.workspace;
     if (!workspace)
         return {};
@@ -96,8 +101,10 @@ export async function saveManual(fs, request, now, signal) {
                 response.assistance = update.assistance;
                 response.assistanceConfirmation = update.userConfirmation;
             }
-            if (update.answerDate)
+            if (update.answerDate) {
                 response.answerDate = update.answerDate;
+                response.answerDateConfirmation = update.userConfirmation;
+            }
         }
         for (const assessment of request.intent.assessments) {
             const existing = next.assessments.findIndex(item => item.responseId === assessment.responseId);

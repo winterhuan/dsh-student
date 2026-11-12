@@ -119,7 +119,6 @@ export function describeMigration(read, backup, existing = []) {
 /** A validated observed-version backup, separate from business authority. */
 export const backupSchema = z.object({ format: z.literal(1), kind: z.literal('observed-version'), sourcePath: z.string().max(240), targetKey: z.string().max(2000), version: z.string().max(2000),
     observedAt: z.number().int().nonnegative(), sha256: z.string().regex(/^[a-f0-9]{64}$/u), bytesBase64: z.string().max(11_184_812) }).strict();
-const backupCache = new Map();
 /**
  * Inspect existing backup candidates without restoring or deleting original invalid files.
  * @param fs - read-capable workspace adapter.
@@ -127,6 +126,7 @@ const backupCache = new Map();
  * @returns byte-verified backup records and bounded per-file failures.
  */
 export async function readBackups(fs, signal) {
+    const backupCache = fs.cache?.backups ?? new Map();
     const backups = [];
     const issues = [];
     const entries = await fs.list('.study/backups', signal);

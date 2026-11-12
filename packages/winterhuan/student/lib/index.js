@@ -1,7 +1,7 @@
-import { _ as applicationStudyFiles, a as projectWorkspace, i as queryWorkspace, n as queryDashboard, t as nextRefreshAfter, u as scheduleMistakes, v as StudyBackupRetention } from "./queries-BZMV7lLe.js";
-import { c as readInteractiveLessons, ct as stateSchema, d as backupVersions, g as retainObservedBackups, h as readBackups, it as migrateStudyFile, v as readWorkspace } from "./openmaic-N9F1Z3na.js";
-import { n as resolveNativeSources, t as readStudentWorkspace } from "./transport-BE1rMRq_.js";
-import { n as saveManual, t as manualFields } from "./manual-BlusTzBQ.js";
+import { a as queryWorkspace, b as StudyBackupRetention, f as scheduleMistakes, n as queryDashboard, o as queryWorkspaceDashboard, r as queryJsonData, s as projectWorkspace, t as nextRefreshAfter, y as applicationStudyFiles } from "./queries-DiF4-X5v.js";
+import { c as readInteractiveLessons, ct as stateSchema, d as backupVersions, g as retainObservedBackups, h as readBackups, it as migrateStudyFile, mt as StudyReadCacheOwner, v as readWorkspace } from "./openmaic-LJGZi6qr.js";
+import { t as readStudentWorkspace } from "./transport-Bq3tBhRM.js";
+import { n as saveManual, t as manualFields } from "./manual-Cv8WsyvX.js";
 import { z } from "zod";
 import { createHash } from "node:crypto";
 import { SessionId } from "@deepseek-ai/dsh-session";
@@ -11,8 +11,6 @@ import z$1 from "@deepseek-ai/schemastery";
 import { Remote, RemoteError, TypertRemoteService } from "@deepseek-ai/dsh-typert-protocol";
 //#region lib/types/store.js
 const MAX_BYTES = 8388608;
-const stateCache = /* @__PURE__ */ new Map();
-const entityCache = /* @__PURE__ */ new Map();
 /**
 * Read validated v2 files or preserved legacy v1 bytes in the calling Session's filesystem.
 * Reads preserve absence and legacy bytes; current valid v2 observations can retain bounded backups.
@@ -29,6 +27,8 @@ async function studyStore(exec) {
 	if (!fs || !policy) throw new Error("学生插件需要 DSH 文件系统和沙箱策略服务。");
 	const cwd = agent.session.header.cwd;
 	const files = applicationStudyFiles(exec);
+	const stateCache = files.cache.legacy;
+	const entityCache = files.cache.entities;
 	if (await files.stat(".study/settings.json", exec.signal)) {
 		const backups = await readBackups(files, exec.signal);
 		const read = await readWorkspace(files, exec.signal, backupVersions(backups.backups));
@@ -358,17 +358,12 @@ let StudentRemote = (() => {
 				signal
 			});
 			const now = Date.now();
-			const query = request.kind === "dashboard" ? {
-				status: read.status,
-				versions: this.readFacts(read).versions,
-				issues: read.issues,
-				...read.status === "valid" && read.workspace ? { data: queryDashboard(projectWorkspace(read.workspace, now), now, request.options, await readInteractiveLessons(agent, signal, read.workspace.settings.openmaic?.baseUrl)) } : {}
-			} : queryWorkspace(read, request, now);
+			const query = request.kind === "dashboard" ? queryWorkspaceDashboard(read, now, request.options, read.workspace ? await readInteractiveLessons(agent, signal, read.workspace.settings.openmaic?.baseUrl) : void 0) : queryWorkspace(read, request, now);
 			const { observations: _observations, ...view } = native;
-			const { data, ...facts } = query;
+			const { data: _data, ...facts } = query;
 			const result = {
 				...facts,
-				data: data === void 0 ? null : z.json().parse(JSON.parse(JSON.stringify(data))),
+				data: queryJsonData(query),
 				readAt: now,
 				refreshAfter: query.refreshAfter ?? now + this.config.refreshIntervalMs,
 				token: createHash("sha256").update(JSON.stringify([
@@ -436,7 +431,7 @@ let StudentRemote = (() => {
 			});
 			return this.wire({
 				...this.readFacts(read),
-				baseline: z.record(z.string(), z.json()).parse(JSON.parse(JSON.stringify(manualFields(read, intent))))
+				baseline: manualFields(read, intent)
 			});
 		}
 		/**
@@ -457,7 +452,7 @@ let StudentRemote = (() => {
 			return this.wire({
 				...this.readFacts(result.read),
 				status: result.status,
-				current: z.record(z.string(), z.json()).parse(JSON.parse(JSON.stringify(result.current))),
+				current: result.current,
 				...result.reason === void 0 ? {} : { reason: result.reason }
 			});
 		}
@@ -536,7 +531,8 @@ const Config = StudentRemote.Config;
 function apply(context, config) {
 	registerStudyRoute(context);
 	context.plugin(StudyBackupRetention);
+	context.plugin(StudyReadCacheOwner);
 	context.plugin(StudentRemote, config);
 }
 //#endregion
-export { Config, StudentRemote, apply, inject, name, readStudentWorkspace, resolveNativeSources };
+export { Config, StudentRemote, apply, inject, name };

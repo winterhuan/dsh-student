@@ -28,7 +28,7 @@ export function replayMistake(mistake: StudyState['mistakes'][number], index: Ev
   let completed = false
   let consolidatedDay: string | undefined
   const registerOpportunity = (at: number) => { if (windowStart !== undefined && dueAt <= at && dueAt <= now && Math.max(dueAt, windowStart) <= at) opportunity = true }
-  const rows = evidenceAtCutoff(index, now).filter(item => item.mistakeId === mistake.id && demonstrablyAfter(item, mistake.confirmedAt!))
+  const rows = evidenceAtCutoff(index, now).filter(item => item.mistakeId === mistake.id && item.subject === mistake.subject && item.objectiveId === mistake.objectiveId && demonstrablyAfter(item, mistake.confirmedAt!))
   const groups = new Map<string, EffectiveEvidence[]>()
   for (const row of rows) { const day = evidenceDay(row)!; groups.set(day, [...groups.get(day) ?? [], row]) }
   for (const [day, entries] of [...groups].sort(([left], [right]) => left.localeCompare(right))) {

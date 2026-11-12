@@ -12,6 +12,9 @@ import { projectWorkspace } from '../files/projection.ts'
 import { diagnosticFor, insightSummary, studyInsight } from './mastery.ts'
 import { studyStatus, weeklySummary, timeStatus, summaryMinutes } from './status.ts'
 import { builtinObjectiveAnywhere, curriculumFor, subjectExercises, subjectIdeas } from '../curriculum.ts'
+import { z } from 'zod'
+import type { StudentJsonValue } from '../types.ts'
+import { StudyReadCache } from '../files/cache.ts'
 
 /** Bounded read query; an explicit clock belongs to the caller. */
 export interface WorkspaceQuery {
@@ -20,7 +23,33 @@ export interface WorkspaceQuery {
 }
 /** Dynamic CLI projection; typed page consumers use queryDashboard and the validated file DTOs. */
 export interface WorkspaceQueryResult<T = unknown> { status: WorkspaceRead['status'] | 'partial'; versions: Pick<ObservedFile, 'path' | 'targetKey' | 'version'>[]; issues?: FileIssue[]; refreshAfter?: number; data?: T }
-const workspaceQueryCache = new Map<string, { signature: string; state: StudyState; at: number; refreshAfter: number; summary?: ReturnType<typeof weeklySummary>; queries: Map<string, Record<string, unknown>> }>()
+function workspaceProjection(read: WorkspaceRead, now: number) {
+  const workspaceQueryCache = (read.cache ??= new StudyReadCache()).queries
+  const workspace = read.workspace!
+  const identity = read.files.find(file => file.path === '.study/settings.json')!.targetKey
+  const signature = JSON.stringify([read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), workspace.nativeSources ?? []])
+  let cached = workspaceQueryCache.get(identity)
+  if (!cached || cached.signature !== signature || now >= cached.refreshAfter || now < cached.at) {
+    const state = projectWorkspace(workspace, now)
+    cached = { signature, state, at: now, refreshAfter: nextRefreshAfter(state, now), queries: new Map() }
+    if (workspaceQueryCache.size >= 8) workspaceQueryCache.clear()
+    workspaceQueryCache.set(identity, cached)
+  }
+  return cached
+}
+
+/**
+ * Read a dashboard using the same version- and time-bound projection as other workspace queries.
+ * @param read - independently validated current files.
+ * @param now - caller clock.
+ * @param options - selected dashboard page and scope.
+ * @param lessons - separately read classroom status.
+ * @returns current data only for a fully valid workspace; failures retain their file issues.
+ */
+export function queryWorkspaceDashboard(read: WorkspaceRead, now: number, options: Parameters<typeof dashboard>[2] = {}, lessons?: InteractiveLessons): WorkspaceQueryResult<ReturnType<typeof queryDashboard>> {
+  const facts = { status: read.status, versions: read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), issues: read.issues }
+  return read.status === 'valid' && read.workspace ? { ...facts, data: queryDashboard(workspaceProjection(read, now).state, now, options, lessons) } : facts
+}
 /**
  * Query current validated facts. Settings and materials remain explicitly partial when unrelated entities fail.
  * @param read - one consistent workspace read.
@@ -44,15 +73,7 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
   const workspace = read.workspace
   if (request.kind === 'files') return { status: read.status === 'valid' ? 'valid' : 'partial', issues: read.issues, versions, data: workspace }
   if (request.kind === 'settings') return { status: read.status === 'valid' ? 'valid' : 'partial', issues: read.issues, versions, data: workspace.settings }
-  const identity = read.files.find(file => file.path === '.study/settings.json')!.targetKey
-  const signature = JSON.stringify([versions, workspace.nativeSources ?? []])
-  let cached = workspaceQueryCache.get(identity)
-  if (!cached || cached.signature !== signature || now >= cached.refreshAfter || now < cached.at) {
-    const state = projectWorkspace(workspace, now)
-    cached = { signature, state, at: now, refreshAfter: nextRefreshAfter(state, now), queries: new Map() }
-    if (workspaceQueryCache.size >= 8) workspaceQueryCache.clear()
-    workspaceQueryCache.set(identity, cached)
-  }
+  const cached = workspaceProjection(read, now)
   const { state, refreshAfter } = cached
   const index = evidenceOf(state)
   if (request.kind === 'learning-context') {
@@ -73,7 +94,7 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
       activeBlock: active ? { id: active.id, subject: active.subject, mode: active.mode, context: active.context, currentQuestionId: active.currentQuestionId } : null, currentQuestion: currentQuestion ?? null, responses,
       assessments: active?.assessments.filter(assessment => responses.some(response => response.id === assessment.responseId)) ?? [], savedResponse, savedAssessment, pendingAssessment: savedResponse !== null && savedAssessment === null,
       target: target ? { id: target.id, title: target.title, goal: target.goal, method: target.method, source: currentQuestion?.source, facts: elements?.facts ?? [] } : null,
-      pendingFacts: index.entries.filter(item => item.answerDate.kind === 'unknown' || item.assistance === 'unknown' || !item.objectiveId).map(item => ({ ownerId: item.ownerId, responseId: item.responseId, fields: [...(item.answerDate.kind === 'unknown' ? ['answerDate'] : []), ...(item.assistance === 'unknown' ? ['assistance'] : []), ...(item.basisStatus ? ['answerBasis'] : !item.objectiveId ? ['objectiveId'] : [])] })).slice(0, 20),
+      pendingFacts: index.entries.filter(item => item.answerDate.kind === 'unknown' || item.assistance === 'unknown' || item.sourceStatus === 'unknown' || !item.objectiveId).map(item => ({ ownerId: item.ownerId, responseId: item.responseId, fields: [...(item.answerDate.kind === 'unknown' ? ['answerDate'] : []), ...(item.assistance === 'unknown' ? ['assistance'] : []), ...(item.sourceStatus === 'unknown' ? ['source'] : []), ...(item.basisStatus ? ['answerBasis'] : !item.objectiveId ? ['objectiveId'] : [])] })).slice(0, 20),
       seeds: currentQuestion && typeof currentQuestion.objectiveId === 'string' ? subjectExercises(active!.subject).filter(item => item.objectiveId === currentQuestion.objectiveId).slice(0, 3) : [],
       elements: elements ? { ...elements, exercises: elements.exercises.slice(0, 3) } : null,
       legalActions: active ? currentQuestion ? savedResponse ? savedAssessment ? ['next-question', 'end-block', 'switch-block'] : ['request-assessment', 'end-block', 'switch-block'] : ['answer', 'request-hint', 'end-block', 'switch-block'] : ['start-question', 'end-block', 'switch-block'] : ['start-block'],
@@ -249,7 +270,8 @@ export function nextRefreshAfter(state: StudyState, now: number): number {
   for (const block of state.sessions) if (block.mode === 'diagnose') thresholds.push(block.startedAt + 14 * 86_400_000)
   return Math.min(...thresholds.filter(at => at > now))
 }
-const dashboardCache = new WeakMap<StudyState, Map<string, { refreshAfter: number; value: ReturnType<typeof dashboard> }>>()
+const DASHBOARD_CACHE = Symbol('studentDashboardCache')
+type DashboardState = StudyState & { [DASHBOARD_CACHE]?: Map<string, { refreshAfter: number; value: ReturnType<typeof dashboard> }> }
 /**
  * Reuse expensive map/mastery projections until an actual file version or time threshold changes.
  * @param state - version-cached current state, or undefined before setup.
@@ -261,15 +283,25 @@ const dashboardCache = new WeakMap<StudyState, Map<string, { refreshAfter: numbe
 export function queryDashboard(state: StudyState | undefined, now: number, options: Parameters<typeof dashboard>[2] = {}, lessons?: InteractiveLessons): ReturnType<typeof dashboard> & { refreshAfter: number } {
   if (!state) return { ...dashboard(state, now, options, lessons), refreshAfter: Date.parse(`${studyDay(now)}T00:00:00+08:00`) + 86_400_000 }
   const key = canonical(options)
-  const entries = dashboardCache.get(state) ?? new Map()
+  const owner = state as DashboardState
+  const entries = owner[DASHBOARD_CACHE] ?? new Map()
   let cached = entries.get(key)
   if (!cached || now >= cached.refreshAfter || now < cached.value.serverNow) {
     cached = { refreshAfter: nextRefreshAfter(state, now), value: dashboard(state, now, options, lessons) }
     if (entries.size >= 8) entries.clear()
     entries.set(key, cached)
-    dashboardCache.set(state, entries)
+    Object.defineProperty(owner, DASHBOARD_CACHE, { value: entries, configurable: true })
   }
   const value = cached.value
   return { ...value, serverNow: now, refreshAfter: cached.refreshAfter, interactiveLessons: lessons ?? value.interactiveLessons,
     study: value.study ? { ...value.study, ...timeStatus(state, now), weekly: { ...value.study.weekly, minutesByDay: summaryMinutes(state, now), activeDays: summaryMinutes(state, now).filter(item => item.minutes > 0).length } } : null }
+}
+
+/**
+ * Serialize a shared query projection for both CLI and typed Remote consumers.
+ * @param result - shared query facts and projection.
+ * @returns JSON-compatible data without absent optional fields.
+ */
+export function queryJsonData(result: WorkspaceQueryResult): StudentJsonValue {
+  return result.data === undefined ? null : z.json().parse(JSON.parse(JSON.stringify(result.data)))
 }

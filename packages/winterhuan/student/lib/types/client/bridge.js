@@ -1,3 +1,11 @@
+/** A failed native call retains its request identity for deliberate inspection. */
+export class StudySubmissionError extends Error {
+    requestId;
+    constructor(requestId, reason) {
+        super(reason instanceof Error ? reason.message : String(reason));
+        this.requestId = requestId;
+    }
+}
 /** Register the native submission echo without changing the user's composer draft. */
 export function tutorBridge(context, sessionId, unavailable, failed) {
     return async (text, photo) => {
@@ -9,10 +17,11 @@ export function tutorBridge(context, sessionId, unavailable, failed) {
             const result = await session.prompt([{ type: 'text', text }, ...(photo ? [{ type: 'image', mediaType: photo.mediaType, data: photo.data, name: photo.name }] : [])], 'queue', undefined, submission.requestId);
             if (!result.ok)
                 throw new Error(result.error.message || failed);
+            return { requestId: submission.requestId, admission: 'accepted' };
         }
         catch (error) {
             submission.abandon();
-            throw error;
+            throw new StudySubmissionError(submission.requestId, error);
         }
     };
 }

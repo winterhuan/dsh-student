@@ -1,6 +1,35 @@
 import { z } from "zod";
+import { Service } from "@deepseek-ai/cordis";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+//#region lib/types/files/cache.js
+/** Validated source and query caches belong to a Host instance or one read-only adapter. */
+/** Read-only adapters retain their own observations; application adapters share a disposable Host owner. */
+var StudyReadCache = class {
+	files = /* @__PURE__ */ new Map();
+	backups = /* @__PURE__ */ new Map();
+	queries = /* @__PURE__ */ new Map();
+	legacy = /* @__PURE__ */ new Map();
+	entities = /* @__PURE__ */ new Map();
+	/** Release retained source bytes and every derived projection together. */
+	clear() {
+		this.files.clear();
+		this.backups.clear();
+		this.queries.clear();
+		this.legacy.clear();
+		this.entities.clear();
+	}
+};
+/** Teardown releases source bytes; another Host starts without this Host's validation history. */
+var StudyReadCacheOwner = class extends Service {
+	cache = new StudyReadCache();
+	/** @param ctx - Host context owning the cached observations. */
+	constructor(ctx) {
+		super(ctx, "studentReadCache");
+		ctx.effect(() => () => this.cache.clear(), "student: validated read cache");
+	}
+};
+//#endregion
 //#region lib/types/interests.js
 /** Example tags used when a profile has not saved its own list. */
 const DEFAULT_INTEREST_TAGS = [
@@ -1328,7 +1357,7 @@ const SUBJECTS = [
 	"math",
 	"english"
 ];
-const cache$1 = /* @__PURE__ */ new Map();
+const cache = /* @__PURE__ */ new Map();
 const ideaCache = /* @__PURE__ */ new Map();
 const exerciseCache = /* @__PURE__ */ new Map();
 /** Read through a variable so bundler asset rewriting of `new URL(…, import.meta.url)` does not apply to data files. */
@@ -1355,11 +1384,11 @@ function subjectIdeas(subject) {
 function load(subject, grade, term) {
 	if (grade < 1 || grade > 2) return void 0;
 	const key = `${subject}-grade${grade}-${term}`;
-	const cached = cache$1.get(key);
+	const cached = cache.get(key);
 	if (cached !== void 0) return cached;
 	const url = new URL(`../knowledge/curriculum/${key}.json`, moduleUrl);
 	const file = curriculumSchema.parse(JSON.parse(readFileSync(url, "utf8")));
-	cache$1.set(key, file);
+	cache.set(key, file);
 	return file;
 }
 /**
@@ -1740,6 +1769,7 @@ const responseSchema = z.object({
 	response: text.optional(),
 	assistance: assistanceSchema,
 	assistanceConfirmation: text.optional(),
+	answerDateConfirmation: text.optional(),
 	answerDate: answerDateSchema.optional(),
 	source: responseSourceSchema
 }).strict();
@@ -2018,6 +2048,15 @@ function validateStudyFiles(input, prior = [], nativeSources = []) {
 				const sourceId = question.source.exerciseId;
 				if (![...workspace.collections?.exercises ?? [], ...subjectExercises(file.subject)].some((item) => item.id === sourceId && item.objectiveId === question.objectiveId)) fail(path, `questions.${i}.source`, "exercise-source", "Reference a saved or shipped exercise for this goal.");
 			}
+			if (question.source.kind === "mistake" && question.source.mistakeId !== question.mistakeId) fail(path, `questions.${i}.source`, "mistake-source", "Use the same mistake identity for the source and frozen review binding.");
+			if (question.mistakeId) {
+				const mistake = workspace.collections?.mistakes.find((item) => item.id === question.mistakeId);
+				if (!prior.some((entry) => {
+					if (entry.path !== path || entry.file.kind !== file.kind || entry.file.kind !== "block" && entry.file.kind !== "worksheet") return false;
+					const old = (entry.file.kind === "block" ? entry.file.questions : entry.file.items).find((item) => item.id === question.id);
+					return (entry.file.responses.some((response) => response.questionId === question.id) || entry.file.kind === "worksheet" && entry.file.drafts.some((draft) => draft.questionId === question.id)) && canonical(old) === canonical(question);
+				}) && (!mistake || mistake.subject !== file.subject || mistake.objectiveId !== question.objectiveId || mistake.confirmedAt === void 0 || !mistake.userConfirmation)) fail(path, `questions.${i}.mistakeId`, "mistake-source", "Bind new review content to a confirmed mistake of the same subject and goal; preserve validated used content for historical bindings.");
+			}
 		}
 		for (const [i, response] of file.responses.entries()) {
 			const question = questions.find((item) => item.id === response.questionId);
@@ -2026,7 +2065,12 @@ function validateStudyFiles(input, prior = [], nativeSources = []) {
 			if (response.answerDate?.kind === "instant" && response.answerDate.basis === "native-input" && (response.source.kind !== "native" || response.source.receiptAt !== response.answerDate.at || response.source.inputVersion !== response.answerDate.sourceVersion)) fail(path, `responses.${i}.answerDate`, "native-input-version", "Use the matching consumed native input version and receipt time, or retain an unknown date.");
 			if (response.answerDate?.kind === "instant" && response.answerDate.basis === "current-manual" && (response.source.kind !== "manual" || response.source.entry !== "current")) fail(path, `responses.${i}.answerDate`, "current-manual-source", "Use a confirmed current manual response; historical and paper entry retain day precision or an unknown date.");
 			if (file.kind === "worksheet" && file.answerDate?.kind === "instant") fail(path, "answerDate", "worksheet-date-precision", "Use a parent-confirmed calendar date for a worksheet-wide date.");
-			if (file.kind === "block" && file.hints.some((hint) => hint.questionId === response.questionId && (hint.responseId === response.id || response.answerDate?.kind === "instant" && hint.at <= response.answerDate.at)) && !["hint", "worked-example"].includes(response.assistance)) fail(path, `responses.${i}.assistance`, "known-help", "Preserve the help used for this response.");
+			if (file.kind === "block") {
+				const hints = file.hints.filter((hint) => hint.questionId === response.questionId);
+				const known = hints.some((hint) => hint.responseId === response.id || !hint.responseId && response.answerDate?.kind === "instant" && hint.at <= response.answerDate.at);
+				const ambiguous = hints.some((hint) => !hint.responseId && (response.answerDate?.kind === "day" ? studyDay(hint.at) <= response.answerDate.day : response.answerDate?.kind !== "instant"));
+				if (known && !["hint", "worked-example"].includes(response.assistance) || ambiguous && response.assistance === "independent") fail(path, `responses.${i}.assistance`, "known-help", "Preserve known help; associate a question hint with its actual response before claiming an independently answered attempt with uncertain order.");
+			}
 		}
 		for (const [i, assessment] of file.assessments.entries()) {
 			const response = file.responses.find((item) => item.id === assessment.responseId);
@@ -2049,10 +2093,11 @@ function validateStudyFiles(input, prior = [], nativeSources = []) {
 			for (const question of oldQuestions) if ((old.file.responses.some((response) => response.questionId === question.id) || old.file.kind === "worksheet" && old.file.drafts.some((draft) => draft.questionId === question.id)) && canonical(question) !== canonical(questions.find((item) => item.id === question.id))) fail(path, "questions", "frozen-content", "Retain used question content and target; publish replacements under a new identity.");
 			for (const response of old.file.responses) {
 				const current = file.responses.find((item) => item.id === response.id);
-				const { assistance: oldHelp, assistanceConfirmation: _oldConfirmation, answerDate: oldDate, ...original } = response;
-				const { assistance: newHelp, assistanceConfirmation: newConfirmation, answerDate: newDate, ...comparable } = current ?? response;
-				const helpChanged = newHelp !== oldHelp && !(oldHelp === "unknown" && newConfirmation);
-				const dateChanged = canonical(oldDate) !== canonical(newDate) && !(oldDate?.kind !== "instant" && newDate?.kind === "day" && newDate.parentConfirmation);
+				const { assistance: oldHelp, assistanceConfirmation: _oldConfirmation, answerDate: oldDate, answerDateConfirmation: _oldDateConfirmation, ...original } = response;
+				const { assistance: newHelp, assistanceConfirmation: newConfirmation, answerDate: newDate, answerDateConfirmation: dateConfirmation, ...comparable } = current ?? response;
+				const greaterHelp = oldHelp === "independent" && ["hint", "worked-example"].includes(newHelp) || oldHelp === "hint" && newHelp === "worked-example";
+				const helpChanged = newHelp !== oldHelp && !((oldHelp === "unknown" || greaterHelp) && newConfirmation);
+				const dateChanged = canonical(oldDate) !== canonical(newDate) && !(oldDate?.kind !== "instant" && (newDate?.kind === "day" && newDate.parentConfirmation || newDate?.kind === "unknown" && dateConfirmation));
 				if (!current || canonical(comparable) !== canonical(original) || helpChanged || dateChanged) fail(path, "responses", "original-response", "Preserve original response identity and wording; confirm unknown help or actual paper dates explicitly and correct assessment separately.");
 			}
 		}
@@ -2079,7 +2124,6 @@ function validateStudyFiles(input, prior = [], nativeSources = []) {
 //#region lib/types/files/read.js
 const MAX_FILE_BYTES = 8388608;
 const MAX_TOTAL_BYTES = 33554432;
-const cache = /* @__PURE__ */ new Map();
 /**
 * Read a stable set of official files, checking membership and actual versions on both sides.
 * @param fs - filesystem adapter in the caller's execution world.
@@ -2089,6 +2133,14 @@ const cache = /* @__PURE__ */ new Map();
 * @returns validated facts or an explicit incomplete, invalid or changing result.
 */
 async function readWorkspace(fs, signal, prior = [], nativeSources = []) {
+	const owner = fs.cache ??= new StudyReadCache();
+	return {
+		...await readWorkspaceFiles(fs, signal, prior, nativeSources, owner),
+		cache: owner
+	};
+}
+async function readWorkspaceFiles(fs, signal, prior, nativeSources, owner) {
+	const cache = owner.files;
 	for (let attempt = 0; attempt < 3; attempt += 1) {
 		signal.throwIfAborted();
 		const membership = [];
@@ -2678,7 +2730,6 @@ const backupSchema = z.object({
 	sha256: z.string().regex(/^[a-f0-9]{64}$/u),
 	bytesBase64: z.string().max(11184812)
 }).strict();
-const backupCache = /* @__PURE__ */ new Map();
 /**
 * Inspect existing backup candidates without restoring or deleting original invalid files.
 * @param fs - read-capable workspace adapter.
@@ -2686,6 +2737,7 @@ const backupCache = /* @__PURE__ */ new Map();
 * @returns byte-verified backup records and bounded per-file failures.
 */
 async function readBackups(fs, signal) {
+	const backupCache = fs.cache?.backups ?? /* @__PURE__ */ new Map();
 	const backups = [];
 	const issues = [];
 	const entries = await fs.list(".study/backups", signal);
@@ -3160,4 +3212,4 @@ async function readInteractiveLessons(agent, signal, savedBase) {
 	}
 }
 //#endregion
-export { builtinObjectivesIn as $, termSettingsSchema as A, sameSavedAnswer as B, blockSchema as C, questionSourceSchema as D, questionSchema as E, choiceMismatch as F, spent as G, schoolGate as H, foldText as I, todaySpent as J, studyDay as K, formatDuration as L, DAY as M, activeSession as N, responseSchema as O, canonical as P, builtinObjectives as Q, matchChoice as R, assistanceSchema as S, officialFileSchemas as T, scopeSelects as U, sameScope as V, showValue as W, builtinObjectiveAnywhere as X, builtinObjective as Y, builtinObjectiveIn as Z, sourceSha256 as _, lessonFileSchema as a, commandSchema as at, answerDateSchema as b, readInteractiveLessons as c, stateSchema as ct, backupVersions as d, interestFocus as dt, curriculumFor as et, describeArchive as f, interestTagsOf as ft, retainObservedBackups as g, readBackups as h, interactiveLessonsView as i, migrateStudyFile as it, worksheetSchema as j, responseSourceSchema as k, readLessonFile as l, errorTypesBySubject as lt, describeRestore as m, OPENMAIC_LESSONS_PATH as n, subjectExercises as nt, lessonSchema as o, customObjectiveMethods as ot, describeMigration as p, taughtUnit as q, effectiveOpenmaicBase as r, subjectIdeas as rt, normalizeOpenmaicBase as s, figureSchema as st, OPENMAIC_COOKIE_PATH as t, exercisesForObjective as tt, backupSchema as u, DEFAULT_INTEREST_TAGS as ut, readWorkspace as v, collectionsSchema as w, assessmentSchema as x, validateStudyFiles as y, requireValue as z };
+export { builtinObjectivesIn as $, termSettingsSchema as A, sameSavedAnswer as B, blockSchema as C, questionSourceSchema as D, questionSchema as E, choiceMismatch as F, spent as G, schoolGate as H, foldText as I, todaySpent as J, studyDay as K, formatDuration as L, DAY as M, activeSession as N, responseSchema as O, canonical as P, builtinObjectives as Q, matchChoice as R, assistanceSchema as S, officialFileSchemas as T, scopeSelects as U, sameScope as V, showValue as W, builtinObjectiveAnywhere as X, builtinObjective as Y, builtinObjectiveIn as Z, sourceSha256 as _, lessonFileSchema as a, commandSchema as at, answerDateSchema as b, readInteractiveLessons as c, stateSchema as ct, backupVersions as d, interestFocus as dt, curriculumFor as et, describeArchive as f, interestTagsOf as ft, retainObservedBackups as g, readBackups as h, interactiveLessonsView as i, migrateStudyFile as it, worksheetSchema as j, responseSourceSchema as k, readLessonFile as l, errorTypesBySubject as lt, describeRestore as m, StudyReadCacheOwner as mt, OPENMAIC_LESSONS_PATH as n, subjectExercises as nt, lessonSchema as o, customObjectiveMethods as ot, describeMigration as p, StudyReadCache as pt, taughtUnit as q, effectiveOpenmaicBase as r, subjectIdeas as rt, normalizeOpenmaicBase as s, figureSchema as st, OPENMAIC_COOKIE_PATH as t, exercisesForObjective as tt, backupSchema as u, DEFAULT_INTEREST_TAGS as ut, readWorkspace as v, collectionsSchema as w, assessmentSchema as x, validateStudyFiles as y, requireValue as z };

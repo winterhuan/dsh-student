@@ -13,8 +13,6 @@ const MAX_BYTES = 8_388_608
 import { migrateStudyFile } from './files/legacy.ts'
 export { migrateStudyFile } from './files/legacy.ts'
 
-const stateCache = new Map<string, { version: string; state: StudyState }>()
-const entityCache = new Map<string, { signature: string; state: StudyState; at: number; refreshAfter: number }>()
 
 /**
  * Read validated v2 files or preserved legacy v1 bytes in the calling Session's filesystem.
@@ -32,6 +30,8 @@ export async function studyStore(exec: Pick<ToolExecution, 'agent' | 'signal'>):
   if (!fs || !policy) throw new Error('学生插件需要 DSH 文件系统和沙箱策略服务。')
   const cwd = agent.session.header.cwd
   const files = applicationStudyFiles(exec)
+  const stateCache = files.cache!.legacy
+  const entityCache = files.cache!.entities
   if (await files.stat('.study/settings.json', exec.signal)) {
     const backups = await readBackups(files, exec.signal)
     const read = await readWorkspace(files, exec.signal, backupVersions(backups.backups))

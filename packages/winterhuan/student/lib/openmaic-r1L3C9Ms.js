@@ -2018,6 +2018,7 @@ function validateStudyFiles(input, prior = [], nativeSources = []) {
 			continue;
 		}
 		if (file.kind !== "block" && file.kind !== "worksheet") continue;
+		if (file.kind === "block" && file.mode !== "diagnose" && file.intensity !== void 0) fail(path, "intensity", "diagnostic-intensity", "Record intensity only for a diagnostic block; omit it for other activities.");
 		const questions = file.kind === "block" ? file.questions : file.items;
 		unique(path, "questions", questions);
 		unique(path, "responses", file.responses);
@@ -2034,6 +2035,13 @@ function validateStudyFiles(input, prior = [], nativeSources = []) {
 			if (!file.context.pendingProfile && (!file.context.profile || !material || !sameScope(settings.profile, material.scope) || !sameScope(settings.profile, file.context.profile) || file.context.material?.id !== material.id)) fail(path, "context.material", "future-course-confirmation", "Confirm a course compatible with the current profile before starting a future school block.");
 		}
 		for (const [i, question] of questions.entries()) {
+			const frozen = prior.some((entry) => {
+				if (entry.path !== path || entry.file.kind !== file.kind || entry.file.kind !== "block" && entry.file.kind !== "worksheet") return false;
+				const old = (entry.file.kind === "block" ? entry.file.questions : entry.file.items).find((item) => item.id === question.id);
+				return (entry.file.responses.some((response) => response.questionId === question.id) || entry.file.kind === "worksheet" && entry.file.drafts.some((draft) => draft.questionId === question.id)) && canonical(old) === canonical(question);
+			});
+			if (file.kind === "block" && file.mode === "diagnose" && question.phase !== void 0) fail(path, `questions.${i}.phase`, "diagnostic-phase", "Omit teaching phases from diagnostic questions.");
+			if (file.kind === "block" && file.mode === "review" && !question.mistakeId && question.source.kind !== "legacy") fail(path, `questions.${i}.mistakeId`, "review-mistake", "Bind a review question to a confirmed mistake of the same subject and goal.");
 			if (question.basisStatus && question.source.kind !== "legacy") fail(path, `questions.${i}.basisStatus`, "legacy-basis-source", "Unresolved answer bases belong only to preserved legacy questions.");
 			if (typeof question.objectiveId !== "string") {
 				if (question.source.kind !== "legacy") fail(path, `questions.${i}.objectiveId`, "pending-target", "Only preserved legacy questions may carry an unresolved target.");
@@ -2043,6 +2051,8 @@ function validateStudyFiles(input, prior = [], nativeSources = []) {
 			const custom = workspace.collections?.objectives.find((item) => item.id === question.objectiveId);
 			const goal = builtin ?? custom;
 			if (!goal || goal.subject !== file.subject) fail(path, `questions.${i}.objectiveId`, "subject-target", "Reference a saved or shipped learning goal of this subject.");
+			const effective = file.context.scope ?? file.context.profile;
+			if (builtin && !frozen && question.source.kind !== "legacy" && (!effective || !builtinObjectiveIn(effective, file.subject, question.objectiveId))) fail(path, `questions.${i}.objectiveId`, "effective-curriculum", "Publish a goal in the historical profile book, or save an explicit scope selecting the goal’s book.");
 			if (file.context.scope && (!goal || !scopeSelects(file.context.scope, file.subject, builtin?.unit ?? "", question.objectiveId))) fail(path, `questions.${i}.objectiveId`, "effective-scope", "Publish a question inside the explicitly selected scope.");
 			if (question.source.kind === "exercise") {
 				const sourceId = question.source.exerciseId;
@@ -2051,11 +2061,8 @@ function validateStudyFiles(input, prior = [], nativeSources = []) {
 			if (question.source.kind === "mistake" && question.source.mistakeId !== question.mistakeId) fail(path, `questions.${i}.source`, "mistake-source", "Use the same mistake identity for the source and frozen review binding.");
 			if (question.mistakeId) {
 				const mistake = workspace.collections?.mistakes.find((item) => item.id === question.mistakeId);
-				if (!prior.some((entry) => {
-					if (entry.path !== path || entry.file.kind !== file.kind || entry.file.kind !== "block" && entry.file.kind !== "worksheet") return false;
-					const old = (entry.file.kind === "block" ? entry.file.questions : entry.file.items).find((item) => item.id === question.id);
-					return (entry.file.responses.some((response) => response.questionId === question.id) || entry.file.kind === "worksheet" && entry.file.drafts.some((draft) => draft.questionId === question.id)) && canonical(old) === canonical(question);
-				}) && (!mistake || mistake.subject !== file.subject || mistake.objectiveId !== question.objectiveId || mistake.confirmedAt === void 0 || !mistake.userConfirmation)) fail(path, `questions.${i}.mistakeId`, "mistake-source", "Bind new review content to a confirmed mistake of the same subject and goal; preserve validated used content for historical bindings.");
+				if (!frozen && (!mistake || mistake.subject !== file.subject || mistake.objectiveId !== question.objectiveId || mistake.confirmedAt === void 0 || !mistake.userConfirmation)) fail(path, `questions.${i}.mistakeId`, "mistake-source", "Bind new review content to a confirmed mistake of the same subject and goal; preserve validated used content for historical bindings.");
+				if (!frozen && question.source.kind !== "legacy" && file.kind === "worksheet" && file.origin === "prepared" && mistake?.prompt === question.prompt) fail(path, `questions.${i}.prompt`, "review-variation", "Vary the prompt of a prepared mistake question; retain original prompts in workbook records.");
 			}
 		}
 		for (const [i, response] of file.responses.entries()) {

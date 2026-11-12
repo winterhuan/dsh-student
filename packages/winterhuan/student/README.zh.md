@@ -133,6 +133,8 @@ node packages/winterhuan/student/lib/cli.js validate --workspace /path/to/worksp
 
 安装后使用 `<study 技能 Base directory>/../../../lib/cli.js`；`./cli` 导出与 `study-validate` bin 指向同一文件。DSH Git 安装不承诺全局 PATH 命令。校验读取正式文件与完整独立课程日志，保留字节/修订，不创建备份或修复。退出 0 指明观察到的 kind、身份和版本；非零 JSON 指明路径、字段、规则和修正方式。校验输出最多 32 KiB，并明确遗漏。schema/example 从源定义生成完整资源；跨文件和来源事实检查仍由 CLI 执行。CLI 未独立匹配 Host 接收版本时，原生作答日期保持未知。部分操作和明确恢复见[编辑参考](knowledge/skills/study/references/files.md)。
 
+内置目标的新题默认使用保存的历史档案年级与学期；跨册时必须由 `context.scope` 明确选择匹配的知识地图，浏览本身不授予范围。只有摸底学习段可记录强度，摸底题不带教学阶段。复习题绑定同科同目标的已确认错题。准备的错题巩固题须更换原题面；练习册记录保留原题面。旧题保留未核实事实，已观察使用内容在来源错题更改或删除后保留冻结绑定。
+
 [Student Remote](src/remote-service.ts)为已注册的 DSH 主会话提供生成的类型化查询、显式手动保存与提交检查。Gateway 在每次调用前检查会话权限；缺失、已关闭和子 Agent 会被拒绝，且不触发激活。提交检查分别报告原生消息接纳、已保存原答与有效的已保存评分，绝不重发输入。手动保存使用已观察的学期、版本和编辑字段基线；设置明确提供 `editedProfileFields`。Host 配置默认 `refreshIntervalMs: 3000`、`maxWireBytes: 1048576`，限制完整请求与响应的 JSON 大小，包含 watch/manual/inspection 包装；超大的手动请求在保存前拒绝。[客户端资源提供者](src/client/resource.ts)通过原生重连跟踪 `dsh-resource://student/session/<encoded-id>?query=<encoded-JSON>`，在失败时报告错误并将之前的值标记为过期状态，等待流关闭后才撤销命名空间。同一来源的 [HTTP 工作区路由](src/route.ts)仅为已注册主 Agent 提供 GET 兼容读取，不接受修改。
 
 [原生来源读取器](src/transport.ts)仅观察发起调用的已授权会话。较早会话的原始回答和文件时间戳保持完整，但没有单独授权的来源观察时，投影日期仍为未知，也不计入有实际日期的独立作答证据。完整原始事件重放最多读取 100,000 个事件和 16 MiB；原生传输视图最多 32 KiB，包含 20 条已消费输入、20 条接纳记录，每条输入最多 2,000 个文本字符和八个附件引用，并明确省略的输入、接纳记录和附件数量。历史不完整或存在不支持的事件时，接收来源事实不可用。接收版本匹配已消费输入的完整来源与内容，包括附件；稍后的消费、文件写入和评分不会生成作答接收时间。

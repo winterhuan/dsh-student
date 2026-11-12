@@ -1,7 +1,7 @@
-import { a as queryWorkspace, b as StudyBackupRetention, f as scheduleMistakes, n as queryDashboard, o as queryWorkspaceDashboard, r as queryJsonData, s as projectWorkspace, t as nextRefreshAfter, y as applicationStudyFiles } from "./queries-DiF4-X5v.js";
-import { c as readInteractiveLessons, ct as stateSchema, d as backupVersions, g as retainObservedBackups, h as readBackups, it as migrateStudyFile, mt as StudyReadCacheOwner, v as readWorkspace } from "./openmaic-LJGZi6qr.js";
-import { t as readStudentWorkspace } from "./transport-Bq3tBhRM.js";
-import { n as saveManual, t as manualFields } from "./manual-Cv8WsyvX.js";
+import { a as queryWorkspace, b as StudyBackupRetention, f as scheduleMistakes, n as queryDashboard, o as queryWorkspaceDashboard, r as queryJsonData, s as projectWorkspace, t as nextRefreshAfter, y as applicationStudyFiles } from "./queries-CLXWsuKo.js";
+import { c as readInteractiveLessons, ct as stateSchema, d as backupVersions, g as retainObservedBackups, h as readBackups, it as migrateStudyFile, mt as StudyReadCacheOwner, v as readWorkspace } from "./openmaic-r1L3C9Ms.js";
+import { t as readStudentWorkspace } from "./transport-D9Yyzg8Y.js";
+import { n as saveManual, t as manualFields } from "./manual-B5C3_uiM.js";
 import { z } from "zod";
 import { createHash } from "node:crypto";
 import { SessionId } from "@deepseek-ai/dsh-session";

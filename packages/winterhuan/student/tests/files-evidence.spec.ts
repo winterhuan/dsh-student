@@ -11,7 +11,7 @@ import { queryWorkspace, queryWorkspaceDashboard } from '../src/learning/queries
 import { validateStudyFiles } from '../src/files/validation.ts'
 import type { z } from 'zod'
 import type { blockSchema } from '../src/files/schema.ts'
-import { collectionsSchema } from '../src/files/schema.ts'
+import { collectionsSchema, worksheetSchema } from '../src/files/schema.ts'
 import { NOW, setup } from './fixtures.ts'
 
 async function workspace() {
@@ -39,6 +39,95 @@ it('reads saved original answers without turning unknown dates or assistance int
   expect(result).toMatchObject({ status: 'valid', data: { currentQuestion: { id: 'q1' }, responses: [{ rawResponse: '15', answerDate: { kind: 'unknown' } }], pendingFacts: [{ responseId: 'r1', fields: ['answerDate', 'assistance', 'source'] }], seeds: expect.any(Array) } })
   const summary = queryWorkspace(read, { kind: 'summary' }, NOW)
   expect(summary).toMatchObject({ data: { practisedGoals: 0, masteredGoals: 0, dueCompletion: { done: 0, total: 0 } } })
+})
+
+it('rejects a diagnostic teaching phase before displaying the question and accepts an unphased diagnostic', async () => {
+  const { files, block, save } = await workspace()
+  block.mode = 'diagnose'
+  block.responses = []; block.assessments = []
+  block.questions[0]!.phase = 'demo'
+  await save('.study/blocks/block-1.json', block)
+  const invalid = await readWorkspace(files, new AbortController().signal)
+  expect(invalid).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ field: 'questions.0.phase', rule: 'diagnostic-phase' })]) })
+  expect(queryWorkspace(invalid, { kind: 'learning-context' }, NOW)).not.toHaveProperty('data.currentQuestion')
+  delete block.questions[0]!.phase
+  await save('.study/blocks/block-1.json', block)
+  expect(queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'learning-context' }, NOW)).toMatchObject({ status: 'valid', data: { currentQuestion: { id: 'q1' } } })
+})
+
+it('records intensity only for a diagnostic block while leaving diagnostic intensity optional', async () => {
+  const { files, block, save } = await workspace()
+  block.intensity = 'deep'
+  await save('.study/blocks/block-1.json', block)
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ field: 'intensity', rule: 'diagnostic-intensity' })]) })
+  block.mode = 'diagnose'
+  delete block.questions[0]!.phase
+  await save('.study/blocks/block-1.json', block)
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'valid', workspace: { blocks: [{ intensity: 'deep' }] } })
+  delete block.intensity
+  await save('.study/blocks/block-1.json', block)
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'valid' })
+})
+
+it('requires a matching selected book for a new cross-book question and accepts the historical profile by default', async () => {
+  const { files, settings, block, save } = await workspace()
+  block.context = { profile: { ...setup.profile, grade: 1 } }
+  block.responses = []; block.assessments = []
+  await save('.study/blocks/block-1.json', block)
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ field: 'questions.0.objectiveId', rule: 'effective-curriculum' })]) })
+  block.context.scope = { grade: 1, term: 'first', objectiveIds: ['m2a-o-sub'] }
+  await save('.study/blocks/block-1.json', block)
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ rule: 'effective-curriculum' })]) })
+  block.context.scope = { grade: 2, term: 'first', objectiveIds: ['m2a-o-sub'] }
+  await save('.study/blocks/block-1.json', block)
+  expect(queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'learning-context' }, NOW)).toMatchObject({ status: 'valid', data: { target: { id: 'm2a-o-sub' } } })
+  block.context = { profile: setup.profile }
+  await save('.study/blocks/block-1.json', block)
+  await save('.study/settings.json', { ...settings, profile: { ...settings.profile, grade: 1 } })
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'valid' })
+})
+
+it('requires a confirmed mistake binding for a review question while permitting early review practice', async () => {
+  const { files, block, save } = await workspace()
+  block.mode = 'review'
+  block.responses = []; block.assessments = []
+  await save('.study/blocks/block-1.json', block)
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ field: 'questions.0.mistakeId', rule: 'review-mistake' })]) })
+  block.questions[0]!.mistakeId = 'm1'
+  const mistake = { id: 'm1', subject: 'math', topic: 'Subtraction', prompt: '18 - 7?', learnerAnswer: '10', correction: '11', explanation: 'Subtract seven', answerEvidence: '11 + 7 = 18', uncertainties: '', objectiveId: 'm2a-o-sub', confirmedAt: NOW, userConfirmation: 'Confirmed' }
+  await save('.study/blocks/block-1.json', block)
+  await save('.study/collections.json', collectionsSchema.parse({ format: 2, kind: 'collections', termId: 'term-1', mistakes: [mistake], rewards: [], teachingQueue: [] }))
+  expect(queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'learning-context' }, NOW)).toMatchObject({ status: 'valid', data: { currentQuestion: { mistakeId: 'm1' } } })
+})
+
+it('varies a prepared mistake question but preserves workbook originals and used review content after source edits or deletion', async () => {
+  const { files, block, save } = await workspace()
+  const mistake = { id: 'm1', subject: 'math', topic: 'Subtraction', prompt: '18 - 7?', learnerAnswer: '10', correction: '11', explanation: 'Subtract seven', answerEvidence: '11 + 7 = 18', uncertainties: '', objectiveId: 'm2a-o-sub', confirmedAt: NOW, userConfirmation: 'Confirmed' }
+  const collection = collectionsSchema.parse({ format: 2, kind: 'collections', termId: 'term-1', mistakes: [mistake], rewards: [], teachingQueue: [] })
+  const sheet = worksheetSchema.parse({ format: 2, kind: 'worksheet', termId: 'term-1', id: 'review-1', subject: 'math', worksheetKind: 'review', origin: 'prepared', createdAt: NOW, context: block.context,
+    items: [{ ...block.questions[0]!, mistakeId: 'm1', prompt: mistake.prompt }], responses: [], assessments: [], drafts: [] })
+  await save('.study/collections.json', collection)
+  await save('.study/worksheets/review-1.json', sheet)
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ path: '.study/worksheets/review-1.json', field: 'questions.0.prompt', rule: 'review-variation' })]) })
+  sheet.origin = 'workbook'
+  await save('.study/worksheets/review-1.json', sheet)
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'valid' })
+  sheet.origin = 'prepared'; sheet.items[0]!.prompt = '28 - 7?'
+  await save('.study/worksheets/review-1.json', sheet)
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'valid' })
+  sheet.drafts = [{ id: 'draft-1', questionId: 'q1', response: '21', result: 'correct', assistance: 'unknown', confidence: 'high', uncertainties: '', imagePaths: [], receivedAt: NOW }]
+  await save('.study/worksheets/review-1.json', sheet)
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'valid' })
+  collection.mistakes[0]!.prompt = '28 - 7?'; collection.mistakes[0]!.objectiveId = 'm2a-o-add'
+  await save('.study/collections.json', collection)
+  const reclassified = await readWorkspace(files, new AbortController().signal)
+  expect(reclassified).toMatchObject({ status: 'valid', workspace: { worksheets: [{ items: [{ objectiveId: 'm2a-o-sub', prompt: '28 - 7?' }] }] } })
+  collection.mistakes = []
+  await save('.study/collections.json', collection)
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'valid', workspace: { worksheets: [{ drafts: [{ response: '21' }], items: [{ objectiveId: 'm2a-o-sub' }] }] } })
+  sheet.items[0]!.prompt = '38 - 7?'
+  await save('.study/worksheets/review-1.json', sheet)
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ rule: 'frozen-content' })]) })
 })
 
 it('reuses dashboard curriculum across independent reads until files or the Shanghai day change', async () => {

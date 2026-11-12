@@ -43,7 +43,7 @@ it('requires an original-byte verified backup, retains pending legacy facts and 
   const cwd = await mkdtemp(join(tmpdir(), 'student-migrate-'))
   onTestFinished(() => rm(cwd, { recursive: true, force: true }))
   await mkdir(join(cwd, '.study'))
-  const state = stateSchema.parse({ format: 1, revision: 9, updatedAt: NOW, profile: setup.profile, materials: [], courses: [], sessions: [], attempts: [], mistakes: [], rewards: [],
+  const state = stateSchema.parse({ format: 1, revision: 9, updatedAt: NOW, profile: { ...setup.profile, grade: 1 }, materials: [], courses: [], sessions: [], attempts: [], mistakes: [], rewards: [],
     workbookResults: [{ id: 'wb1', subject: 'math', prompt: '8 + 7?', response: '15', outcome: 'hinted', objectiveId: 'm2a-o-sub', uncertainties: '', receivedAt: NOW - 10, confirmedAt: NOW, userConfirmation: 'Parent confirmed help', imagePath: 'attachments/a.png' }] })
   const original = `${JSON.stringify(state, null, 2)}\n`
   await writeFile(join(cwd, '.study/state.json'), original)
@@ -70,6 +70,7 @@ it('requires an original-byte verified backup, retains pending legacy facts and 
   worksheet.file.responses[0]!.answerDate = { kind: 'day', day: '2026-10-05', parentConfirmation: 'Actual date confirmed' }
   await writeFile(join(cwd, worksheet.path), JSON.stringify(worksheet.file))
   const dated = await readWorkspace(fs, new AbortController().signal)
+  expect(dated).toMatchObject({ status: 'valid', workspace: { worksheets: [{ context: { pendingProfile: expect.any(String) }, items: [{ objectiveId: 'm2a-o-sub', source: { kind: 'legacy' } }] }] } })
   expect(queryWorkspace(dated, { kind: 'summary' }, NOW)).toMatchObject({ data: { practisedGoals: 0, masteredGoals: 0 } })
   expect(queryWorkspace(dated, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { pendingFacts: expect.arrayContaining([expect.objectContaining({ fields: expect.arrayContaining(['answerBasis']) })]) } })
 })

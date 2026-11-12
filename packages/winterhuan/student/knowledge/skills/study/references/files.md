@@ -18,6 +18,8 @@ node "$STUDY_CLI" validate --workspace '<当前工作区绝对路径>'
 
 结构 schema 来自共享 Zod 输入定义；CLI 再核对身份、关联、范围、帮助与已观察使用内容。日期合法性和其他跨字段规则以 CLI 为准，不以 JSON schema 独立判定业务完成。
 
+内置目标的新题默认使用 context.profile 的历史年级与学期；跨册时保存明确的 context.scope，目标必须属于该册且在所选单元或目标范围内。浏览不授予新范围。intensity 仅用于 diagnose 学习段，摸底题省略 phase。review 学习段的新题必须绑定同科同目标的已确认 mistakeId；prepared 练习单的错题巩固题更换原题面，workbook 记录保留原题。旧题的待核实事实与已观察使用内容的冻结绑定继续保留，不按来源错题的当前分类重写历史。
+
 ## 文件归属
 
 | 文件 | 所有内容 |

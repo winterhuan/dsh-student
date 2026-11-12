@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { T as officialFileSchemas, a as lessonFileSchema, ct as stateSchema, d as backupVersions, h as readBackups, l as readLessonFile, st as figureSchema, v as readWorkspace } from "./openmaic-LJGZi6qr.js";
+import { T as officialFileSchemas, a as lessonFileSchema, ct as stateSchema, d as backupVersions, h as readBackups, l as readLessonFile, st as figureSchema, v as readWorkspace } from "./openmaic-r1L3C9Ms.js";
 import { t as nodeStudyFiles } from "./node-BHVvVtYI.js";
 import { z } from "zod";
 import { parseArgs } from "node:util";
@@ -61,6 +61,14 @@ function authoringExample(kind) {
 		value.subject = "math";
 		value.context = { profile };
 		if (kind === "worksheet") {
+			value.context = {
+				profile,
+				scope: {
+					grade: 2,
+					term: "first",
+					objectiveIds: ["m2a-o-sub"]
+				}
+			};
 			const items = z.array(z.record(z.string(), z.unknown())).parse(value.items);
 			for (const item of items) item.objectiveId = "m2a-o-sub";
 			value.items = items;

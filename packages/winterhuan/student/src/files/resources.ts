@@ -54,6 +54,7 @@ export function authoringExample(kind: AuthoringKind): unknown {
     value.subject = 'math'
     value.context = { profile }
     if (kind === 'worksheet') {
+      value.context = { profile, scope: { grade: 2, term: 'first', objectiveIds: ['m2a-o-sub'] } }
       const items = z.array(z.record(z.string(), z.unknown())).parse(value.items)
       for (const item of items) item.objectiveId = 'm2a-o-sub'
       value.items = items

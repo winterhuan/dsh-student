@@ -51,7 +51,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 id: string;
                 subject: "chinese" | "math" | "english";
                 objectiveId: string;
-                role: "diagnose" | "demo" | "try" | "vary" | "daily";
+                role: "daily" | "diagnose" | "demo" | "try" | "vary";
                 variant: "numeric" | "context" | "reasoning";
                 prompt: string;
                 steps: string[];
@@ -239,7 +239,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                         x: number;
                         y: number;
                         label: string;
-                        align?: "center" | "left" | undefined;
+                        align?: "left" | "center" | undefined;
                     } | {
                         draw: "arrow";
                         from: {
@@ -252,7 +252,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                         };
                     })[];
                 } | undefined;
-                errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+                errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
                 savedAt?: number | undefined;
             }[];
             workbookDrafts: {
@@ -485,7 +485,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                         x: number;
                         y: number;
                         label: string;
-                        align?: "center" | "left" | undefined;
+                        align?: "left" | "center" | undefined;
                     } | {
                         draw: "arrow";
                         from: {
@@ -519,7 +519,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 id: string;
                 subject: "chinese" | "math" | "english";
                 title: string;
-                level: "practising" | "due" | "weak" | "stalled" | "mastered" | "untouched";
+                level: "due" | "weak" | "stalled" | "mastered" | "practising" | "untouched";
                 priority: number;
                 reasons: import("../learning/mastery.ts").InsightReason[];
             }[];
@@ -557,10 +557,10 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 title: string;
                 goal: string;
                 conceptIds: string[];
-                method: "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "listen" | "speak";
-                errorTypes?: ("pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
+                method: "listen" | "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "speak";
+                errorTypes?: ("carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
                 questionPoints?: string[] | undefined;
-                variationAxes?: ("context" | "numbers" | "representation" | "reverse" | "explain")[] | undefined;
+                variationAxes?: ("reverse" | "context" | "numbers" | "representation" | "explain")[] | undefined;
             }[];
             relations: {
                 id: string;
@@ -574,7 +574,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 objectiveTitle: string;
                 open: boolean;
                 results: {
-                    errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
+                    errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                     itemId: string;
                     result: "correct" | "partial" | "incorrect" | "unassessed";
                     response: string;
@@ -582,7 +582,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 }[];
                 drafts: {
                     confidence?: "high" | "low";
-                    errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
+                    errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                     itemId: string;
                     response: string;
                     result: "correct" | "partial" | "incorrect" | "unassessed";
@@ -786,7 +786,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                             x: number;
                             y: number;
                             label: string;
-                            align?: "center" | "left" | undefined;
+                            align?: "left" | "center" | undefined;
                         } | {
                             draw: "arrow";
                             from: {
@@ -836,7 +836,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 imagePath?: string | undefined;
                 materialId?: string | undefined;
                 objectiveId?: string | undefined;
-                errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+                errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
                 confirmedAt?: number | undefined;
                 userConfirmation?: string | undefined;
                 dueAt?: number | undefined;
@@ -861,7 +861,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 imagePath?: string | undefined;
                 materialId?: string | undefined;
                 objectiveId?: string | undefined;
-                errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+                errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
                 confirmedAt?: number | undefined;
                 userConfirmation?: string | undefined;
                 dueAt?: number | undefined;
@@ -890,7 +890,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
             active: {
                 id: string;
                 subject: "chinese" | "math" | "english";
-                mode: "review" | "foundation" | "school" | "explore" | "diagnose";
+                mode: "review" | "diagnose" | "foundation" | "school" | "explore";
                 startedAt: number;
                 intensity?: "light" | "standard" | "deep" | undefined;
                 endedAt?: number | undefined;
@@ -921,7 +921,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                     confirmedAt: number;
                     posture: "keep-up" | "catch-up";
                     preview: boolean;
-                    pace: "teaching" | "review";
+                    pace: "review" | "teaching";
                 } | undefined;
             }[];
             unconfirmedSubjects: string[];
@@ -1126,7 +1126,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                         x: number;
                         y: number;
                         label: string;
-                        align?: "center" | "left" | undefined;
+                        align?: "left" | "center" | undefined;
                     } | {
                         draw: "arrow";
                         from: {
@@ -1339,7 +1339,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                         x: number;
                         y: number;
                         label: string;
-                        align?: "center" | "left" | undefined;
+                        align?: "left" | "center" | undefined;
                     } | {
                         draw: "arrow";
                         from: {

@@ -107,7 +107,7 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, re
     if (!data) throw new Error(t('networkError'))
     return data
   }
-  async function manual(command: Command, _revision?: number, original?: string): Promise<Dashboard> {
+  async function manual(command: Command, _revision?: number, original?: string): Promise<Dashboard & { manual?: import('../types.ts').StudentManualReply }> {
     if (!data || !workspace.termId || workspace.stale) throw new Error(t('manualInvalid'))
     const retained = original ? JSON.parse(original) : undefined
     const beforeText = retained && typeof retained.baseline === 'string' ? retained.baseline : original
@@ -145,7 +145,7 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, re
     if (result.value.status === 'conflict') throw new Error(`${t('manualConflict')} · ${t('currentValues')}: ${JSON.stringify(result.value.current)}`)
     if (result.value.status === 'old-term') throw new Error(t('manualOldTerm'))
     if (result.value.status !== 'saved' && result.value.status !== 'unchanged') throw new Error(result.value.reason ?? t('manualInvalid'))
-    return data
+    return Object.assign({}, data, { manual: result.value })
   }
   async function saveWorksheet(intent: ManualSaveRequest['intent'], baseline: Record<string, StudentJsonValue>) {
     if (!workspace.termId || workspace.stale) throw new Error(t('manualInvalid'))
@@ -158,6 +158,7 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, re
     if (result.value.status === 'conflict') throw new Error(`${t('manualConflict')} · ${t('currentValues')}: ${JSON.stringify(result.value.current)}`)
     if (result.value.status === 'old-term') throw new Error(t('manualOldTerm'))
     if (result.value.status !== 'saved' && result.value.status !== 'unchanged') throw new Error(result.value.reason ?? t('manualInvalid'))
+    return result.value
   }
   async function act(command: Command, _withTutor = false, prompt = continuePrompt) {
     try { await tutor(prompt, undefined, command) } catch { /* The request or tutor notice retains the failed action and its data. */ }
@@ -250,6 +251,9 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, re
   const nativeT: Translate = key => ['saved', 'gradesSaved', 'confirmPaperDone', 'teachQueued', 'workbookSaved'].includes(key) ? t('intentAdmitted') : t(key)
   const parentSettings = view === 'parent' && parentTab === 'parent'
   const draftScope = `student:draft:${sessionId}:${workspace.termId ?? 'setup'}`
+  const context = workspace.context
+  const pendingFacts = context && typeof context === 'object' && 'pendingFacts' in context && Array.isArray(context.pendingFacts) ? context.pendingFacts : []
+  const pendingLabels = { answerDate: 'answerDateUnknown', assistance: 'assistanceUnknown', source: 'answerSourceUnknown', answerBasis: 'answerBasisUnknown', objectiveId: 'answerGoalUnknown' } as const
   return <main className="student-desk" aria-label={t('title')}>
     <header className="student-top">
       <nav className="student-views" aria-label={t('title')}>
@@ -268,6 +272,11 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, re
     </header>
     {workspace.error && <p role="alert">{t('staleData')}</p>}
     {sendError && <p role="alert">{sendError}</p>}
+    {study && pendingFacts.length > 0 && <section aria-label={t('pendingFacts')}><h3>{t('pendingFacts')}</h3>{pendingFacts.map(item => {
+      if (!item || typeof item !== 'object' || !('responseId' in item) || typeof item.responseId !== 'string' || !('fields' in item) || !Array.isArray(item.fields)) return null
+      const labels = item.fields.flatMap(field => typeof field === 'string' && field in pendingLabels ? [t(pendingLabels[field as keyof typeof pendingLabels])] : [])
+      return <p key={JSON.stringify([item.ownerId, item.responseId])}>{item.responseId} · {labels.join(' · ')}</p>
+    })}</section>}
     {submissions.length > 0 && <details className="student-fold"><summary>{t('submissionStatus')}</summary>{submissions.map(item => <div key={item.requestId}>
       <p>{t(item.admission === 'accepted' ? 'messageAdmitted' : 'messageUnknown')}</p>
       {item.response && <p>{t(item.inspection?.answer === 'saved' ? 'answerSaved' : 'answerPending')} · {t(item.inspection?.assessment === 'valid' ? 'assessmentSaved' : 'assessmentPending')}</p>}
@@ -282,7 +291,7 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, re
       {study && view === 'parent' && parentTab === 'mistakes' && <PracticeView study={study} now={now} subject={subject} goals={goals} mistakeStatus={mistakeStatus} setMistakeStatus={setMistakeStatus} setMistakeOffset={setMistakeOffset} revision={data.revision} disabled={disabled} running={running} change={change} ask={tutor} onReview={item => { selectSubject(item); setActivity({ subject: item, mode: 'review' }); setSelectedObjectiveId(''); setView('student') }} epoch={epoch} t={nativeT} />}
       {study && view === 'parent' && parentTab === 'mistakes' && workspace.termId && <WorksheetCorrections key={draftScope} sessionId={sessionId} termId={workspace.termId} draftScope={draftScope} useResource={useResource} save={saveWorksheet} disabled={disabled} t={t} />}
       {parentSettings && <section><button type="button" disabled={disabled} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('profileConversation')}</button><button type="button" disabled={disabled} onClick={() => { void tutor(t('courseConversation')).catch(() => {}) }}>{t('courseConversation')}</button><button type="button" disabled={disabled} onClick={() => { void tutor(t('archiveConversation')).catch(() => {}) }}>{t('archiveConversation')}</button></section>}
-      {parentSettings && study && <details className="student-fold"><summary>{t('manualForms')}</summary><p>{t('manualSummary')}</p><ParentSettings key={draftScope + subject} draftScope={draftScope} data={data} change={manual} t={t} curriculum={curriculum} subject={subject} onSubject={item => { selectSubject(item); setActivity({ subject: item, mode: 'foundation' }) }} /></details>}
+      {parentSettings && study && <details className="student-fold"><summary>{t('manualForms')}</summary><p>{t('manualSummary')}</p><ParentSettings key={draftScope + subject} draftScope={draftScope} observation={workspace.value?.versions.find(file => file.path === '.study/settings.json')?.version} data={data} change={manual} t={t} curriculum={curriculum} subject={subject} onSubject={item => { selectSubject(item); setActivity({ subject: item, mode: 'foundation' }) }} /></details>}
       {study && parentSettings && <Growth study={study} curriculum={curriculum} subject={subject} goals={goals} t={t} />}
     </>}
   </main>

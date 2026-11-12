@@ -28,7 +28,7 @@ export function studentClientFixture(initial: ReturnType<typeof updateStudy>, le
   })
   return {
     useResource, addresses, requests,
-    remote: { inspectSubmission: vi.fn(), manualContext: vi.fn(async () => ({ ok: true, value: { termId: 'term-one', versions: [], baseline: {}, issues: [], readStatus: 'valid' } })), saveManual: vi.fn(async (_session, request) => { state = updateStudy(state, request.intent.command, Date.now()); publish(); return { ok: true, value: { status: 'saved', current: {}, termId: 'term-one', versions: [], issues: [], readStatus: 'valid' } } }) },
+    remote: { inspectSubmission: vi.fn(), manualContext: vi.fn(async () => ({ ok: true, value: { termId: 'term-one', versions: [{ path: '.study/settings.json', version: 'settings-one' }], baseline: {}, issues: [], readStatus: 'valid' } })), saveManual: vi.fn(async (_session, request) => { state = updateStudy(state, request.intent.command, Date.now()); publish(); const current = Object.fromEntries(Object.keys(request.baseline).map(key => [key, key.startsWith('profile:') ? state.profile[key.slice(8) as keyof typeof state.profile] : key.startsWith('course:') ? state.courses.find(course => course.subject === key.slice(7)) : key.startsWith('progress:') ? state.courses.find(course => course.subject === key.slice(9))?.progress ?? null : key === 'interests' ? state.interests ?? null : key === 'openmaic' ? state.openmaic ?? null : null])); return { ok: true, value: { status: 'saved', current, termId: 'term-one', versions: [{ path: '.study/settings.json', version: `settings-${state.revision}` }], issues: [], readStatus: 'valid' } } }) },
     read: () => state,
     replace(next: typeof state) { state = next; publish() },
     async consume(text: string) {

@@ -5,6 +5,8 @@ export declare const zh: {
     manualWorksheetHelp: string;
     assistanceLabel: string;
     actualAnswerDay: string;
+    worksheetAnswerDay: string;
+    worksheetAnswerDayHelp: string;
     answerDayHelp: string;
     workedExampleHelp: string;
     assistanceUnknown: string;
@@ -28,6 +30,10 @@ export declare const zh: {
     intentAdmitted: string;
     switchBlock: string;
     answerDateUnknown: string;
+    pendingFacts: string;
+    answerSourceUnknown: string;
+    answerBasisUnknown: string;
+    answerGoalUnknown: string;
     currentValues: string;
     manualConflict: string;
     manualOldTerm: string;

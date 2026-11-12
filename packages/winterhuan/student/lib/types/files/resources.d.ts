@@ -15,8 +15,8 @@ declare const schemas: {
             title: z.ZodString;
             requirement: z.ZodString;
             subject: z.ZodOptional<z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>>;
             objectiveId: z.ZodOptional<z.ZodString>;
@@ -299,8 +299,8 @@ declare const schemas: {
             y: z.ZodNumber;
             label: z.ZodString;
             align: z.ZodOptional<z.ZodEnum<{
-                left: "left";
                 center: "center";
+                left: "left";
             }>>;
         }, z.core.$strict>, z.ZodObject<{
             draw: z.ZodLiteral<"arrow">;
@@ -337,8 +337,8 @@ declare const schemas: {
         materials: z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
             scope: z.ZodObject<{
@@ -372,8 +372,8 @@ declare const schemas: {
         }, z.core.$strict>>;
         courses: z.ZodArray<z.ZodObject<{
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
             materialId: z.ZodString;
@@ -387,8 +387,8 @@ declare const schemas: {
                 }>;
                 preview: z.ZodBoolean;
                 pace: z.ZodEnum<{
-                    review: "review";
                     teaching: "teaching";
+                    review: "review";
                 }>;
             }, z.core.$strict>>;
             parentConfirmation: z.ZodString;
@@ -414,13 +414,13 @@ declare const schemas: {
         kind: z.ZodLiteral<"block">;
         id: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").BlockId, string>>;
         subject: z.ZodEnum<{
-            chinese: "chinese";
             math: "math";
+            chinese: "chinese";
             english: "english";
         }>;
         mode: z.ZodEnum<{
-            review: "review";
             diagnose: "diagnose";
+            review: "review";
             foundation: "foundation";
             school: "school";
             explore: "explore";
@@ -464,8 +464,8 @@ declare const schemas: {
             material: z.ZodOptional<z.ZodObject<{
                 id: z.ZodString;
                 subject: z.ZodEnum<{
-                    chinese: "chinese";
                     math: "math";
+                    chinese: "chinese";
                     english: "english";
                 }>;
                 scope: z.ZodObject<{
@@ -789,8 +789,8 @@ declare const schemas: {
                     y: z.ZodNumber;
                     label: z.ZodString;
                     align: z.ZodOptional<z.ZodEnum<{
-                        left: "left";
                         center: "center";
+                        left: "left";
                     }>>;
                 }, z.core.$strict>, z.ZodObject<{
                     draw: z.ZodLiteral<"arrow">;
@@ -890,8 +890,8 @@ declare const schemas: {
             id: z.ZodString;
             responseId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").ResponseId, string>>;
             result: z.ZodEnum<{
-                correct: "correct";
                 partial: "partial";
+                correct: "correct";
                 incorrect: "incorrect";
                 unassessed: "unassessed";
                 stuck: "stuck";
@@ -908,13 +908,13 @@ declare const schemas: {
             correctedAt: z.ZodOptional<z.ZodNumber>;
             userConfirmation: z.ZodOptional<z.ZodString>;
             errorType: z.ZodOptional<z.ZodEnum<{
-                "carry-borrow": "carry-borrow";
+                pattern: "pattern";
                 "place-value": "place-value";
+                "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
-                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -948,8 +948,8 @@ declare const schemas: {
         kind: z.ZodLiteral<"worksheet">;
         id: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").WorksheetId, string>>;
         subject: z.ZodEnum<{
-            chinese: "chinese";
             math: "math";
+            chinese: "chinese";
             english: "english";
         }>;
         worksheetKind: z.ZodOptional<z.ZodEnum<{
@@ -1296,8 +1296,8 @@ declare const schemas: {
                     y: z.ZodNumber;
                     label: z.ZodString;
                     align: z.ZodOptional<z.ZodEnum<{
-                        left: "left";
                         center: "center";
+                        left: "left";
                     }>>;
                 }, z.core.$strict>, z.ZodObject<{
                     draw: z.ZodLiteral<"arrow">;
@@ -1386,8 +1386,8 @@ declare const schemas: {
             id: z.ZodString;
             responseId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").ResponseId, string>>;
             result: z.ZodEnum<{
-                correct: "correct";
                 partial: "partial";
+                correct: "correct";
                 incorrect: "incorrect";
                 unassessed: "unassessed";
                 stuck: "stuck";
@@ -1404,13 +1404,13 @@ declare const schemas: {
             correctedAt: z.ZodOptional<z.ZodNumber>;
             userConfirmation: z.ZodOptional<z.ZodString>;
             errorType: z.ZodOptional<z.ZodEnum<{
-                "carry-borrow": "carry-borrow";
+                pattern: "pattern";
                 "place-value": "place-value";
+                "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
-                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -1436,8 +1436,8 @@ declare const schemas: {
             questionId: z.ZodString;
             response: z.ZodString;
             result: z.ZodEnum<{
-                correct: "correct";
                 partial: "partial";
+                correct: "correct";
                 incorrect: "incorrect";
                 unassessed: "unassessed";
                 stuck: "stuck";
@@ -1470,29 +1470,29 @@ declare const schemas: {
         mistakes: z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
-            confirmedAt: z.ZodOptional<z.ZodNumber>;
             materialId: z.ZodOptional<z.ZodString>;
+            confirmedAt: z.ZodOptional<z.ZodNumber>;
             topic: z.ZodString;
             prompt: z.ZodString;
+            answerEvidence: z.ZodString;
+            objectiveId: z.ZodOptional<z.ZodString>;
             learnerAnswer: z.ZodString;
             correction: z.ZodString;
             explanation: z.ZodString;
-            answerEvidence: z.ZodString;
             imagePath: z.ZodOptional<z.ZodString>;
             uncertainties: z.ZodString;
-            objectiveId: z.ZodOptional<z.ZodString>;
             errorType: z.ZodOptional<z.ZodEnum<{
-                "carry-borrow": "carry-borrow";
+                pattern: "pattern";
                 "place-value": "place-value";
+                "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
-                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -1512,26 +1512,26 @@ declare const schemas: {
                 "spoken-response": "spoken-response";
                 "writing-complete": "writing-complete";
             }>>;
+            userConfirmation: z.ZodOptional<z.ZodString>;
             source: z.ZodOptional<z.ZodObject<{
                 worksheetId: z.ZodString;
                 itemId: z.ZodString;
             }, z.core.$strict>>;
-            userConfirmation: z.ZodOptional<z.ZodString>;
         }, z.core.$strict>>;
         exercises: z.ZodDefault<z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
             objectiveId: z.ZodString;
             role: z.ZodEnum<{
-                daily: "daily";
                 diagnose: "diagnose";
                 demo: "demo";
                 try: "try";
                 vary: "vary";
+                daily: "daily";
             }>;
             variant: z.ZodEnum<{
                 numeric: "numeric";
@@ -1799,8 +1799,8 @@ declare const schemas: {
                     y: z.ZodNumber;
                     label: z.ZodString;
                     align: z.ZodOptional<z.ZodEnum<{
-                        left: "left";
                         center: "center";
+                        left: "left";
                     }>>;
                 }, z.core.$strict>, z.ZodObject<{
                     draw: z.ZodLiteral<"arrow">;
@@ -1819,13 +1819,13 @@ declare const schemas: {
             explanation: z.ZodString;
             answerEvidence: z.ZodString;
             errorType: z.ZodOptional<z.ZodEnum<{
-                "carry-borrow": "carry-borrow";
+                pattern: "pattern";
                 "place-value": "place-value";
+                "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
-                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -1850,8 +1850,8 @@ declare const schemas: {
         concepts: z.ZodDefault<z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
             name: z.ZodString;
@@ -1866,15 +1866,14 @@ declare const schemas: {
         objectives: z.ZodDefault<z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
             title: z.ZodString;
             goal: z.ZodString;
             conceptIds: z.ZodArray<z.ZodString>;
             method: z.ZodEnum<{
-                listen: "listen";
                 context: "context";
                 recognize: "recognize";
                 "read-evidence": "read-evidence";
@@ -1882,16 +1881,17 @@ declare const schemas: {
                 represent: "represent";
                 reason: "reason";
                 verify: "verify";
+                listen: "listen";
                 speak: "speak";
             }>;
             errorTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
-                "carry-borrow": "carry-borrow";
+                pattern: "pattern";
                 "place-value": "place-value";
+                "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
-                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -1913,10 +1913,10 @@ declare const schemas: {
             }>>>;
             questionPoints: z.ZodOptional<z.ZodArray<z.ZodString>>;
             variationAxes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
-                reverse: "reverse";
                 context: "context";
                 numbers: "numbers";
                 representation: "representation";
+                reverse: "reverse";
                 explain: "explain";
             }>>>;
         }, z.core.$strict>>>;
@@ -1937,8 +1937,8 @@ declare const schemas: {
         teachingQueue: z.ZodDefault<z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
             prompt: z.ZodString;

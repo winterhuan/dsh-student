@@ -58,15 +58,25 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
   if (request.kind === 'learning-context') {
     const active = workspace.blocks.find(block => block.endedAt === undefined)
     const currentQuestion = active?.questions.find(question => question.id === active.currentQuestionId)
-    const responses = (active?.responses.filter(response => response.questionId === currentQuestion?.id) ?? []).slice(-20).map(response => ({ ...response, answerDate: index.entries.find(item => item.ownerId === active?.id && item.responseId === response.id)?.answerDate ?? { kind: 'unknown' } }))
-    const elements = currentQuestion && typeof currentQuestion.objectiveId === 'string' ? objectiveElements(state, currentQuestion.objectiveId) : undefined
+    const originals = active?.responses.filter(response => response.questionId === currentQuestion?.id) ?? []
+    const selected = originals.find(response => response.id === active?.currentResponseId) ?? originals.at(-1)
+    const recent = originals.slice(-20)
+    if (selected && !recent.some(response => response.id === selected.id)) recent[0] = selected
+    const responses = recent.map(response => ({ ...response, answerDate: index.entries.find(item => item.ownerId === active?.id && item.responseId === response.id)?.answerDate ?? { kind: 'unknown' } }))
+    const target = currentQuestion && typeof currentQuestion.objectiveId === 'string' ? builtinObjectiveAnywhere(currentQuestion.objectiveId) ?? workspace.collections?.objectives.find(goal => goal.id === currentQuestion.objectiveId) : undefined
+    const selectedProfile = active?.context.profile ? { ...active.context.profile, ...active.context.scope } : state.profile
+    const scopedState = { ...state, profile: selectedProfile }
+    const elements = currentQuestion && typeof currentQuestion.objectiveId === 'string' ? objectiveElements(scopedState, currentQuestion.objectiveId) : undefined
+    const savedResponse = responses.find(response => response.id === active?.currentResponseId) ?? responses.at(-1) ?? null
+    const savedAssessment = savedResponse ? active?.assessments.find(assessment => assessment.responseId === savedResponse.id) ?? null : null
     return { status: read.status === 'valid' ? 'valid' : 'partial', issues: read.issues, versions, refreshAfter, data: { termId: workspace.settings.termId,
       activeBlock: active ? { id: active.id, subject: active.subject, mode: active.mode, context: active.context, currentQuestionId: active.currentQuestionId } : null, currentQuestion: currentQuestion ?? null, responses,
-      assessments: active?.assessments.filter(assessment => responses.some(response => response.id === assessment.responseId)) ?? [],
+      assessments: active?.assessments.filter(assessment => responses.some(response => response.id === assessment.responseId)) ?? [], savedResponse, savedAssessment, pendingAssessment: savedResponse !== null && savedAssessment === null,
+      target: target ? { id: target.id, title: target.title, goal: target.goal, method: target.method, source: currentQuestion?.source, facts: elements?.facts ?? [] } : null,
       pendingFacts: index.entries.filter(item => item.answerDate.kind === 'unknown' || item.assistance === 'unknown' || !item.objectiveId).map(item => ({ ownerId: item.ownerId, responseId: item.responseId, fields: [...(item.answerDate.kind === 'unknown' ? ['answerDate'] : []), ...(item.assistance === 'unknown' ? ['assistance'] : []), ...(item.basisStatus ? ['answerBasis'] : !item.objectiveId ? ['objectiveId'] : [])] })).slice(0, 20),
       seeds: currentQuestion && typeof currentQuestion.objectiveId === 'string' ? subjectExercises(active!.subject).filter(item => item.objectiveId === currentQuestion.objectiveId).slice(0, 3) : [],
       elements: elements ? { ...elements, exercises: elements.exercises.slice(0, 3) } : null,
-      legalActions: currentQuestion ? responses.length ? ['request-assessment', 'end-block'] : ['answer', 'request-hint', 'end-block'] : ['start-question'],
+      legalActions: active ? currentQuestion ? savedResponse ? savedAssessment ? ['next-question', 'end-block', 'switch-block'] : ['request-assessment', 'end-block', 'switch-block'] : ['answer', 'request-hint', 'end-block', 'switch-block'] : ['start-question', 'end-block', 'switch-block'] : ['start-block'],
     } }
   }
   if (request.kind === 'summary') {
@@ -105,7 +115,7 @@ export function queryStudy(state: StudyState | undefined, kind: string, offset: 
       teachingQueue: state.teachingQueue.slice(0, 20), teachingQueueCount: state.teachingQueue.length,
       workbookDrafts: state.workbookDrafts.slice(0, 20), workbookDraftCount: state.workbookDrafts.length,
       workbookResults: state.workbookResults.slice(-20).reverse(), workbookResultCount: state.workbookResults.length,
-      more: 'The study skill owns what to do next; kind=progress, due, weak, exercises or curriculum with offset pages more records. interests and interestFocus wrap question context; facts stay on the knowledge map. dueToday lists at most two mistakes to clear and dueBacklog is the full overdue count. openmaic.baseUrl is the interactive-lesson service; write lesson records at openmaic.lessonsPath with the shell, not study_update.',
+      more: 'The study skill owns what to do next; kind=progress, due, weak, exercises or curriculum with offset pages more records. Preserve unfinished work and explicitly selected goals before recommendations. interests and interestFocus wrap question context; facts stay on the knowledge map. dueToday lists at most two optional reviews. openmaic.baseUrl is the interactive-lesson service; author its independent lesson log and validate it with the packaged CLI.',
     }
   }
   if (kind === 'curriculum') {

@@ -41,6 +41,29 @@ it('reads saved original answers without turning unknown dates or assistance int
   expect(summary).toMatchObject({ data: { practisedGoals: 0, masteredGoals: 0, dueCompletion: { done: 0, total: 0 } } })
 })
 
+it('keeps the selected goal and current response while distinguishing pending and saved assessment actions', async () => {
+  const { files, block, save } = await workspace()
+  block.currentResponseId = 'r1'
+  block.assessments = []
+  await save('.study/blocks/block-1.json', block)
+  const pending = queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'learning-context' }, NOW)
+  expect(pending).toMatchObject({ data: { savedResponse: { id: 'r1', rawResponse: '15' }, pendingAssessment: true, target: { id: 'm2a-o-sub', method: 'verify' }, legalActions: ['request-assessment', 'end-block', 'switch-block'] } })
+  block.assessments = [{ id: 'a1', responseId: 'r1', result: 'correct', assistance: 'unknown', feedback: 'Correct', answerEvidence: '8 + 7 = 15', assessedAt: NOW }]
+  await save('.study/blocks/block-1.json', block)
+  expect(queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'learning-context' }, NOW)).toMatchObject({ data: { pendingAssessment: false, legalActions: ['next-question', 'end-block', 'switch-block'] } })
+})
+
+it('retains an explicitly selected original response outside the recent response window', async () => {
+  const { files, block, save } = await workspace()
+  const original = block.responses[0]!
+  block.responses = Array.from({ length: 21 }, (_, index) => ({ ...original, id: `r-${index}`, rawResponse: `Original ${index}` }))
+  block.currentResponseId = 'r-0'
+  block.assessments = []
+  await save('.study/blocks/block-1.json', block)
+  const result = queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'learning-context' }, NOW)
+  expect(result).toMatchObject({ data: { savedResponse: { id: 'r-0', rawResponse: 'Original 0' }, responses: expect.arrayContaining([expect.objectContaining({ id: 'r-0' })]), pendingAssessment: true } })
+})
+
 it('loads curriculum and seed questions through the built package export in plain Node', async () => {
   const { cwd } = await workspace()
   const { stdout } = await promisify(execFile)(process.execPath, ['--input-type=module', '--eval', `

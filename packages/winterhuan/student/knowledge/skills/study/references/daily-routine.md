@@ -25,7 +25,7 @@
 
 ## 两种入口
 
-- 打印今日小卷：用 `worksheet` 保存，`kind` 写 `daily`，4 到 6 题（生字或单词、句子或口算、一道薄弱错因变式）。先查 `study_status kind=elements` 与 `kind=weak`。
-- 对话听写：先查 `study_status`；没有进行中的学习段时用 `start` 开一段 `foundation`。用 `task` 一次报一个字词或一句话（自由作答），学生写完后对照答案用 `record` 反馈，写错的用 `mistake` 保存为待确认错题。
+- 打印今日小卷：在 worksheet.items 保存，worksheetKind 写 daily，编辑后校验，4 到 6 题（生字或单词、句子或口算、一道薄弱错因变式）。先查 `study_status kind=elements` 与 `kind=weak`。
+- 对话听写：先查 `study_status`；没有进行中的学习段时创建 mode 为 foundation 的正式 block 并校验。在 questions 一次保存一个字词或一句话（自由作答），学生写完先保存 responses，再核对答案保存 assessment 并校验；错误在 collections 中待确认。
 
-听写和口算对完即结束，不追加同型题；孩子说出思路时用一两句话肯定，不评分。卷子批改与照片核对走 `paper-draft`、`confirm-paper` 和 `grade-sheet`，见 `questions.md`。
+听写和口算对完即结束，不追加同型题；孩子说出思路时用一两句话肯定，不评分。卷子批改与照片核对先保存 worksheet.drafts，家长确认后保留 responses 与 assessments 并校验，见 `questions.md`。

@@ -3,7 +3,7 @@ import StudentRemote from './remote-service.ts'
 import type { StudentTransportConfig } from './types.ts'
 import type z from '@deepseek-ai/schemastery'
 import { StudyBackupRetention } from './files/backup-retention.ts'
-import { StudyReadCacheOwner } from './files/cache.ts'
+import { StudyReadCacheOwner } from './files/cache-owner.ts'
 export * from './remote-service.ts'
 export type * from './types.ts'
 

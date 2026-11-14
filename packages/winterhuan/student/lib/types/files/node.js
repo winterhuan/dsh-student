@@ -1,7 +1,6 @@
 /** Node filesystem adapter for the packaged read-only validator. */
 import { stat, realpath, readdir, readFile } from 'node:fs/promises';
 import { resolve, relative, isAbsolute } from 'node:path';
-import { FsTargetKey, FsVersion } from '@deepseek-ai/dsh-fs';
 /**
  * Create a read-only adapter contained in one local workspace.
  * @param cwd - workspace root; symlink aliases resolve to their actual stable identity.
@@ -37,7 +36,7 @@ export function nodeStudyFiles(cwd) {
             const full = await target(path);
             try {
                 const info = await stat(full, { bigint: true });
-                return { targetKey: FsTargetKey(full), version: FsVersion(`${info.dev}:${info.ino}:${info.size}:${info.mtimeNs}:${info.ctimeNs}`), type: info.isFile() ? 'file' : info.isDirectory() ? 'directory' : 'other', size: Number(info.size) };
+                return { targetKey: full, version: `${info.dev}:${info.ino}:${info.size}:${info.mtimeNs}:${info.ctimeNs}`, type: info.isFile() ? 'file' : info.isDirectory() ? 'directory' : 'other', size: Number(info.size) };
             }
             catch (error) {
                 if (error instanceof Error && 'code' in error && error.code === 'ENOENT')

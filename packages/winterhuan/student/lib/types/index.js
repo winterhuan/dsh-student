@@ -1,6 +1,6 @@
 import StudentRemote from "./remote-service.js";
 import { StudyBackupRetention } from "./files/backup-retention.js";
-import { StudyReadCacheOwner } from "./files/cache.js";
+import { StudyReadCacheOwner } from "./files/cache-owner.js";
 export * from "./remote-service.js";
 /** Independent student plugin identity. */
 export const name = 'student';

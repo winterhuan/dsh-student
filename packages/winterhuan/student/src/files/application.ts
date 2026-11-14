@@ -3,7 +3,7 @@ import type { ToolExecution } from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-sandbox-policy'
 import type { StudyFiles } from './read.ts'
 import { StudyBackupRetention } from './backup-retention.ts'
-import { StudyReadCacheOwner } from './cache.ts'
+import { StudyReadCacheOwner } from './cache-owner.ts'
 
 /**
  * Bind official-file reads and guarded manual writes to the calling execution world.

@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文
 
-面向小学生的每日学习、知识点练习和错题复习。
+面向小学生的原生对话学习、已确认课程和可恢复练习记录。
 
 [插件说明](packages/winterhuan/student/README.zh.md) · [发布包](https://github.com/winterhuan/dsh-student/releases/download/v0.1.8/winterhuan-dsh-student-0.1.8.tgz)
 

@@ -8,6 +8,12 @@ import type { ObservedFile, WorkspaceRead, StudyFiles } from './read.ts';
  * @returns their SHA-256 digest.
  */
 export declare function sourceSha256(bytes: Uint8Array): string;
+/**
+ * Locate stable entity outputs required by a preserved v1 source, allowing subsequent content corrections.
+ * @param source - parsed original v1 material whose bytes have been verified independently.
+ * @returns official paths required by the migrated term.
+ */
+export declare function migrationOutputPaths(source: unknown): string[];
 /** One proposed migration file; existing valid output is resumed under its original identity. */
 export interface MigrationOutput {
     path: string;

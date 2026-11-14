@@ -80,6 +80,7 @@
     "build": "pnpm run build:host && pnpm run build:client",
     "typecheck": "pnpm run build:host && tsc -b tsconfig.client.json && tsc -p tsconfig.scripts.json",
     "test": "vitest run",
+    "test:recovery": "node packages/winterhuan/student/tests/recovery-native.e2e.mjs",
     "clean": "rm -rf packages/*/*/lib"
   }
 }

@@ -28,7 +28,7 @@ Guide a primary-school learner through Chinese, mathematics and English in the c
 Install the prebuilt release through the [plugin market](https://winterhuan.github.io/dsh-creative/index.json), or use this pinned Git source with DSH `0.2.2-rc.1`:
 
 ```sh
-dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#cbc8409b4d48d210a2df5b4dcfa0b24d58ef3903&path:/packages/winterhuan/student'
+dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.0&path:/packages/winterhuan/student'
 ```
 
 Replace `market` with the name of your existing DSH profile.
@@ -96,7 +96,7 @@ The check-in is a short, recurring probe: for each subject it samples untouched 
 
 ### Learn and review
 
-The tutor starts one learning block, asks a short question, waits for the learner and records the actual response and help received. There is no block, break or daily minute limit; a child may stop when tired without penalty or catch-up. Elapsed time is quiet clock time including waiting, and stop stores the actual elapsed time. Calendar days use Shanghai time. No background alarm or screen lock is installed. Record matching, choice normalisation and diagnose intensity remain in the [soft-time decision](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/bug-fix/2026-10-18-student-soft-time.md); removal of durations is in the [overhaul decision](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/feature/2026-10-30-student-overhaul.md).
+The tutor starts one learning block, asks a short question, waits for the learner and records the actual response and help received. There is no block, break or daily minute limit; a child may stop when tired without penalty or catch-up. Elapsed time is quiet clock time including waiting, and stop stores the actual elapsed time. Calendar days use Shanghai time. No background alarm or screen lock is installed. Record matching, choice normalisation and diagnose intensity remain in the [soft-time decision](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/bug-fix/2026-10-18-student-soft-time.md); removal of durations is in the [overhaul decision](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-30-student-overhaul.md).
 
 Actual recorded work earns at most one participation star per day; a learner's reflection can earn one additional star. Idle time, more questions, longer sessions and consecutive days earn no extra stars. The progress report shows evidence and topics, not rankings or exam scores.
 
@@ -109,7 +109,7 @@ Ask `/study` to review progress, continue due mistakes or explore a child's ques
 <a id="understand-the-implementation"></a>
 ## Understand the implementation
 
-Ownership and trust boundaries: [Student subsystem](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/docs/subsystems/student.md). From the repository root, build with `pnpm --filter @winterhuan/dsh-student build` and test with `pnpm --filter @winterhuan/dsh-student test`.
+Ownership and trust boundaries: [Student subsystem](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/docs/subsystems/student.md). From the repository root, build with `pnpm --filter @winterhuan/dsh-student build` and test with `pnpm --filter @winterhuan/dsh-student test`.
 
 The Host entry owns validated workspace reads, typed manual saves and configuration. The `./agent` export registers domain Skills and tools inside the `student` preset and inherited native child compositions. The preset supplies a task-specific persona and explicit native tools; it does not change the default mode. Learning uses filesystem, search, web, questions, presentation and platform-specific shell tools without delegation or creative production workflows.
 
@@ -162,13 +162,13 @@ Default textbook resources live in the Skill's `textbooks/` directory and ship w
 
 - [Study Skill](knowledge/skills/study/SKILL.md) — parent setup and daily tutoring.
 - [OpenMAIC lessons](knowledge/skills/study/references/openmaic.md) — generate a local interactive lesson, record it, and review with a few questions.
-- [Interactive lesson decision](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/feature/2026-10-28-student-openmaic-lessons.md) — why the tutor shell calls OpenMAIC and the desk only lists and opens.
+- [Interactive lesson decision](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-28-student-openmaic-lessons.md) — why the tutor shell calls OpenMAIC and the desk only lists and opens.
 - [Teaching reference](knowledge/skills/study/references/teaching.md) — subject-specific methods and answer checks.
 - [Knowledge map](knowledge/skills/study/references/knowledge-map.md) — shipped knowledge points, mastery states and the consolidation loop.
-- [Learning decision](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/feature/2026-10-05-student-learning.md) — evidence, source and reward boundaries.
-- [Default textbook decision](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/feature/2026-10-10-student-default-textbooks.md) — packaged materials and school-alignment limits.
-- [Knowledge map decision](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/feature/2026-10-12-student-knowledge-map.md) — shipped maps, weak-point rules and the main workbench tab.
-- [Overhaul decision](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/feature/2026-10-30-student-overhaul.md) — no time limits, exercise bank, 1 / 7 / 16 / 35 review and simplified parent/student flow.
+- [Learning decision](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-05-student-learning.md) — evidence, source and reward boundaries.
+- [Default textbook decision](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-10-student-default-textbooks.md) — packaged materials and school-alignment limits.
+- [Knowledge map decision](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-12-student-knowledge-map.md) — shipped maps, weak-point rules and the main workbench tab.
+- [Overhaul decision](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-30-student-overhaul.md) — no time limits, exercise bank, 1 / 7 / 16 / 35 review and simplified parent/student flow.
 
 <a id="model-experience"></a>
 ## Model Experience

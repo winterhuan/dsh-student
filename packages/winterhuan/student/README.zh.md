@@ -28,7 +28,7 @@ kind: "package-bundle"
 通过[插件市场](https://winterhuan.github.io/dsh-creative/index.json)安装预构建版本，或在 DSH `0.2.2-rc.1` 中安装以下固定 Git 提交：
 
 ```sh
-dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#cbc8409b4d48d210a2df5b4dcfa0b24d58ef3903&path:/packages/winterhuan/student'
+dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.0&path:/packages/winterhuan/student'
 ```
 
 将 `market` 替换为你已有的 DSH profile 名称。
@@ -96,7 +96,7 @@ dsh plugin --profile student add ./packages/winterhuan/student
 
 ### 学习与复习
 
-辅导者开启一个学习段，提出简短问题，等待学生并记录真实回答与帮助程度。没有单段、休息或每日分钟限制；孩子累了可以随时停止，不扣星、不责备、不补打卡。时长是包含等待的钟表时间，停止时按实际经过时间记录。日期使用上海时区。不安装后台闹钟或屏幕锁。作答匹配、选项归一与摸底强度见[软提醒决策](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/bug-fix/2026-10-18-student-soft-time.zh.md)；取消时长限制见[全面改造决策](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/feature/2026-10-30-student-overhaul.zh.md)。
+辅导者开启一个学习段，提出简短问题，等待学生并记录真实回答与帮助程度。没有单段、休息或每日分钟限制；孩子累了可以随时停止，不扣星、不责备、不补打卡。时长是包含等待的钟表时间，停止时按实际经过时间记录。日期使用上海时区。不安装后台闹钟或屏幕锁。作答匹配、选项归一与摸底强度见[软提醒决策](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/bug-fix/2026-10-18-student-soft-time.zh.md)；取消时长限制见[全面改造决策](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-30-student-overhaul.zh.md)。
 
 每天实际作答最多获得一颗参与星，学生复述可再得一颗。挂机、多刷题、延长学习和连续天数均不额外加星。进度报告展示证据和主题，不排名，也不当作考试成绩。
 
@@ -109,7 +109,7 @@ dsh plugin --profile student add ./packages/winterhuan/student
 <a id="understand-the-implementation"></a>
 ## 理解实现
 
-职责与信任边界见[学生学习子系统](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/docs/subsystems/student.zh.md)。在仓库根目录通过 `pnpm --filter @winterhuan/dsh-student build` 构建，通过 `pnpm --filter @winterhuan/dsh-student test` 测试。
+职责与信任边界见[学生学习子系统](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/docs/subsystems/student.zh.md)。在仓库根目录通过 `pnpm --filter @winterhuan/dsh-student build` 构建，通过 `pnpm --filter @winterhuan/dsh-student test` 测试。
 
 Host 入口负责已验证工作区读取、类型化手动保存和配置。`./agent` 导出在 `student` preset 及继承它的原生子 Agent 组合内注册领域技能和工具。preset 提供任务专属 persona 和显式原生工具组合，不改变默认模式。学习模式使用文件、搜索、网页、提问、呈现和系统对应的 shell 工具，不默认挂载委派或创作生产工作流。
 
@@ -162,13 +162,13 @@ node packages/winterhuan/student/lib/cli.js validate --workspace /path/to/worksp
 
 - [学习技能](knowledge/skills/study/SKILL.md)——家长设置与日常辅导。
 - [OpenMAIC 互动课](knowledge/skills/study/references/openmaic.md)——在本机生成互动课、记课，并用几道题巩固。
-- [互动课决策](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/feature/2026-10-28-student-openmaic-lessons.zh.md)——为什么由助手的 shell 调用 OpenMAIC，工作台只列表和打开。
+- [互动课决策](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-28-student-openmaic-lessons.zh.md)——为什么由助手的 shell 调用 OpenMAIC，工作台只列表和打开。
 - [教学参考](knowledge/skills/study/references/teaching.md)——学科方法和答案核验。
 - [知识地图](knowledge/skills/study/references/knowledge-map.md)——内置知识点、掌握状态与巩固回路。
-- [学习系统决策](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/feature/2026-10-05-student-learning.zh.md)——证据、来源与奖励边界。
-- [默认教材决策](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/feature/2026-10-10-student-default-textbooks.zh.md)——随包资料与校内匹配限制。
-- [知识地图决策](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/feature/2026-10-12-student-knowledge-map.zh.md)——内置地图、薄弱点规则与工作台主标签。
-- [全面改造决策](https://github.com/winterhuan/dsh-creative/blob/upstream-conventions/.agents/notes/implemented/feature/2026-10-30-student-overhaul.zh.md)——取消时长限制、习题知识库、1 / 7 / 16 / 35 复习与家长/学生流转简化。
+- [学习系统决策](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-05-student-learning.zh.md)——证据、来源与奖励边界。
+- [默认教材决策](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-10-student-default-textbooks.zh.md)——随包资料与校内匹配限制。
+- [知识地图决策](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-12-student-knowledge-map.zh.md)——内置地图、薄弱点规则与工作台主标签。
+- [全面改造决策](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-30-student-overhaul.zh.md)——取消时长限制、习题知识库、1 / 7 / 16 / 35 复习与家长/学生流转简化。
 
 <a id="model-experience"></a>
 ## 模型体验

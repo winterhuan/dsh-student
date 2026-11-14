@@ -3,5 +3,5 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write README.md
 /winterhuan-dsh-student:
-  en: 731f64fc5b28cff3
-  zh: 54ab48d55c86e632
+  en: 869f47adaaa06f98
+  zh: 6e7acbea82d2ca60

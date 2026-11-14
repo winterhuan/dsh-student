@@ -7,6 +7,7 @@ import { validateStudyFiles, type FileIssue, type ParsedFile, type ValidationRes
 import type { OfficialFile } from './schema.ts'
 import type { BackupRetentionQueue } from './backup-retention.ts'
 import { StudyReadCache } from './cache.ts'
+import { migrationOutputPaths } from './recovery.ts'
 
 /** Stable observation supplied by the execution-world filesystem. */
 export interface FileObservation extends FsInfo { targetKey: FsTargetKey }
@@ -121,6 +122,10 @@ async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: re
         const bytes = await fs.read(migration.backupPath, signal, MAX_FILE_BYTES)
         if ((await fs.stat(migration.backupPath, signal))?.version !== backup.version) continue
         if (createHash('sha256').update(bytes).digest('hex') !== migration.sourceSha256) throw new Error('The preserved migration source bytes do not match their recorded digest.')
+        const expected = migrationOutputPaths(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)))
+        const present = new Set(validation.files.filter(file => file.file).map(file => file.path))
+        const missing = expected.filter(path => !present.has(path))
+        if (missing.length) discoveryIssues.push({ path: '.study/settings.json', field: 'migration', rule: 'migration-incomplete', correction: `Resume the verified migration under the same identities; missing outputs: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? ` and ${missing.length - 5} more` : ''}.` })
         const original = await fs.stat(migration.sourcePath, signal)
         if (original) {
           const originalBytes = await fs.read(migration.sourcePath, signal, MAX_FILE_BYTES)

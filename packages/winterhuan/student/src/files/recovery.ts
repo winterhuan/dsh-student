@@ -14,6 +14,19 @@ import type { ObservedFile, WorkspaceRead, StudyFiles } from './read.ts'
  * @returns their SHA-256 digest.
  */
 export function sourceSha256(bytes: Uint8Array): string { return createHash('sha256').update(bytes).digest('hex') }
+
+function workbookMigrationId(id: string): string { return `workbook-${id}`.length <= 80 ? `workbook-${id}` : `workbook-${sourceSha256(new TextEncoder().encode(id)).slice(0, 32)}` }
+
+/**
+ * Locate stable entity outputs required by a preserved v1 source, allowing subsequent content corrections.
+ * @param source - parsed original v1 material whose bytes have been verified independently.
+ * @returns official paths required by the migrated term.
+ */
+export function migrationOutputPaths(source: unknown): string[] {
+  const state = stateSchema.parse(migrateStudyFile(structuredClone(source)))
+  return ['.study/settings.json', '.study/collections.json', ...state.sessions.map(block => `.study/blocks/${block.id}.json`),
+    ...state.worksheets.map(sheet => `.study/worksheets/${sheet.id}.json`), ...[...state.workbookResults, ...state.workbookDrafts].map(workbook => `.study/worksheets/${workbookMigrationId(workbook.id)}.json`)]
+}
 /** One proposed migration file; existing valid output is resumed under its original identity. */
 export interface MigrationOutput { path: string; file: OfficialFile; status: 'missing' | 'already-valid' | 'conflict' }
 /** Unsupported legacy facts remain located in the preserved source material. */
@@ -82,7 +95,7 @@ export function describeMigration(read: WorkspaceRead, backup: ObservedFile, exi
   }
   for (const [i, workbook] of [...state.workbookResults, ...state.workbookDrafts].entries()) {
     const confirmed = i < state.workbookResults.length ? state.workbookResults[i] : undefined
-    const worksheetId = `workbook-${workbook.id}`.length <= 80 ? `workbook-${workbook.id}` : `workbook-${sourceSha256(new TextEncoder().encode(workbook.id)).slice(0, 32)}`
+    const worksheetId = workbookMigrationId(workbook.id)
     const row = confirmed ? `workbookResults.${i}` : `workbookDrafts.${i - state.workbookResults.length}`
     const legacy = [pending(row, ['answerDate', 'nativeSource', ...(workbook.objectiveId ? [] : ['objectiveId']), ...(workbook.outcome === 'hinted' ? [] : ['assistance'])], 'Original workbook content and combined outcome declarations are retained; receipt/confirmation time is not answer time.')]
     const assistance = workbook.outcome === 'hinted' && confirmed ? 'hint' : 'unknown'

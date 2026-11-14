@@ -3,6 +3,7 @@ import { stateSchema } from "../schema.js";
 import { migrateStudyFile } from "./legacy.js";
 import { validateStudyFiles } from "./validation.js";
 import { StudyReadCache } from "./cache.js";
+import { migrationOutputPaths } from "./recovery.js";
 const MAX_FILE_BYTES = 8_388_608;
 const MAX_TOTAL_BYTES = 33_554_432;
 /**
@@ -115,6 +116,11 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, owner) {
                     continue;
                 if (createHash('sha256').update(bytes).digest('hex') !== migration.sourceSha256)
                     throw new Error('The preserved migration source bytes do not match their recorded digest.');
+                const expected = migrationOutputPaths(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)));
+                const present = new Set(validation.files.filter(file => file.file).map(file => file.path));
+                const missing = expected.filter(path => !present.has(path));
+                if (missing.length)
+                    discoveryIssues.push({ path: '.study/settings.json', field: 'migration', rule: 'migration-incomplete', correction: `Resume the verified migration under the same identities; missing outputs: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? ` and ${missing.length - 5} more` : ''}.` });
                 const original = await fs.stat(migration.sourcePath, signal);
                 if (original) {
                     const originalBytes = await fs.read(migration.sourcePath, signal, MAX_FILE_BYTES);

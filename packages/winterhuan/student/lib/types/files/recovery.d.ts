@@ -111,7 +111,7 @@ export interface RestoreDescription {
 }
 /**
  * Validate a chosen restore candidate against independently read current entities.
- * @param read - current files, including invalid original bytes.
+ * @param read - current files, including invalid original bytes and retained verified observations.
  * @param chosen - explicit user-selected verified backup.
  * @returns destination, preserved-current descriptor and revalidation issues; performs no writes.
  */

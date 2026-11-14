@@ -11,9 +11,9 @@ import { applicationStudyFiles } from '../src/files/application.ts'
 import { nodeStudyFiles } from '../src/files/node.ts'
 import { readWorkspace } from '../src/files/read.ts'
 import { saveManual, manualFields, type ManualSaveRequest } from '../src/files/manual.ts'
-import { worksheetSchema } from '../src/files/schema.ts'
+import { blockSchema, worksheetSchema } from '../src/files/schema.ts'
 import { studyStore } from '../src/store.ts'
-import { readBackups, describeRestore, retainObservedBackups } from '../src/files/recovery.ts'
+import { readBackups, describeRestore, retainObservedBackups, sourceSha256 } from '../src/files/recovery.ts'
 import { NOW, setup, material, course } from './fixtures.ts'
 import { readLessonFile } from '../src/files/lessons.ts'
 import { readInteractiveLessons } from '../src/openmaic.ts'
@@ -203,6 +203,63 @@ it('propagates cancellation during backup discovery', async () => {
   await expect(readBackups({ ...fs, async list() { abort.abort(reason); throw reason } }, abort.signal)).rejects.toBe(reason)
 })
 
+it('bounds physical backups after a published write rejects its version result', async () => {
+  const { fs, signal, cwd } = await fixture()
+  const block = blockSchema.parse({ format: 2, kind: 'block', termId: 'term-1', id: 'current', subject: 'math', mode: 'foundation', startedAt: NOW, endedAt: NOW + 1, context: { profile: setup.profile }, questions: [], responses: [], hints: [], assessments: [] })
+  await mkdir(join(cwd, '.study/blocks'))
+  await writeFile(join(cwd, '.study/blocks/current.json'), JSON.stringify(block))
+  await mkdir(join(cwd, '.study/backups'))
+  await Promise.all(Array.from({ length: 127 }, async (_, index) => {
+    const id = `old-${index}`
+    const bytes = new TextEncoder().encode(JSON.stringify({ ...block, id }))
+    await writeFile(join(cwd, `.study/backups/${id}.json`), JSON.stringify({ format: 1, kind: 'observed-version', sourcePath: `.study/blocks/${id}.json`, targetKey: `old-target-${index}`, version: `old-version-${index}`, observedAt: index, sha256: sourceSha256(bytes), bytesBase64: Buffer.from(bytes).toString('base64') }))
+  }))
+  const read = await readWorkspace(fs, signal)
+  expect(read.status).toBe('valid')
+  let writes = 0
+  const rejecting = { ...fs, async write(...args: Parameters<NonNullable<typeof fs.write>>) {
+    const version = await fs.write!(...args)
+    // LocalFS probes the new version after publication; a probe failure retains the committed bytes.
+    if (++writes === 1) throw new Error('Post-publication version probe failed')
+    return version
+  } }
+  const result = await retainObservedBackups(rejecting, read, NOW, signal)
+  expect(writes).toBe(2)
+  expect(result.issues).toEqual([])
+  expect(result.backups).toHaveLength(128)
+  expect(await fs.list('.study/backups', signal)).toHaveLength(128)
+  const observed = await readBackups(fs, signal)
+  expect(observed.issues).toEqual([])
+  expect(observed.backups.map(entry => entry.path).sort()).toEqual(result.backups.map(entry => entry.path).sort())
+  for (const source of read.files) expect(observed.backups).toContainEqual(expect.objectContaining({ backup: expect.objectContaining({ sourcePath: source.path, sha256: sourceSha256(source.bytes), bytesBase64: Buffer.from(source.bytes).toString('base64') }) }))
+})
+
+it.each(['write-failure', 'cancellation'] as const)('preserves independent backup outcomes on %s', async outcome => {
+  const { fs, signal, cwd } = await fixture()
+  await mkdir(join(cwd, '.study/blocks'))
+  await writeFile(join(cwd, '.study/blocks/current.json'), JSON.stringify({ format: 2, kind: 'block', termId: 'term-1', id: 'current', subject: 'math', mode: 'foundation', startedAt: NOW, endedAt: NOW + 1, context: { profile: setup.profile }, questions: [], responses: [], hints: [], assessments: [] }))
+  const read = await readWorkspace(fs, signal)
+  const abort = new AbortController()
+  const failure = new Error(outcome)
+  let writes = 0
+  const failing = { ...fs, async write(...args: Parameters<NonNullable<typeof fs.write>>) {
+    if (++writes === 1 && outcome === 'write-failure') throw failure
+    const version = await fs.write!(...args)
+    if (outcome === 'cancellation') { abort.abort(failure); throw failure }
+    return version
+  } }
+  const retaining = retainObservedBackups(failing, read, NOW, abort.signal)
+  if (outcome === 'cancellation') {
+    await expect(retaining).rejects.toBe(failure)
+    expect(writes).toBe(1)
+  } else {
+    expect(await retaining).toMatchObject({ backups: [expect.objectContaining({ backup: expect.objectContaining({ sourcePath: '.study/blocks/current.json' }) })], issues: [expect.objectContaining({ path: expect.stringMatching(/^\.study\/backups\//u), rule: 'backup-write' })] })
+    expect(writes).toBe(2)
+  }
+  expect((await readBackups(fs, signal)).backups).toHaveLength(1)
+  expect((await readWorkspace(fs, signal)).status).toBe('valid')
+})
+
 it('keeps published unanswered worksheet content frozen after source deletion across a validator process restart', async () => {
   const { fs, signal, cwd, read } = await fixture()
   await mkdir(join(cwd, '.study/worksheets'))
@@ -227,4 +284,32 @@ it('keeps published unanswered worksheet content frozen after source deletion ac
   const backups = await readBackups(fs, signal)
   const { backupVersions } = await import('../src/files/recovery.ts')
   expect(await readWorkspace(fs, signal, backupVersions(backups.backups))).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ rule: 'frozen-content' })]) })
+  const invalid = await readWorkspace(nodeStudyFiles(cwd), signal)
+  const chosen = backups.backups.find(entry => entry.backup.sourcePath === '.study/worksheets/published.json')!
+  const damaged = await fs.read(chosen.backup.sourcePath, signal, 100_000)
+  const restore = describeRestore(invalid, chosen)
+  expect(restore).toMatchObject({ status: 'available', destinationPath: chosen.backup.sourcePath, preserveCurrent: { version: invalid.files.find(file => file.path === chosen.backup.sourcePath)!.version, sha256: sourceSha256(damaged) } })
+  expect(await fs.read(chosen.backup.sourcePath, signal, 100_000)).toEqual(damaged)
+  expect(describeRestore(invalid, { ...chosen, backup: { ...chosen.backup, bytesBase64: Buffer.from('{}').toString('base64') } }).status).toBe('blocked')
+  await fs.write!('.study/restore-original.json', new TextDecoder().decode(damaged), { kind: 'createIfAbsent' }, signal)
+  await fs.write!(chosen.backup.sourcePath, Buffer.from(chosen.backup.bytesBase64, 'base64').toString('utf8'), { kind: 'replaceIfVersion', version: restore.preserveCurrent!.version }, signal)
+  expect(sourceSha256(await fs.read('.study/restore-original.json', signal, 100_000))).toBe(restore.preserveCurrent!.sha256)
+  expect(JSON.parse((await run()).stdout)).toMatchObject({ ok: true, status: 'valid' })
+  const restored = await readWorkspace(fs, signal)
+  expect(restored).toMatchObject({ status: 'valid', workspace: { worksheets: [{ id: 'published', termId: read.workspace!.settings.termId, items: [expect.objectContaining({ prompt: '28 - 7?', objectiveId: 'm2a-o-sub' })] }] } })
+  expect(sourceSha256(await fs.read(chosen.backup.sourcePath, signal, 100_000))).toBe(chosen.backup.sha256)
+  const answered = structuredClone(restored.workspace!.worksheets[0]!)
+  answered.responses.push({ id: 'saved-answer', questionId: 'q1', rawResponse: '21', assistance: 'unknown', answerDate: { kind: 'unknown' }, source: { kind: 'unknown' } })
+  await writeFile(join(cwd, chosen.backup.sourcePath), JSON.stringify(answered))
+  const used = await readWorkspace(fs, signal)
+  expect(used.status).toBe('valid')
+  expect(describeRestore(used, chosen)).toMatchObject({ status: 'blocked', issues: expect.arrayContaining([expect.objectContaining({ rule: 'original-response' })]) })
+  const retargeted = structuredClone(answered)
+  retargeted.items[0]!.objectiveId = 'm2a-o-meaning'
+  const bytes = new TextEncoder().encode(JSON.stringify(retargeted))
+  expect(describeRestore(used, { ...chosen, backup: { ...chosen.backup, bytesBase64: Buffer.from(bytes).toString('base64'), sha256: sourceSha256(bytes) } })).toMatchObject({ status: 'blocked', issues: expect.arrayContaining([expect.objectContaining({ rule: 'frozen-content' })]) })
+  const orphan = structuredClone(answered)
+  orphan.responses[0]!.questionId = 'missing-question'
+  const orphanBytes = new TextEncoder().encode(JSON.stringify(orphan))
+  expect(describeRestore(used, { ...chosen, backup: { ...chosen.backup, bytesBase64: Buffer.from(orphanBytes).toString('base64'), sha256: sourceSha256(orphanBytes) } })).toMatchObject({ status: 'blocked', issues: expect.arrayContaining([expect.objectContaining({ rule: 'question-reference' })]) })
 })

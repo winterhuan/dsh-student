@@ -223,7 +223,9 @@ async function retainBackups(fs: StudyFiles, read: WorkspaceRead, now: number, s
       if (signal.aborted) throw error
       const observed = await readBackups(fs, signal)
       existing.issues.push(...observed.issues.slice(0, 100 - existing.issues.length))
-      if (existing.issues.length < 100 && !observed.backups.some(entry => entry.path === path && entry.backup.sha256 === hash)) existing.issues.push({ path, field: '', rule: 'backup-write', correction: (error instanceof Error ? error.message : 'Inspect whether this backup was saved before retrying.').slice(0, 500) })
+      const committed = observed.backups.find(entry => entry.path === path && entry.backup.sha256 === hash)
+      if (committed) backups.push(committed)
+      else if (existing.issues.length < 100) existing.issues.push({ path, field: '', rule: 'backup-write', correction: (error instanceof Error ? error.message : 'Inspect whether this backup was saved before retrying.').slice(0, 500) })
     }
   }
   signal.throwIfAborted()
@@ -251,14 +253,16 @@ export function backupVersions(backups: readonly { path: string; backup: Observe
 export interface RestoreDescription { status: 'available' | 'blocked'; destinationPath: string; backupPath: string; sourceSha256: string; preserveCurrent?: { path: string; version: string; sha256: string }; issues: FileIssue[] }
 /**
  * Validate a chosen restore candidate against independently read current entities.
- * @param read - current files, including invalid original bytes.
+ * @param read - current files, including invalid original bytes and retained verified observations.
  * @param chosen - explicit user-selected verified backup.
  * @returns destination, preserved-current descriptor and revalidation issues; performs no writes.
  */
 export function describeRestore(read: WorkspaceRead, chosen: { path: string; backup: ObservedBackup }): RestoreDescription {
   const source = backupVersions([chosen])[0]
   const current = read.files.find(file => file.path === chosen.backup.sourcePath)
-  const issues = source ? validateStudyFiles([...read.files.filter(file => file.path !== source.path && file.file).map(file => ({ path: file.path, value: file.file })), { path: source.path, value: source.file }]).issues
+  const prior = [...backupVersions([chosen, ...Array.from(read.cache?.backups.values() ?? [], ({ backup }) => ({ path: backup.sourcePath, backup }))]),
+    ...read.files.flatMap(({ path, targetKey }) => { const file = read.cache?.files.get(targetKey)?.file; return file ? [{ path, file }] : [] })]
+  const issues = source ? validateStudyFiles([...read.files.filter(file => file.path !== source.path && file.file).map(file => ({ path: file.path, value: file.file })), { path: source.path, value: source.file }], prior, read.workspace?.nativeSources).issues
     : [{ path: chosen.path, field: '', rule: 'backup-verification', correction: 'Choose a byte-verified strict official backup.' }]
   return { status: issues.length === 0 ? 'available' : 'blocked', destinationPath: chosen.backup.sourcePath, backupPath: chosen.path, sourceSha256: chosen.backup.sha256,
     ...(current ? { preserveCurrent: { path: current.path, version: current.version, sha256: sourceSha256(current.bytes) } } : {}), issues }

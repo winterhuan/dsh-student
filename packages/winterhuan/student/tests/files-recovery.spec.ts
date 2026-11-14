@@ -115,3 +115,23 @@ it('keeps absent legacy confirmations pending instead of turning parser defaults
   const backup = { ...(await fs.stat('.study/v1-original.json', signal))!, path: '.study/v1-original.json', bytes: new TextEncoder().encode(original) }
   expect(describeMigration(read, backup)).toMatchObject({ status: 'blocked', outputs: [], pending: [expect.objectContaining({ row: 'profile', fields: ['parentConfirmation'] })] })
 })
+
+it('preserves unsupported legacy reward declarations as pending facts without inflating valid stars', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-legacy-rewards-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study'))
+  const rewards = [{ day: '2024-02-29', reason: 'participation' }, { day: '2024-02-29', reason: 'reflection' }, { day: '2024-02-29', reason: 'participation' }, { day: '2026-02-29', reason: 'reflection' }]
+  const original = JSON.stringify(stateSchema.parse({ format: 1, revision: 1, updatedAt: NOW, profile: setup.profile, materials: [], courses: [], sessions: [], attempts: [], mistakes: [], rewards }))
+  await writeFile(join(cwd, '.study/state.json'), original)
+  await writeFile(join(cwd, '.study/v1-original.json'), original)
+  const fs = nodeStudyFiles(cwd)
+  const signal = new AbortController().signal
+  const read = await readWorkspace(fs, signal)
+  const backup = { ...(await fs.stat('.study/v1-original.json', signal))!, path: '.study/v1-original.json', bytes: new TextEncoder().encode(original) }
+  const plan = describeMigration(read, backup)
+  expect(plan).toMatchObject({ status: 'ready', pending: expect.arrayContaining([expect.objectContaining({ row: 'rewards.2', fields: ['day', 'reason'] }), expect.objectContaining({ row: 'rewards.3', fields: ['day', 'reason'] })]) })
+  expect(plan.outputs.find(output => output.file.kind === 'collections')?.file).toMatchObject({ rewards: [{ day: '2024-02-29', reason: 'participation' }, { day: '2024-02-29', reason: 'reflection' }] })
+  expect(describeMigration(read, backup, plan.outputs).outputs.every(output => output.status === 'already-valid')).toBe(true)
+  expect(await readFile(join(cwd, '.study/state.json'), 'utf8')).toBe(original)
+  expect(await readFile(join(cwd, '.study/v1-original.json'), 'utf8')).toBe(original)
+})

@@ -93,11 +93,11 @@ export const worksheetSchema = z.object({ ...base, kind: z.literal('worksheet'),
     assistance: assistanceSchema, confidence: z.enum(['high', 'low']), uncertainties: z.string().max(2000), imagePaths: z.array(text).max(8), receivedAt: time,
   }).strict()).max(500), pendingLegacy: z.array(pending).max(500).optional(),
 }).strict()
-/** Bounded non-block collections; mistakes, teaching and curriculum extensions retain explicit ownership. */
+/** Bounded non-block collections with explicit ownership; rewards have one calendar day/reason identity. */
 export const collectionsSchema = z.object({ ...base, kind: z.literal('collections'),
   mistakes: z.array(stateSchema.shape.mistakes.element.omit({ stage: true, independentDays: true, dueAt: true })).max(5000),
   exercises: stateSchema.shape.exercises, concepts: stateSchema.shape.concepts, objectives: stateSchema.shape.objectives,
-  relations: stateSchema.shape.relations, teachingQueue: stateSchema.shape.teachingQueue, rewards: stateSchema.shape.rewards,
+  relations: stateSchema.shape.relations, teachingQueue: stateSchema.shape.teachingQueue, rewards: z.array(stateSchema.shape.rewards.element.extend({ day })).max(1000),
   pendingLegacy: z.array(pending).max(5000).optional(),
 }).strict()
 /** Machine-readable file definitions shared by CLI, application reads and manual saves. */

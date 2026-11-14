@@ -30,6 +30,43 @@ it('validates actual official bytes without writing and gives independent consum
   expect(queryWorkspace(after, { kind: 'settings' }, NOW)).toMatchObject({ status: 'valid', data: { termId: 'term-cli', profile: { nickname: setup.profile.nickname } } })
 })
 
+it('rejects duplicate reward identities in official bytes and restores the two-reason daily cap after repair', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-cli-rewards-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study'), { recursive: true })
+  await writeFile(join(cwd, '.study/settings.json'), JSON.stringify(authoringExample('term-settings')))
+  const path = join(cwd, '.study/collections.json')
+  const collections = authoringExample('collections') as object
+  const bytes = JSON.stringify({ ...collections, rewards: Array.from({ length: 3 }, () => ({ day: '2026-11-14', reason: 'participation' })) })
+  await writeFile(path, bytes)
+  const failed = await execute(process.execPath, [cli, 'validate', '--workspace', cwd]).then(value => ({ code: 0, signal: null, ...value }), error => error)
+  expect(failed.signal).toBeNull()
+  expect(failed.code).toBe(1)
+  expect(JSON.parse(failed.stdout)).toMatchObject({ ok: false, issues: expect.arrayContaining([expect.objectContaining({ path: '.study/collections.json', rule: 'duplicate-identity' })]) })
+  const invalid = await readWorkspace(nodeStudyFiles(cwd), new AbortController().signal)
+  expect(queryWorkspace(invalid, { kind: 'status' }, Date.parse('2026-11-14T10:00:00+08:00'))).not.toHaveProperty('data')
+  expect(await readFile(path, 'utf8')).toBe(bytes)
+  await writeFile(path, JSON.stringify({ ...collections, rewards: [{ day: '2026-11-14', reason: 'participation' }, { day: '2026-11-14', reason: 'reflection' }, { day: '2026-11-13', reason: 'participation' }] }))
+  expect(JSON.parse((await execute(process.execPath, [cli, 'validate', '--workspace', cwd])).stdout)).toMatchObject({ ok: true })
+  expect(queryWorkspace(await readWorkspace(nodeStudyFiles(cwd), new AbortController().signal), { kind: 'status' }, Date.parse('2026-11-14T10:00:00+08:00'))).toMatchObject({ status: 'valid', data: { stars: 3, todayStars: 2 } })
+})
+
+it.each(['2026-02-29', '2026-02-30', '2026-04-31', '2026-13-01'])('rejects the invalid reward calendar day %s in official bytes', async day => {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-cli-reward-day-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study'), { recursive: true })
+  await writeFile(join(cwd, '.study/settings.json'), JSON.stringify(authoringExample('term-settings')))
+  const path = join(cwd, '.study/collections.json')
+  const bytes = JSON.stringify({ ...(authoringExample('collections') as object), rewards: [{ day, reason: 'participation' }] })
+  await writeFile(path, bytes)
+  const failed = await execute(process.execPath, [cli, 'validate', '--workspace', cwd]).then(value => ({ code: 0, signal: null, ...value }), error => error)
+  expect(failed.signal).toBeNull()
+  expect(failed.code).toBe(1)
+  expect(JSON.parse(failed.stdout)).toMatchObject({ ok: false, issues: expect.arrayContaining([expect.objectContaining({ path: '.study/collections.json', field: 'rewards.0.day', rule: 'schema' })]) })
+  expect(queryWorkspace(await readWorkspace(nodeStudyFiles(cwd), new AbortController().signal), { kind: 'status' }, NOW)).not.toHaveProperty('data')
+  expect(await readFile(path, 'utf8')).toBe(bytes)
+})
+
 it('generates valid examples for every official file kind from the same strict definitions', () => {
   const paths = { 'term-settings': '.study/settings.json', block: '.study/blocks/example.json', worksheet: '.study/worksheets/example.json', collections: '.study/collections.json' }
   const input = Object.entries(officialFileSchemas).map(([kind, schema]) => {

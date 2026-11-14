@@ -229,7 +229,7 @@ function WorksheetActions({ worksheet, revision, change, ask, disabled, t }: { w
     } catch (reason) { setError(reason instanceof Error ? reason.message : t('networkError')) }
     finally { setSaving(false) }
   }
-  const highConfidence = worksheet.drafts.filter(draft => draft.confidence === 'high' && draft.result === 'correct' && draft.uncertainties === '')
+  const highConfidence = worksheet.drafts.filter(draft => draft.confidence === 'high' && draft.result === 'correct' && draft.assistance !== 'unknown' && draft.uncertainties === '')
   async function confirmBatch(drafts: typeof worksheet.drafts) {
     setSaving(true); setError(''); setMessage('')
     try {

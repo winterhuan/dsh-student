@@ -94,6 +94,27 @@ it('keeps the unfinished question primary while browsing another subject', async
   expect(screen.queryByRole('button', { name: en.startNow })).toBeNull()
 })
 
+it.each(['answer', 'hint', 'continue', 'stop'] as const)('keeps the active question subject and scope in a %s intention after browsing', async action => {
+  const scope = { grade: 2, term: 'first' as const, units: ['m2a-u-sub'], objectiveIds: ['m2a-o-sub'] }
+  const state = updateStudy(updateStudy(updateStudy(undefined, setup, NOW), { ...start, scope }, NOW), { action: 'task', task: { id: 'q1', sessionId: start.id, subject: 'math', objectiveId: 'm2a-o-sub', topic: 'Subtraction', prompt: '18 - 7?' } }, NOW)
+  const useResource = (address: string) => ({ status: 'live' as const, failure: undefined, value: { status: 'valid', token: 'one', readAt: NOW, refreshAfter: NOW + 1000, versions: [], native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [], data: new URL(address).searchParams.get('query')?.includes('learning-context') ? { termId: 'term-one', pendingFacts: [] } : dashboard(state, NOW, { subject: new URL(address).searchParams.get('query')?.includes('chinese') ? 'chinese' : 'math' }) } as StudentQueryResult })
+  state.task!.hintLevel = 1
+  const ask = vi.fn().mockResolvedValue({ requestId: 'native-1', admission: 'accepted' })
+  render(<StudyDesk useResource={useResource} remote={{ inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() }} sessionId="browse-native" visible running={false} ask={ask} t={t} />)
+  fireEvent.click(screen.getByRole('button', { name: en.chinese }))
+  fireEvent.click(screen.getByText(en.otherWays))
+  fireEvent.change(screen.getByLabelText(en.scopeLabel), { target: { value: '1-second' } })
+  if (action === 'answer') {
+    fireEvent.change(screen.getByLabelText(en.answer), { target: { value: '11' } })
+    fireEvent.click(screen.getByRole('button', { name: en.submit }))
+  } else fireEvent.click(screen.getByRole('button', { name: action === 'hint' ? en.hintMore : action === 'continue' ? en.retryHint : en.stop }))
+  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+  const intent = JSON.parse(String(ask.mock.calls[0]![0]).split('Student intention:\n')[1]!.split('\n')[0]!)
+  expect(intent).toMatchObject({ blockId: start.id, questionId: 'q1', selection: { subject: 'math', goalId: 'm2a-o-sub', scope } })
+  if (action === 'continue') expect(intent).not.toHaveProperty('operation')
+  else expect(intent.operation).toMatchObject({ action, ...(action === 'answer' ? { response: '11' } : {}) })
+})
+
 it('retains a parent nickname draft across navigation and saves only its original edited-field baseline', async () => {
   const state = updateStudy(undefined, setup, NOW)
   const body = dashboard(state, NOW)

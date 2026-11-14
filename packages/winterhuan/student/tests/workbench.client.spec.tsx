@@ -242,16 +242,20 @@ it('shows a different learning method for each selected subject', async () => {
 })
 
 it('starts foundation practice with the learner-selected knowledge goal', async () => {
-  const backend = installResource(worksheetState())
+  const backend = installResource(updateStudy(worksheetState(), { ...start, scope: { grade: 2, term: 'first', objectiveIds: ['m2a-o-sub'] } }, NOW))
   const ask = vi.fn().mockResolvedValue(undefined)
   render(<StudyDesk sessionId="goal" visible running={false} ask={ask} t={t} />)
   await openDesk('Knowledge map')
   fireEvent.click(await screen.findByRole('button', { name: 'Practise this goal · 凑十加法' }))
   fireEvent.click(screen.getByRole('button', { name: 'Today' }))
-  await screen.findByText('Learning goal: 凑十加法')
-  fireEvent.click(screen.getByRole('button', { name: 'Start learning' }))
+  await screen.findByLabelText(en.scopeLabel)
+  fireEvent.change(screen.getByLabelText(en.scopeLabel), { target: { value: '1-second' } })
+  fireEvent.click(screen.getByRole('button', { name: en.switchLearning }))
   await waitFor(() => expect(ask).toHaveBeenCalledWith(expect.stringContaining('add'), undefined))
-  expect(backend.read().sessions[0]).toMatchObject({ subject: 'math', mode: 'foundation' })
+  const intent = JSON.parse(String(ask.mock.calls[0]![0]).split('Student intention:\n')[1]!.split('\n')[0]!)
+  expect(intent).toMatchObject({ selection: { subject: 'math', goalId: 'add', scope: { grade: 1, term: 'second' } }, operation: { action: 'start', subject: 'math', scope: { grade: 1, term: 'second' } } })
+  await waitFor(() => expect(backend.read().sessions).toHaveLength(2))
+  expect(backend.read().sessions[1]).toMatchObject({ subject: 'math', mode: 'foundation', scope: { grade: 1, term: 'second' } })
 })
 
 it('previews the sheet as HTML and prints through the browser dialog', async () => {
@@ -295,6 +299,7 @@ it('confirms high-confidence transcriptions in one batch and leaves the rest for
 it('batches only clearly transcribed correct responses and preserves their assistance', async () => {
   const entries = [
     { id: 'right', result: 'correct', assistance: 'hint', uncertainties: '' },
+    { id: 'unknown-help', result: 'correct', assistance: 'unknown', uncertainties: '' },
     { id: 'unknown', result: 'unassessed', assistance: 'independent', uncertainties: '' },
     { id: 'wrong', result: 'incorrect', assistance: 'independent', uncertainties: '' },
     { id: 'partial', result: 'partial', assistance: 'independent', uncertainties: '' },
@@ -306,12 +311,28 @@ it('batches only clearly transcribed correct responses and preserves their assis
   const backend = installResource(state)
   render(<StudyDesk sessionId="safe-batch" visible running={false} ask={vi.fn()} t={t} />)
   await openDesk('Mistakes')
-  fireEvent.click(screen.getByText(/5 questions/).closest('summary')!)
+  fireEvent.click(screen.getByText(/6 questions/).closest('summary')!)
   const batch = await screen.findByRole('button', { name: `${en.confirmHighConfidence} · 1` })
   fireEvent.click(batch)
   await screen.findByText(en.intentAdmitted)
   expect(backend.read().paperResults).toEqual([expect.objectContaining({ itemId: 'right', result: 'correct', assistance: 'hint' })])
-  expect(backend.read().paperDrafts.map(item => item.itemId)).toEqual(['unknown', 'wrong', 'partial', 'unclear'])
+  expect(backend.read().paperDrafts.map(item => item.itemId)).toEqual(['unknown-help', 'unknown', 'wrong', 'partial', 'unclear'])
+  expect(screen.queryByRole('button', { name: /Confirm high-confidence transcriptions/ })).toBeNull()
+})
+
+it('keeps a correct unknown-assistance transcription individually editable and confirmable', async () => {
+  let state = updateStudy(undefined, setup, NOW)
+  state = updateStudy(state, { action: 'worksheet', worksheet: { id: 'unknown-help-sheet', subject: 'math', objectiveId: 'm2a-o-sub', items: [{ id: 'q1', prompt: '18 - 7?', answer: '11', explanation: 'Subtract seven', answerEvidence: '11 + 7 = 18' }] } }, NOW)
+  state = updateStudy(state, { action: 'paper-draft', paperDraft: { worksheetId: 'unknown-help-sheet', itemId: 'q1', response: '1l', result: 'correct', assistance: 'unknown', uncertainties: '', confidence: 'high' } }, NOW)
+  const backend = installResource(state)
+  render(<StudyDesk sessionId="unknown-help" visible running={false} ask={vi.fn()} t={t} />)
+  await openDesk('Mistakes')
+  fireEvent.click(screen.getByText(/1 questions/).closest('summary')!)
+  expect(screen.queryByRole('button', { name: /Confirm high-confidence transcriptions/ })).toBeNull()
+  fireEvent.change(screen.getByDisplayValue('1l'), { target: { value: '11' } })
+  fireEvent.click(screen.getByRole('button', { name: `${en.confirmPaper} · 1` }))
+  await waitFor(() => expect(backend.read().paperResults).toHaveLength(1))
+  expect(backend.read().paperResults[0]).toMatchObject({ itemId: 'q1', response: '11', result: 'correct', assistance: 'unknown' })
 })
 
 it('saves a worksheet cause-only edit and retains known help when correcting its mark', async () => {

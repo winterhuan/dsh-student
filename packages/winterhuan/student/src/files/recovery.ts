@@ -98,8 +98,18 @@ export function describeMigration(read: WorkspaceRead, backup: ObservedFile, exi
     files.push({ path: `.study/worksheets/${worksheetId}.json`, file })
   }
   if (state.attempts.some(attempt => !state.sessions.some(block => block.id === attempt.sessionId))) pending('attempts[missing owning block]', ['owningBlock', 'publishedQuestionSource', 'answerDate', 'assistance'], 'No saved owning block establishes these flattened legacy associations.')
+  const rewardIdentities = new Set<string>()
+  const rewards = state.rewards.filter((reward, index) => {
+    const identity = JSON.stringify([reward.day, reward.reason])
+    if (!collectionsSchema.shape.rewards.element.safeParse(reward).success || rewardIdentities.has(identity)) {
+      pending(`rewards.${index}`, ['day', 'reason'], 'The preserved reward declaration has an invalid calendar day or repeats a daily reward identity.')
+      return false
+    }
+    rewardIdentities.add(identity)
+    return true
+  })
   files.push({ path: '.study/collections.json', file: collectionsSchema.parse({ format: 2, kind: 'collections', termId,
-    mistakes: state.mistakes.map(({ stage: _stage, independentDays: _days, dueAt: _due, ...mistake }) => mistake), exercises: state.exercises, concepts: state.concepts, objectives: state.objectives, relations: state.relations, teachingQueue: state.teachingQueue, rewards: state.rewards,
+    mistakes: state.mistakes.map(({ stage: _stage, independentDays: _days, dueAt: _due, ...mistake }) => mistake), exercises: state.exercises, concepts: state.concepts, objectives: state.objectives, relations: state.relations, teachingQueue: state.teachingQueue, rewards,
     pendingLegacy: plan.pending.slice(0, 5000) }) })
   const validation = validateStudyFiles(files.map(({ path, file }) => ({ path, value: file })))
   plan.issues.push(...validation.issues)

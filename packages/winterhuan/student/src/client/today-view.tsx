@@ -40,7 +40,7 @@ export function TodayView({ study, subject, activity, setActivity, goal, clearGo
   disabled: boolean
   running: boolean
   act: Act
-  tutor: (text: string) => Promise<void>
+  tutor: (text: string, currentBlock?: boolean) => Promise<void>
   t: Translate
   prompts: { daily: string; dictation: string }
   lessons: Dashboard['interactiveLessons']['lessons']
@@ -83,12 +83,12 @@ export function TodayView({ study, subject, activity, setActivity, goal, clearGo
     {ownSession && <>
       <section className="student-focus"><p className="student-muted">{t('chatHelp')}</p>{task ? <Task draftScope={draftScope} key={`${task.sessionId}:${task.id}`} study={study} goalTitle={goalTitle(study, task.objectiveId)} goalText={objectiveMeta?.goal} days={objectiveMeta?.independentDays} disabled={disabled || running} t={t} act={act} tutor={tutor} /> : <p>{t('waiting')}</p>}
         {available && (running ? <p role="status">{t('tutorWorking')}</p>
-          : (!task || study.feedback || task.response !== undefined || task.hintLevel > 0) && <button disabled={disabled} onClick={() => { void tutor(study.feedback ? '明确请求下一题。先保留上一题的原回答和有效反馈，再准备下一题。' : '检查当前题的未完成答案或提示，不换题，不自动重发原回答。').catch(() => {}) }}>{t(!task ? 'prepareTask' : study.feedback ? 'nextTask' : task.response !== undefined ? 'retryFeedback' : 'retryHint')}</button>)}
+          : (!task || study.feedback || task.response !== undefined || task.hintLevel > 0) && <button disabled={disabled} onClick={() => { void tutor(study.feedback ? '明确请求下一题。先保留上一题的原回答和有效反馈，再准备下一题。' : '检查当前题的未完成答案或提示，不换题，不自动重发原回答。', true).catch(() => {}) }}>{t(!task ? 'prepareTask' : study.feedback ? 'nextTask' : task.response !== undefined ? 'retryFeedback' : 'retryHint')}</button>)}
       </section>
       <form onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); void act({ action: 'stop', sessionId: active.id, reflection: String(form.get('reflection') ?? '') }) }}>
         <div className="student-segments">
           <button disabled={disabled} type="submit" className="student-primary">{t('stop')}</button>
-          {(explain || task?.objectiveId) && <button type="button" disabled={disabled || running} onClick={() => { void tutor(feynmanPrompt(explain?.title ?? goalTitle(study, task?.objectiveId))).catch(() => {}) }}>{t('feynmanTeach')}</button>}
+          {(explain || task?.objectiveId) && <button type="button" disabled={disabled || running} onClick={() => { void tutor(feynmanPrompt(explain?.title ?? goalTitle(study, task?.objectiveId)), true).catch(() => {}) }}>{t('feynmanTeach')}</button>}
         </div>
         <details className="student-fold">
           <summary>{t('reflectionOptional')}</summary>
@@ -241,7 +241,7 @@ function SimonSteps({ phase, t }: { phase: typeof phaseOrder[number]; t: Transla
   </ol>
 }
 
-function Task({ study, goalTitle: title, goalText, days, disabled, t, act, tutor, draftScope }: { draftScope?: string | undefined; study: Study; goalTitle: string | undefined; goalText: string | undefined; days: number | undefined; disabled: boolean; t: Translate; act: Act; tutor: (text: string) => Promise<void> }) {
+function Task({ study, goalTitle: title, goalText, days, disabled, t, act, tutor, draftScope }: { draftScope?: string | undefined; study: Study; goalTitle: string | undefined; goalText: string | undefined; days: number | undefined; disabled: boolean; t: Translate; act: Act; tutor: (text: string, currentBlock?: boolean) => Promise<void> }) {
   const task = study.task
   if (!task) return null
   const hintLabel = task.hintLevel > 0 ? t('hintMore') : t('hint')
@@ -261,7 +261,7 @@ function Task({ study, goalTitle: title, goalText, days, disabled, t, act, tutor
     </ul>}
     {task.response !== undefined && <p>{t('answer')}: {task.response}</p>}
     {study.feedback ? <><p className="student-result">{t(study.feedback.result)}</p><p>{study.feedback.feedback}</p>
-      {study.feedback.result === 'correct' && <button type="button" disabled={disabled} onClick={() => { void tutor(feynmanPrompt(title)).catch(() => {}) }}>{t('feynmanTeach')}</button>}
+      {study.feedback.result === 'correct' && <button type="button" disabled={disabled} onClick={() => { void tutor(feynmanPrompt(title), true).catch(() => {}) }}>{t('feynmanTeach')}</button>}
     </> : task.response !== undefined ? <p role="status">{t('submitted')}</p> : task.choices ? <fieldset disabled={disabled}>
       <p>{t('chooseAnswer')}</p>
       <div className="student-choices">{task.choices.map(choice => <button key={choice} type="button" onClick={() => { void act({ action: 'answer', taskId: task.id, response: choice }, true) }}>{choice}</button>)}</div>

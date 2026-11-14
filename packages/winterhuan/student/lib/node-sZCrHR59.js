@@ -1,6 +1,5 @@
 import { readFile, readdir, realpath, stat } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
-import { FsTargetKey, FsVersion } from "@deepseek-ai/dsh-fs";
 //#region lib/types/files/node.js
 /** Node filesystem adapter for the packaged read-only validator. */
 /**
@@ -34,8 +33,8 @@ function nodeStudyFiles(cwd) {
 			try {
 				const info = await stat(full, { bigint: true });
 				return {
-					targetKey: FsTargetKey(full),
-					version: FsVersion(`${info.dev}:${info.ino}:${info.size}:${info.mtimeNs}:${info.ctimeNs}`),
+					targetKey: full,
+					version: `${info.dev}:${info.ino}:${info.size}:${info.mtimeNs}:${info.ctimeNs}`,
 					type: info.isFile() ? "file" : info.isDirectory() ? "directory" : "other",
 					size: Number(info.size)
 				};

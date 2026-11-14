@@ -1,5 +1,5 @@
 import { StudyBackupRetention } from "./backup-retention.js";
-import { StudyReadCacheOwner } from "./cache.js";
+import { StudyReadCacheOwner } from "./cache-owner.js";
 /**
  * Bind official-file reads and guarded manual writes to the calling execution world.
  * @param exec - current registered agent and cancellation signal.

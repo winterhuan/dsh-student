@@ -1,9 +1,7 @@
 import { z } from "zod";
-import { Service } from "@deepseek-ai/cordis";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 //#region lib/types/files/cache.js
-/** Validated source and query caches belong to a Host instance or one read-only adapter. */
 /** Read-only adapters retain their own observations; application adapters share a disposable Host owner. */
 var StudyReadCache = class {
 	files = /* @__PURE__ */ new Map();
@@ -18,15 +16,6 @@ var StudyReadCache = class {
 		this.queries.clear();
 		this.legacy.clear();
 		this.entities.clear();
-	}
-};
-/** Teardown releases source bytes; another Host starts without this Host's validation history. */
-var StudyReadCacheOwner = class extends Service {
-	cache = new StudyReadCache();
-	/** @param ctx - Host context owning the cached observations. */
-	constructor(ctx) {
-		super(ctx, "studentReadCache");
-		ctx.effect(() => () => this.cache.clear(), "student: validated read cache");
 	}
 };
 //#endregion
@@ -3219,4 +3208,4 @@ async function readInteractiveLessons(agent, signal, savedBase) {
 	}
 }
 //#endregion
-export { builtinObjectivesIn as $, termSettingsSchema as A, sameSavedAnswer as B, blockSchema as C, questionSourceSchema as D, questionSchema as E, choiceMismatch as F, spent as G, schoolGate as H, foldText as I, todaySpent as J, studyDay as K, formatDuration as L, DAY as M, activeSession as N, responseSchema as O, canonical as P, builtinObjectives as Q, matchChoice as R, assistanceSchema as S, officialFileSchemas as T, scopeSelects as U, sameScope as V, showValue as W, builtinObjectiveAnywhere as X, builtinObjective as Y, builtinObjectiveIn as Z, sourceSha256 as _, lessonFileSchema as a, customObjectiveMethods as at, answerDateSchema as b, readInteractiveLessons as c, errorTypesBySubject as ct, backupVersions as d, interestTagsOf as dt, curriculumFor as et, describeArchive as f, StudyReadCache as ft, retainObservedBackups as g, readBackups as h, interactiveLessonsView as i, commandSchema as it, worksheetSchema as j, responseSourceSchema as k, readLessonFile as l, DEFAULT_INTEREST_TAGS as lt, describeRestore as m, OPENMAIC_LESSONS_PATH as n, subjectExercises as nt, lessonSchema as o, figureSchema as ot, describeMigration as p, StudyReadCacheOwner as pt, taughtUnit as q, effectiveOpenmaicBase as r, subjectIdeas as rt, normalizeOpenmaicBase as s, stateSchema as st, OPENMAIC_COOKIE_PATH as t, exercisesForObjective as tt, backupSchema as u, interestFocus as ut, readWorkspace as v, collectionsSchema as w, assessmentSchema as x, validateStudyFiles as y, requireValue as z };
+export { builtinObjectivesIn as $, termSettingsSchema as A, sameSavedAnswer as B, blockSchema as C, questionSourceSchema as D, questionSchema as E, choiceMismatch as F, spent as G, schoolGate as H, foldText as I, todaySpent as J, studyDay as K, formatDuration as L, DAY as M, activeSession as N, responseSchema as O, canonical as P, builtinObjectives as Q, matchChoice as R, assistanceSchema as S, officialFileSchemas as T, scopeSelects as U, sameScope as V, showValue as W, builtinObjectiveAnywhere as X, builtinObjective as Y, builtinObjectiveIn as Z, sourceSha256 as _, lessonFileSchema as a, customObjectiveMethods as at, answerDateSchema as b, readInteractiveLessons as c, errorTypesBySubject as ct, backupVersions as d, interestTagsOf as dt, curriculumFor as et, describeArchive as f, StudyReadCache as ft, retainObservedBackups as g, readBackups as h, interactiveLessonsView as i, commandSchema as it, worksheetSchema as j, responseSourceSchema as k, readLessonFile as l, DEFAULT_INTEREST_TAGS as lt, describeRestore as m, OPENMAIC_LESSONS_PATH as n, subjectExercises as nt, lessonSchema as o, figureSchema as ot, describeMigration as p, taughtUnit as q, effectiveOpenmaicBase as r, subjectIdeas as rt, normalizeOpenmaicBase as s, stateSchema as st, OPENMAIC_COOKIE_PATH as t, exercisesForObjective as tt, backupSchema as u, interestFocus as ut, readWorkspace as v, collectionsSchema as w, assessmentSchema as x, validateStudyFiles as y, requireValue as z };

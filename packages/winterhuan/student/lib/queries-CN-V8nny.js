@@ -1,4 +1,4 @@
-import { $ as builtinObjectivesIn, H as schoolGate, J as todaySpent, K as studyDay, L as formatDuration, M as DAY, N as activeSession, P as canonical, Q as builtinObjectives, U as scopeSelects, X as builtinObjectiveAnywhere, Y as builtinObjective, dt as interestTagsOf, et as curriculumFor, ft as StudyReadCache, i as interactiveLessonsView, n as OPENMAIC_LESSONS_PATH, nt as subjectExercises, pt as StudyReadCacheOwner, q as taughtUnit, r as effectiveOpenmaicBase, rt as subjectIdeas, st as stateSchema, t as OPENMAIC_COOKIE_PATH, tt as exercisesForObjective, ut as interestFocus } from "./openmaic-DQGP2eA0.js";
+import { $ as builtinObjectivesIn, H as schoolGate, J as todaySpent, K as studyDay, L as formatDuration, M as DAY, N as activeSession, P as canonical, Q as builtinObjectives, U as scopeSelects, X as builtinObjectiveAnywhere, Y as builtinObjective, dt as interestTagsOf, et as curriculumFor, ft as StudyReadCache, i as interactiveLessonsView, n as OPENMAIC_LESSONS_PATH, nt as subjectExercises, q as taughtUnit, r as effectiveOpenmaicBase, rt as subjectIdeas, st as stateSchema, t as OPENMAIC_COOKIE_PATH, tt as exercisesForObjective, ut as interestFocus } from "./openmaic-DWNvScKi.js";
 import { z } from "zod";
 import { Service } from "@deepseek-ai/cordis";
 //#region lib/types/files/backup-retention.js
@@ -34,6 +34,18 @@ var StudyBackupRetention = class extends Service {
 			operationResult.then(resolve, reject).finally(() => combined.removeEventListener("abort", abort));
 			if (combined.aborted) abort();
 		});
+	}
+};
+//#endregion
+//#region lib/types/files/cache-owner.js
+/** Host lifetime for validated observations; read-only adapters use the independent cache. */
+/** Teardown releases source bytes; another Host starts without this Host's validation history. */
+var StudyReadCacheOwner = class extends Service {
+	cache = new StudyReadCache();
+	/** @param ctx - Host context owning the cached observations. */
+	constructor(ctx) {
+		super(ctx, "studentReadCache");
+		ctx.effect(() => () => this.cache.clear(), "student: validated read cache");
 	}
 };
 //#endregion
@@ -2239,4 +2251,4 @@ function queryJsonData(result) {
 	return result.data === void 0 ? null : z.json().parse(JSON.parse(JSON.stringify(result.data)));
 }
 //#endregion
-export { evidenceDay as _, queryWorkspace as a, StudyBackupRetention as b, itemObjectiveId as c, dayStart as d, scheduleMistakes as f, evidenceAtCutoff as g, deriveEvidence as h, queryStudy as i, objectiveOf as l, demonstrablyAfter as m, queryDashboard as n, queryWorkspaceDashboard as o, attachEvidence as p, queryJsonData as r, projectWorkspace as s, nextRefreshAfter as t, sheetOpen as u, evidenceOf as v, applicationStudyFiles as y };
+export { evidenceDay as _, queryWorkspace as a, StudyReadCacheOwner as b, itemObjectiveId as c, dayStart as d, scheduleMistakes as f, evidenceAtCutoff as g, deriveEvidence as h, queryStudy as i, objectiveOf as l, demonstrablyAfter as m, queryDashboard as n, queryWorkspaceDashboard as o, attachEvidence as p, queryJsonData as r, projectWorkspace as s, nextRefreshAfter as t, sheetOpen as u, evidenceOf as v, StudyBackupRetention as x, applicationStudyFiles as y };

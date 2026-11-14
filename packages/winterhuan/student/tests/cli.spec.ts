@@ -1,7 +1,8 @@
 import { execFile } from 'node:child_process'
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { cp, mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { expect, it, onTestFinished } from 'vitest'
@@ -13,6 +14,25 @@ import { NOW, setup } from './fixtures.ts'
 
 const cli = fileURLToPath(new URL('../lib/cli.js', import.meta.url))
 const execute = promisify(execFile)
+
+it('runs the installed CLI without Host peers or development dependencies', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'student-cli-installed-'))
+  onTestFinished(() => rm(root, { recursive: true, force: true }))
+  const installed = join(root, 'node_modules/@winterhuan/dsh-student')
+  await cp(dirname(cli), join(installed, 'lib'), { recursive: true })
+  const require = createRequire(import.meta.url)
+  await symlink(dirname(require.resolve('zod/package.json')), join(root, 'node_modules/zod'), 'junction')
+  const cwd = join(root, 'workspace')
+  await mkdir(join(cwd, '.study'), { recursive: true })
+  await writeFile(join(cwd, '.study/settings.json'), JSON.stringify(authoringExample('term-settings')))
+  const env = { ...process.env, NODE_OPTIONS: '', NODE_PATH: '' }
+  const executable = join(installed, 'lib/cli.js')
+  const invoke = (...args: string[]) => execute(process.execPath, [executable, ...args], { cwd, env })
+  expect((await invoke('--help')).stdout).toContain('Read-only validation')
+  expect(JSON.parse((await invoke('schema', 'block')).stdout)).toHaveProperty('properties.termId')
+  expect(JSON.parse((await invoke('example', 'openmaic-lessons')).stdout)).toHaveProperty('lessons')
+  expect(JSON.parse((await invoke('validate')).stdout)).toMatchObject({ ok: true, status: 'valid' })
+})
 
 it('validates actual official bytes without writing and gives independent consumers the saved facts', async () => {
   const cwd = await mkdtemp(join(tmpdir(), 'student-cli-'))

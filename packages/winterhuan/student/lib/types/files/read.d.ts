@@ -42,6 +42,8 @@ export interface WorkspaceRead {
         names: string[];
     }[];
     issues: FileIssue[];
+    /** Backup inspection failures remain independent from official-file validity. */
+    backupIssues?: FileIssue[];
     workspace?: ValidatedWorkspace;
     legacy?: unknown;
 }
@@ -49,7 +51,7 @@ export interface WorkspaceRead {
  * Read a stable set of official files, checking membership and actual versions on both sides.
  * @param fs - filesystem adapter in the caller's execution world.
  * @param signal - cancels discovery, bounded rereads and byte reads.
- * @param prior - preserved validated versions available for frozen-content checks.
+ * @param prior - supplied preserved versions; omitted reads use verified observed-version backups for cold frozen-content checks.
  * @param nativeSources - independently resolved consumed input observations, empty for the read-only CLI.
  * @returns validated facts or an explicit incomplete, invalid or changing result.
  */

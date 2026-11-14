@@ -149,7 +149,13 @@ export async function readBackups(fs: StudyFiles, signal: AbortSignal): Promise<
   const backupCache = fs.cache?.backups ?? new Map<string, { version: string; backup: ObservedBackup }>()
   const backups: { path: string; backup: ObservedBackup }[] = []
   const issues: FileIssue[] = []
-  const entries = await fs.list('.study/backups', signal)
+  let entries: Awaited<ReturnType<StudyFiles['list']>>
+  try { entries = await fs.list('.study/backups', signal) }
+  catch (error) {
+    signal.throwIfAborted()
+    return { backups, issues: [{ path: '.study/backups', field: '', rule: 'backup-list', correction: (error instanceof Error ? error.message : 'Inspect the backup directory and retry.').slice(0, 500) }] }
+  }
+  signal.throwIfAborted()
   if (entries.length > 128) issues.push({ path: '.study/backups', field: '', rule: 'backup-count', correction: 'Inspect and explicitly remove excess external backup files; the application retains at most 128.' })
   let total = 0
   for (const entry of entries.slice(0, 128)) {
@@ -167,8 +173,9 @@ export async function readBackups(fs: StudyFiles, signal: AbortSignal): Promise<
       while ([...backupCache.values()].reduce((sum, entry) => sum + entry.backup.bytesBase64.length, backup.bytesBase64.length) > 44_739_248 && backupCache.size > 0) backupCache.delete(backupCache.keys().next().value ?? '')
       backupCache.set(observation.targetKey, { version: observation.version, backup })
       backups.push({ path, backup })
-    } catch (error) { if (signal.aborted) throw error; issues.push({ path, field: '', rule: 'backup-verification', correction: error instanceof Error ? error.message : 'Preserve and inspect the invalid backup.' }) }
+    } catch (error) { if (signal.aborted) throw error; if (issues.length < 100) issues.push({ path, field: '', rule: 'backup-verification', correction: (error instanceof Error ? error.message : 'Preserve and inspect the invalid backup.').slice(0, 500) }) }
   }
+  signal.throwIfAborted()
   return { backups, issues }
 }
 
@@ -200,17 +207,26 @@ async function retainBackups(fs: StudyFiles, read: WorkspaceRead, now: number, s
       const candidates = backups.filter(entry => backups.filter(candidate => candidate.backup.sourcePath === source.path).length >= 3 ? entry.backup.sourcePath === source.path : true).sort((left, right) => left.backup.observedAt - right.backup.observedAt || left.path.localeCompare(right.path))
       const oldest = candidates[0]
       if (!oldest) break
-      const observed = await fs.stat(oldest.path, signal)
-      if (observed) await fs.remove(oldest.path, observed.version, signal)
+      try {
+        const observed = await fs.stat(oldest.path, signal)
+        if (observed) await fs.remove(oldest.path, observed.version, signal)
+        signal.throwIfAborted()
+      } catch (error) {
+        signal.throwIfAborted()
+        if (existing.issues.length < 100) existing.issues.push({ path: oldest.path, field: '', rule: 'backup-prune', correction: (error instanceof Error ? error.message : 'Inspect the retained backup before retrying.').slice(0, 500) })
+        return { backups, issues: existing.issues }
+      }
       backups.splice(backups.indexOf(oldest), 1)
     }
     try { await fs.write(path, `${JSON.stringify(backup)}\n`, { kind: 'createIfAbsent' }, signal); backups.push({ path, backup }) }
     catch (error) {
       if (signal.aborted) throw error
       const observed = await readBackups(fs, signal)
-      if (!observed.backups.some(entry => entry.path === path && entry.backup.sha256 === hash)) existing.issues.push({ path, field: '', rule: 'backup-write', correction: error instanceof Error ? error.message : 'Inspect whether this backup was saved before retrying.' })
+      existing.issues.push(...observed.issues.slice(0, 100 - existing.issues.length))
+      if (existing.issues.length < 100 && !observed.backups.some(entry => entry.path === path && entry.backup.sha256 === hash)) existing.issues.push({ path, field: '', rule: 'backup-write', correction: (error instanceof Error ? error.message : 'Inspect whether this backup was saved before retrying.').slice(0, 500) })
     }
   }
+  signal.throwIfAborted()
   return { backups, issues: existing.issues }
 }
 

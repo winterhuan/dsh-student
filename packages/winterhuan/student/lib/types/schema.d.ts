@@ -2994,7 +2994,6 @@ export declare const stateSchema: z.ZodObject<{
         topic: z.ZodString;
         prompt: z.ZodString;
         response: z.ZodString;
-        feedback: z.ZodString;
         answerEvidence: z.ZodString;
         mistakeId: z.ZodOptional<z.ZodString>;
         objectiveId: z.ZodOptional<z.ZodString>;
@@ -3277,6 +3276,7 @@ export declare const stateSchema: z.ZodObject<{
                 }, z.core.$strict>;
             }, z.core.$strict>], "draw">>;
         }, z.core.$strict>], "kind">>;
+        feedback: z.ZodString;
         at: z.ZodNumber;
         materialId: z.ZodOptional<z.ZodString>;
         rawResponse: z.ZodOptional<z.ZodString>;

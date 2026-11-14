@@ -1,4 +1,4 @@
-import { $ as builtinObjectives, F as canonical, J as taughtUnit, N as DAY, P as activeSession, R as formatDuration, U as schoolGate, W as scopeSelects, X as builtinObjective, Y as todaySpent, Z as builtinObjectiveAnywhere, ct as stateSchema, dt as interestFocus, et as builtinObjectivesIn, ft as interestTagsOf, i as interactiveLessonsView, it as subjectIdeas, n as OPENMAIC_LESSONS_PATH, nt as exercisesForObjective, pt as StudyReadCache, q as studyDay, r as effectiveOpenmaicBase, rt as subjectExercises, t as OPENMAIC_COOKIE_PATH, tt as curriculumFor } from "./openmaic-Yf-05c0e.js";
+import { $ as builtinObjectives, F as canonical, J as taughtUnit, N as DAY, P as activeSession, R as formatDuration, U as schoolGate, W as scopeSelects, X as builtinObjective, Y as todaySpent, Z as builtinObjectiveAnywhere, ct as stateSchema, dt as interestFocus, et as builtinObjectivesIn, ft as interestTagsOf, i as interactiveLessonsView, it as subjectIdeas, n as OPENMAIC_LESSONS_PATH, nt as exercisesForObjective, pt as StudyReadCache, q as studyDay, r as effectiveOpenmaicBase, rt as subjectExercises, t as OPENMAIC_COOKIE_PATH, tt as curriculumFor } from "./openmaic-oaD578Fa.js";
 import { z } from "zod";
 import { Service } from "@deepseek-ai/cordis";
 //#region lib/types/files/backup-retention.js
@@ -1672,7 +1672,7 @@ function projectWorkspace(workspace, now) {
 				rawResponse: response.rawResponse,
 				result: assessment?.result ?? "unassessed",
 				assistance: response.assistance,
-				feedback: assessment?.feedback ?? "Pending assessment",
+				feedback: assessment?.feedback ?? "",
 				answerEvidence: assessment?.answerEvidence ?? question.answerEvidence,
 				at: assessment?.assessedAt ?? block.startedAt,
 				...typeof question.objectiveId === "string" ? { objectiveId: question.objectiveId } : {},

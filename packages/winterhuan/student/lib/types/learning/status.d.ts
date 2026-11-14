@@ -303,8 +303,8 @@ export declare function studyStatus(state: StudyState, now: number): {
         topic: string;
         prompt: string;
         response: string;
-        feedback: string;
         answerEvidence: string;
+        feedback: string;
         at: number;
         mistakeId?: string | undefined;
         objectiveId?: string | undefined;

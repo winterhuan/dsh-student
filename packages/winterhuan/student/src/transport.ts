@@ -35,5 +35,6 @@ export async function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | '
     backupIssues.push(...retained.issues)
   }
   exec.signal.throwIfAborted()
-  return { read, native, backupIssues }
+  read.backupIssues = backupIssues.slice(0, 100)
+  return { read, native, backupIssues: read.backupIssues }
 }

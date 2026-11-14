@@ -23,7 +23,7 @@ export function projectWorkspace(workspace: ValidatedWorkspace, now: number): St
       const question = block.questions.find(question => question.id === response.questionId)!
       const assessment = block.assessments.find(assessment => assessment.responseId === response.id)
       return { id: response.id, questionId: question.id, responseId: response.id, sessionId: block.id, subject: block.subject, topic: question.topic, prompt: question.prompt, response: response.response ?? response.rawResponse,
-        rawResponse: response.rawResponse, result: assessment?.result ?? 'unassessed', assistance: response.assistance, feedback: assessment?.feedback ?? 'Pending assessment', answerEvidence: assessment?.answerEvidence ?? question.answerEvidence,
+        rawResponse: response.rawResponse, result: assessment?.result ?? 'unassessed', assistance: response.assistance, feedback: assessment?.feedback ?? '', answerEvidence: assessment?.answerEvidence ?? question.answerEvidence,
         at: assessment?.assessedAt ?? block.startedAt, ...(typeof question.objectiveId === 'string' ? { objectiveId: question.objectiveId } : {}), ...(question.mistakeId ? { mistakeId: question.mistakeId } : {}) }
     })),
     worksheets: worksheets.map(sheet => ({ id: sheet.id, subject: sheet.subject, createdAt: sheet.createdAt,

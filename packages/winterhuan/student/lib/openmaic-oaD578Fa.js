@@ -1032,6 +1032,7 @@ const stateSchema = z.object({
 		}).strict().optional()
 	}).strict()).max(5e3),
 	attempts: z.array(attempt.extend({
+		feedback: z.string().max(2e3),
 		at: time$1,
 		materialId: id$1.optional(),
 		rawResponse: text$2.optional(),
@@ -2029,11 +2030,18 @@ function validateStudyFiles(input, prior = [], nativeSources = []) {
 			const material = settings.materials.find((material) => material.id === course?.materialId);
 			if (!file.context.pendingProfile && (!file.context.profile || !material || !sameScope(settings.profile, material.scope) || !sameScope(settings.profile, file.context.profile) || file.context.material?.id !== material.id)) fail(path, "context.material", "future-course-confirmation", "Confirm a course compatible with the current profile before starting a future school block.");
 		}
+		if (file.kind === "block") {
+			for (const [i, hint] of file.hints.entries()) {
+				if (!questions.some((question) => question.id === hint.questionId)) fail(path, `hints.${i}.questionId`, "question-reference", "Reference a saved question in this block.");
+				if (hint.responseId && !file.responses.some((response) => response.id === hint.responseId && response.questionId === hint.questionId)) fail(path, `hints.${i}.responseId`, "response-reference", "Associate the hint with a saved response to this question in this block.");
+			}
+			for (const [i, signal] of (file.stuckSignals ?? []).entries()) if (!questions.some((question) => question.id === signal.questionId)) fail(path, `stuckSignals.${i}.questionId`, "question-reference", "Reference a saved question in this block.");
+		}
 		for (const [i, question] of questions.entries()) {
 			const frozen = prior.some((entry) => {
 				if (entry.path !== path || entry.file.kind !== file.kind || entry.file.kind !== "block" && entry.file.kind !== "worksheet") return false;
 				const old = (entry.file.kind === "block" ? entry.file.questions : entry.file.items).find((item) => item.id === question.id);
-				return (entry.file.responses.some((response) => response.questionId === question.id) || entry.file.kind === "worksheet" && entry.file.drafts.some((draft) => draft.questionId === question.id)) && canonical(old) === canonical(question);
+				return (entry.file.kind === "worksheet" || entry.file.responses.some((response) => response.questionId === question.id)) && canonical(old) === canonical(question);
 			});
 			if (file.kind === "block" && file.mode === "diagnose" && question.phase !== void 0) fail(path, `questions.${i}.phase`, "diagnostic-phase", "Omit teaching phases from diagnostic questions.");
 			if (file.kind === "block" && file.mode === "review" && !question.mistakeId && question.source.kind !== "legacy") fail(path, `questions.${i}.mistakeId`, "review-mistake", "Bind a review question to a confirmed mistake of the same subject and goal.");
@@ -2056,7 +2064,7 @@ function validateStudyFiles(input, prior = [], nativeSources = []) {
 			if (question.source.kind === "mistake" && question.source.mistakeId !== question.mistakeId) fail(path, `questions.${i}.source`, "mistake-source", "Use the same mistake identity for the source and frozen review binding.");
 			if (question.mistakeId) {
 				const mistake = workspace.collections?.mistakes.find((item) => item.id === question.mistakeId);
-				if (!frozen && (!mistake || mistake.subject !== file.subject || mistake.objectiveId !== question.objectiveId || mistake.confirmedAt === void 0 || !mistake.userConfirmation)) fail(path, `questions.${i}.mistakeId`, "mistake-source", "Bind new review content to a confirmed mistake of the same subject and goal; preserve validated used content for historical bindings.");
+				if (!frozen && (!mistake || mistake.subject !== file.subject || mistake.objectiveId !== question.objectiveId || mistake.confirmedAt === void 0 || !mistake.userConfirmation)) fail(path, `questions.${i}.mistakeId`, "mistake-source", "Bind new review content to a confirmed mistake of the same subject and goal; preserve validated published worksheets and used block content for historical bindings.");
 				if (!frozen && question.source.kind !== "legacy" && file.kind === "worksheet" && file.origin === "prepared" && mistake?.prompt === question.prompt) fail(path, `questions.${i}.prompt`, "review-variation", "Vary the prompt of a prepared mistake question; retain original prompts in workbook records.");
 			}
 		}
@@ -2091,8 +2099,8 @@ function validateStudyFiles(input, prior = [], nativeSources = []) {
 				continue;
 			}
 			const oldQuestions = old.file.kind === "block" ? old.file.questions : old.file.items;
-			if ((old.file.responses.length > 0 || old.file.kind === "worksheet" && old.file.drafts.length > 0) && canonical(old.file.context) !== canonical(file.context)) fail(path, "context", "historical-context", "Preserve the historical profile, material and selected scope used by these responses.");
-			for (const question of oldQuestions) if ((old.file.responses.some((response) => response.questionId === question.id) || old.file.kind === "worksheet" && old.file.drafts.some((draft) => draft.questionId === question.id)) && canonical(question) !== canonical(questions.find((item) => item.id === question.id))) fail(path, "questions", "frozen-content", "Retain used question content and target; publish replacements under a new identity.");
+			if ((old.file.responses.length > 0 || old.file.kind === "worksheet" && old.file.items.length > 0) && canonical(old.file.context) !== canonical(file.context)) fail(path, "context", "historical-context", "Preserve the historical profile, material and selected scope of published worksheets and answered blocks.");
+			for (const question of oldQuestions) if ((old.file.kind === "worksheet" || old.file.responses.some((response) => response.questionId === question.id)) && canonical(question) !== canonical(questions.find((item) => item.id === question.id))) fail(path, "questions", "frozen-content", "Retain published worksheet and used block question content and target; publish replacements under a new identity.");
 			for (const response of old.file.responses) {
 				const current = file.responses.find((item) => item.id === response.id);
 				const { assistance: oldHelp, assistanceConfirmation: _oldConfirmation, answerDate: oldDate, answerDateConfirmation: _oldDateConfirmation, ...original } = response;
@@ -2489,7 +2497,22 @@ async function readBackups(fs, signal) {
 	const backupCache = fs.cache?.backups ?? /* @__PURE__ */ new Map();
 	const backups = [];
 	const issues = [];
-	const entries = await fs.list(".study/backups", signal);
+	let entries;
+	try {
+		entries = await fs.list(".study/backups", signal);
+	} catch (error) {
+		signal.throwIfAborted();
+		return {
+			backups,
+			issues: [{
+				path: ".study/backups",
+				field: "",
+				rule: "backup-list",
+				correction: (error instanceof Error ? error.message : "Inspect the backup directory and retry.").slice(0, 500)
+			}]
+		};
+	}
+	signal.throwIfAborted();
 	if (entries.length > 128) issues.push({
 		path: ".study/backups",
 		field: "",
@@ -2520,14 +2543,15 @@ async function readBackups(fs, signal) {
 			});
 		} catch (error) {
 			if (signal.aborted) throw error;
-			issues.push({
+			if (issues.length < 100) issues.push({
 				path,
 				field: "",
 				rule: "backup-verification",
-				correction: error instanceof Error ? error.message : "Preserve and inspect the invalid backup."
+				correction: (error instanceof Error ? error.message : "Preserve and inspect the invalid backup.").slice(0, 500)
 			});
 		}
 	}
+	signal.throwIfAborted();
 	return {
 		backups,
 		issues
@@ -2568,8 +2592,23 @@ async function retainBackups(fs, read, now, signal) {
 		while (backups.filter((entry) => entry.backup.sourcePath === source.path).length >= 3 || backups.length >= 128 || backups.reduce((sum, entry) => sum + size(entry), source.bytes.byteLength) > 33554432) {
 			const oldest = backups.filter((entry) => backups.filter((candidate) => candidate.backup.sourcePath === source.path).length >= 3 ? entry.backup.sourcePath === source.path : true).sort((left, right) => left.backup.observedAt - right.backup.observedAt || left.path.localeCompare(right.path))[0];
 			if (!oldest) break;
-			const observed = await fs.stat(oldest.path, signal);
-			if (observed) await fs.remove(oldest.path, observed.version, signal);
+			try {
+				const observed = await fs.stat(oldest.path, signal);
+				if (observed) await fs.remove(oldest.path, observed.version, signal);
+				signal.throwIfAborted();
+			} catch (error) {
+				signal.throwIfAborted();
+				if (existing.issues.length < 100) existing.issues.push({
+					path: oldest.path,
+					field: "",
+					rule: "backup-prune",
+					correction: (error instanceof Error ? error.message : "Inspect the retained backup before retrying.").slice(0, 500)
+				});
+				return {
+					backups,
+					issues: existing.issues
+				};
+			}
 			backups.splice(backups.indexOf(oldest), 1);
 		}
 		try {
@@ -2580,14 +2619,17 @@ async function retainBackups(fs, read, now, signal) {
 			});
 		} catch (error) {
 			if (signal.aborted) throw error;
-			if (!(await readBackups(fs, signal)).backups.some((entry) => entry.path === path && entry.backup.sha256 === hash)) existing.issues.push({
+			const observed = await readBackups(fs, signal);
+			existing.issues.push(...observed.issues.slice(0, 100 - existing.issues.length));
+			if (existing.issues.length < 100 && !observed.backups.some((entry) => entry.path === path && entry.backup.sha256 === hash)) existing.issues.push({
 				path,
 				field: "",
 				rule: "backup-write",
-				correction: error instanceof Error ? error.message : "Inspect whether this backup was saved before retrying."
+				correction: (error instanceof Error ? error.message : "Inspect whether this backup was saved before retrying.").slice(0, 500)
 			});
 		}
 	}
+	signal.throwIfAborted();
 	return {
 		backups,
 		issues: existing.issues
@@ -2688,15 +2730,17 @@ const MAX_TOTAL_BYTES = 33554432;
 * Read a stable set of official files, checking membership and actual versions on both sides.
 * @param fs - filesystem adapter in the caller's execution world.
 * @param signal - cancels discovery, bounded rereads and byte reads.
-* @param prior - preserved validated versions available for frozen-content checks.
+* @param prior - supplied preserved versions; omitted reads use verified observed-version backups for cold frozen-content checks.
 * @param nativeSources - independently resolved consumed input observations, empty for the read-only CLI.
 * @returns validated facts or an explicit incomplete, invalid or changing result.
 */
-async function readWorkspace(fs, signal, prior = [], nativeSources = []) {
+async function readWorkspace(fs, signal, prior, nativeSources = []) {
 	const owner = fs.cache ??= new StudyReadCache();
+	const backups = prior === void 0 ? await readBackups(fs, signal) : void 0;
 	return {
-		...await readWorkspaceFiles(fs, signal, prior, nativeSources, owner),
-		cache: owner
+		...await readWorkspaceFiles(fs, signal, prior ?? backupVersions(backups.backups), nativeSources, owner),
+		cache: owner,
+		...backups ? { backupIssues: backups.issues } : {}
 	};
 }
 async function readWorkspaceFiles(fs, signal, prior, nativeSources, owner) {

@@ -8,10 +8,11 @@ window.__ModuleLoader__.load({
 		let _deepseek_ai_dsh_client_ui_primitives = require("@deepseek-ai/dsh-client-ui-primitives");
 		let react = require("react");
 		let zod = require("zod");
+		let _deepseek_ai_dsh_client_store = require("@deepseek-ai/dsh-client-store");
 		let _deepseek_ai_dsh_api_gateway_client = require("@deepseek-ai/dsh-api-gateway/client");
 		require("@deepseek-ai/cordis");
 		let react_dom = require("react-dom");
-		//#region \0dsh-global-css:/Users/winter/dsh-creative/.worktrees/student-native-chat-parent/plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
+		//#region \0dsh-global-css:/Users/winter/dsh-creative/.worktrees/student-native-chat-final-repairs/plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
 		const css = ".student-desk{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font:13px/1.5 var(--dsw-font-family);flex-direction:column;gap:12px;padding:0 12px 20px;display:flex;overflow:auto}.student-top{z-index:2;background:var(--dsw-alias-bg-base);border-bottom:1px solid var(--dsw-alias-border-l2);flex-direction:column;gap:8px;margin:0 -12px;padding:10px 12px 8px;display:flex;position:sticky;top:0}.student-toolbar{align-items:center;gap:8px;display:flex}.student-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;display:grid}.student-subjects{background:var(--dsw-alias-bg-layer-1);border-radius:8px;flex:1;gap:2px;padding:2px;display:flex}.student-subjects button{background:0 0;border:0;flex:1}.student-quiet{background:0 0;border:0;flex:none;padding:6px 8px}.student-desk section{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);border-radius:10px;flex-direction:column;gap:8px;padding:12px;display:flex}.student-desk details{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:10px;padding:10px 12px}.student-desk h3{margin:0;font-size:13px;font-weight:500}.student-desk p{overflow-wrap:anywhere;white-space:pre-wrap;margin:0}.student-desk form,.student-desk fieldset,.student-desk label{flex-direction:column;gap:8px;min-width:0;display:flex}.student-desk fieldset{border:0;margin:0;padding:0}.student-desk button,.student-desk input,.student-desk select,.student-desk textarea{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);box-sizing:border-box;border-radius:8px;min-width:0;max-width:100%;padding:8px}.student-desk button{cursor:pointer}.student-desk .student-subjects button,.student-desk .student-quiet{background:0 0;border:0}.student-desk button:hover:enabled:not([aria-pressed=true]):not(.student-primary){background:var(--dsw-alias-button-ghost-active-fill)}.student-desk .student-tabs button[aria-pressed=true],.student-desk .student-views button[aria-pressed=true],.student-desk .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-desk .student-tabs button[aria-pressed=true]:hover:enabled,.student-desk .student-views button[aria-pressed=true]:hover:enabled,.student-desk .student-primary:hover:enabled{background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-foreground)}.student-desk .student-subjects button[aria-pressed=true],.student-desk .student-segments button[aria-pressed=true],.student-desk .student-segments button[aria-checked=true]{background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);box-shadow:inset 0 0 0 1px var(--dsw-alias-state-business-primary)}.student-desk :disabled{opacity:.6;cursor:default}.student-desk :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.student-desk textarea{resize:vertical;min-height:72px}.student-desk .student-check{flex-direction:row;align-items:flex-start}.student-desk .student-check input{flex:none}.student-desk img{object-fit:contain;background:var(--dsw-alias-bg-base);border-radius:8px;width:100%;max-height:240px}.student-status{gap:6px}.student-desk .student-question{background:var(--dsw-alias-bg-base);border-radius:8px;padding:12px;font-size:16px;line-height:1.45}.student-desk summary{cursor:pointer;overflow-wrap:anywhere;font-weight:500}.student-desk .student-pages{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-plan{border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-1))}.student-desk details>details,.student-desk details>div,.student-desk details>p{margin-top:8px}.student-muted{color:var(--dsw-alias-label-secondary)}.student-unit{border-top:1px solid var(--dsw-alias-border-l2);padding-top:8px}.student-choices{flex-direction:column;gap:8px;display:flex}.student-choices button{text-align:left;width:100%;padding:12px 14px;font-size:15px}.student-result{font-size:15px;font-weight:500}.student-scope{flex-wrap:wrap;align-items:flex-end;gap:8px;display:flex}.student-scope label{flex:120px}.student-segments{flex-wrap:wrap;gap:6px;display:flex}.student-desk .student-grade{border-top:1px solid var(--dsw-alias-border-l2);padding:8px 0}.student-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px;height:8px;display:flex;overflow:hidden}.student-bar span{height:100%;display:block}.student-level-mastered,.student-fill-mastered{background:var(--dsw-alias-state-success-primary)}.student-level-practising,.student-fill-practising{background:var(--dsw-alias-state-business-primary)}.student-level-stalled,.student-fill-stalled{background:var(--dsw-alias-state-warn-primary)}.student-level-weak,.student-fill-weak{background:var(--dsw-alias-state-error-primary)}.student-level-due,.student-fill-due{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, var(--dsw-alias-state-warn-primary))}.student-level-untouched,.student-fill-untouched{background:var(--dsw-alias-label-tertiary)}.student-legend{flex-wrap:wrap;gap:8px 12px;display:flex}.student-dot{vertical-align:middle;border-radius:50%;width:8px;height:8px;margin-right:4px;display:inline-block}.student-chips{flex-direction:column;gap:6px;display:flex}.student-chip{text-align:left;border-radius:8px;align-items:center;gap:6px;width:100%;padding:8px 10px;display:flex}.student-views{grid-template-columns:1fr 1fr;gap:6px;display:grid}.student-pair{grid-template-columns:1fr 1fr;gap:8px;display:grid}.student-mastery{align-items:center;gap:6px;display:flex}.student-mastery span{border-radius:50%;width:10px;height:10px}.student-simon{flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-simon li{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 8px}.student-simon-done{opacity:.7}.student-simon-current{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, var(--dsw-alias-bg-base));font-weight:500}.student-steps{flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-map-inline{border:1px solid var(--dsw-alias-border-l2);border-left:3px solid var(--dsw-alias-state-business-primary);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base));border-radius:8px;margin:4px 0 8px;padding:8px 10px}.student-map-links{margin-top:8px}.student-mindmap-unit{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:8px;margin:8px 0;padding:10px}.student-mindmap-unit>summary{cursor:pointer;font-weight:500}.student-mindmap-branch{border-left:2px solid var(--dsw-alias-border-l2);flex-direction:column;gap:6px;margin:8px 0 0;padding:0 0 0 12px;list-style:none;display:flex}.student-mindmap-node{flex-direction:column;gap:4px;display:flex}.student-mindmap-concept{text-align:left;align-items:center;gap:6px;width:100%;display:flex}.student-mindmap-concept[aria-pressed=true]{background:var(--dsw-alias-bg-layer-2,transparent)}.student-mindmap-concept.student-level-mastered{box-shadow:inset 3px 0 0 var(--dsw-alias-state-success-primary)}.student-mindmap-concept.student-level-practising{box-shadow:inset 3px 0 0 var(--dsw-alias-state-business-primary)}.student-mindmap-concept.student-level-stalled{box-shadow:inset 3px 0 0 var(--dsw-alias-state-warn-primary)}.student-mindmap-concept.student-level-weak,.student-mindmap-concept.student-level-due{box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}.student-figure svg{width:100%;height:auto;max-height:220px;color:var(--dsw-alias-label-primary)}.student-figure circle,.student-figure rect,.student-figure line,.student-figure path,.student-figure polyline,.student-figure polygon{fill:none;stroke:currentColor;stroke-width:1.4px}.student-figure text{fill:currentColor;stroke:none}.student-figure .student-fill{fill:currentColor}.student-desk progress{width:100%;height:8px}.student-desk progress::-webkit-progress-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px}.student-desk progress::-webkit-progress-value{background:var(--dsw-alias-state-business-primary);border-radius:999px}.student-sheet-portal{font:13px/1.5 var(--dsw-font-family)}.student-sheet-portal button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);cursor:pointer;border-radius:8px;padding:8px}.student-sheet-portal .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-sheet-portal .student-quiet{background:0 0;border:0}.student-sheet-backdrop{z-index:1000;box-sizing:border-box;background:color-mix(in srgb, var(--dsw-alias-label-primary) 32%, transparent);justify-content:center;align-items:flex-start;padding:32px 16px;display:flex;position:fixed;inset:0;overflow:auto}.student-sheet-dialog{box-sizing:border-box;background:var(--dsw-alias-bg-base);border-radius:10px;flex-direction:column;gap:8px;width:min(720px,100%);padding:12px;display:flex}.student-sheet-toolbar{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.student-sheet-toolbar .student-muted{flex:200px;margin:0}.student-sheet-scroll{overflow:auto}.student-sheet{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);color:#333;font:14px/1.6 var(--dsw-font-family);background:#fff;border-radius:8px;flex-direction:column;gap:12px;padding:24px;display:flex}.student-url{user-select:text;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.student-sheet h2{text-align:center;margin:0;font-size:18px;font-weight:500}.student-sheet-meta{text-align:center;margin:0;font-size:12px}.student-sheet-item{break-inside:avoid;flex-direction:column;gap:8px;display:flex}.student-sheet-item>p{white-space:pre-wrap;margin:0}.student-sheet .student-figure svg{color:#333;width:100%;height:auto;max-height:260px}.student-sheet-lines{flex-direction:column;display:flex}.student-sheet-rule{border-bottom:1px solid #b9c0c7;height:22px}.student-sheet-box{border:1px dashed #b9c0c7;border-radius:4px;height:84px}@page{size:A4;margin:12mm 14mm}@media print{body>:not(.student-sheet-portal){display:none!important}.student-sheet-backdrop{background:0 0;padding:0;display:block;position:static;overflow:visible}.student-sheet-dialog{display:contents}.student-sheet-toolbar{display:none}.student-sheet-scroll{overflow:visible}.student-sheet{border:0;border-radius:0;width:100%;padding:0}.student-sheet-item{page-break-inside:avoid}}";
 		const tagId = "@winterhuan/dsh-student/plugin.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
@@ -1438,7 +1439,13 @@ window.__ModuleLoader__.load({
 				"field": zod.z.string(),
 				"rule": zod.z.string(),
 				"correction": zod.z.string()
-			}))
+			})),
+			"backupIssues": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			}))]).optional()
 		});
 		let _winterhuan_dsh_student_student_manualContext_parameter_0$schema$value;
 		const _winterhuan_dsh_student_student_manualContext_parameter_0$schema = () => _winterhuan_dsh_student_student_manualContext_parameter_0$schema$value ??= zod.z.string();
@@ -1661,7 +1668,13 @@ window.__ModuleLoader__.load({
 				"field": zod.z.string(),
 				"rule": zod.z.string(),
 				"correction": zod.z.string()
-			}))
+			})),
+			"backupIssues": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			}))]).optional()
 		});
 		let _winterhuan_dsh_student_student_query_parameter_0$schema$value;
 		const _winterhuan_dsh_student_student_query_parameter_0$schema = () => _winterhuan_dsh_student_student_query_parameter_0$schema$value ??= zod.z.string();
@@ -2079,6 +2092,12 @@ window.__ModuleLoader__.load({
 				"rule": zod.z.string(),
 				"correction": zod.z.string()
 			})),
+			"backupIssues": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			}))]).optional(),
 			"reason": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
 		});
 		let _winterhuan_dsh_student_student_watch_parameter_0$schema$value;
@@ -3087,6 +3106,25 @@ window.__ModuleLoader__.load({
 										],
 										"additionalProperties": true
 									}
+								},
+								"backupIssues": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"path": { "type": "string" },
+											"field": { "type": "string" },
+											"rule": { "type": "string" },
+											"correction": { "type": "string" }
+										},
+										"required": [
+											"path",
+											"field",
+											"rule",
+											"correction"
+										],
+										"additionalProperties": true
+									}
 								}
 							},
 							"required": [
@@ -3736,6 +3774,71 @@ window.__ModuleLoader__.load({
 				}
 			}
 		}, zod.z);
+		//#endregion
+		//#region lib/types/client/drafts.js
+		/**
+		* Declare persisted interaction drafts; official files remain the business authority.
+		* @returns the registration handle seeded before its first render.
+		*/
+		function createStudentDraftStore() {
+			return (0, _deepseek_ai_dsh_client_store.defineStore)({
+				init: () => {
+					const drafts = {};
+					try {
+						for (let index = 0; index < window.sessionStorage.length; index++) {
+							const key = window.sessionStorage.key(index);
+							if (key?.startsWith("student:draft:")) drafts[key] = window.sessionStorage.getItem(key) ?? "";
+						}
+					} catch {}
+					return { drafts };
+				},
+				persist: "student:drafts",
+				actions: {
+					setDraft: (state, key, value) => {
+						state.drafts[key] = value;
+					},
+					clearDraft: (state, key) => {
+						delete state.drafts[key];
+					}
+				}
+			});
+		}
+		/**
+		* Parse optional browser drafts before their first render; malformed values supply no baseline.
+		* @param value - persisted browser interaction text.
+		* @returns valid retained fields, or no retained baseline.
+		*/
+		function readFormDraft(value) {
+			if (!value) return void 0;
+			try {
+				const entry = JSON.parse(value);
+				if (typeof entry.baseline !== "string" || typeof entry.revision !== "number" || !entry.values || typeof entry.values !== "object" || Array.isArray(entry.values)) return void 0;
+				if (!Object.values(entry.values).every((value) => [
+					"string",
+					"number",
+					"boolean"
+				].includes(typeof value))) return void 0;
+				return {
+					baseline: entry.baseline,
+					revision: entry.revision,
+					values: entry.values,
+					edited: Array.isArray(entry.edited) ? entry.edited.filter((name) => typeof name === "string") : [],
+					...typeof entry.confirmedFrom === "string" ? { confirmedFrom: entry.confirmedFrom } : {},
+					...typeof entry.observation === "string" ? { observation: entry.observation } : {}
+				};
+			} catch {
+				return;
+			}
+		}
+		/**
+		* Name a form within its Session and term namespace.
+		* @param entity - edited entity or answer identity.
+		* @param namespace - Session and term prefix; standalone confirmations use their own prefix.
+		* @returns the declared-store draft key.
+		*/
+		function formDraftKey(entity, namespace = "student:standalone") {
+			return `${namespace}:${entity}`;
+		}
 		//#endregion
 		//#region lib/types/interests.js
 		/** One saved tag: 2–16 Han characters, letters or digits, with no spaces. */
@@ -4700,6 +4803,7 @@ window.__ModuleLoader__.load({
 				}).strict().optional()
 			}).strict()).max(5e3),
 			attempts: zod.z.array(attempt.extend({
+				feedback: zod.z.string().max(2e3),
 				at: time$1,
 				materialId: id$1.optional(),
 				rawResponse: text$1.optional(),
@@ -5027,32 +5131,6 @@ window.__ModuleLoader__.load({
 			pendingLegacy: zod.z.array(pending).max(5e3).optional()
 		}).strict();
 		//#endregion
-		//#region lib/types/client/drafts.js
-		/** Browser draft storage is optional and never supplies saved business facts. */
-		function useDraftStorage(entity, namespace = "student:standalone") {
-			const key = `${namespace}:${entity}`;
-			return {
-				key,
-				read() {
-					try {
-						return window.sessionStorage.getItem(key) ?? void 0;
-					} catch {
-						return;
-					}
-				},
-				write(value) {
-					try {
-						window.sessionStorage.setItem(key, value);
-					} catch {}
-				},
-				clear() {
-					try {
-						window.sessionStorage.removeItem(key);
-					} catch {}
-				}
-			};
-		}
-		//#endregion
 		//#region lib/types/client/forms.js
 		function savedSettingsForm(result, entity, original, subject) {
 			if (!result.manual) return result;
@@ -5105,7 +5183,7 @@ window.__ModuleLoader__.load({
 			}
 			return {
 				baseline: JSON.stringify(current.interests ?? []),
-				currentValues: {},
+				currentValues: { tags: JSON.stringify(current.interests ?? []) },
 				observation
 			};
 		}
@@ -5115,11 +5193,56 @@ window.__ModuleLoader__.load({
 			"english"
 		];
 		const read = (form, name) => String(form.get(name) ?? "").trim();
+		function useDraftValue({ useStore, draftKey, observation }, name) {
+			const entry = readFormDraft(useStore((state) => state.drafts[draftKey]));
+			return name && entry && (entry.confirmedFrom === observation || entry.edited.includes(name)) ? entry.values[name] : void 0;
+		}
+		/** Native controls read their declared draft before rendering and retain their DOM identity. */
+		function DraftInput({ useStore, draftKey, observation, ...props }) {
+			const retained = useDraftValue({
+				useStore,
+				draftKey,
+				observation
+			}, props.name);
+			const { defaultValue, defaultChecked, value, checked, onChange, ...rest } = props;
+			return (0, react_jsx_runtime.jsx)("input", {
+				...rest,
+				...props.type === "checkbox" ? { checked: retained === void 0 ? checked ?? defaultChecked ?? false : retained === true || retained === "on" } : { value: retained === void 0 ? value ?? defaultValue ?? "" : String(retained) },
+				onChange: onChange ?? (() => {})
+			});
+		}
+		function DraftSelect({ useStore, draftKey, observation, ...props }) {
+			const retained = useDraftValue({
+				useStore,
+				draftKey,
+				observation
+			}, props.name);
+			const { defaultValue, value, onChange, ...rest } = props;
+			return (0, react_jsx_runtime.jsx)("select", {
+				...rest,
+				value: retained === void 0 ? value ?? defaultValue ?? "" : String(retained),
+				onChange: onChange ?? (() => {})
+			});
+		}
+		function DraftTextarea({ useStore, draftKey, observation, ...props }) {
+			const retained = useDraftValue({
+				useStore,
+				draftKey,
+				observation
+			}, props.name);
+			const { defaultValue, value, onChange, ...rest } = props;
+			return (0, react_jsx_runtime.jsx)("textarea", {
+				...rest,
+				value: retained === void 0 ? value ?? defaultValue ?? "" : String(retained),
+				onChange: onChange ?? (() => {})
+			});
+		}
 		/** Labelled native field with browser validation. */
-		function Field({ name, label, value = "", type = "text", min, max, required = true }) {
-			return (0, react_jsx_runtime.jsxs)("label", { children: [label, (0, react_jsx_runtime.jsx)("input", {
+		function Field({ name, label, value = "", type = "text", min, max, required = true, ...draft }) {
+			return (0, react_jsx_runtime.jsxs)("label", { children: [label, (0, react_jsx_runtime.jsx)(DraftInput, {
+				...draft,
 				name,
-				defaultValue: value,
+				value,
 				type,
 				min,
 				max,
@@ -5127,88 +5250,43 @@ window.__ModuleLoader__.load({
 				maxLength: 2e3
 			})] });
 		}
-		function SaveForm({ revision, baseline, submit, children, t, disabled = false, button = "save", entity = "confirmation", draftScope, currentValues, resetValues, observation = `${revision}:${baseline}` }) {
-			const storage = useDraftStorage(entity, draftScope);
-			const form = (0, react.useRef)(null);
-			const [base, setBase] = (0, react.useState)({
+		function SaveForm({ revision, baseline, submit, children, t, disabled = false, button = "save", entity = "confirmation", draftScope, currentValues, resetValues, observation = `${revision}:${baseline}`, useStore, actions }) {
+			const key = formDraftKey(entity, draftScope);
+			const retained = readFormDraft(useStore((state) => state.drafts[key]));
+			const edited = retained?.edited ?? [];
+			const confirmed = retained?.confirmedFrom === observation;
+			const base = retained && (confirmed || edited.length > 0 && retained.baseline !== baseline) ? {
+				revision: retained.revision,
+				baseline: retained.baseline
+			} : {
 				revision,
 				baseline
-			});
-			const dirty = (0, react.useRef)(false);
-			const edited = (0, react.useRef)(/* @__PURE__ */ new Set());
-			const confirmed = (0, react.useRef)();
-			(0, react.useEffect)(() => {
-				const retained = storage.read();
-				if (!retained || !form.current) return;
-				try {
-					const entry = JSON.parse(retained);
-					if (typeof entry.baseline !== "string" || typeof entry.revision !== "number" || !entry.values || typeof entry.values !== "object") return;
-					if (Array.isArray(entry.edited)) {
-						for (const name of entry.edited) if (typeof name === "string") edited.current.add(name);
-					}
-					if (entry.confirmedFrom !== void 0 && entry.confirmedFrom !== observation && !edited.current.size) {
-						storage.clear();
-						return;
-					}
-					if (entry.confirmedFrom === observation) confirmed.current = {
-						from: observation,
-						snapshot: {
-							baseline: entry.baseline,
-							currentValues: entry.values,
-							observation: entry.observation
-						}
-					};
-					for (const input of form.current.querySelectorAll("input,textarea,select")) {
-						if (!(input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement || input instanceof HTMLSelectElement)) continue;
-						if (!confirmed.current && !edited.current.has(input.name)) continue;
-						const value = entry.values[input.name];
-						if (input instanceof HTMLInputElement && input.type === "checkbox") input.checked = value === true || value === "on";
-						else if (typeof value === "string" || typeof value === "number") input.value = String(value);
-					}
-					setBase({
-						revision: entry.revision,
-						baseline: entry.baseline
-					});
-					dirty.current = edited.current.size > 0 || !confirmed.current;
-				} catch {
-					storage.clear();
-				}
-			}, []);
-			(0, react.useEffect)(() => {
-				if (confirmed.current?.from === observation) return;
-				if (confirmed.current) {
-					confirmed.current = void 0;
-					if (!dirty.current) storage.clear();
-				}
-				setBase((previous) => !dirty.current || previous.baseline === baseline ? {
-					revision,
-					baseline
-				} : previous);
-				for (const input of form.current?.querySelectorAll("input,textarea,select") ?? []) {
-					if (!(input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement || input instanceof HTMLSelectElement) || edited.current.has(input.name)) continue;
-					const value = currentValues?.[input.name];
-					if (value === void 0) continue;
-					if (input instanceof HTMLInputElement && input.type === "checkbox") input.checked = value === true;
-					else input.value = String(value);
-				}
-			}, [
-				revision,
-				baseline,
-				observation
-			]);
+			};
+			const form = (0, react.useRef)(null);
 			function retain(event) {
 				const target = event.target;
-				if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) edited.current.add(target.name);
+				const names = new Set(edited);
+				if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
+					if (!target.name) {
+						setSaved(false);
+						return;
+					}
+					names.add(target.name);
+				}
 				if (!form.current) return;
-				dirty.current = true;
-				const values = Object.fromEntries(new FormData(form.current));
-				for (const input of form.current.querySelectorAll("input[type=\"checkbox\"]")) if (input instanceof HTMLInputElement && edited.current.has(input.name)) values[input.name] = input.checked ? "on" : "";
-				storage.write(JSON.stringify({
+				const values = {
+					...retained?.values,
+					...Object.fromEntries([...new FormData(form.current)].flatMap(([name, value]) => typeof value === "string" ? [[name, value]] : []))
+				};
+				for (const input of form.current.querySelectorAll("input[type=\"checkbox\"]")) if (input instanceof HTMLInputElement && names.has(input.name)) values[input.name] = input.checked ? "on" : "";
+				actions.setDraft(key, JSON.stringify({
 					...base,
-					edited: [...edited.current],
+					edited: [...names],
 					values,
-					confirmedFrom: confirmed.current?.from,
-					observation: confirmed.current?.snapshot.observation
+					...confirmed ? {
+						confirmedFrom: retained.confirmedFrom,
+						observation: retained.observation
+					} : {}
 				}));
 				setSaved(false);
 			}
@@ -5217,28 +5295,16 @@ window.__ModuleLoader__.load({
 			const [saved, setSaved] = (0, react.useState)(false);
 			function resolveDraft(keep) {
 				if (!form.current) return;
-				if (!keep) {
-					for (const input of form.current.querySelectorAll("input,textarea,select")) {
-						if (!(input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement || input instanceof HTMLSelectElement)) continue;
-						const value = currentValues?.[input.name];
-						if (value === void 0) continue;
-						if (input instanceof HTMLInputElement && input.type === "checkbox") input.checked = value === true;
-						else input.value = String(value);
-					}
-					resetValues?.();
-					dirty.current = false;
-					edited.current.clear();
-					storage.clear();
-				} else storage.write(JSON.stringify({
+				if (keep) actions.setDraft(key, JSON.stringify({
 					revision,
 					baseline,
-					edited: [...edited.current],
-					values: Object.fromEntries(new FormData(form.current))
+					edited,
+					values: retained?.values ?? {}
 				}));
-				setBase({
-					revision,
-					baseline
-				});
+				else {
+					resetValues?.();
+					actions.clearDraft(key);
+				}
 				setError("");
 				setSaved(false);
 			}
@@ -5254,39 +5320,17 @@ window.__ModuleLoader__.load({
 				try {
 					const result = await submit(values, base.revision, JSON.stringify({
 						baseline: base.baseline,
-						editedFields: [...edited.current]
+						editedFields: edited
 					}));
-					dirty.current = false;
-					edited.current.clear();
-					storage.clear();
-					if (result && "baseline" in result) {
-						confirmed.current = {
-							from: observation,
-							snapshot: result
-						};
-						setBase({
-							revision,
-							baseline: result.baseline
-						});
-						for (const input of form.current?.querySelectorAll("input,textarea,select") ?? []) {
-							if (!(input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement || input instanceof HTMLSelectElement)) continue;
-							const value = result.currentValues[input.name];
-							if (value === void 0) continue;
-							if (input instanceof HTMLInputElement && input.type === "checkbox") input.checked = value === true;
-							else input.value = String(value);
-						}
-						storage.write(JSON.stringify({
-							revision,
-							baseline: result.baseline,
-							edited: [],
-							values: result.currentValues,
-							confirmedFrom: observation,
-							observation: result.observation
-						}));
-					} else setBase({
+					if (result && "baseline" in result) actions.setDraft(key, JSON.stringify({
 						revision,
-						baseline
-					});
+						baseline: result.baseline,
+						edited: [],
+						values: result.currentValues,
+						confirmedFrom: observation,
+						observation: result.observation
+					}));
+					else actions.clearDraft(key);
 					setSaved(true);
 				} catch (reason) {
 					setError(reason instanceof Error ? reason.message : t("networkError"));
@@ -5333,22 +5377,44 @@ window.__ModuleLoader__.load({
 			});
 		}
 		/** Parent-confirmed setup or in-place profile update, plus an atomic textbook/course update. */
-		function ParentSettings({ data, change, t, curriculum = null, subject = "math", onSubject, draftScope, observation }) {
+		function ParentSettings({ data, change, t, curriculum = null, subject = "math", onSubject, draftScope, observation, useStore, actions }) {
 			const [progressError, setProgressError] = (0, react.useState)("");
+			const draft = {
+				useStore,
+				actions
+			};
+			const field = (entity, baseline) => ({
+				useStore,
+				draftKey: formDraftKey(entity, draftScope),
+				observation: observation ?? `${data.revision}:${baseline}`
+			});
 			const study = data.study;
 			const profile = study?.profile;
+			const profileBaseline = JSON.stringify(profile ?? null);
+			const courseBaseline = JSON.stringify({
+				scope: profile ? {
+					region: profile.region,
+					grade: profile.grade,
+					term: profile.term,
+					schoolYear: profile.schoolYear,
+					schoolSystem: profile.schoolSystem
+				} : void 0,
+				course: study?.courses.find((item) => item.subject === subject)
+			});
+			const progressBaseline = JSON.stringify(study?.courses.find((course) => course.subject === subject)?.progress ?? null);
 			const today = new Date(data.serverNow + 288e5);
 			const currentYear = today.getUTCFullYear() - (today.getUTCMonth() < 8 ? 1 : 0);
 			const years = Array.from({ length: 7 }, (_, index) => `${currentYear + 1 - index}–${currentYear + 2 - index}`);
 			return (0, react_jsx_runtime.jsxs)("section", { children: [
 				(0, react_jsx_runtime.jsx)("p", { children: t("parentHelp") }),
 				(0, react_jsx_runtime.jsxs)(SaveForm, {
+					...draft,
 					observation,
 					draftScope,
 					entity: "profile",
 					currentValues: profile ?? {},
 					revision: data.revision,
-					baseline: JSON.stringify(profile ?? null),
+					baseline: profileBaseline,
 					t,
 					submit: (form, revision, original) => change({
 						action: "setup",
@@ -5365,16 +5431,19 @@ window.__ModuleLoader__.load({
 					}, revision, original).then((result) => savedSettingsForm(result, "profile", original)),
 					children: [
 						(0, react_jsx_runtime.jsx)(Field, {
+							...field("profile", profileBaseline),
 							name: "nickname",
 							label: t("nickname"),
 							value: profile?.nickname ?? ""
 						}),
 						(0, react_jsx_runtime.jsx)(Field, {
+							...field("profile", profileBaseline),
 							name: "region",
 							label: t("region"),
 							value: profile?.region ?? "上海市"
 						}),
 						(0, react_jsx_runtime.jsx)(Field, {
+							...field("profile", profileBaseline),
 							name: "grade",
 							label: t("grade"),
 							value: profile?.grade ?? 2,
@@ -5382,7 +5451,8 @@ window.__ModuleLoader__.load({
 							min: 1,
 							max: 6
 						}),
-						(0, react_jsx_runtime.jsxs)("label", { children: [t("term"), (0, react_jsx_runtime.jsxs)("select", {
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("term"), (0, react_jsx_runtime.jsxs)(DraftSelect, {
+							...field("profile", profileBaseline),
 							name: "term",
 							"aria-label": t("term"),
 							defaultValue: profile?.term ?? "first",
@@ -5394,7 +5464,8 @@ window.__ModuleLoader__.load({
 								children: t("second")
 							})]
 						})] }),
-						(0, react_jsx_runtime.jsxs)("label", { children: [t("schoolYear"), (0, react_jsx_runtime.jsxs)("select", {
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("schoolYear"), (0, react_jsx_runtime.jsxs)(DraftSelect, {
+							...field("profile", profileBaseline),
 							name: "schoolYear",
 							"aria-label": t("schoolYear"),
 							defaultValue: profile?.schoolYear ?? "",
@@ -5410,13 +5481,15 @@ window.__ModuleLoader__.load({
 						})] }),
 						(0, react_jsx_runtime.jsx)("p", { children: t("schoolYearHelp") }),
 						(0, react_jsx_runtime.jsx)(Field, {
+							...field("profile", profileBaseline),
 							name: "schoolAlias",
 							label: t("schoolAlias"),
 							value: profile?.schoolAlias ?? "",
 							required: false
 						}),
 						(0, react_jsx_runtime.jsx)("p", { children: t("schoolAliasHelp") }),
-						(0, react_jsx_runtime.jsxs)("label", { children: [t("schoolSystem"), (0, react_jsx_runtime.jsxs)("select", {
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("schoolSystem"), (0, react_jsx_runtime.jsxs)(DraftSelect, {
+							...field("profile", profileBaseline),
 							name: "schoolSystem",
 							"aria-label": t("schoolSystem"),
 							defaultValue: profile?.schoolSystem ?? "five-four",
@@ -5441,6 +5514,7 @@ window.__ModuleLoader__.load({
 						course.unit
 					] }, course.subject)),
 					(0, react_jsx_runtime.jsxs)(SaveForm, {
+						...draft,
 						observation,
 						draftScope,
 						entity: `course:${subject}`,
@@ -5450,16 +5524,7 @@ window.__ModuleLoader__.load({
 							unit: study.courses.find((item) => item.subject === subject)?.unit ?? ""
 						},
 						revision: data.revision,
-						baseline: JSON.stringify({
-							scope: {
-								region: profile.region,
-								grade: profile.grade,
-								term: profile.term,
-								schoolYear: profile.schoolYear,
-								schoolSystem: profile.schoolSystem
-							},
-							course: study.courses.find((item) => item.subject === subject)
-						}),
+						baseline: courseBaseline,
 						t,
 						submit: async (form, revision, original) => {
 							const materialId = crypto.randomUUID();
@@ -5504,7 +5569,8 @@ window.__ModuleLoader__.load({
 								} } : {}
 							}, revision, original).then((result) => savedSettingsForm(result, "course", original, courseSubject));
 						},
-						children: [(0, react_jsx_runtime.jsxs)("label", { children: [t("subject"), (0, react_jsx_runtime.jsx)("select", {
+						children: [(0, react_jsx_runtime.jsxs)("label", { children: [t("subject"), (0, react_jsx_runtime.jsx)(DraftSelect, {
+							...field(`course:${subject}`, courseBaseline),
 							name: "subject",
 							"aria-label": t("subject"),
 							value: subject,
@@ -5516,20 +5582,22 @@ window.__ModuleLoader__.load({
 								value: item,
 								children: t(item)
 							}, item))
-						})] }), curriculum?.scope.current ? (0, react_jsx_runtime.jsxs)("label", { children: [t("unit"), (0, react_jsx_runtime.jsxs)("select", {
+						})] }), curriculum?.scope.current ? (0, react_jsx_runtime.jsxs)("label", { children: [t("unit"), (0, react.createElement)(DraftSelect, {
+							...field(`course:${subject}`, courseBaseline),
 							name: "unitId",
 							"aria-label": t("unit"),
+							key: subject,
 							defaultValue: study.courses.find((item) => item.subject === subject)?.progress?.unitId ?? "",
-							required: true,
-							children: [(0, react_jsx_runtime.jsx)("option", {
-								value: "",
-								disabled: true,
-								children: t("chooseUnit")
-							}), curriculum.units.map((unit) => (0, react_jsx_runtime.jsx)("option", {
-								value: unit.id,
-								children: unit.name
-							}, unit.id))]
-						}, subject)] }) : (0, react_jsx_runtime.jsx)(Field, {
+							required: true
+						}, (0, react_jsx_runtime.jsx)("option", {
+							value: "",
+							disabled: true,
+							children: t("chooseUnit")
+						}), curriculum.units.map((unit) => (0, react_jsx_runtime.jsx)("option", {
+							value: unit.id,
+							children: unit.name
+						}, unit.id)))] }) : (0, react_jsx_runtime.jsx)(Field, {
+							...field(`course:${subject}`, courseBaseline),
 							name: "unit",
 							label: t("unit")
 						})]
@@ -5548,12 +5616,13 @@ window.__ModuleLoader__.load({
 							}, item))
 						}),
 						study.courses.some((course) => course.subject === subject) ? (0, react_jsx_runtime.jsxs)(SaveForm, {
+							...draft,
 							observation,
 							draftScope,
 							entity: `progress:${subject}`,
 							currentValues: study.courses.find((course) => course.subject === subject)?.progress ?? {},
 							revision: data.revision,
-							baseline: JSON.stringify(study.courses.find((course) => course.subject === subject)?.progress ?? null),
+							baseline: progressBaseline,
 							t,
 							button: false,
 							submit: (form, revision, original) => {
@@ -5576,7 +5645,8 @@ window.__ModuleLoader__.load({
 								}, revision, original).then((result) => savedSettingsForm(result, "progress", original, subject));
 							},
 							children: [
-								(0, react_jsx_runtime.jsxs)("label", { children: [t("schoolFrontier"), (0, react_jsx_runtime.jsx)("select", {
+								(0, react_jsx_runtime.jsxs)("label", { children: [t("schoolFrontier"), (0, react_jsx_runtime.jsx)(DraftSelect, {
+									...field(`progress:${subject}`, progressBaseline),
 									name: "unitId",
 									"aria-label": t("schoolFrontier"),
 									defaultValue: study.courses.find((course) => course.subject === subject)?.progress?.unitId ?? curriculum.units[0]?.id,
@@ -5586,7 +5656,8 @@ window.__ModuleLoader__.load({
 										children: unit.name
 									}, unit.id))
 								})] }),
-								(0, react_jsx_runtime.jsxs)("label", { children: [t("keepUp"), (0, react_jsx_runtime.jsxs)("select", {
+								(0, react_jsx_runtime.jsxs)("label", { children: [t("keepUp"), (0, react_jsx_runtime.jsxs)(DraftSelect, {
+									...field(`progress:${subject}`, progressBaseline),
 									name: "posture",
 									"aria-label": t("keepUp"),
 									defaultValue: study.courses.find((course) => course.subject === subject)?.progress?.posture ?? "keep-up",
@@ -5600,7 +5671,8 @@ window.__ModuleLoader__.load({
 								})] }),
 								(0, react_jsx_runtime.jsxs)("label", {
 									className: "student-check",
-									children: [(0, react_jsx_runtime.jsx)("input", {
+									children: [(0, react_jsx_runtime.jsx)(DraftInput, {
+										...field(`progress:${subject}`, progressBaseline),
 										type: "checkbox",
 										name: "preview",
 										defaultChecked: study.courses.find((course) => course.subject === subject)?.progress?.preview === true
@@ -5634,6 +5706,7 @@ window.__ModuleLoader__.load({
 						}) : (0, react_jsx_runtime.jsx)("p", { children: t("schoolProgressNeedsCourse") })
 					] }),
 					(0, react_jsx_runtime.jsx)(InterestsForm, {
+						...draft,
 						tags: study.interests,
 						revision: data.revision,
 						change,
@@ -5652,6 +5725,7 @@ window.__ModuleLoader__.load({
 						data.interactiveLessons.baseUrl
 					] }),
 					(0, react_jsx_runtime.jsxs)(SaveForm, {
+						...draft,
 						observation,
 						draftScope,
 						entity: "openmaic",
@@ -5665,6 +5739,7 @@ window.__ModuleLoader__.load({
 							parentConfirmation: t("openmaicConfirm")
 						}, revision, original).then((result) => savedSettingsForm(result, "openmaic", original)),
 						children: [(0, react_jsx_runtime.jsx)(Field, {
+							...field("openmaic", study.openmaic?.savedBaseUrl ?? ""),
 							name: "baseUrl",
 							label: t("openmaicBase"),
 							value: study.openmaic?.savedBaseUrl ?? "",
@@ -5697,44 +5772,49 @@ window.__ModuleLoader__.load({
 			] });
 		}
 		/** Parent theme tags. The saved list is edited here; an empty profile shows the example tags from status. */
-		function InterestsForm({ tags, revision, change, t, draftScope, observation }) {
-			const storage = useDraftStorage("interests-values", draftScope);
-			const [draft, setDraft] = (0, react.useState)(() => {
-				try {
-					const saved = JSON.parse(storage.read() ?? "null");
-					return Array.isArray(saved) && saved.every((item) => typeof item === "string") ? saved : tags;
-				} catch {
-					return tags;
-				}
-			});
+		function InterestsForm({ tags, revision, change, t, draftScope, observation, useStore, actions }) {
+			const draft = {
+				useStore,
+				actions
+			};
+			const key = formDraftKey("interests", draftScope);
+			const retained = readFormDraft(useStore((state) => state.drafts[key]));
+			const baseline = JSON.stringify(tags);
+			const observed = observation ?? `${revision}:${baseline}`;
+			const stored = retained && (retained.edited.length > 0 || retained.confirmedFrom === observed) ? retained.values.tags : void 0;
+			let tagsDraft = tags;
+			try {
+				const saved = typeof stored === "string" ? JSON.parse(stored) : void 0;
+				if (Array.isArray(saved) && saved.every((item) => typeof item === "string")) tagsDraft = saved;
+			} catch {}
 			function updateTags(next) {
-				setDraft(next);
-				storage.write(JSON.stringify(next));
+				actions.setDraft(key, JSON.stringify({
+					...retained ?? {
+						revision,
+						baseline
+					},
+					edited: ["tags"],
+					values: { tags: JSON.stringify(next) }
+				}));
 			}
 			return (0, react_jsx_runtime.jsxs)(SaveForm, {
+				...draft,
 				observation,
 				draftScope,
 				entity: "interests",
-				resetValues: () => {
-					setDraft(tags);
-					storage.clear();
-				},
+				currentValues: { tags: baseline },
 				revision,
 				baseline: JSON.stringify(tags),
 				t,
 				submit: async (_form, nextRevision, original) => {
-					const next = [...new Set(draft.map((tag) => tag.trim()).filter((tag) => tag !== ""))];
+					const next = [...new Set(tagsDraft.map((tag) => tag.trim()).filter((tag) => tag !== ""))];
 					if (next.length < 3 || next.length > 8) throw new Error(t("interestCount"));
 					if (next.some((tag) => !INTEREST_TAG.test(tag))) throw new Error(t("interestShape"));
-					const result = await change({
+					return savedSettingsForm(await change({
 						action: "interests",
 						tags: next,
 						parentConfirmation: t("interestConfirm")
-					}, nextRevision, original);
-					storage.clear();
-					const saved = savedSettingsForm(result, "interests", original);
-					if ("baseline" in saved) setDraft(JSON.parse(saved.baseline));
-					return saved;
+					}, nextRevision, original), "interests", original);
 				},
 				children: [
 					(0, react_jsx_runtime.jsx)("h3", { children: t("interestsTitle") }),
@@ -5742,7 +5822,7 @@ window.__ModuleLoader__.load({
 						className: "student-muted",
 						children: t("interestsHelp")
 					}),
-					draft.map((tag, index) => (0, react_jsx_runtime.jsxs)("label", { children: [
+					tagsDraft.map((tag, index) => (0, react_jsx_runtime.jsxs)("label", { children: [
 						t("interestTag"),
 						" ",
 						index + 1,
@@ -5752,18 +5832,18 @@ window.__ModuleLoader__.load({
 							required: true,
 							minLength: 2,
 							maxLength: 16,
-							onChange: (event) => updateTags(draft.map((item, itemIndex) => itemIndex === index ? event.target.value : item))
+							onChange: (event) => updateTags(tagsDraft.map((item, itemIndex) => itemIndex === index ? event.target.value : item))
 						})
 					] }, index)),
 					(0, react_jsx_runtime.jsxs)("div", {
 						className: "student-segments",
-						children: [draft.length < 8 && (0, react_jsx_runtime.jsx)("button", {
+						children: [tagsDraft.length < 8 && (0, react_jsx_runtime.jsx)("button", {
 							type: "button",
-							onClick: () => updateTags([...draft, ""]),
+							onClick: () => updateTags([...tagsDraft, ""]),
 							children: t("addInterest")
-						}), draft.length > 3 && (0, react_jsx_runtime.jsx)("button", {
+						}), tagsDraft.length > 3 && (0, react_jsx_runtime.jsx)("button", {
 							type: "button",
-							onClick: () => updateTags(draft.slice(0, -1)),
+							onClick: () => updateTags(tagsDraft.slice(0, -1)),
 							children: t("removeInterest")
 						})]
 					})
@@ -5771,7 +5851,12 @@ window.__ModuleLoader__.load({
 			});
 		}
 		/** Confirmation retains the unedited image transcription until a user explicitly saves it. */
-		function MistakeConfirmation({ mistake, revision, change, t }) {
+		function MistakeConfirmation({ mistake, revision, change, t, useStore, actions }) {
+			const field = {
+				useStore,
+				draftKey: formDraftKey(`mistake:${mistake.id}`),
+				observation: `${revision}:${JSON.stringify(mistake)}`
+			};
 			return (0, react_jsx_runtime.jsxs)("details", { children: [
 				(0, react_jsx_runtime.jsx)("summary", { children: mistake.topic }),
 				(0, react_jsx_runtime.jsxs)("p", { children: [
@@ -5785,6 +5870,8 @@ window.__ModuleLoader__.load({
 					mistake.uncertainties
 				] }),
 				(0, react_jsx_runtime.jsxs)(SaveForm, {
+					useStore,
+					actions,
 					entity: `mistake:${mistake.id}`,
 					revision,
 					baseline: JSON.stringify(mistake),
@@ -5811,13 +5898,15 @@ window.__ModuleLoader__.load({
 						"correction",
 						"explanation",
 						"answerEvidence"
-					].map((name) => (0, react_jsx_runtime.jsxs)("label", { children: [t(name), (0, react_jsx_runtime.jsx)("textarea", {
+					].map((name) => (0, react_jsx_runtime.jsxs)("label", { children: [t(name), (0, react_jsx_runtime.jsx)(DraftTextarea, {
+						...field,
 						"aria-label": t(name),
 						name,
 						defaultValue: mistake[name],
 						required: true,
 						maxLength: 2e3
-					})] }, name)), (0, react_jsx_runtime.jsxs)("label", { children: [t("errorTypeLabel"), (0, react_jsx_runtime.jsxs)("select", {
+					})] }, name)), (0, react_jsx_runtime.jsxs)("label", { children: [t("errorTypeLabel"), (0, react_jsx_runtime.jsxs)(DraftSelect, {
+						...field,
 						name: "errorType",
 						defaultValue: mistake.errorType ?? "",
 						children: [(0, react_jsx_runtime.jsx)("option", {
@@ -5996,7 +6085,7 @@ window.__ModuleLoader__.load({
 		//#endregion
 		//#region lib/types/client/worksheet-corrections.js
 		/** Optional corrections edit confirmed records; the original response and frozen question stay visible. */
-		function WorksheetCorrections({ sessionId, termId, draftScope, useResource, save, t, disabled }) {
+		function WorksheetCorrections({ sessionId, termId, draftScope, useResource, save, t, disabled, useStore, actions }) {
 			const resource = useResource(studentResourceAddress(sessionId, { kind: "files" }));
 			const value = resource.value?.data;
 			const sheets = (value && typeof value === "object" && "worksheets" in value && Array.isArray(value.worksheets) ? value.worksheets : []).flatMap((candidate) => {
@@ -6013,6 +6102,8 @@ window.__ModuleLoader__.load({
 						children: t("staleData")
 					}),
 					sheets.map((sheet) => (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsxs)(SaveForm, {
+						useStore,
+						actions,
 						observation: resource.value?.versions.find((file) => file.path === `.study/worksheets/${sheet.id}.json`)?.version,
 						entity: `worksheet:${sheet.id}:date`,
 						draftScope,
@@ -6047,7 +6138,10 @@ window.__ModuleLoader__.load({
 							t("worksheetAnswerDay"),
 							" · ",
 							sheet.id,
-							(0, react_jsx_runtime.jsx)("input", {
+							(0, react_jsx_runtime.jsx)(DraftInput, {
+								useStore,
+								draftKey: formDraftKey(`worksheet:${sheet.id}:date`, draftScope),
+								observation: resource.value?.versions.find((file) => file.path === `.study/worksheets/${sheet.id}.json`)?.version ?? `0:${JSON.stringify(sheet.answerDate ?? null)}`,
 								name: "answerDay",
 								type: "date",
 								"aria-label": t("worksheetAnswerDay"),
@@ -6055,6 +6149,8 @@ window.__ModuleLoader__.load({
 							})
 						] }), (0, react_jsx_runtime.jsx)("p", { children: t("worksheetAnswerDayHelp") })]
 					}), sheet.responses.map((response) => (0, react_jsx_runtime.jsx)(Correction, {
+						useStore,
+						actions,
 						sheet,
 						response,
 						draftScope,
@@ -6066,10 +6162,18 @@ window.__ModuleLoader__.load({
 				]
 			});
 		}
-		function Correction({ sheet, response, draftScope, save, t, disabled, observation }) {
+		function Correction({ sheet, response, draftScope, save, t, disabled, observation, useStore, actions }) {
 			const assessment = sheet.assessments.find((item) => item.responseId === response.id);
 			const question = sheet.items.find((item) => item.id === response.questionId);
 			const answerDate = response.answerDate ?? sheet.answerDate;
+			const field = {
+				useStore,
+				draftKey: formDraftKey(`worksheet:${sheet.id}:${response.id}`, draftScope),
+				observation: observation ?? `0:${JSON.stringify({
+					response,
+					assessment: assessment ?? null
+				})}`
+			};
 			return (0, react_jsx_runtime.jsxs)("section", { children: [
 				(0, react_jsx_runtime.jsx)("p", { children: question.prompt }),
 				(0, react_jsx_runtime.jsxs)("p", { children: [
@@ -6083,6 +6187,8 @@ window.__ModuleLoader__.load({
 					question.answerEvidence
 				] }),
 				(0, react_jsx_runtime.jsxs)(SaveForm, {
+					useStore,
+					actions,
 					entity: `worksheet:${sheet.id}:${response.id}`,
 					draftScope,
 					t,
@@ -6196,7 +6302,8 @@ window.__ModuleLoader__.load({
 						}
 					},
 					children: [
-						(0, react_jsx_runtime.jsxs)("label", { children: [t("draftChoice"), (0, react_jsx_runtime.jsx)("select", {
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("draftChoice"), (0, react_jsx_runtime.jsx)(DraftSelect, {
+							...field,
 							name: "result",
 							defaultValue: assessment?.result ?? "unassessed",
 							children: [
@@ -6210,19 +6317,22 @@ window.__ModuleLoader__.load({
 								children: t(value === "correct" ? "markCorrect" : value === "partial" ? "markPartial" : value === "incorrect" ? "markWrong" : value === "stuck" ? "workbookStuck" : "notGraded")
 							}, value))
 						})] }),
-						(0, react_jsx_runtime.jsxs)("label", { children: [t("feedback"), (0, react_jsx_runtime.jsx)("textarea", {
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("feedback"), (0, react_jsx_runtime.jsx)(DraftTextarea, {
+							...field,
 							name: "feedback",
 							defaultValue: assessment?.feedback ?? question.explanation,
 							required: true,
 							maxLength: 2e3
 						})] }),
-						(0, react_jsx_runtime.jsxs)("label", { children: [t("answerEvidence"), (0, react_jsx_runtime.jsx)("textarea", {
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("answerEvidence"), (0, react_jsx_runtime.jsx)(DraftTextarea, {
+							...field,
 							name: "answerEvidence",
 							defaultValue: assessment?.answerEvidence ?? question.answerEvidence,
 							required: true,
 							maxLength: 2e3
 						})] }),
-						(0, react_jsx_runtime.jsxs)("label", { children: [t("assistanceLabel"), (0, react_jsx_runtime.jsx)("select", {
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("assistanceLabel"), (0, react_jsx_runtime.jsx)(DraftSelect, {
+							...field,
 							name: "assistance",
 							defaultValue: response.assistance,
 							children: [
@@ -6232,10 +6342,11 @@ window.__ModuleLoader__.load({
 								"unknown"
 							].map((value) => (0, react_jsx_runtime.jsx)("option", {
 								value,
-								children: t(value === "independent" ? "independent" : value === "hint" ? "assistHint" : value === "worked-example" ? "workedExampleHelp" : "assistanceUnknown")
+								children: t(value === "independent" ? "assistIndependent" : value === "hint" ? "assistHint" : value === "worked-example" ? "workedExampleHelp" : "assistanceUnknown")
 							}, value))
 						})] }),
-						(0, react_jsx_runtime.jsxs)("label", { children: [t("actualAnswerDay"), (0, react_jsx_runtime.jsx)("input", {
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("actualAnswerDay"), (0, react_jsx_runtime.jsx)(DraftInput, {
+							...field,
 							type: "date",
 							name: "answerDay",
 							defaultValue: answerDate?.kind === "day" ? answerDate.day : ""
@@ -6244,7 +6355,8 @@ window.__ModuleLoader__.load({
 							className: "student-muted",
 							children: t("answerDayHelp")
 						}),
-						(0, react_jsx_runtime.jsxs)("label", { children: [t("errorTypeLabel"), (0, react_jsx_runtime.jsxs)("select", {
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("errorTypeLabel"), (0, react_jsx_runtime.jsxs)(DraftSelect, {
+							...field,
 							name: "errorType",
 							defaultValue: assessment?.errorType ?? "",
 							children: [(0, react_jsx_runtime.jsx)("option", {
@@ -8255,7 +8367,7 @@ window.__ModuleLoader__.load({
 			incorrect: "markWrong"
 		};
 		/** Parent practice page: the mistake notebook, printed sheets, and due review. */
-		function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, epoch, t }) {
+		function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, epoch, t, useStore, actions }) {
 			return (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
 				(0, react_jsx_runtime.jsx)(PhotoIntake, {
 					ask,
@@ -8544,6 +8656,8 @@ window.__ModuleLoader__.load({
 					] }),
 					study.pendingMistakes.length === 0 && (0, react_jsx_runtime.jsx)("p", { children: t("empty") }),
 					study.pendingMistakes.map((item) => (0, react_jsx_runtime.jsx)(MistakeConfirmation, {
+						useStore,
+						actions,
 						mistake: item,
 						revision,
 						change,
@@ -9505,7 +9619,7 @@ window.__ModuleLoader__.load({
 		//#endregion
 		//#region lib/types/client/today-view.js
 		/** The learner's page: one recommended next step, the current question, and a folded set of other ways to practise. */
-		function TodayView({ study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom, draftScope }) {
+		function TodayView({ study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom, draftScope, useStore, actions }) {
 			const active = study.active;
 			const ownSession = !!active;
 			const task = ownSession && study.task?.sessionId === active.id ? study.task : void 0;
@@ -9596,6 +9710,8 @@ window.__ModuleLoader__.load({
 							children: t("chatHelp")
 						}),
 						task ? (0, react_jsx_runtime.jsx)(Task, {
+							useStore,
+							actions,
 							draftScope,
 							study,
 							goalTitle: goalTitle(study, task.objectiveId),
@@ -10145,16 +10261,13 @@ window.__ModuleLoader__.load({
 				}, step))
 			});
 		}
-		function Task({ study, goalTitle: title, goalText, days, disabled, t, act, tutor, draftScope }) {
+		function Task({ study, goalTitle: title, goalText, days, disabled, t, act, tutor, draftScope, useStore, actions }) {
 			const task = study.task;
 			if (!task) return null;
 			const hintLabel = task.hintLevel > 0 ? t("hintMore") : t("hint");
 			const [checked, setChecked] = (0, react.useState)({});
-			const draft = useDraftStorage(`answer:${task.sessionId}:${task.id}`, draftScope);
-			const [answer, setAnswer] = (0, react.useState)(() => draft.read() ?? "");
-			(0, react.useEffect)(() => {
-				if (task.response !== void 0) draft.clear();
-			}, [task.response]);
+			const key = formDraftKey(`answer:${task.sessionId}:${task.id}`, draftScope);
+			const answer = useStore((state) => state.drafts[key]) ?? "";
 			return (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
 				(0, react_jsx_runtime.jsx)("h3", { children: task.topic }),
 				title && (0, react_jsx_runtime.jsxs)("p", {
@@ -10215,7 +10328,7 @@ window.__ModuleLoader__.load({
 						className: "student-result",
 						children: t(study.feedback.result)
 					}),
-					(0, react_jsx_runtime.jsx)("p", { children: study.feedback.feedback }),
+					(0, react_jsx_runtime.jsx)("p", { children: study.feedback.result === "unassessed" ? t("assessmentPending") : study.feedback.feedback }),
 					study.feedback.result === "correct" && (0, react_jsx_runtime.jsx)("button", {
 						type: "button",
 						disabled,
@@ -10283,8 +10396,7 @@ window.__ModuleLoader__.load({
 								"aria-label": t("answer"),
 								value: answer,
 								onChange: (event) => {
-									setAnswer(event.target.value);
-									draft.write(event.target.value);
+									actions.setDraft(key, event.target.value);
 								},
 								required: true,
 								maxLength: 2e3
@@ -10342,7 +10454,7 @@ window.__ModuleLoader__.load({
 			} catch {}
 		}
 		/** Workbench actions share the same persisted state as the native tutoring tools. */
-		function StudyDesk({ sessionId, visible, ask, running, t, useResource, remote }) {
+		function StudyDesk({ sessionId, visible, ask, running, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, inspectSubmission, useStore, actions }) {
 			const [subject, setSubject] = (0, react.useState)(storedSubject);
 			const [mistakeOffset, setMistakeOffset] = (0, react.useState)(0);
 			const [mistakeStatus, setMistakeStatus] = (0, react.useState)("all");
@@ -10491,79 +10603,11 @@ window.__ModuleLoader__.load({
 			}
 			async function manual(command, _revision, original) {
 				if (!data || !workspace.termId || workspace.stale) throw new Error(t("manualInvalid"));
-				const retained = original ? JSON.parse(original) : void 0;
-				const beforeText = retained && typeof retained.baseline === "string" ? retained.baseline : original;
-				const editedNames = retained && Array.isArray(retained.editedFields) ? retained.editedFields : void 0;
-				let intent;
-				let baseline;
-				if (command.action === "setup") {
-					const before = beforeText ? JSON.parse(beforeText) : data.study?.profile;
-					const fields = Object.keys(command.profile).filter((field) => field !== "parentConfirmation" && (editedNames ? editedNames.includes(field) : command.profile[field] !== before?.[field]));
-					intent = {
-						kind: "settings",
-						command,
-						editedProfileFields: fields
-					};
-					baseline = Object.fromEntries(fields.map((field) => [`profile:${field}`, before?.[field] ?? null]));
-				} else if (command.action === "configure-course") {
-					intent = {
-						kind: "settings",
-						command
-					};
-					const before = beforeText ? JSON.parse(beforeText) : { course: data.study?.courses.find((item) => item.subject === command.course.subject) };
-					baseline = {
-						[`material:${command.material.id}`]: null,
-						[`course:${command.course.subject}`]: before.course ?? null
-					};
-				} else if (command.action === "school-progress" || command.action === "interests" || command.action === "openmaic-settings") {
-					intent = {
-						kind: "settings",
-						command
-					};
-					if (command.action === "school-progress" && beforeText) baseline = { [`progress:${command.subject}`]: JSON.parse(beforeText) };
-					if (command.action === "interests" && beforeText) baseline = { interests: JSON.parse(beforeText) };
-					if (command.action === "openmaic-settings") baseline = beforeText ? void 0 : { openmaic: null };
-				} else return change(command);
-				const controller = new AbortController();
-				const context = await remote.manualContext(sessionId, intent, controller.signal);
-				if (!context.ok) throw new Error(context.error.message);
-				if (!context.value.termId || context.value.termId !== workspace.termId) throw new Error(t("manualOldTerm"));
-				if (command.action === "openmaic-settings") {
-					const current = context.value.baseline.openmaic;
-					const currentBase = current && typeof current === "object" && "baseUrl" in current ? current.baseUrl : "";
-					if (beforeText !== void 0 && currentBase !== beforeText) throw new Error(`${t("manualConflict")} · ${t("currentValues")}: ${JSON.stringify(current)}`);
-					baseline = context.value.baseline;
-				}
-				if (command.action === "interests" && context.value.baseline.interests === null) baseline = { interests: null };
-				const result = await remote.saveManual(sessionId, {
-					termId: context.value.termId,
-					expectedVersions: context.value.versions,
-					baseline: baseline ?? context.value.baseline,
-					intent
-				}, controller.signal);
-				if (!result.ok) throw new Error(result.error.message);
-				if (result.value.status === "conflict") throw new Error(`${t("manualConflict")} · ${t("currentValues")}: ${JSON.stringify(result.value.current)}`);
-				if (result.value.status === "old-term") throw new Error(t("manualOldTerm"));
-				if (result.value.status !== "saved" && result.value.status !== "unchanged") throw new Error(result.value.reason ?? t("manualInvalid"));
-				return Object.assign({}, data, { manual: result.value });
+				return saveSettings(sessionId, command, data, workspace.termId, original, t);
 			}
 			async function saveWorksheet(intent, baseline) {
 				if (!workspace.termId || workspace.stale) throw new Error(t("manualInvalid"));
-				const controller = new AbortController();
-				const context = await remote.manualContext(sessionId, intent, controller.signal);
-				if (!context.ok) throw new Error(context.error.message);
-				if (context.value.termId !== workspace.termId) throw new Error(t("manualOldTerm"));
-				const result = await remote.saveManual(sessionId, {
-					termId: context.value.termId,
-					expectedVersions: context.value.versions,
-					baseline,
-					intent
-				}, controller.signal);
-				if (!result.ok) throw new Error(result.error.message);
-				if (result.value.status === "conflict") throw new Error(`${t("manualConflict")} · ${t("currentValues")}: ${JSON.stringify(result.value.current)}`);
-				if (result.value.status === "old-term") throw new Error(t("manualOldTerm"));
-				if (result.value.status !== "saved" && result.value.status !== "unchanged") throw new Error(result.value.reason ?? t("manualInvalid"));
-				return result.value;
+				return saveWorksheetRecord(sessionId, intent, baseline, workspace.termId, t);
 			}
 			async function act(command, _withTutor = false, prompt = continuePrompt) {
 				try {
@@ -10746,6 +10790,10 @@ window.__ModuleLoader__.load({
 				"workbookSaved"
 			].includes(key) ? t("intentAdmitted") : t(key);
 			const parentSettings = view === "parent" && parentTab === "parent";
+			const draft = {
+				useStore,
+				actions
+			};
 			const draftScope = `student:draft:${sessionId}:${workspace.termId ?? "setup"}`;
 			const context = workspace.context;
 			const pendingFacts = context && typeof context === "object" && "pendingFacts" in context && Array.isArray(context.pendingFacts) ? context.pendingFacts : [];
@@ -10868,13 +10916,10 @@ window.__ModuleLoader__.load({
 								type: "button",
 								disabled: sending,
 								onClick: () => {
-									const controller = new AbortController();
-									remote.inspectSubmission(sessionId, {
+									inspectSubmission(sessionId, {
 										requestId: item.requestId,
 										...item.response ? { response: item.response } : {}
-									}, controller.signal).then((reply) => {
-										if (!reply.ok) throw new Error(reply.error.message);
-										const result = reply.value;
+									}).then((result) => {
 										setSubmissions((previous) => previous.map((current) => current.requestId === item.requestId ? {
 											...current,
 											admission: result.admission,
@@ -10894,6 +10939,7 @@ window.__ModuleLoader__.load({
 						children: t("setupConversation")
 					})] }) : subjectLoading && !parentSettings ? (0, react_jsx_runtime.jsx)("progress", { "aria-label": t("busy") }) : (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
 						study && view === "student" && (0, react_jsx_runtime.jsx)(TodayView, {
+							...draft,
 							draftScope,
 							study,
 							subject,
@@ -11017,6 +11063,7 @@ window.__ModuleLoader__.load({
 							}
 						}),
 						study && view === "parent" && parentTab === "mistakes" && (0, react_jsx_runtime.jsx)(PracticeView, {
+							...draft,
 							study,
 							now,
 							subject,
@@ -11041,7 +11088,9 @@ window.__ModuleLoader__.load({
 							epoch,
 							t: nativeT
 						}),
-						study && view === "parent" && parentTab === "mistakes" && workspace.termId && (0, react_jsx_runtime.jsx)(WorksheetCorrections, {
+						study && view === "parent" && parentTab === "mistakes" && workspace.termId && (0, react.createElement)(WorksheetCorrections, {
+							...draft,
+							key: draftScope,
 							sessionId,
 							termId: workspace.termId,
 							draftScope,
@@ -11049,7 +11098,7 @@ window.__ModuleLoader__.load({
 							save: saveWorksheet,
 							disabled,
 							t
-						}, draftScope),
+						}),
 						parentSettings && (0, react_jsx_runtime.jsxs)("section", { children: [
 							(0, react_jsx_runtime.jsx)("button", {
 								type: "button",
@@ -11081,7 +11130,9 @@ window.__ModuleLoader__.load({
 							children: [
 								(0, react_jsx_runtime.jsx)("summary", { children: t("manualForms") }),
 								(0, react_jsx_runtime.jsx)("p", { children: t("manualSummary") }),
-								(0, react_jsx_runtime.jsx)(ParentSettings, {
+								(0, react.createElement)(ParentSettings, {
+									...draft,
+									key: draftScope + subject,
 									draftScope,
 									observation: workspace.value?.versions.find((file) => file.path === ".study/settings.json")?.version,
 									data,
@@ -11096,7 +11147,7 @@ window.__ModuleLoader__.load({
 											mode: "foundation"
 										});
 									}
-								}, draftScope + subject)
+								})
 							]
 						}),
 						study && parentSettings && (0, react_jsx_runtime.jsx)(Growth, {
@@ -11212,12 +11263,105 @@ window.__ModuleLoader__.load({
 						] }),
 						(0, react_jsx_runtime.jsx)("p", { children: item.prompt }),
 						(0, react_jsx_runtime.jsx)("p", { children: item.response }),
-						(0, react_jsx_runtime.jsx)("p", { children: item.feedback }),
+						(0, react_jsx_runtime.jsx)("p", { children: item.result === "unassessed" ? t("assessmentPending") : item.feedback }),
 						(0, react_jsx_runtime.jsx)("p", { children: item.answerEvidence })
 					] }, item.id))
 				] }),
 				(0, react_jsx_runtime.jsx)("p", { children: t("bounded") })
 			] });
+		}
+		//#endregion
+		//#region lib/types/client/manual-actions.js
+		/**
+		* Bind Gateway operations in the registration world and expose plain feature callbacks.
+		* @param remote - mounted Student manual-save and submission-inspection operations.
+		* @returns callbacks preserving original draft baselines and separate file outcomes.
+		*/
+		function createStudentManualActions(remote) {
+			async function saveSettings(sessionId, command, data, termId, original, t) {
+				const retained = original ? JSON.parse(original) : void 0;
+				const beforeText = retained && typeof retained.baseline === "string" ? retained.baseline : original;
+				const editedNames = retained && Array.isArray(retained.editedFields) ? retained.editedFields : void 0;
+				let intent;
+				let baseline;
+				if (command.action === "setup") {
+					const before = beforeText ? JSON.parse(beforeText) : data.study?.profile;
+					const fields = Object.keys(command.profile).filter((field) => field !== "parentConfirmation" && (editedNames ? editedNames.includes(field) : command.profile[field] !== before?.[field]));
+					intent = {
+						kind: "settings",
+						command,
+						editedProfileFields: fields
+					};
+					baseline = Object.fromEntries(fields.map((field) => [`profile:${field}`, before?.[field] ?? null]));
+				} else if (command.action === "configure-course") {
+					intent = {
+						kind: "settings",
+						command
+					};
+					const before = beforeText ? JSON.parse(beforeText) : { course: data.study?.courses.find((item) => item.subject === command.course.subject) };
+					baseline = {
+						[`material:${command.material.id}`]: null,
+						[`course:${command.course.subject}`]: before.course ?? null
+					};
+				} else if (command.action === "school-progress" || command.action === "interests" || command.action === "openmaic-settings") {
+					intent = {
+						kind: "settings",
+						command
+					};
+					if (command.action === "school-progress" && beforeText) baseline = { [`progress:${command.subject}`]: JSON.parse(beforeText) };
+					if (command.action === "interests" && beforeText) baseline = { interests: JSON.parse(beforeText) };
+					if (command.action === "openmaic-settings") baseline = beforeText ? void 0 : { openmaic: null };
+				} else throw new Error(t("manualInvalid"));
+				const controller = new AbortController();
+				const context = await remote.manualContext(sessionId, intent, controller.signal);
+				if (!context.ok) throw new Error(context.error.message);
+				if (!context.value.termId || context.value.termId !== termId) throw new Error(t("manualOldTerm"));
+				if (command.action === "openmaic-settings") {
+					const current = context.value.baseline.openmaic;
+					const currentBase = current && typeof current === "object" && "baseUrl" in current ? current.baseUrl : "";
+					if (beforeText !== void 0 && currentBase !== beforeText) throw new Error(`${t("manualConflict")} · ${t("currentValues")}: ${JSON.stringify(current)}`);
+					baseline = context.value.baseline;
+				}
+				if (command.action === "interests" && context.value.baseline.interests === null) baseline = { interests: null };
+				const result = await remote.saveManual(sessionId, {
+					termId: context.value.termId,
+					expectedVersions: context.value.versions,
+					baseline: baseline ?? context.value.baseline,
+					intent
+				}, controller.signal);
+				if (!result.ok) throw new Error(result.error.message);
+				if (result.value.status === "conflict") throw new Error(`${t("manualConflict")} · ${t("currentValues")}: ${JSON.stringify(result.value.current)}`);
+				if (result.value.status === "old-term") throw new Error(t("manualOldTerm"));
+				if (result.value.status !== "saved" && result.value.status !== "unchanged") throw new Error(result.value.reason ?? t("manualInvalid"));
+				return Object.assign({}, data, { manual: result.value });
+			}
+			async function saveWorksheet(sessionId, intent, baseline, termId, t) {
+				const controller = new AbortController();
+				const context = await remote.manualContext(sessionId, intent, controller.signal);
+				if (!context.ok) throw new Error(context.error.message);
+				if (context.value.termId !== termId) throw new Error(t("manualOldTerm"));
+				const result = await remote.saveManual(sessionId, {
+					termId: context.value.termId,
+					expectedVersions: context.value.versions,
+					baseline,
+					intent
+				}, controller.signal);
+				if (!result.ok) throw new Error(result.error.message);
+				if (result.value.status === "conflict") throw new Error(`${t("manualConflict")} · ${t("currentValues")}: ${JSON.stringify(result.value.current)}`);
+				if (result.value.status === "old-term") throw new Error(t("manualOldTerm"));
+				if (result.value.status !== "saved" && result.value.status !== "unchanged") throw new Error(result.value.reason ?? t("manualInvalid"));
+				return result.value;
+			}
+			async function inspectSubmission(sessionId, request) {
+				const reply = await remote.inspectSubmission(sessionId, request, new AbortController().signal);
+				if (!reply.ok) throw new Error(reply.error.message);
+				return reply.value;
+			}
+			return {
+				saveSettings,
+				saveWorksheet,
+				inspectSubmission
+			};
 		}
 		//#endregion
 		//#region lib/types/client/sidebar.js
@@ -11231,6 +11375,35 @@ window.__ModuleLoader__.load({
 			"remote",
 			"resources"
 		];
+		function studentCallbacks(scope) {
+			const t = scope.locale.bind(NS);
+			return {
+				...createStudentManualActions(scope.remote.student),
+				askStudent: (sessionId, text, photo) => tutorBridge(scope, sessionId, t("sessionError"), t("sendError"))(text, photo)
+			};
+		}
+		function Sidebar({ sessionId, useTabInfo, useSession, useSessions, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission }) {
+			const preset = useSessions((state) => state.byId[sessionId]?.projectionValues?.agentPreset);
+			const { tab } = useTabInfo();
+			(0, react.useEffect)(() => {
+				if (typeof preset === "string" && preset !== "student") tab.actions.close();
+			}, [preset, tab.actions]);
+			const running = useSession((snapshot) => snapshot.running);
+			if (preset !== "student") return null;
+			return (0, react_jsx_runtime.jsx)(StudyDesk, {
+				sessionId,
+				visible: tab.visible,
+				running: !!running,
+				ask: (text, photo) => askStudent(sessionId, text, photo),
+				t,
+				useResource,
+				useStore,
+				actions,
+				saveSettings,
+				saveWorksheet,
+				inspectSubmission
+			}, sessionId);
+		}
 		/** Register the learning desk inside DSH's existing session sidebar. */
 		async function apply(context) {
 			await mountStudentResource(context);
@@ -11252,29 +11425,13 @@ window.__ModuleLoader__.load({
 				}]
 			}), "student: sidebar");
 			context.inject(["remote.student"], (scope) => {
-				function Sidebar({ sessionId, useTabInfo, useSession, useSessions, useResource, t }) {
-					const preset = useSessions((state) => state.byId[sessionId]?.projectionValues?.agentPreset);
-					const { tab } = useTabInfo();
-					(0, react.useEffect)(() => {
-						if (typeof preset === "string" && preset !== "student") tab.actions.close();
-					}, [preset, tab.actions]);
-					const running = useSession((snapshot) => snapshot.running);
-					const ask = (0, react.useMemo)(() => tutorBridge(context, sessionId, t("sessionError"), t("sendError")), [sessionId, t]);
-					if (preset !== "student") return null;
-					return (0, react_jsx_runtime.jsx)(StudyDesk, {
-						sessionId,
-						visible: tab.visible,
-						running: !!running,
-						ask,
-						t,
-						useResource,
-						remote: scope.remote.student
-					}, sessionId);
-				}
-				scope.slots.inject("sidebar.right.pane.tab", () => context.slots.register({
+				const store = createStudentDraftStore();
+				scope.slots.inject("sidebar.right.pane.tab", () => scope.slots.register({
 					name: "sidebar.right.pane.tab",
 					key: "@winterhuan/dsh-student",
-					locale: NS
+					locale: NS,
+					store,
+					inject: () => studentCallbacks(scope)
 				}, Sidebar));
 			});
 		}

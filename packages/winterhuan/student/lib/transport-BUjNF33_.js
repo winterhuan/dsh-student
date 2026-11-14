@@ -1,5 +1,5 @@
-import { y as applicationStudyFiles } from "./queries-DpQSrfKe.js";
-import { F as canonical, _ as readBackups, f as backupVersions, u as readWorkspace, v as retainObservedBackups } from "./openmaic-Yf-05c0e.js";
+import { y as applicationStudyFiles } from "./queries-Do-cB2_C.js";
+import { F as canonical, _ as readBackups, f as backupVersions, u as readWorkspace, v as retainObservedBackups } from "./openmaic-oaD578Fa.js";
 import { createHash } from "node:crypto";
 import { KNOWN_SESSION_EVENT_TYPES } from "@deepseek-ai/dsh-session";
 //#region lib/types/native-source.js
@@ -301,10 +301,11 @@ async function readStudentWorkspace(exec) {
 		backupIssues.push(...retained.issues);
 	}
 	exec.signal.throwIfAborted();
+	read.backupIssues = backupIssues.slice(0, 100);
 	return {
 		read,
 		native,
-		backupIssues
+		backupIssues: read.backupIssues
 	};
 }
 //#endregion

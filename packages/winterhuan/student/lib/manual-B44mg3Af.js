@@ -1,5 +1,5 @@
-import { c as itemObjectiveId, d as dayStart, f as scheduleMistakes, l as objectiveOf, p as attachEvidence, s as projectWorkspace, u as sheetOpen, v as evidenceOf } from "./queries-DpQSrfKe.js";
-import { B as requireValue, F as canonical, G as showValue, H as sameScope, I as choiceMismatch, K as spent, L as foldText, N as DAY, P as activeSession, Q as builtinObjectiveIn, V as sameSavedAnswer, W as scopeSelects, _ as readBackups, at as commandSchema, b as validateStudyFiles, ct as stateSchema, f as backupVersions, lt as errorTypesBySubject, ot as customObjectiveMethods, q as studyDay, s as normalizeOpenmaicBase, tt as curriculumFor, u as readWorkspace, ut as DEFAULT_INTEREST_TAGS, v as retainObservedBackups, z as matchChoice } from "./openmaic-Yf-05c0e.js";
+import { c as itemObjectiveId, d as dayStart, f as scheduleMistakes, l as objectiveOf, p as attachEvidence, s as projectWorkspace, u as sheetOpen, v as evidenceOf } from "./queries-Do-cB2_C.js";
+import { B as requireValue, F as canonical, G as showValue, H as sameScope, I as choiceMismatch, K as spent, L as foldText, N as DAY, P as activeSession, Q as builtinObjectiveIn, V as sameSavedAnswer, W as scopeSelects, at as commandSchema, b as validateStudyFiles, ct as stateSchema, lt as errorTypesBySubject, ot as customObjectiveMethods, q as studyDay, s as normalizeOpenmaicBase, tt as curriculumFor, u as readWorkspace, ut as DEFAULT_INTEREST_TAGS, v as retainObservedBackups, z as matchChoice } from "./openmaic-oaD578Fa.js";
 import { z } from "zod";
 //#region lib/types/learning/update/context.js
 function alignRecord(task, attempt) {
@@ -1173,8 +1173,9 @@ function editedFields(read, intent) {
 * @returns saved, unchanged or explicit conflict/invalid/unknown result with independently reread files.
 */
 async function saveManual(fs, request, now, signal) {
-	const backups = await readBackups(fs, signal);
-	const read = await readWorkspace(fs, signal, backupVersions(backups.backups));
+	const read = await readWorkspace(fs, signal);
+	const backupIssues = read.backupIssues ?? [];
+	read.backupIssues = backupIssues;
 	const current = manualFields(read, request.intent);
 	const path = request.intent.kind === "settings" ? ".study/settings.json" : `.study/worksheets/${request.intent.worksheetId}.json`;
 	if (!read.workspace || read.issues.some((issue) => issue.path === path || path.startsWith(`${issue.path}/`) || issue.path === ".study/settings.json") || !fs.write) return {
@@ -1198,7 +1199,7 @@ async function saveManual(fs, request, now, signal) {
 		current,
 		read
 	};
-	await retainObservedBackups(fs, read, now, signal);
+	backupIssues.push(...(await retainObservedBackups(fs, read, now, signal)).issues.slice(0, 100 - backupIssues.length));
 	let next = structuredClone(observed.file);
 	if (request.intent.kind === "settings") {
 		const previous = projectWorkspace(read.workspace, now);
@@ -1316,6 +1317,8 @@ async function saveManual(fs, request, now, signal) {
 	} catch (error) {
 		if (signal.aborted) throw error;
 		const latest = await readWorkspace(fs, signal);
+		backupIssues.push(...(latest.backupIssues ?? []).slice(0, 100 - backupIssues.length));
+		latest.backupIssues = backupIssues;
 		return {
 			status: error instanceof Error && "code" in error && ["FS_STALE_VERSION", "FS_NOT_OBSERVED"].includes(String(error.code)) ? "conflict" : "unknown",
 			current: manualFields(latest, request.intent),
@@ -1324,7 +1327,9 @@ async function saveManual(fs, request, now, signal) {
 		};
 	}
 	const latest = await readWorkspace(fs, signal);
-	if (latest.status === "valid") await retainObservedBackups(fs, latest, now, signal);
+	backupIssues.push(...(latest.backupIssues ?? []).slice(0, 100 - backupIssues.length));
+	latest.backupIssues = backupIssues;
+	if (latest.status === "valid") backupIssues.push(...(await retainObservedBackups(fs, latest, now, signal)).issues.slice(0, 100 - backupIssues.length));
 	return {
 		status: latest.files.some((file) => file.path === path && file.file && canonical(file.file) === canonical(next)) ? "saved" : "unknown",
 		current: manualFields(latest, request.intent),

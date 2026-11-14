@@ -1,13 +1,15 @@
+import { useDraftFixture } from './draft-fixture.tsx'
+import { createStudentManualActions } from '../src/client/manual-actions.ts'
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ParentSettings } from '../src/client/forms.tsx'
+import { ParentSettings as RealParentSettings } from '../src/client/forms.tsx'
 import { StudyDesk as RealStudyDesk } from '../src/client/desk.tsx'
 import { studentClientFixture } from './student-client-fixture.tsx'
 import type { ComponentProps } from 'react'
 import { dashboard } from '../src/dashboard.ts'
 import { updateStudy } from './fixtures.ts'
-import { en } from '../src/client/locales.ts'
+import { en, zh } from '../src/client/locales.ts'
 import { NOW, MINUTE, DAY, setup, material, course, start, attempt, mistake, confirm } from './fixtures.ts'
 
 const t = (key: keyof typeof en) => en[key]
@@ -17,8 +19,8 @@ const initial = () => updateStudy(updateStudy(updateStudy(undefined, setup, Date
 
 let backend: ReturnType<typeof studentClientFixture>
 function installResource(state = initial()) { backend = studentClientFixture(state); return backend }
-function StudyDesk(props: Omit<ComponentProps<typeof RealStudyDesk>, 'useResource' | 'remote'>) {
-  return <RealStudyDesk {...props} useResource={backend.useResource} remote={backend.remote} ask={async (text, photo) => { await props.ask(text, photo); await backend.consume(text) }} />
+function StudyDesk(props: Omit<ComponentProps<typeof RealStudyDesk>, 'useResource' | keyof import('../src/client/manual-actions.ts').StudentManualActions | keyof import('../src/client/drafts.tsx').DraftProps>) {
+  return <RealStudyDesk {...props} useResource={backend.useResource} {...useDraftFixture()} {...createStudentManualActions(backend.remote)} ask={async (text, photo) => { await props.ask(text, photo); await backend.consume(text) }} />
 }
 
 async function openDesk(tab: 'Knowledge map' | 'Mistakes' | 'Parent setup') {
@@ -843,4 +845,17 @@ it('shows the explain-it-back reminder after a helped answer', async () => {
   render(<StudyDesk sessionId="remind" visible running={false} ask={vi.fn()} t={t} />)
   await screen.findByRole('heading', { name: en.remindersTitle })
   expect(screen.getByText(`${en.remindFirst} · 把同数连加改写成乘法算式并说明意义`)).toBeTruthy()
+})
+
+function ParentSettings(props: Omit<import('react').ComponentProps<typeof RealParentSettings>, keyof import('../src/client/drafts.tsx').DraftProps>) { return <RealParentSettings {...props} {...useDraftFixture()} /> }
+
+it('renders pending assessment feedback from the selected Chinese dictionary', async () => {
+  vi.spyOn(Date, 'now').mockReturnValue(NOW)
+  const state = initial()
+  state.task!.response = attempt.response
+  state.attempts = [{ ...attempt, result: 'unassessed', feedback: 'Pending assessment', at: NOW }]
+  installResource(state)
+  render(<StudyDesk sessionId="pending-copy" visible running={false} ask={vi.fn()} t={key => zh[key]} />)
+  await screen.findByText(zh.assessmentPending)
+  expect(screen.queryByText('Pending assessment')).toBeNull()
 })

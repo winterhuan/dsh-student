@@ -1,9 +1,12 @@
+import { Children, cloneElement, isValidElement } from 'react'
+import { useDraftFixture } from './draft-fixture.tsx'
+import { createStudentManualActions } from '../src/client/manual-actions.ts'
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
-import { StudyDesk } from '../src/client/desk.tsx'
-import { WorksheetCorrections } from '../src/client/worksheet-corrections.tsx'
-import { SaveForm } from '../src/client/forms.tsx'
+import { StudyDesk as RealStudyDesk } from '../src/client/desk.tsx'
+import { WorksheetCorrections as RealWorksheetCorrections } from '../src/client/worksheet-corrections.tsx'
+import { SaveForm as RealSaveForm, DraftInput } from '../src/client/forms.tsx'
 import { dashboard } from '../src/dashboard.ts'
 import { updateStudy } from './fixtures.ts'
 import { NOW, setup, start, attempt } from './fixtures.ts'
@@ -69,7 +72,7 @@ it('sends the complete original answer to native chat without a business pre-sav
   const ask = vi.fn().mockResolvedValue({ requestId: 'native-1', admission: 'accepted' })
   const useResource = (address: string) => ({ status: 'live' as const, failure: undefined, value: { status: 'valid', token: 'one', readAt: NOW, refreshAfter: NOW + 1000, versions: [], native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [], data: new URL(address).searchParams.get('query')?.includes('learning-context') ? { termId: 'term-one', pendingFacts: [] } : body } as StudentQueryResult })
   const remote = { inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() }
-  render(<StudyDesk {...{ useResource, remote }} sessionId="native-session" visible running={false} ask={ask} t={t} />)
+  render(<StudyDesk useResource={useResource} {...createStudentManualActions(remote)} sessionId="native-session" visible running={false} ask={ask} t={t} />)
   fireEvent.change(await screen.findByLabelText(en.answer), { target: { value: attempt.response } })
   fireEvent.click(screen.getByRole('button', { name: en.submit }))
   await waitFor(() => expect(ask).toHaveBeenCalledOnce())
@@ -87,7 +90,7 @@ it('keeps the unfinished question primary while browsing another subject', async
   const state = updateStudy(updateStudy(updateStudy(undefined, setup, NOW), start, NOW), { action: 'task', task: { id: 'q1', sessionId: start.id, subject: 'math', topic: 'Addition', prompt: '8 + 7?' } }, NOW)
   const useResource = (address: string) => ({ status: 'live' as const, failure: undefined, value: { status: 'valid', token: 'one', readAt: NOW, refreshAfter: NOW + 1000, versions: [], native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [], data: new URL(address).searchParams.get('query')?.includes('learning-context') ? { termId: 'term-one', pendingFacts: [] } : dashboard(state, NOW, { subject: new URL(address).searchParams.get('query')?.includes('chinese') ? 'chinese' : 'math' }) } as StudentQueryResult })
   const remote = { inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() }
-  render(<StudyDesk {...{ useResource, remote }} sessionId="native-session" visible running={false} ask={vi.fn()} t={t} />)
+  render(<StudyDesk useResource={useResource} {...createStudentManualActions(remote)} sessionId="native-session" visible running={false} ask={vi.fn()} t={t} />)
   await screen.findByText('8 + 7?')
   fireEvent.click(screen.getByRole('button', { name: en.chinese }))
   expect(screen.getByText('8 + 7?')).toBeTruthy()
@@ -100,7 +103,7 @@ it.each(['answer', 'hint', 'continue', 'stop'] as const)('keeps the active quest
   const useResource = (address: string) => ({ status: 'live' as const, failure: undefined, value: { status: 'valid', token: 'one', readAt: NOW, refreshAfter: NOW + 1000, versions: [], native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [], data: new URL(address).searchParams.get('query')?.includes('learning-context') ? { termId: 'term-one', pendingFacts: [] } : dashboard(state, NOW, { subject: new URL(address).searchParams.get('query')?.includes('chinese') ? 'chinese' : 'math' }) } as StudentQueryResult })
   state.task!.hintLevel = 1
   const ask = vi.fn().mockResolvedValue({ requestId: 'native-1', admission: 'accepted' })
-  render(<StudyDesk useResource={useResource} remote={{ inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() }} sessionId="browse-native" visible running={false} ask={ask} t={t} />)
+  render(<StudyDesk useResource={useResource} {...createStudentManualActions({ inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() })} sessionId="browse-native" visible running={false} ask={ask} t={t} />)
   fireEvent.click(screen.getByRole('button', { name: en.chinese }))
   fireEvent.click(screen.getByText(en.otherWays))
   fireEvent.change(screen.getByLabelText(en.scopeLabel), { target: { value: '1-second' } })
@@ -123,7 +126,7 @@ it('retains a parent nickname draft across navigation and saves only its origina
   const manualContext = vi.fn().mockResolvedValue({ ok: true, value: { termId: 'term-one', versions: [{ path: '.study/settings.json', version: 'v2' }], baseline: { 'profile:nickname': setup.profile.nickname }, readStatus: 'valid', issues: [] } })
   const saveManual = vi.fn().mockResolvedValue({ ok: true, value: { status: 'conflict', current: { 'profile:nickname': 'Current name' }, versions: [], readStatus: 'valid', issues: [] } })
   const ask = vi.fn()
-  render(<StudyDesk {...{ useResource, ask }} remote={{ manualContext, saveManual, inspectSubmission: vi.fn() }} sessionId="parent-native" visible running={false} t={t} />)
+  render(<StudyDesk {...{ useResource, ask }} {...createStudentManualActions({ manualContext, saveManual, inspectSubmission: vi.fn() })} sessionId="parent-native" visible running={false} t={t} />)
   fireEvent.click(screen.getByRole('button', { name: en.parentView }))
   fireEvent.click(screen.getByRole('button', { name: en.parentProfile }))
   fireEvent.click(screen.getByText(en.manualForms))
@@ -150,7 +153,7 @@ it('retains a worksheet correction draft and separates its original assessment, 
   const manualContext = vi.fn().mockResolvedValue({ ok: true, value: { termId: 'term-one', versions: [{ path: '.study/worksheets/paper-sheet.json', version: 'paper-v2' }], baseline: {}, readStatus: 'valid', issues: [] } })
   const saveManual = vi.fn().mockResolvedValue({ ok: true, value: { status: 'conflict', current: { 'assessment:paper-response': { ...assessment, feedback: 'Current feedback' } }, versions: [], readStatus: 'valid', issues: [] } })
   const ask = vi.fn()
-  render(<StudyDesk {...{ useResource, ask }} remote={{ manualContext, saveManual, inspectSubmission: vi.fn() }} sessionId="paper-native" visible running={false} t={t} />)
+  render(<StudyDesk {...{ useResource, ask }} {...createStudentManualActions({ manualContext, saveManual, inspectSubmission: vi.fn() })} sessionId="paper-native" visible running={false} t={t} />)
   fireEvent.click(screen.getByRole('button', { name: en.parentView }))
   fireEvent.click(screen.getByRole('button', { name: en.mistakes }))
   fireEvent.click(screen.getByText('Optional: correct saved worksheet records'))
@@ -187,7 +190,7 @@ it('shows the inherited worksheet day and saves an explicit unknown override wit
 it('shows unresolved help, source and effective answer date beside the learning path', () => {
   const body = dashboard(updateStudy(undefined, setup, NOW), NOW)
   const useResource = (address: string) => ({ status: 'live' as const, failure: undefined, value: { status: 'valid', token: 'one', readAt: NOW, refreshAfter: NOW + 1000, versions: [], native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [], data: new URL(address).searchParams.get('query')?.includes('learning-context') ? { termId: 'term-one', pendingFacts: [{ ownerId: 'earlier-block', responseId: 'earlier-response', fields: ['answerDate', 'assistance', 'source'] }] } : body } as StudentQueryResult })
-  render(<StudyDesk {...{ useResource }} remote={{ inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() }} sessionId="current-native" visible running={false} ask={vi.fn()} t={t} />)
+  render(<StudyDesk {...{ useResource }} {...createStudentManualActions({ inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() })} sessionId="current-native" visible running={false} ask={vi.fn()} t={t} />)
   expect(screen.getByText(en.answerDateUnknown, { exact: false })).toBeTruthy()
   expect(screen.getByText(en.assistanceUnknown, { exact: false })).toBeTruthy()
   expect(screen.getByText('Answer source awaiting verification', { exact: false })).toBeTruthy()
@@ -207,3 +210,19 @@ it('saves a worksheet-wide answer day while retaining per-response overrides', a
   expect(save.mock.calls[0]![1]).toEqual({ answerDate: { kind: 'unknown' } })
   expect((screen.getByLabelText(en.actualAnswerDay) as HTMLInputElement).value).toBe('')
 })
+
+function StudyDesk(props: Omit<import('react').ComponentProps<typeof RealStudyDesk>, keyof import('../src/client/drafts.tsx').DraftProps>) { return <RealStudyDesk {...props} {...useDraftFixture()} /> }
+
+function WorksheetCorrections(props: Omit<import('react').ComponentProps<typeof RealWorksheetCorrections>, keyof import('../src/client/drafts.tsx').DraftProps>) { return <RealWorksheetCorrections {...props} {...useDraftFixture()} /> }
+
+function SaveForm(props: Omit<import('react').ComponentProps<typeof RealSaveForm>, keyof import('../src/client/drafts.tsx').DraftProps>) {
+  const draft = useDraftFixture()
+  const identity = { useStore: draft.useStore, draftKey: `${props.draftScope ?? 'student:standalone'}:${props.entity ?? 'confirmation'}`, observation: props.observation ?? `${props.revision}:${props.baseline}` }
+  const controls = (node: import('react').ReactNode): import('react').ReactNode => {
+    if (!isValidElement<{ children?: import('react').ReactNode }>(node)) return node
+    if (node.type === 'input') return <DraftInput {...identity} {...node.props} />
+    if (node.props.children) return cloneElement(node, {}, Children.map(node.props.children, controls))
+    return node
+  }
+  return <RealSaveForm {...props} {...draft}>{Children.map(props.children, controls)}</RealSaveForm>
+}

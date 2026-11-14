@@ -62,6 +62,7 @@ export interface StudentManualContext {
     versions: WorkspaceQueryResult['versions'];
     baseline: Record<string, StudentJsonValue>;
     issues: FileIssue[];
+    backupIssues?: FileIssue[];
 }
 /** Manual save outcome is independent from native message admission and saved assessment outcomes. */
 export interface StudentManualReply {
@@ -71,6 +72,7 @@ export interface StudentManualReply {
     versions: WorkspaceQueryResult['versions'];
     readStatus: WorkspaceRead['status'];
     issues: FileIssue[];
+    backupIssues?: FileIssue[];
     reason?: string;
 }
 /** Recovery inspects the original request and optional stable response identity without resending. */
@@ -100,5 +102,6 @@ export interface StudentSubmissionInspection {
     readStatus: WorkspaceRead['status'];
     versions: WorkspaceQueryResult['versions'];
     issues: FileIssue[];
+    backupIssues?: FileIssue[];
 }
 //# sourceMappingURL=types.d.ts.map

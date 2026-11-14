@@ -298,8 +298,8 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 topic: string;
                 prompt: string;
                 response: string;
-                feedback: string;
                 answerEvidence: string;
+                feedback: string;
                 at: number;
                 mistakeId?: string | undefined;
                 objectiveId?: string | undefined;
@@ -1155,8 +1155,8 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 topic: string;
                 prompt: string;
                 response: string;
-                feedback: string;
                 answerEvidence: string;
+                feedback: string;
                 at: number;
                 mistakeId?: string | undefined;
                 objectiveId?: string | undefined;

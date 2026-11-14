@@ -7,7 +7,7 @@ import { validateStudyFiles, type FileIssue, type ParsedFile, type ValidationRes
 import type { OfficialFile } from './schema.ts'
 import type { BackupRetentionQueue } from './backup-retention.ts'
 import { StudyReadCache } from './cache.ts'
-import { migrationOutputPaths } from './recovery.ts'
+import { migrationOutputPaths, readBackups, backupVersions } from './recovery.ts'
 
 /** Stable observation supplied by the execution-world filesystem. */
 export interface FileObservation extends FsInfo { targetKey: FsTargetKey }
@@ -33,6 +33,8 @@ export interface WorkspaceRead {
   files: ObservedFile[]
   membership: { path: string; names: string[] }[]
   issues: FileIssue[]
+  /** Backup inspection failures remain independent from official-file validity. */
+  backupIssues?: FileIssue[]
   workspace?: ValidatedWorkspace
   legacy?: unknown
 }
@@ -43,13 +45,14 @@ const MAX_TOTAL_BYTES = 33_554_432
  * Read a stable set of official files, checking membership and actual versions on both sides.
  * @param fs - filesystem adapter in the caller's execution world.
  * @param signal - cancels discovery, bounded rereads and byte reads.
- * @param prior - preserved validated versions available for frozen-content checks.
+ * @param prior - supplied preserved versions; omitted reads use verified observed-version backups for cold frozen-content checks.
  * @param nativeSources - independently resolved consumed input observations, empty for the read-only CLI.
  * @returns validated facts or an explicit incomplete, invalid or changing result.
  */
-export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior: readonly { path: string; file: OfficialFile }[] = [], nativeSources: readonly NativeInputObservation[] = []): Promise<WorkspaceRead> {
+export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?: readonly { path: string; file: OfficialFile }[], nativeSources: readonly NativeInputObservation[] = []): Promise<WorkspaceRead> {
   const owner = fs.cache ??= new StudyReadCache()
-  return { ...await readWorkspaceFiles(fs, signal, prior, nativeSources, owner), cache: owner }
+  const backups = prior === undefined ? await readBackups(fs, signal) : undefined
+  return { ...await readWorkspaceFiles(fs, signal, prior ?? backupVersions(backups!.backups), nativeSources, owner), cache: owner, ...(backups ? { backupIssues: backups.issues } : {}) }
 }
 
 async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: readonly { path: string; file: OfficialFile }[], nativeSources: readonly NativeInputObservation[], owner: StudyReadCache): Promise<WorkspaceRead> {

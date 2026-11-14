@@ -1,3 +1,5 @@
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 import { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
@@ -6,11 +8,12 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { it, expect, onTestFinished } from 'vitest'
 import { applicationStudyFiles } from '../src/files/application.ts'
+import { nodeStudyFiles } from '../src/files/node.ts'
 import { readWorkspace } from '../src/files/read.ts'
 import { saveManual, manualFields, type ManualSaveRequest } from '../src/files/manual.ts'
 import { worksheetSchema } from '../src/files/schema.ts'
 import { studyStore } from '../src/store.ts'
-import { readBackups, describeRestore } from '../src/files/recovery.ts'
+import { readBackups, describeRestore, retainObservedBackups } from '../src/files/recovery.ts'
 import { NOW, setup, material, course } from './fixtures.ts'
 import { readLessonFile } from '../src/files/lessons.ts'
 import { readInteractiveLessons } from '../src/openmaic.ts'
@@ -157,4 +160,71 @@ it('returns an invalid manual outcome for a bad compound progress command and pe
   expect((await saveManual(fs, request, NOW, signal)).status).toBe('saved')
   await writeFile(join(cwd, '.study/settings.json'), '{broken')
   expect((await saveManual(fs, request, NOW, signal)).status).toBe('invalid')
+})
+
+it.each(['list', 'stat', 'remove'] as const)('keeps valid settings and manual saves usable when backup %s fails', async operation => {
+  const { fs, signal, settings, save, request } = await fixture()
+  for (let index = 0; index < 3; index++) {
+    await save({ ...settings, profile: { ...settings.profile, nickname: `Version ${index}` } })
+    await retainObservedBackups(fs, await readWorkspace(fs, signal), NOW + index, signal)
+  }
+  await save(settings)
+  let stats = 0
+  const failure = new Error('Backup unavailable ' + 'x'.repeat(1000))
+  const failing = {
+    ...fs,
+    async list(path: string, signal: AbortSignal) {
+      if (operation === 'list' && path === '.study/backups') throw failure
+      return fs.list(path, signal)
+    },
+    async stat(path: string, signal: AbortSignal) {
+      if (operation === 'stat' && path.startsWith('.study/backups/') && ++stats > 6) throw failure
+      return fs.stat(path, signal)
+    },
+    async remove(...args: Parameters<NonNullable<typeof fs.remove>>) {
+      if (operation === 'remove') throw failure
+      return fs.remove!(...args)
+    },
+  }
+  const read = await readWorkspace(failing, signal, [])
+  expect(read.status).toBe('valid')
+  const retained = await retainObservedBackups(failing, read, NOW + 4, signal)
+  expect(retained.issues).toContainEqual(expect.objectContaining({ rule: operation === 'list' ? 'backup-list' : 'backup-prune' }))
+  expect(retained.issues.every(issue => issue.correction.length <= 500)).toBe(true)
+  const result = await saveManual(failing, request, NOW + 5, signal)
+  expect(result).toMatchObject({ status: 'saved', read: { workspace: { settings: { profile: { nickname: 'New nickname' } } } } })
+  expect(result.read.backupIssues?.length).toBeGreaterThan(0)
+})
+
+it('propagates cancellation during backup discovery', async () => {
+  const { fs } = await fixture()
+  const abort = new AbortController()
+  const reason = new Error('Closed during discovery')
+  await expect(readBackups({ ...fs, async list() { abort.abort(reason); throw reason } }, abort.signal)).rejects.toBe(reason)
+})
+
+it('keeps published unanswered worksheet content frozen after source deletion across a validator process restart', async () => {
+  const { fs, signal, cwd, read } = await fixture()
+  await mkdir(join(cwd, '.study/worksheets'))
+  const mistake = { id: 'm1', subject: 'math', topic: 'Subtraction', prompt: '18 - 7?', learnerAnswer: '10', correction: '11', explanation: 'Subtract seven', answerEvidence: '11 + 7 = 18', uncertainties: '', objectiveId: 'm2a-o-sub', confirmedAt: NOW, userConfirmation: 'Confirmed' }
+  const collections = { format: 2, kind: 'collections', termId: read.workspace!.settings.termId, mistakes: [mistake], rewards: [] }
+  const sheet = worksheetSchema.parse({ format: 2, kind: 'worksheet', termId: read.workspace!.settings.termId, id: 'published', subject: 'math', origin: 'prepared', createdAt: NOW, context: { profile: setup.profile },
+    items: [{ id: 'q1', objectiveId: 'm2a-o-sub', mistakeId: 'm1', source: { kind: 'mistake', mistakeId: 'm1', description: 'Varied published practice' }, topic: 'Subtraction', prompt: '28 - 7?', answer: '21', explanation: 'Subtract seven', answerEvidence: '21 + 7 = 28' }], responses: [], assessments: [], drafts: [] })
+  await writeFile(join(cwd, '.study/collections.json'), JSON.stringify(collections))
+  await writeFile(join(cwd, '.study/worksheets/published.json'), JSON.stringify(sheet))
+  const published = await readWorkspace(fs, signal)
+  expect(published.status).toBe('valid')
+  await retainObservedBackups(fs, published, NOW, signal)
+  await writeFile(join(cwd, '.study/collections.json'), JSON.stringify({ ...collections, mistakes: [] }))
+  const cli = new URL('../src/cli.ts', import.meta.url)
+  const run = () => promisify(execFile)(process.execPath, ['--import', 'tsx/esm', cli.pathname, 'validate', '--workspace', cwd], { timeout: 30_000 })
+  expect(JSON.parse((await run()).stdout)).toMatchObject({ ok: true, status: 'valid' })
+  const cold = await readWorkspace(nodeStudyFiles(cwd), new AbortController().signal)
+  expect(cold).toMatchObject({ status: 'valid', workspace: { worksheets: [{ id: 'published', responses: [], items: [expect.objectContaining({ prompt: '28 - 7?', objectiveId: 'm2a-o-sub' })] }] } })
+  sheet.items[0]!.prompt = '38 - 7?'
+  await writeFile(join(cwd, '.study/worksheets/published.json'), JSON.stringify(sheet))
+  await expect(run()).rejects.toMatchObject({ code: 1, killed: false })
+  const backups = await readBackups(fs, signal)
+  const { backupVersions } = await import('../src/files/recovery.ts')
+  expect(await readWorkspace(fs, signal, backupVersions(backups.backups))).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ rule: 'frozen-content' })]) })
 })

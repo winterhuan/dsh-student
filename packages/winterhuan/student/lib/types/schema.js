@@ -263,7 +263,7 @@ export const stateSchema = z.object({
         materialId: id.optional(), unit: text.optional(), reflection: z.string().max(2000).optional(),
         scope: z.object({ grade: z.number().int().min(1).max(6), term: z.enum(['first', 'second']), units: z.array(id).max(20).optional(), objectiveIds: z.array(id).max(60).optional() }).strict().optional(),
     }).strict()).max(5000),
-    attempts: z.array(attempt.extend({ at: time, materialId: id.optional(), rawResponse: text.optional(), questionId: id.optional(), responseId: id.optional() }).strict()).max(20000),
+    attempts: z.array(attempt.extend({ feedback: z.string().max(2000), at: time, materialId: id.optional(), rawResponse: text.optional(), questionId: id.optional(), responseId: id.optional() }).strict()).max(20000),
     mistakes: z.array(mistake.extend({
         confirmedAt: time.optional(), userConfirmation: text.optional(),
         // Derived by replay on read; persisted copies are legacy and ignored.

@@ -1,3 +1,4 @@
+import type { DraftProps } from './drafts.tsx';
 import type { Dashboard, MistakeStatus } from '../dashboard.ts';
 import type { AskTutor } from './bridge.ts';
 import { type ChangeStudy } from './forms.tsx';
@@ -9,7 +10,7 @@ type Goal = {
     title: string;
 };
 /** Parent practice page: the mistake notebook, printed sheets, and due review. */
-export declare function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, epoch, t }: {
+export declare function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, epoch, t, useStore, actions }: DraftProps & {
     study: Study;
     now: number;
     subject: Subject;

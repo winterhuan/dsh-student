@@ -304,8 +304,8 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             topic: string;
             prompt: string;
             response: string;
-            feedback: string;
             answerEvidence: string;
+            feedback: string;
             at: number;
             mistakeId?: string | undefined;
             objectiveId?: string | undefined;
@@ -1161,8 +1161,8 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             topic: string;
             prompt: string;
             response: string;
-            feedback: string;
             answerEvidence: string;
+            feedback: string;
             at: number;
             mistakeId?: string | undefined;
             objectiveId?: string | undefined;

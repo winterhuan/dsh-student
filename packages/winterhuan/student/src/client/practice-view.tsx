@@ -1,3 +1,4 @@
+import type { DraftProps } from './drafts.tsx'
 import { useState, type FormEvent } from 'react'
 import type { Dashboard, MistakeStatus } from '../dashboard.ts'
 import type { AskTutor, StudyPhoto } from './bridge.ts'
@@ -14,7 +15,7 @@ type Mark = 'correct' | 'partial' | 'incorrect'
 const markKeys = { correct: 'markCorrect', partial: 'markPartial', incorrect: 'markWrong' } as const
 
 /** Parent practice page: the mistake notebook, printed sheets, and due review. */
-export function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, epoch, t }: {
+export function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, epoch, t, useStore, actions }: DraftProps & {
   study: Study
   now: number
   subject: Subject
@@ -101,7 +102,7 @@ export function PracticeView({ study, now, subject, goals, mistakeStatus, setMis
       {study.dueSubjects.map(item => <button key={item} disabled={disabled || running} onClick={() => onReview(item)}>{t('review')} · {t(item)}</button>)}
     </section>
     <section><h3>{t('pending')} · {study.pendingCount}</h3>{study.pendingMistakes.length === 0 && <p>{t('empty')}</p>}
-      {study.pendingMistakes.map(item => <MistakeConfirmation key={`${epoch}-${item.id}`} mistake={item} revision={revision} change={change} t={t} />)}
+      {study.pendingMistakes.map(item => <MistakeConfirmation useStore={useStore} actions={actions} key={`${epoch}-${item.id}`} mistake={item} revision={revision} change={change} t={t} />)}
     </section><p>{t('mistakeBounded')}</p>
   </>
 }

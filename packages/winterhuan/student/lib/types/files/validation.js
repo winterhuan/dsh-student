@@ -133,13 +133,24 @@ export function validateStudyFiles(input, prior = [], nativeSources = []) {
             if (!file.context.pendingProfile && (!file.context.profile || !material || !sameScope(settings.profile, material.scope) || !sameScope(settings.profile, file.context.profile) || file.context.material?.id !== material.id))
                 fail(path, 'context.material', 'future-course-confirmation', 'Confirm a course compatible with the current profile before starting a future school block.');
         }
+        if (file.kind === 'block') {
+            for (const [i, hint] of file.hints.entries()) {
+                if (!questions.some(question => question.id === hint.questionId))
+                    fail(path, `hints.${i}.questionId`, 'question-reference', 'Reference a saved question in this block.');
+                if (hint.responseId && !file.responses.some(response => response.id === hint.responseId && response.questionId === hint.questionId))
+                    fail(path, `hints.${i}.responseId`, 'response-reference', 'Associate the hint with a saved response to this question in this block.');
+            }
+            for (const [i, signal] of (file.stuckSignals ?? []).entries())
+                if (!questions.some(question => question.id === signal.questionId))
+                    fail(path, `stuckSignals.${i}.questionId`, 'question-reference', 'Reference a saved question in this block.');
+        }
         for (const [i, question] of questions.entries()) {
             const frozen = prior.some(entry => {
                 if (entry.path !== path || entry.file.kind !== file.kind || (entry.file.kind !== 'block' && entry.file.kind !== 'worksheet'))
                     return false;
                 const oldQuestions = entry.file.kind === 'block' ? entry.file.questions : entry.file.items;
                 const old = oldQuestions.find(item => item.id === question.id);
-                const used = entry.file.responses.some(response => response.questionId === question.id) || (entry.file.kind === 'worksheet' && entry.file.drafts.some(draft => draft.questionId === question.id));
+                const used = entry.file.kind === 'worksheet' || entry.file.responses.some(response => response.questionId === question.id);
                 return used && canonical(old) === canonical(question);
             });
             if (file.kind === 'block' && file.mode === 'diagnose' && question.phase !== undefined)
@@ -173,7 +184,7 @@ export function validateStudyFiles(input, prior = [], nativeSources = []) {
             if (question.mistakeId) {
                 const mistake = workspace.collections?.mistakes.find(item => item.id === question.mistakeId);
                 if (!frozen && (!mistake || mistake.subject !== file.subject || mistake.objectiveId !== question.objectiveId || mistake.confirmedAt === undefined || !mistake.userConfirmation))
-                    fail(path, `questions.${i}.mistakeId`, 'mistake-source', 'Bind new review content to a confirmed mistake of the same subject and goal; preserve validated used content for historical bindings.');
+                    fail(path, `questions.${i}.mistakeId`, 'mistake-source', 'Bind new review content to a confirmed mistake of the same subject and goal; preserve validated published worksheets and used block content for historical bindings.');
                 if (!frozen && question.source.kind !== 'legacy' && file.kind === 'worksheet' && file.origin === 'prepared' && mistake?.prompt === question.prompt)
                     fail(path, `questions.${i}.prompt`, 'review-variation', 'Vary the prompt of a prepared mistake question; retain original prompts in workbook records.');
             }
@@ -221,12 +232,12 @@ export function validateStudyFiles(input, prior = [], nativeSources = []) {
                 continue;
             }
             const oldQuestions = old.file.kind === 'block' ? old.file.questions : old.file.items;
-            if ((old.file.responses.length > 0 || (old.file.kind === 'worksheet' && old.file.drafts.length > 0)) && canonical(old.file.context) !== canonical(file.context))
-                fail(path, 'context', 'historical-context', 'Preserve the historical profile, material and selected scope used by these responses.');
+            if ((old.file.responses.length > 0 || (old.file.kind === 'worksheet' && old.file.items.length > 0)) && canonical(old.file.context) !== canonical(file.context))
+                fail(path, 'context', 'historical-context', 'Preserve the historical profile, material and selected scope of published worksheets and answered blocks.');
             for (const question of oldQuestions) {
-                const used = old.file.responses.some(response => response.questionId === question.id) || (old.file.kind === 'worksheet' && old.file.drafts.some(draft => draft.questionId === question.id));
+                const used = old.file.kind === 'worksheet' || old.file.responses.some(response => response.questionId === question.id);
                 if (used && canonical(question) !== canonical(questions.find(item => item.id === question.id)))
-                    fail(path, 'questions', 'frozen-content', 'Retain used question content and target; publish replacements under a new identity.');
+                    fail(path, 'questions', 'frozen-content', 'Retain published worksheet and used block question content and target; publish replacements under a new identity.');
             }
             for (const response of old.file.responses) {
                 const current = file.responses.find(item => item.id === response.id);

@@ -30,15 +30,19 @@ try {
         const files = read.files.map(file => ({ path: file.path, version: file.version, ...(file.file ? { kind: file.file.kind, termId: file.file.termId, ...('id' in file.file ? { id: file.file.id } : {}) } : {}) }));
         if (lessons.observation)
             files.push({ path: '.study/openmaic-lessons.json', version: lessons.observation.version, kind: 'openmaic-lessons' });
-        const output = { ok, status: read.status, lessons: lessons.status, fileCount: files.length, files: files.slice(0, 100), omittedFiles: Math.max(0, files.length - 100), issues: issues.slice(0, 20).map(issue => ({ path: issue.path.slice(0, 240), field: issue.field.slice(0, 240), rule: issue.rule.slice(0, 80), correction: issue.correction.slice(0, 500) })), omittedIssues: Math.max(0, issues.length - 20), nativeDates: 'Native declarations require independent Host matching; this CLI supplies no consumed-input observations.' };
+        const output = { ok, status: read.status, lessons: lessons.status, fileCount: files.length, files: files.slice(0, 100), omittedFiles: Math.max(0, files.length - 100), issues: issues.slice(0, 20).map(issue => ({ path: issue.path.slice(0, 240), field: issue.field.slice(0, 240), rule: issue.rule.slice(0, 80), correction: issue.correction.slice(0, 500) })), omittedIssues: Math.max(0, issues.length - 20), backupIssues: backups.issues.slice(0, 20).map(issue => ({ path: issue.path.slice(0, 240), field: issue.field.slice(0, 240), rule: issue.rule.slice(0, 80), correction: issue.correction.slice(0, 500) })), omittedBackupIssues: Math.max(0, backups.issues.length - 20), nativeDates: 'Native declarations require independent Host matching; this CLI supplies no consumed-input observations.' };
         while (Buffer.byteLength(JSON.stringify(output)) > 32767) {
             if (output.files.length > 0) {
                 output.files.pop();
                 output.omittedFiles += 1;
             }
-            else {
+            else if (output.issues.length > 0) {
                 output.issues.pop();
                 output.omittedIssues += 1;
+            }
+            else {
+                output.backupIssues.pop();
+                output.omittedBackupIssues += 1;
             }
         }
         console.log(JSON.stringify(output));

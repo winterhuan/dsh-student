@@ -149,7 +149,7 @@ export class StudentRemote extends TypertRemoteService {
   }
 
   private readFacts(read: WorkspaceRead): Omit<StudentManualContext, 'baseline'> {
-    return { readStatus: read.status, ...(read.workspace ? { termId: read.workspace.settings.termId } : {}), versions: read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), issues: read.issues }
+    return { readStatus: read.status, ...(read.workspace ? { termId: read.workspace.settings.termId } : {}), versions: read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), issues: read.issues, ...(read.backupIssues ? { backupIssues: read.backupIssues } : {}) }
   }
 
   private async mainAgent(sessionId: StudentSessionId, signal: AbortSignal): Promise<Agent> {

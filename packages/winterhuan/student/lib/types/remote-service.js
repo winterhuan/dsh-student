@@ -195,7 +195,7 @@ let StudentRemote = (() => {
             return value;
         }
         readFacts(read) {
-            return { readStatus: read.status, ...(read.workspace ? { termId: read.workspace.settings.termId } : {}), versions: read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), issues: read.issues };
+            return { readStatus: read.status, ...(read.workspace ? { termId: read.workspace.settings.termId } : {}), versions: read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), issues: read.issues, ...(read.backupIssues ? { backupIssues: read.backupIssues } : {}) };
         }
         async mainAgent(sessionId, signal) {
             signal.throwIfAborted();

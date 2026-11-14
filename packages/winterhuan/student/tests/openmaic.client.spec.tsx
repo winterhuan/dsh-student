@@ -1,10 +1,12 @@
+import { useDraftFixture } from './draft-fixture.tsx'
+import { createStudentManualActions } from '../src/client/manual-actions.ts'
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StudyDesk as RealStudyDesk } from '../src/client/desk.tsx'
 import { studentClientFixture } from './student-client-fixture.tsx'
 import type { ComponentProps } from 'react'
-import { ParentSettings } from '../src/client/forms.tsx'
+import { ParentSettings as RealParentSettings } from '../src/client/forms.tsx'
 import { LessonsPanel } from '../src/client/lessons-view.tsx'
 import { en } from '../src/client/locales.ts'
 import { dashboard } from '../src/dashboard.ts'
@@ -15,7 +17,7 @@ const t = (key: keyof typeof en) => en[key]
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); window.sessionStorage.clear() })
 
 let backend: ReturnType<typeof studentClientFixture>
-function StudyDesk(props: Omit<ComponentProps<typeof RealStudyDesk>, 'useResource' | 'remote'>) { return <RealStudyDesk {...props} useResource={backend.useResource} remote={backend.remote} /> }
+function StudyDesk(props: Omit<ComponentProps<typeof RealStudyDesk>, 'useResource' | keyof import('../src/client/manual-actions.ts').StudentManualActions | keyof import('../src/client/drafts.tsx').DraftProps>) { return <RealStudyDesk {...props} useResource={backend.useResource} {...useDraftFixture()} {...createStudentManualActions(backend.remote)} /> }
 
 const ready = {
   id: 'om-1', status: 'ready' as const, createdAt: '2026-10-28T06:00:00.000Z', updatedAt: '2026-10-28T06:05:00.000Z',
@@ -98,3 +100,5 @@ describe('interactive lesson desk', () => {
     expect(change).toHaveBeenCalledWith({ action: 'interests', tags: ['购物超市钱', '运动球类', '动物宠物', '故事角色动画', '积木拼搭手工', '天文观测'], parentConfirmation: en.interestConfirm }, 1, expect.any(String))
   })
 })
+
+function ParentSettings(props: Omit<import('react').ComponentProps<typeof RealParentSettings>, keyof import('../src/client/drafts.tsx').DraftProps>) { return <RealParentSettings {...props} {...useDraftFixture()} /> }

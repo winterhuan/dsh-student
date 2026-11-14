@@ -3,7 +3,8 @@ import type { Dashboard, MistakeStatus } from '../dashboard.ts'
 import type { Command } from '../schema.ts'
 import type { CheckInIntensity } from '../learning/mastery.ts'
 import { StudySubmissionError, type AskTutor, type StudyPhoto } from './bridge.ts'
-import type { Context } from '@deepseek-ai/cordis'
+import type { StudentManualActions } from './manual-actions.ts'
+import type { DraftProps } from './drafts.tsx'
 import type { TermId, BlockId, ResponseId } from '../files/schema.ts'
 import type { StudentSessionId, StudentSubmissionInspection, StudentSubmissionRequest } from '../types.ts'
 import type { UseStudentResource } from './workspace.ts'
@@ -36,7 +37,7 @@ function storeSubject(value: Subject) {
 }
 
 /** Workbench actions share the same persisted state as the native tutoring tools. */
-export function StudyDesk({ sessionId, visible, ask, running, t, useResource, remote }: { sessionId: StudentSessionId; useResource: UseStudentResource; remote: Pick<Context['remote']['student'], 'manualContext' | 'saveManual' | 'inspectSubmission'>; visible: boolean; ask: AskTutor; running: boolean; t: Translate }) {
+export function StudyDesk({ sessionId, visible, ask, running, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, inspectSubmission, useStore, actions }: DraftProps & StudentManualActions & { sessionId: StudentSessionId; useResource: UseStudentResource; visible: boolean; ask: AskTutor; running: boolean; t: Translate }) {
   const [subject, setSubject] = useState<Subject>(storedSubject)
   const [mistakeOffset, setMistakeOffset] = useState(0)
   const [mistakeStatus, setMistakeStatus] = useState<MistakeStatus>('all')
@@ -110,58 +111,13 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, re
     if (!data) throw new Error(t('networkError'))
     return data
   }
-  async function manual(command: Command, _revision?: number, original?: string): Promise<Dashboard & { manual?: import('../types.ts').StudentManualReply }> {
+  async function manual(command: Command, _revision?: number, original?: string) {
     if (!data || !workspace.termId || workspace.stale) throw new Error(t('manualInvalid'))
-    const retained = original ? JSON.parse(original) : undefined
-    const beforeText = retained && typeof retained.baseline === 'string' ? retained.baseline : original
-    const editedNames: string[] | undefined = retained && Array.isArray(retained.editedFields) ? retained.editedFields : undefined
-    let intent: ManualSaveRequest['intent']
-    let baseline: Record<string, StudentJsonValue> | undefined
-    if (command.action === 'setup') {
-      const before = beforeText ? JSON.parse(beforeText) : data.study?.profile
-      const fields = (Object.keys(command.profile) as (keyof typeof command.profile)[]).filter(field => field !== 'parentConfirmation' && (editedNames ? editedNames.includes(field) : command.profile[field] !== before?.[field]))
-      intent = { kind: 'settings', command, editedProfileFields: fields }
-      baseline = Object.fromEntries(fields.map(field => [`profile:${field}`, before?.[field] ?? null]))
-    } else if (command.action === 'configure-course') {
-      intent = { kind: 'settings', command }
-      const before = beforeText ? JSON.parse(beforeText) : { course: data.study?.courses.find(item => item.subject === command.course.subject) }
-      baseline = { [`material:${command.material.id}`]: null, [`course:${command.course.subject}`]: before.course ?? null }
-    } else if (command.action === 'school-progress' || command.action === 'interests' || command.action === 'openmaic-settings') {
-      intent = { kind: 'settings', command }
-      if (command.action === 'school-progress' && beforeText) baseline = { [`progress:${command.subject}`]: JSON.parse(beforeText) }
-      if (command.action === 'interests' && beforeText) baseline = { interests: JSON.parse(beforeText!) }
-      if (command.action === 'openmaic-settings') baseline = beforeText ? undefined : { openmaic: null }
-    } else return change(command)
-    const controller = new AbortController()
-    const context = await remote.manualContext(sessionId, intent, controller.signal)
-    if (!context.ok) throw new Error(context.error.message)
-    if (!context.value.termId || context.value.termId !== workspace.termId) throw new Error(t('manualOldTerm'))
-    if (command.action === 'openmaic-settings') {
-      const current = context.value.baseline.openmaic
-      const currentBase = current && typeof current === 'object' && 'baseUrl' in current ? current.baseUrl : ''
-      if (beforeText !== undefined && currentBase !== beforeText) throw new Error(`${t('manualConflict')} · ${t('currentValues')}: ${JSON.stringify(current)}`)
-      baseline = context.value.baseline
-    }
-    if (command.action === 'interests' && context.value.baseline.interests === null) baseline = { interests: null }
-    const result = await remote.saveManual(sessionId, { termId: context.value.termId, expectedVersions: context.value.versions, baseline: baseline ?? context.value.baseline, intent }, controller.signal)
-    if (!result.ok) throw new Error(result.error.message)
-    if (result.value.status === 'conflict') throw new Error(`${t('manualConflict')} · ${t('currentValues')}: ${JSON.stringify(result.value.current)}`)
-    if (result.value.status === 'old-term') throw new Error(t('manualOldTerm'))
-    if (result.value.status !== 'saved' && result.value.status !== 'unchanged') throw new Error(result.value.reason ?? t('manualInvalid'))
-    return Object.assign({}, data, { manual: result.value })
+    return saveSettings(sessionId, command, data, workspace.termId, original, t)
   }
   async function saveWorksheet(intent: ManualSaveRequest['intent'], baseline: Record<string, StudentJsonValue>) {
     if (!workspace.termId || workspace.stale) throw new Error(t('manualInvalid'))
-    const controller = new AbortController()
-    const context = await remote.manualContext(sessionId, intent, controller.signal)
-    if (!context.ok) throw new Error(context.error.message)
-    if (context.value.termId !== workspace.termId) throw new Error(t('manualOldTerm'))
-    const result = await remote.saveManual(sessionId, { termId: context.value.termId, expectedVersions: context.value.versions, baseline, intent }, controller.signal)
-    if (!result.ok) throw new Error(result.error.message)
-    if (result.value.status === 'conflict') throw new Error(`${t('manualConflict')} · ${t('currentValues')}: ${JSON.stringify(result.value.current)}`)
-    if (result.value.status === 'old-term') throw new Error(t('manualOldTerm'))
-    if (result.value.status !== 'saved' && result.value.status !== 'unchanged') throw new Error(result.value.reason ?? t('manualInvalid'))
-    return result.value
+    return saveWorksheetRecord(sessionId, intent, baseline, workspace.termId, t)
   }
   async function act(command: Command, _withTutor = false, prompt = continuePrompt) {
     try { await tutor(prompt, undefined, command) } catch { /* The request or tutor notice retains the failed action and its data. */ }
@@ -253,6 +209,7 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, re
   }
   const nativeT: Translate = key => ['saved', 'gradesSaved', 'confirmPaperDone', 'teachQueued', 'workbookSaved'].includes(key) ? t('intentAdmitted') : t(key)
   const parentSettings = view === 'parent' && parentTab === 'parent'
+  const draft = { useStore, actions }
   const draftScope = `student:draft:${sessionId}:${workspace.termId ?? 'setup'}`
   const context = workspace.context
   const pendingFacts = context && typeof context === 'object' && 'pendingFacts' in context && Array.isArray(context.pendingFacts) ? context.pendingFacts : []
@@ -283,18 +240,18 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, re
     {submissions.length > 0 && <details className="student-fold"><summary>{t('submissionStatus')}</summary>{submissions.map(item => <div key={item.requestId}>
       <p>{t(item.admission === 'accepted' ? 'messageAdmitted' : 'messageUnknown')}</p>
       {item.response && <p>{t(item.inspection?.answer === 'saved' ? 'answerSaved' : 'answerPending')} · {t(item.inspection?.assessment === 'valid' ? 'assessmentSaved' : 'assessmentPending')}</p>}
-      <button type="button" disabled={sending} onClick={() => { const controller = new AbortController(); void remote.inspectSubmission(sessionId, { requestId: item.requestId, ...(item.response ? { response: item.response } : {}) }, controller.signal).then(reply => { if (!reply.ok) throw new Error(reply.error.message); const result = reply.value; setSubmissions(previous => previous.map(current => current.requestId === item.requestId ? { ...current, admission: result.admission, inspection: result } : current)) }).catch(reason => setSendError(reason instanceof Error ? reason.message : t('networkError'))) }}>{t('inspectSubmission')}</button>
+      <button type="button" disabled={sending} onClick={() => { void inspectSubmission(sessionId, { requestId: item.requestId, ...(item.response ? { response: item.response } : {}) }).then(result => { setSubmissions(previous => previous.map(current => current.requestId === item.requestId ? { ...current, admission: result.admission, inspection: result } : current)) }).catch(reason => setSendError(reason instanceof Error ? reason.message : t('networkError'))) }}>{t('inspectSubmission')}</button>
     </div>)}</details>}
     {!data ? !workspace.error && <progress aria-label={t('busy')} /> : !study && view !== 'parent' ? <section><p>{t('setupFirst')}</p><button disabled={sending} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('setupConversation')}</button></section> : subjectLoading && !parentSettings ? <progress aria-label={t('busy')} /> : <>
-      {study && view === 'student' && <TodayView draftScope={draftScope} study={study} subject={subject} activity={activity} setActivity={setActivity} goal={goals.find(item => item.id === selectedObjectiveId)} clearGoal={() => setSelectedObjectiveId('')} curriculum={curriculum} selectedObjectiveId={selectedObjectiveId} chooseGoal={chooseGoal} intensityLabel={`${t(intensityKeys[chosenIntensity(subject)])} · ${planOf(subject)?.samples[chosenIntensity(subject)].length ?? 0}`} openParent={() => { setView('parent'); setParentTab('parent') }} openCheckins={() => { setView('parent'); setParentTab('map') }} scope={activeScope} setScope={next => setScopeChoice(previous => ({ ...previous, [subject]: next }))} scopeUnits={study.scopedUnits ?? []} start={start} startRecommended={startRecommended} startDiagnosis={startDiagnosis} chosenIntensity={chosenIntensity(subject)} disabled={disabled} running={running} act={act} tutor={(text, currentBlock) => tutor(text, undefined, undefined, currentBlock)} t={t} prompts={{ daily: dailySheetPrompt(subject), dictation: dictationPrompt(subject) }} lessons={lessonsForSubject(data.interactiveLessons?.lessons ?? [], subject)} onInterestPractice={startInterest} onOpenLesson={() => { const request = lessonRequest(); void tutor(openmaicGeneratePrompt(request.subjectLabel, request.objectiveId, request.tags, request.focus, request.unitName)).catch(() => {}) }} onClearDue={startDue} onOpenClassroom={openClassroom} />}
+      {study && view === 'student' && <TodayView {...draft} draftScope={draftScope} study={study} subject={subject} activity={activity} setActivity={setActivity} goal={goals.find(item => item.id === selectedObjectiveId)} clearGoal={() => setSelectedObjectiveId('')} curriculum={curriculum} selectedObjectiveId={selectedObjectiveId} chooseGoal={chooseGoal} intensityLabel={`${t(intensityKeys[chosenIntensity(subject)])} · ${planOf(subject)?.samples[chosenIntensity(subject)].length ?? 0}`} openParent={() => { setView('parent'); setParentTab('parent') }} openCheckins={() => { setView('parent'); setParentTab('map') }} scope={activeScope} setScope={next => setScopeChoice(previous => ({ ...previous, [subject]: next }))} scopeUnits={study.scopedUnits ?? []} start={start} startRecommended={startRecommended} startDiagnosis={startDiagnosis} chosenIntensity={chosenIntensity(subject)} disabled={disabled} running={running} act={act} tutor={(text, currentBlock) => tutor(text, undefined, undefined, currentBlock)} t={t} prompts={{ daily: dailySheetPrompt(subject), dictation: dictationPrompt(subject) }} lessons={lessonsForSubject(data.interactiveLessons?.lessons ?? [], subject)} onInterestPractice={startInterest} onOpenLesson={() => { const request = lessonRequest(); void tutor(openmaicGeneratePrompt(request.subjectLabel, request.objectiveId, request.tags, request.focus, request.unitName)).catch(() => {}) }} onClearDue={startDue} onOpenClassroom={openClassroom} />}
       {study && view === 'student' && data.interactiveLessons && <LessonsPanel lessons={lessonsForSubject(data.interactiveLessons.lessons, subject)} {...(data.interactiveLessons.error !== undefined ? { error: data.interactiveLessons.error } : {})} disabled={disabled} running={running} t={t} onRetry={runId => { void tutor(openmaicRetryPrompt(runId)).catch(() => {}) }} onReview={classroomId => { void tutor(openmaicReviewPrompt(classroomId)).catch(() => {}) }} />}
       {study && view === 'parent' && parentTab === 'map' && <nav className="student-segments" aria-label={t('parentProgress')}><button type="button" aria-pressed={knowledgeView === 'map'} onClick={() => setKnowledgeView('map')}>{t('map')}</button><button type="button" aria-pressed={knowledgeView === 'ideas'} onClick={() => setKnowledgeView('ideas')}>{t('ideas')}</button></nav>}
       {study && showMap && <MapView study={study} curriculum={curriculum} subject={subject} selectedConceptId={selectedConceptId} setSelectedConceptId={setSelectedConceptId} selectedObjectiveId={selectedObjectiveId} clearGoal={() => setSelectedObjectiveId('')} chooseGoal={chooseGoal} active={!!active} scopeGrade={scopeGrade} scopeTerm={scopeTerm} setMapGrade={setMapGrade} setMapTerm={setMapTerm} clearBrowse={() => { setMapGrade(undefined); setMapTerm(undefined) }} intensities={intensities} setIntensity={(target, level) => setIntensities(previous => ({ ...previous, [target]: level }))} scopeOf={scopeOf} setScope={(target, next) => setScopeChoice(previous => ({ ...previous, [target]: next }))} selectSubject={selectSubject} startDiagnosis={startDiagnosis} disabled={disabled} running={running} organize={() => { void tutor(organizePrompt(subject)).catch(() => {}) }} change={command => change(command).then(() => undefined)} t={t} />}
       {study && view === 'parent' && parentTab === 'map' && knowledgeView === 'ideas' && <IdeasView study={study} curriculum={curriculum} t={t} onOpenConcept={id => { setSelectedConceptId(id); setKnowledgeView('map') }} />}
-      {study && view === 'parent' && parentTab === 'mistakes' && <PracticeView study={study} now={now} subject={subject} goals={goals} mistakeStatus={mistakeStatus} setMistakeStatus={setMistakeStatus} setMistakeOffset={setMistakeOffset} revision={data.revision} disabled={disabled} running={running} change={change} ask={tutor} onReview={item => { selectSubject(item); setActivity({ subject: item, mode: 'review' }); setSelectedObjectiveId(''); setView('student') }} epoch={epoch} t={nativeT} />}
-      {study && view === 'parent' && parentTab === 'mistakes' && workspace.termId && <WorksheetCorrections key={draftScope} sessionId={sessionId} termId={workspace.termId} draftScope={draftScope} useResource={useResource} save={saveWorksheet} disabled={disabled} t={t} />}
+      {study && view === 'parent' && parentTab === 'mistakes' && <PracticeView {...draft} study={study} now={now} subject={subject} goals={goals} mistakeStatus={mistakeStatus} setMistakeStatus={setMistakeStatus} setMistakeOffset={setMistakeOffset} revision={data.revision} disabled={disabled} running={running} change={change} ask={tutor} onReview={item => { selectSubject(item); setActivity({ subject: item, mode: 'review' }); setSelectedObjectiveId(''); setView('student') }} epoch={epoch} t={nativeT} />}
+      {study && view === 'parent' && parentTab === 'mistakes' && workspace.termId && <WorksheetCorrections {...draft} key={draftScope} sessionId={sessionId} termId={workspace.termId} draftScope={draftScope} useResource={useResource} save={saveWorksheet} disabled={disabled} t={t} />}
       {parentSettings && <section><button type="button" disabled={disabled} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('profileConversation')}</button><button type="button" disabled={disabled} onClick={() => { void tutor(t('courseConversation')).catch(() => {}) }}>{t('courseConversation')}</button><button type="button" disabled={disabled} onClick={() => { void tutor(t('archiveConversation')).catch(() => {}) }}>{t('archiveConversation')}</button></section>}
-      {parentSettings && study && <details className="student-fold"><summary>{t('manualForms')}</summary><p>{t('manualSummary')}</p><ParentSettings key={draftScope + subject} draftScope={draftScope} observation={workspace.value?.versions.find(file => file.path === '.study/settings.json')?.version} data={data} change={manual} t={t} curriculum={curriculum} subject={subject} onSubject={item => { selectSubject(item); setActivity({ subject: item, mode: 'foundation' }) }} /></details>}
+      {parentSettings && study && <details className="student-fold"><summary>{t('manualForms')}</summary><p>{t('manualSummary')}</p><ParentSettings {...draft} key={draftScope + subject} draftScope={draftScope} observation={workspace.value?.versions.find(file => file.path === '.study/settings.json')?.version} data={data} change={manual} t={t} curriculum={curriculum} subject={subject} onSubject={item => { selectSubject(item); setActivity({ subject: item, mode: 'foundation' }) }} /></details>}
       {study && parentSettings && <Growth study={study} curriculum={curriculum} subject={subject} goals={goals} t={t} />}
     </>}
   </main>
@@ -315,7 +272,7 @@ function Growth({ study, curriculum, subject, goals, t }: { study: Study; curric
     </section>}
     <section><h3>{t('evidence')}</h3>{study.progress.length === 0 && <p>{t('empty')}</p>}
       {study.progress.map(item => <p key={JSON.stringify([item.subject, item.topic, item.materialId, item.objectiveId])}>{goals.find(goal => goal.id === item.objectiveId)?.title ?? item.topic} · {t(item.level === 'independent-on-three-days' ? 'independent' : 'practising')}</p>)}
-      {study.recentAttempts.map(item => <details key={item.id}><summary>{item.topic} · {t(item.result)}</summary><p>{item.prompt}</p><p>{item.response}</p><p>{item.feedback}</p><p>{item.answerEvidence}</p></details>)}
+      {study.recentAttempts.map(item => <details key={item.id}><summary>{item.topic} · {t(item.result)}</summary><p>{item.prompt}</p><p>{item.response}</p><p>{item.result === 'unassessed' ? t('assessmentPending') : item.feedback}</p><p>{item.answerEvidence}</p></details>)}
     </section><p>{t('bounded')}</p>
   </>
 }

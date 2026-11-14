@@ -57,6 +57,12 @@ const _winterhuan_dsh_student_student_inspectSubmission_result$schema = () => (_
   'rule': z.string(),
   'correction': z.string(),
 })),
+  'backupIssues': z.union([z.undefined(), z.array(z.object({
+  'path': z.string(),
+  'field': z.string(),
+  'rule': z.string(),
+  'correction': z.string(),
+}))]).optional(),
 }))
 let _winterhuan_dsh_student_student_manualContext_parameter_0$schema$value
 const _winterhuan_dsh_student_student_manualContext_parameter_0$schema = () => (_winterhuan_dsh_student_student_manualContext_parameter_0$schema$value ??= z.string())
@@ -181,6 +187,12 @@ const _winterhuan_dsh_student_student_manualContext_result$schema = () => (_wint
   'rule': z.string(),
   'correction': z.string(),
 })),
+  'backupIssues': z.union([z.undefined(), z.array(z.object({
+  'path': z.string(),
+  'field': z.string(),
+  'rule': z.string(),
+  'correction': z.string(),
+}))]).optional(),
 }))
 let _winterhuan_dsh_student_student_query_parameter_0$schema$value
 const _winterhuan_dsh_student_student_query_parameter_0$schema = () => (_winterhuan_dsh_student_student_query_parameter_0$schema$value ??= z.string())
@@ -404,6 +416,12 @@ const _winterhuan_dsh_student_student_saveManual_result$schema = () => (_winterh
   'rule': z.string(),
   'correction': z.string(),
 })),
+  'backupIssues': z.union([z.undefined(), z.array(z.object({
+  'path': z.string(),
+  'field': z.string(),
+  'rule': z.string(),
+  'correction': z.string(),
+}))]).optional(),
   'reason': z.union([z.undefined(), z.string()]).optional(),
 }))
 let _winterhuan_dsh_student_student_watch_parameter_0$schema$value
@@ -843,7 +861,7 @@ const $remote = createTypertRemoteInfo({
         typeSymbol: '@winterhuan/dsh-student/types#StudentSubmissionInspection',
         create: _winterhuan_dsh_student_student_inspectSubmission_result$schema,
         description: 'admission, saved-answer and valid-assessment facts separately; omitted admission remains unknown.',
-        jsonSchema: {"type":"object","properties":{"requestId":{"type":"string"},"admission":{"type":"string","enum":["unknown","accepted"]},"nativeStates":{"type":"array","items":{"type":"string","enum":["pending","consumed","claimed","removed"]}},"nativeSourceStatus":{"type":"string","enum":["available","unavailable"]},"cut":{"type":"object","properties":{"sessionId":{"type":"string"},"cursor":{"type":"number"},"source":{"type":"string","enum":["live","prepared"]},"inheritedEventCount":{"type":"number"},"revision":{"type":"string"}},"required":["sessionId","cursor","source","inheritedEventCount"],"additionalProperties":true},"answer":{"type":"string","enum":["unavailable","missing","saved","not-requested"]},"assessment":{"type":"string","enum":["pending","unavailable","valid","not-requested"]},"readStatus":{"type":"string","enum":["valid","missing","invalid","future-format","changing","legacy","archived"]},"versions":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"targetKey":{"type":"string"},"version":{"type":"string"}},"required":["path","targetKey","version"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}}},"required":["requestId","admission","nativeStates","nativeSourceStatus","answer","assessment","readStatus","versions","issues"],"additionalProperties":true},
+        jsonSchema: {"type":"object","properties":{"requestId":{"type":"string"},"admission":{"type":"string","enum":["unknown","accepted"]},"nativeStates":{"type":"array","items":{"type":"string","enum":["pending","consumed","claimed","removed"]}},"nativeSourceStatus":{"type":"string","enum":["available","unavailable"]},"cut":{"type":"object","properties":{"sessionId":{"type":"string"},"cursor":{"type":"number"},"source":{"type":"string","enum":["live","prepared"]},"inheritedEventCount":{"type":"number"},"revision":{"type":"string"}},"required":["sessionId","cursor","source","inheritedEventCount"],"additionalProperties":true},"answer":{"type":"string","enum":["unavailable","missing","saved","not-requested"]},"assessment":{"type":"string","enum":["pending","unavailable","valid","not-requested"]},"readStatus":{"type":"string","enum":["valid","missing","invalid","future-format","changing","legacy","archived"]},"versions":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"targetKey":{"type":"string"},"version":{"type":"string"}},"required":["path","targetKey","version"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}},"backupIssues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}}},"required":["requestId","admission","nativeStates","nativeSourceStatus","answer","assessment","readStatus","versions","issues"],"additionalProperties":true},
       },
       sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":127,"column":9},
     },
@@ -1206,11 +1224,11 @@ export const TYPERT = {
           },
           {
             "name": "StudentManualContext",
-            "declaration": "export interface StudentManualContext {\n    readStatus: WorkspaceRead['status'];\n    termId?: TermId;\n    versions: WorkspaceQueryResult['versions'];\n    baseline: Record<string, StudentJsonValue>;\n    issues: FileIssue[];\n}"
+            "declaration": "export interface StudentManualContext {\n    readStatus: WorkspaceRead['status'];\n    termId?: TermId;\n    versions: WorkspaceQueryResult['versions'];\n    baseline: Record<string, StudentJsonValue>;\n    issues: FileIssue[];\n    backupIssues?: FileIssue[];\n}"
           },
           {
             "name": "StudentManualReply",
-            "declaration": "export interface StudentManualReply {\n    status: ManualSaveResult['status'];\n    current: Record<string, StudentJsonValue>;\n    termId?: TermId;\n    versions: WorkspaceQueryResult['versions'];\n    readStatus: WorkspaceRead['status'];\n    issues: FileIssue[];\n    reason?: string;\n}"
+            "declaration": "export interface StudentManualReply {\n    status: ManualSaveResult['status'];\n    current: Record<string, StudentJsonValue>;\n    termId?: TermId;\n    versions: WorkspaceQueryResult['versions'];\n    readStatus: WorkspaceRead['status'];\n    issues: FileIssue[];\n    backupIssues?: FileIssue[];\n    reason?: string;\n}"
           },
           {
             "name": "StudentManualSaveRequest",
@@ -1230,7 +1248,7 @@ export const TYPERT = {
           },
           {
             "name": "StudentSubmissionInspection",
-            "declaration": "export interface StudentSubmissionInspection {\n    requestId: string;\n    admission: 'accepted' | 'unknown';\n    nativeStates: NativeAdmission['status'][];\n    nativeSourceStatus: NativeSourceView['status'];\n    cut?: NativeSourceCut;\n    answer: 'not-requested' | 'saved' | 'missing' | 'unavailable';\n    assessment: 'not-requested' | 'valid' | 'pending' | 'unavailable';\n    readStatus: WorkspaceRead['status'];\n    versions: WorkspaceQueryResult['versions'];\n    issues: FileIssue[];\n}"
+            "declaration": "export interface StudentSubmissionInspection {\n    requestId: string;\n    admission: 'accepted' | 'unknown';\n    nativeStates: NativeAdmission['status'][];\n    nativeSourceStatus: NativeSourceView['status'];\n    cut?: NativeSourceCut;\n    answer: 'not-requested' | 'saved' | 'missing' | 'unavailable';\n    assessment: 'not-requested' | 'valid' | 'pending' | 'unavailable';\n    readStatus: WorkspaceRead['status'];\n    versions: WorkspaceQueryResult['versions'];\n    issues: FileIssue[];\n    backupIssues?: FileIssue[];\n}"
           },
           {
             "name": "StudentSubmissionRequest",
@@ -1282,7 +1300,7 @@ export const TYPERT = {
           },
           {
             "name": "WorkspaceRead",
-            "declaration": "export interface WorkspaceRead {\n    cache?: StudyReadCache;\n    status: 'valid' | 'missing' | 'invalid' | 'future-format' | 'changing' | 'legacy' | 'archived';\n    files: ObservedFile[];\n    membership: { path: string; names: string[]; }[];\n    issues: FileIssue[];\n    workspace?: ValidatedWorkspace;\n    legacy?: unknown;\n}"
+            "declaration": "export interface WorkspaceRead {\n    cache?: StudyReadCache;\n    status: 'valid' | 'missing' | 'invalid' | 'future-format' | 'changing' | 'legacy' | 'archived';\n    files: ObservedFile[];\n    membership: { path: string; names: string[]; }[];\n    issues: FileIssue[];\n    backupIssues?: FileIssue[];\n    workspace?: ValidatedWorkspace;\n    legacy?: unknown;\n}"
           }
         ]
       },

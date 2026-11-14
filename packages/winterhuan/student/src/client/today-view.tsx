@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Command } from '../schema.ts'
 import type { CheckInIntensity } from '../learning/mastery.ts'
 import type { Translate } from './locales.ts'
-import { useDraftStorage } from './drafts.tsx'
+import { formDraftKey, type DraftProps } from './drafts.tsx'
 import { FigureView } from './figure-view.tsx'
 import { classroomUrl } from './lessons-view.tsx'
 import { MasteryDots } from './mastery-dots.tsx'
@@ -16,7 +16,7 @@ type Goal = { id: string; title: string }
 type Act = (command: Command, withTutor?: boolean, prompt?: string) => Promise<void>
 
 /** The learner's page: one recommended next step, the current question, and a folded set of other ways to practise. */
-export function TodayView({ study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom, draftScope }: {
+export function TodayView({ study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom, draftScope, useStore, actions }: DraftProps & {
   draftScope?: string
   study: Study
   subject: Subject
@@ -81,7 +81,7 @@ export function TodayView({ study, subject, activity, setActivity, goal, clearGo
       {active && <p>{t(active.subject)} · {t(active.mode)}</p>}
     </section>
     {ownSession && <>
-      <section className="student-focus"><p className="student-muted">{t('chatHelp')}</p>{task ? <Task draftScope={draftScope} key={`${task.sessionId}:${task.id}`} study={study} goalTitle={goalTitle(study, task.objectiveId)} goalText={objectiveMeta?.goal} days={objectiveMeta?.independentDays} disabled={disabled || running} t={t} act={act} tutor={tutor} /> : <p>{t('waiting')}</p>}
+      <section className="student-focus"><p className="student-muted">{t('chatHelp')}</p>{task ? <Task useStore={useStore} actions={actions} draftScope={draftScope} key={`${task.sessionId}:${task.id}`} study={study} goalTitle={goalTitle(study, task.objectiveId)} goalText={objectiveMeta?.goal} days={objectiveMeta?.independentDays} disabled={disabled || running} t={t} act={act} tutor={tutor} /> : <p>{t('waiting')}</p>}
         {available && (running ? <p role="status">{t('tutorWorking')}</p>
           : (!task || study.feedback || task.response !== undefined || task.hintLevel > 0) && <button disabled={disabled} onClick={() => { void tutor(study.feedback ? '明确请求下一题。先保留上一题的原回答和有效反馈，再准备下一题。' : '检查当前题的未完成答案或提示，不换题，不自动重发原回答。', true).catch(() => {}) }}>{t(!task ? 'prepareTask' : study.feedback ? 'nextTask' : task.response !== undefined ? 'retryFeedback' : 'retryHint')}</button>)}
       </section>
@@ -241,14 +241,13 @@ function SimonSteps({ phase, t }: { phase: typeof phaseOrder[number]; t: Transla
   </ol>
 }
 
-function Task({ study, goalTitle: title, goalText, days, disabled, t, act, tutor, draftScope }: { draftScope?: string | undefined; study: Study; goalTitle: string | undefined; goalText: string | undefined; days: number | undefined; disabled: boolean; t: Translate; act: Act; tutor: (text: string, currentBlock?: boolean) => Promise<void> }) {
+function Task({ study, goalTitle: title, goalText, days, disabled, t, act, tutor, draftScope, useStore, actions }: DraftProps & { draftScope?: string | undefined; study: Study; goalTitle: string | undefined; goalText: string | undefined; days: number | undefined; disabled: boolean; t: Translate; act: Act; tutor: (text: string, currentBlock?: boolean) => Promise<void> }) {
   const task = study.task
   if (!task) return null
   const hintLabel = task.hintLevel > 0 ? t('hintMore') : t('hint')
   const [checked, setChecked] = useState<Record<number, boolean>>({})
-  const draft = useDraftStorage(`answer:${task.sessionId}:${task.id}`, draftScope)
-  const [answer, setAnswer] = useState(() => draft.read() ?? '')
-  useEffect(() => { if (task.response !== undefined) draft.clear() }, [task.response])
+  const key = formDraftKey(`answer:${task.sessionId}:${task.id}`, draftScope)
+  const answer = useStore(state => state.drafts[key]) ?? ''
   return <><h3>{task.topic}</h3>{title && <p className="student-muted">{t('learningGoal')}: {title}</p>}
     {goalText && <p>{t('objectiveGoal')}: {goalText}</p>}
     {task.phase && <SimonSteps phase={task.phase} t={t} />}
@@ -260,7 +259,7 @@ function Task({ study, goalTitle: title, goalText, days, disabled, t, act, tutor
       {task.steps.map((step, index) => <li key={`${index}-${step}`}><label className="student-check"><input type="checkbox" checked={!!checked[index]} onChange={event => setChecked(previous => ({ ...previous, [index]: event.target.checked }))} />{step}</label></li>)}
     </ul>}
     {task.response !== undefined && <p>{t('answer')}: {task.response}</p>}
-    {study.feedback ? <><p className="student-result">{t(study.feedback.result)}</p><p>{study.feedback.feedback}</p>
+    {study.feedback ? <><p className="student-result">{t(study.feedback.result)}</p><p>{study.feedback.result === 'unassessed' ? t('assessmentPending') : study.feedback.feedback}</p>
       {study.feedback.result === 'correct' && <button type="button" disabled={disabled} onClick={() => { void tutor(feynmanPrompt(title), true).catch(() => {}) }}>{t('feynmanTeach')}</button>}
     </> : task.response !== undefined ? <p role="status">{t('submitted')}</p> : task.choices ? <fieldset disabled={disabled}>
       <p>{t('chooseAnswer')}</p>
@@ -268,7 +267,7 @@ function Task({ study, goalTitle: title, goalText, days, disabled, t, act, tutor
       <button type="button" onClick={() => { void act({ action: 'hint', taskId: task.id }, true, hintPromptFor(task)) }}>{hintLabel}</button>
       <button type="button" onClick={() => { void act({ action: 'stuck', taskId: task.id }, true, stuckPrompt) }}>{t('wont')}</button>
     </fieldset> : <form onSubmit={event => { event.preventDefault(); void act({ action: 'answer', taskId: task.id, response: String(new FormData(event.currentTarget).get('answer') ?? '') }, true) }}>
-      <fieldset disabled={disabled}><label>{t('answer')}<input name="answer" aria-label={t('answer')} value={answer} onChange={event => { setAnswer(event.target.value); draft.write(event.target.value) }} required maxLength={2000} /></label><button type="submit">{t('submit')}</button>
+      <fieldset disabled={disabled}><label>{t('answer')}<input name="answer" aria-label={t('answer')} value={answer} onChange={event => { actions.setDraft(key, event.target.value) }} required maxLength={2000} /></label><button type="submit">{t('submit')}</button>
         <button type="button" onClick={() => { void act({ action: 'hint', taskId: task.id }, true, hintPromptFor(task)) }}>{hintLabel}</button>
         <button type="button" onClick={() => { void act({ action: 'stuck', taskId: task.id }, true, stuckPrompt) }}>{t('wont')}</button>
       </fieldset>

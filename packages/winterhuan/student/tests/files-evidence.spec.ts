@@ -112,21 +112,22 @@ it('varies a prepared mistake question but preserves workbook originals and used
   sheet.origin = 'workbook'
   await save('.study/worksheets/review-1.json', sheet)
   expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'valid' })
+  sheet.id = worksheetSchema.shape.id.parse('prepared-1')
   sheet.origin = 'prepared'; sheet.items[0]!.prompt = '28 - 7?'
-  await save('.study/worksheets/review-1.json', sheet)
+  await save('.study/worksheets/prepared-1.json', sheet)
   expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'valid' })
   sheet.drafts = [{ id: 'draft-1', questionId: 'q1', response: '21', result: 'correct', assistance: 'unknown', confidence: 'high', uncertainties: '', imagePaths: [], receivedAt: NOW }]
-  await save('.study/worksheets/review-1.json', sheet)
+  await save('.study/worksheets/prepared-1.json', sheet)
   expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'valid' })
   collection.mistakes[0]!.prompt = '28 - 7?'; collection.mistakes[0]!.objectiveId = 'm2a-o-add'
   await save('.study/collections.json', collection)
   const reclassified = await readWorkspace(files, new AbortController().signal)
-  expect(reclassified).toMatchObject({ status: 'valid', workspace: { worksheets: [{ items: [{ objectiveId: 'm2a-o-sub', prompt: '28 - 7?' }] }] } })
+  expect(reclassified).toMatchObject({ status: 'valid', workspace: { worksheets: expect.arrayContaining([expect.objectContaining({ id: 'prepared-1', items: [expect.objectContaining({ objectiveId: 'm2a-o-sub', prompt: '28 - 7?' })] })]) } })
   collection.mistakes = []
   await save('.study/collections.json', collection)
-  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'valid', workspace: { worksheets: [{ drafts: [{ response: '21' }], items: [{ objectiveId: 'm2a-o-sub' }] }] } })
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'valid', workspace: { worksheets: expect.arrayContaining([expect.objectContaining({ id: 'prepared-1', drafts: [expect.objectContaining({ response: '21' })], items: [expect.objectContaining({ objectiveId: 'm2a-o-sub' })] })]) } })
   sheet.items[0]!.prompt = '38 - 7?'
-  await save('.study/worksheets/review-1.json', sheet)
+  await save('.study/worksheets/prepared-1.json', sheet)
   expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ rule: 'frozen-content' })]) })
 })
 
@@ -369,4 +370,33 @@ it('cancels a future review opportunity when independent practice advances it be
   const read = await readWorkspace(files, new AbortController().signal)
   expect(queryWorkspace(read, { kind: 'summary' }, SUMMARY_NOW)).toMatchObject({ data: { dueCompletion: { done: 0, total: 0 } } })
   expect(queryWorkspace(read, { kind: 'mistakes' }, SUMMARY_NOW)).toMatchObject({ data: { items: [expect.objectContaining({ id: 'm1', stage: 3, dueAt: Date.parse('2026-11-26T00:00:00+08:00') })] } })
+})
+
+it.each(['missing', 'cross-question'] as const)('rejects a hint response reference that is %s before counting independent evidence', async kind => {
+  const { files, block, save } = await workspace()
+  block.responses[0]!.assistance = 'independent'
+  block.assessments[0]!.assistance = 'independent'
+  block.responses[0]!.answerDate = { kind: 'day', day: '2026-10-05', parentConfirmation: 'Actual date confirmed' }
+  block.questions.push({ ...block.questions[0]!, id: 'q2' })
+  block.responses.push({ ...block.responses[0]!, id: 'r2', questionId: 'q2', assistance: 'hint' })
+  block.hints = [{ questionId: 'q1', responseId: kind === 'missing' ? 'absent' : 'r2', level: 2, at: NOW }]
+  await save('.study/blocks/block-1.json', block)
+  const read = await readWorkspace(files, new AbortController().signal)
+  expect(read).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ field: 'hints.0.responseId', rule: 'response-reference' })]) })
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW).data).toBeUndefined()
+})
+
+it.each(['hint', 'stuck'] as const)('rejects %s signals pointing outside their block questions', async kind => {
+  const { files, block, save } = await workspace()
+  if (kind === 'hint') block.hints = [{ questionId: 'absent', level: 1, at: NOW }]
+  else block.stuckSignals = [{ questionId: 'absent', at: NOW }]
+  await save('.study/blocks/block-1.json', block)
+  expect(await readWorkspace(files, new AbortController().signal)).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ field: `${kind === 'hint' ? 'hints' : 'stuckSignals'}.0.questionId`, rule: 'question-reference' })]) })
+})
+
+it('projects pending assessment as unassessed without application-owned feedback text', async () => {
+  const { files, block, save } = await workspace()
+  block.assessments = []
+  await save('.study/blocks/block-1.json', block)
+  expect(queryWorkspaceDashboard(await readWorkspace(files, new AbortController().signal), NOW).data).toMatchObject({ study: { feedback: { result: 'unassessed', feedback: '' } } })
 })

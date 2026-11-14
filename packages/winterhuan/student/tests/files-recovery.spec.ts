@@ -20,6 +20,7 @@ it('rereads official files edited while the preserved migration source is being 
   await writeFile(join(cwd, '.study/state.json'), original)
   await writeFile(join(cwd, '.study/v1-original.json'), original)
   await writeFile(join(cwd, '.study/settings.json'), JSON.stringify(settings))
+  await writeFile(join(cwd, '.study/collections.json'), JSON.stringify({ format: 2, kind: 'collections', termId: 'term-1', mistakes: [], rewards: [] }))
   const fs = nodeStudyFiles(cwd)
   let enter!: () => void
   let release!: () => void
@@ -73,6 +74,36 @@ it('requires an original-byte verified backup, retains pending legacy facts and 
   expect(dated).toMatchObject({ status: 'valid', workspace: { worksheets: [{ context: { pendingProfile: expect.any(String) }, items: [{ objectiveId: 'm2a-o-sub', source: { kind: 'legacy' } }] }] } })
   expect(queryWorkspace(dated, { kind: 'summary' }, NOW)).toMatchObject({ data: { practisedGoals: 0, masteredGoals: 0 } })
   expect(queryWorkspace(dated, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { pendingFacts: expect.arrayContaining([expect.objectContaining({ fields: expect.arrayContaining(['answerBasis']) })]) } })
+})
+
+it('withholds current data until every stable migration output exists and permits later settings corrections', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-migrate-partial-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study'))
+  const original = await readFile(new URL('./fixtures/legacy-recovery.json', import.meta.url))
+  await writeFile(join(cwd, '.study/state.json'), original)
+  await writeFile(join(cwd, '.study/v1-original.json'), original)
+  const fs = nodeStudyFiles(cwd)
+  const signal = new AbortController().signal
+  const source = await readWorkspace(fs, signal)
+  const backup = { ...(await fs.stat('.study/v1-original.json', signal))!, path: '.study/v1-original.json', bytes: original }
+  const plan = describeMigration(source, backup)
+  const settings = plan.outputs.find(output => output.file.kind === 'term-settings')!
+  await writeFile(join(cwd, settings.path), JSON.stringify(settings.file))
+  const partial = await readWorkspace(fs, signal)
+  expect(partial.status).toBe('invalid')
+  expect(partial.issues).toContainEqual(expect.objectContaining({ path: '.study/settings.json', rule: 'migration-incomplete' }))
+  expect(queryWorkspace(partial, { kind: 'learning-context' }, NOW).data).toBeUndefined()
+  for (const output of plan.outputs.filter(output => output.file.kind !== 'term-settings')) {
+    await mkdir(join(cwd, output.path, '..'), { recursive: true })
+    await writeFile(join(cwd, output.path), JSON.stringify(output.file))
+  }
+  expect((await readWorkspace(fs, signal)).status).toBe('valid')
+  if (settings.file.kind !== 'term-settings') throw new Error('Expected migration settings')
+  await writeFile(join(cwd, settings.path), JSON.stringify({ ...settings.file, profile: { ...settings.file.profile, nickname: 'Parent-corrected nickname' } }))
+  expect(await readWorkspace(fs, signal)).toMatchObject({ status: 'valid', workspace: { settings: { profile: { nickname: 'Parent-corrected nickname' } } } })
+  await rm(join(cwd, '.study/state.json'))
+  expect((await readWorkspace(fs, signal)).status).toBe('valid')
 })
 
 it('resumes a partial archive under the original term and distinguishes an unknown active replacement', async () => {

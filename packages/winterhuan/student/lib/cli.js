@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { T as officialFileSchemas, a as lessonFileSchema, d as backupVersions, h as readBackups, l as readLessonFile, ot as figureSchema, st as stateSchema, v as readWorkspace } from "./openmaic-DWNvScKi.js";
+import { E as officialFileSchemas, _ as readBackups, a as lessonFileSchema, ct as stateSchema, f as backupVersions, l as readLessonFile, st as figureSchema, u as readWorkspace } from "./openmaic-CeogxHS9.js";
 import { t as nodeStudyFiles } from "./node-sZCrHR59.js";
 import { z } from "zod";
 import { parseArgs } from "node:util";

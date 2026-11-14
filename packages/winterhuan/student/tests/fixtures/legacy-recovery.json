@@ -1,0 +1,53 @@
+{
+  "format": 1,
+  "revision": 9,
+  "updatedAt": 1794469200000,
+  "profile": {
+    "nickname": "Recovery fixture",
+    "region": "上海市",
+    "grade": 2,
+    "term": "first",
+    "schoolYear": "2026-2027",
+    "schoolSystem": "five-four",
+    "schoolAlias": "",
+    "parentConfirmation": "Fixture parent confirms this profile."
+  },
+  "materials": [],
+  "courses": [],
+  "sessions": [{ "id": "legacy-block", "subject": "math", "mode": "foundation", "startedAt": 1794469100000, "endedAt": 1794469200000 }],
+  "attempts": [],
+  "mistakes": [],
+  "rewards": [],
+  "workbookResults": [
+    {
+      "id": "legacy-correct",
+      "subject": "math",
+      "prompt": "18 − 7?",
+      "response": "I got eleven.",
+      "outcome": "independent-correct",
+      "objectiveId": "m2a-o-sub",
+      "uncertainties": "",
+      "receivedAt": 1794469150000,
+      "confirmedAt": 1794469200000,
+      "userConfirmation": "Fixture parent confirms the original response and result.",
+      "correction": "11",
+      "explanation": "Subtract seven ones.",
+      "answerEvidence": "18 − 7 = 11; 11 + 7 = 18"
+    },
+    {
+      "id": "legacy-helped",
+      "subject": "math",
+      "prompt": "18 − 7?",
+      "response": "Eleven after help.",
+      "outcome": "hinted",
+      "objectiveId": "m2a-o-sub",
+      "uncertainties": "",
+      "receivedAt": 1794469150000,
+      "confirmedAt": 1794469200000,
+      "userConfirmation": "Fixture parent confirms help was used.",
+      "correction": "11",
+      "explanation": "Subtract seven ones.",
+      "answerEvidence": "18 − 7 = 11; 11 + 7 = 18"
+    }
+  ]
+}

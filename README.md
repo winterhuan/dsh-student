@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-Short daily learning, confirmed curricula and spaced mistake review for primary-school students.
+Native conversational learning, confirmed curricula and recoverable practice records for primary-school students.
 
 [Plugin documentation](packages/winterhuan/student/README.md) · [Release package](https://github.com/winterhuan/dsh-student/releases/download/v0.1.8/winterhuan-dsh-student-0.1.8.tgz)
 

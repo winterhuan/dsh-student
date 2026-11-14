@@ -1949,11 +1949,11 @@ declare const schemas: {
             sourceDraftId: z.ZodOptional<z.ZodString>;
         }, z.core.$strict>>>;
         rewards: z.ZodArray<z.ZodObject<{
-            day: z.ZodString;
             reason: z.ZodEnum<{
                 reflection: "reflection";
                 participation: "participation";
             }>;
+            day: z.ZodString;
         }, z.core.$strict>>;
         pendingLegacy: z.ZodOptional<z.ZodArray<z.ZodObject<{
             sourcePath: z.ZodString;

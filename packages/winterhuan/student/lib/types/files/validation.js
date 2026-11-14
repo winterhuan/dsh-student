@@ -82,6 +82,13 @@ export function validateStudyFiles(input, prior = [], nativeSources = []) {
         if (file.kind === 'collections') {
             for (const field of ['mistakes', 'exercises', 'concepts', 'objectives', 'relations', 'teachingQueue'])
                 unique(path, field, file[field]);
+            const rewards = new Set();
+            file.rewards.forEach((reward, index) => {
+                const identity = JSON.stringify([reward.day, reward.reason]);
+                if (rewards.has(identity))
+                    fail(path, `rewards.${index}`, 'duplicate-identity', 'Keep one reward per calendar day and reason; participation and reflection allow at most two stars per day.');
+                rewards.add(identity);
+            });
             for (const objective of file.objectives) {
                 if (!customObjectiveMethods[objective.subject].some(method => method === objective.method) || new Set(objective.conceptIds).size !== objective.conceptIds.length || !objective.conceptIds.every(id => file.concepts.some(concept => concept.id === id && concept.subject === objective.subject && concept.confirmedAt !== undefined && concept.userConfirmation)))
                     fail(path, 'objectives', 'confirmed-goal', 'Reference distinct confirmed concepts of this subject and use an allowed learning method.');

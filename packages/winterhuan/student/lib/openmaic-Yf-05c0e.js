@@ -1872,7 +1872,7 @@ const worksheetSchema = z.object({
 	}).strict()).max(500),
 	pendingLegacy: z.array(pending).max(500).optional()
 }).strict();
-/** Bounded non-block collections; mistakes, teaching and curriculum extensions retain explicit ownership. */
+/** Bounded non-block collections with explicit ownership; rewards have one calendar day/reason identity. */
 const collectionsSchema = z.object({
 	...base,
 	kind: z.literal("collections"),
@@ -1886,7 +1886,7 @@ const collectionsSchema = z.object({
 	objectives: stateSchema.shape.objectives,
 	relations: stateSchema.shape.relations,
 	teachingQueue: stateSchema.shape.teachingQueue,
-	rewards: stateSchema.shape.rewards,
+	rewards: z.array(stateSchema.shape.rewards.element.extend({ day })).max(1e3),
 	pendingLegacy: z.array(pending).max(5e3).optional()
 }).strict();
 /** Machine-readable file definitions shared by CLI, application reads and manual saves. */
@@ -1994,6 +1994,12 @@ function validateStudyFiles(input, prior = [], nativeSources = []) {
 				"relations",
 				"teachingQueue"
 			]) unique(path, field, file[field]);
+			const rewards = /* @__PURE__ */ new Set();
+			file.rewards.forEach((reward, index) => {
+				const identity = JSON.stringify([reward.day, reward.reason]);
+				if (rewards.has(identity)) fail(path, `rewards.${index}`, "duplicate-identity", "Keep one reward per calendar day and reason; participation and reflection allow at most two stars per day.");
+				rewards.add(identity);
+			});
 			for (const objective of file.objectives) if (!customObjectiveMethods[objective.subject].some((method) => method === objective.method) || new Set(objective.conceptIds).size !== objective.conceptIds.length || !objective.conceptIds.every((id) => file.concepts.some((concept) => concept.id === id && concept.subject === objective.subject && concept.confirmedAt !== void 0 && concept.userConfirmation))) fail(path, "objectives", "confirmed-goal", "Reference distinct confirmed concepts of this subject and use an allowed learning method.");
 			for (const relation of file.relations) {
 				const from = file.concepts.find((concept) => concept.id === relation.fromId);
@@ -2420,6 +2426,16 @@ function describeMigration(read, backup, existing = []) {
 		"answerDate",
 		"assistance"
 	], "No saved owning block establishes these flattened legacy associations.");
+	const rewardIdentities = /* @__PURE__ */ new Set();
+	const rewards = state.rewards.filter((reward, index) => {
+		const identity = JSON.stringify([reward.day, reward.reason]);
+		if (!collectionsSchema.shape.rewards.element.safeParse(reward).success || rewardIdentities.has(identity)) {
+			pending(`rewards.${index}`, ["day", "reason"], "The preserved reward declaration has an invalid calendar day or repeats a daily reward identity.");
+			return false;
+		}
+		rewardIdentities.add(identity);
+		return true;
+	});
 	files.push({
 		path: ".study/collections.json",
 		file: collectionsSchema.parse({
@@ -2432,7 +2448,7 @@ function describeMigration(read, backup, existing = []) {
 			objectives: state.objectives,
 			relations: state.relations,
 			teachingQueue: state.teachingQueue,
-			rewards: state.rewards,
+			rewards,
 			pendingLegacy: plan.pending.slice(0, 5e3)
 		})
 	});

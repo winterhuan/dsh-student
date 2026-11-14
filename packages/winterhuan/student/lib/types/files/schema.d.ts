@@ -1660,7 +1660,7 @@ export declare const worksheetSchema: z.ZodObject<{
     format: z.ZodLiteral<2>;
     termId: z.ZodPipe<z.ZodString, z.ZodTransform<TermId, string>>;
 }, z.core.$strict>;
-/** Bounded non-block collections; mistakes, teaching and curriculum extensions retain explicit ownership. */
+/** Bounded non-block collections with explicit ownership; rewards have one calendar day/reason identity. */
 export declare const collectionsSchema: z.ZodObject<{
     kind: z.ZodLiteral<"collections">;
     mistakes: z.ZodArray<z.ZodObject<{
@@ -2143,11 +2143,11 @@ export declare const collectionsSchema: z.ZodObject<{
         sourceDraftId: z.ZodOptional<z.ZodString>;
     }, z.core.$strict>>>;
     rewards: z.ZodArray<z.ZodObject<{
-        day: z.ZodString;
         reason: z.ZodEnum<{
             reflection: "reflection";
             participation: "participation";
         }>;
+        day: z.ZodString;
     }, z.core.$strict>>;
     pendingLegacy: z.ZodOptional<z.ZodArray<z.ZodObject<{
         sourcePath: z.ZodString;
@@ -3795,11 +3795,11 @@ export declare const officialFileSchemas: {
             sourceDraftId: z.ZodOptional<z.ZodString>;
         }, z.core.$strict>>>;
         rewards: z.ZodArray<z.ZodObject<{
-            day: z.ZodString;
             reason: z.ZodEnum<{
                 reflection: "reflection";
                 participation: "participation";
             }>;
+            day: z.ZodString;
         }, z.core.$strict>>;
         pendingLegacy: z.ZodOptional<z.ZodArray<z.ZodObject<{
             sourcePath: z.ZodString;

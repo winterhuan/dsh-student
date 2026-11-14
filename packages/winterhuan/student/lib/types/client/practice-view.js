@@ -128,7 +128,7 @@ function WorksheetActions({ worksheet, revision, change, ask, disabled, t }) {
             setSaving(false);
         }
     }
-    const highConfidence = worksheet.drafts.filter(draft => draft.confidence === 'high' && draft.result === 'correct' && draft.uncertainties === '');
+    const highConfidence = worksheet.drafts.filter(draft => draft.confidence === 'high' && draft.result === 'correct' && draft.assistance !== 'unknown' && draft.uncertainties === '');
     async function confirmBatch(drafts) {
         setSaving(true);
         setError('');

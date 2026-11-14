@@ -41,7 +41,7 @@ export declare function TodayView({ study, subject, activity, setActivity, goal,
     disabled: boolean;
     running: boolean;
     act: Act;
-    tutor: (text: string) => Promise<void>;
+    tutor: (text: string, currentBlock?: boolean) => Promise<void>;
     t: Translate;
     prompts: {
         daily: string;

@@ -5023,7 +5023,7 @@ window.__ModuleLoader__.load({
 			objectives: stateSchema.shape.objectives,
 			relations: stateSchema.shape.relations,
 			teachingQueue: stateSchema.shape.teachingQueue,
-			rewards: stateSchema.shape.rewards,
+			rewards: zod.z.array(stateSchema.shape.rewards.element.extend({ day: day$1 })).max(1e3),
 			pendingLegacy: zod.z.array(pending).max(5e3).optional()
 		}).strict();
 		//#endregion
@@ -8763,7 +8763,7 @@ window.__ModuleLoader__.load({
 					setSaving(false);
 				}
 			}
-			const highConfidence = worksheet.drafts.filter((draft) => draft.confidence === "high" && draft.result === "correct" && draft.uncertainties === "");
+			const highConfidence = worksheet.drafts.filter((draft) => draft.confidence === "high" && draft.result === "correct" && draft.assistance !== "unknown" && draft.uncertainties === "");
 			async function confirmBatch(drafts) {
 				setSaving(true);
 				setError("");
@@ -9612,7 +9612,7 @@ window.__ModuleLoader__.load({
 						}) : (!task || study.feedback || task.response !== void 0 || task.hintLevel > 0) && (0, react_jsx_runtime.jsx)("button", {
 							disabled,
 							onClick: () => {
-								tutor(study.feedback ? "明确请求下一题。先保留上一题的原回答和有效反馈，再准备下一题。" : "检查当前题的未完成答案或提示，不换题，不自动重发原回答。").catch(() => {});
+								tutor(study.feedback ? "明确请求下一题。先保留上一题的原回答和有效反馈，再准备下一题。" : "检查当前题的未完成答案或提示，不换题，不自动重发原回答。", true).catch(() => {});
 							},
 							children: t(!task ? "prepareTask" : study.feedback ? "nextTask" : task.response !== void 0 ? "retryFeedback" : "retryHint")
 						}))
@@ -9638,7 +9638,7 @@ window.__ModuleLoader__.load({
 							type: "button",
 							disabled: disabled || running,
 							onClick: () => {
-								tutor(feynmanPrompt(explain?.title ?? goalTitle(study, task?.objectiveId))).catch(() => {});
+								tutor(feynmanPrompt(explain?.title ?? goalTitle(study, task?.objectiveId)), true).catch(() => {});
 							},
 							children: t("feynmanTeach")
 						})]
@@ -10220,7 +10220,7 @@ window.__ModuleLoader__.load({
 						type: "button",
 						disabled,
 						onClick: () => {
-							tutor(feynmanPrompt(title)).catch(() => {});
+							tutor(feynmanPrompt(title), true).catch(() => {});
 						},
 						children: t("feynmanTeach")
 					})
@@ -10435,7 +10435,7 @@ window.__ModuleLoader__.load({
 					responseId: task?.responseId ?? responseIds.current.get(key)
 				};
 			}
-			async function tutor(text = continuePrompt, photo, command) {
+			async function tutor(text = continuePrompt, photo, command, currentBlock = false) {
 				const ids = identity(command);
 				if (command?.action === "answer" && submissions.some((item) => item.response?.responseId === ids.responseId && item.admission === "unknown" && !item.inspection)) {
 					setSendError(t("messageUnknown"));
@@ -10443,14 +10443,20 @@ window.__ModuleLoader__.load({
 				}
 				setSending(true);
 				setSendError("");
+				const active = data?.study?.active;
+				const selection = active && (currentBlock || command?.action === "answer" || command?.action === "hint" || command?.action === "stuck" || command?.action === "stop") ? {
+					subject: active.subject,
+					goalId: data?.study?.task?.objectiveId,
+					scope: active.scope
+				} : {
+					subject: command?.action === "start" ? command.subject : subject,
+					goalId: selectedObjectiveId || void 0,
+					scope: command?.action === "start" ? command.scope : scopeCommand(subject).scope
+				};
 				const intent = {
 					nativeSessionId: sessionId,
 					...ids,
-					selection: {
-						subject: command?.action === "start" ? command.subject : subject,
-						goalId: selectedObjectiveId || void 0,
-						scope: command?.action === "start" && command.scope ? command.scope : scopeCommand(subject)
-					},
+					selection,
 					...command ? { operation: command } : {},
 					request: text.trim() === "" ? continuePrompt : text
 				};
@@ -10920,7 +10926,7 @@ window.__ModuleLoader__.load({
 							disabled,
 							running,
 							act,
-							tutor,
+							tutor: (text, currentBlock) => tutor(text, void 0, void 0, currentBlock),
 							t,
 							prompts: {
 								daily: dailySheetPrompt(subject),

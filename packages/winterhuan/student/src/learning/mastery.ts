@@ -1,5 +1,7 @@
 import type { ErrorType, StudyState } from '../schema.ts'
 import { builtinObjectives, builtinObjectivesIn, curriculumFor, type CurriculumMethod, type CurriculumScope, type CurriculumSubject } from '../curriculum.ts'
+import { evidenceOf, evidenceDay, evidenceAtCutoff, demonstrablyAfter } from './evidence.ts'
+import { dayStart } from './schedule.ts'
 import { DAY, schoolGate, scopeSelects, studyDay, taughtUnit, type ObjectiveBase, type Outcome } from './shared.ts'
 
 /** Subject display order shared by check-in plans and history. */
@@ -28,6 +30,8 @@ export interface ObjectiveInsight {
   attempts: number
   helpedOrWrong: number
   lastAt?: number
+  /** Actual day when the latest evidence has day precision rather than an exact instant. */
+  lastDay?: string
   activeMistakes: number
   dueMistakes: number
   masteredMistakes: number
@@ -122,20 +126,16 @@ export interface DueClear {
 }
 
 
-function outcomeIndex(state: StudyState): Map<string, Outcome[]> {
+function lastEvidenceCutoff(item: ObjectiveInsight): number | undefined { return item.lastAt ?? (item.lastDay ? dayStart(item.lastDay) + DAY - 1 : undefined) }
+
+function outcomeIndex(state: StudyState, now: number): Map<string, Outcome[]> {
   const index = new Map<string, Outcome[]>()
-  const add = (objectiveId: string | undefined, outcome: Outcome) => {
-    if (objectiveId === undefined) return
-    index.set(objectiveId, [...(index.get(objectiveId) ?? []), outcome])
+  for (const item of evidenceAtCutoff(evidenceOf(state), now)) {
+    if (!item.objectiveId) continue
+    const day = evidenceDay(item)!
+    const outcome: Outcome = { at: item.answerDate.kind === 'instant' ? item.answerDate.at : dayStart(day) + DAY - 1, day, precision: item.answerDate.kind === 'instant' ? 'instant' : 'day', result: item.result, assistance: item.assistance, evidence: item }
+    index.set(item.objectiveId, [...index.get(item.objectiveId) ?? [], outcome])
   }
-  const mistakeObjective = new Map(state.mistakes.map(mistake => [mistake.id, mistake.objectiveId]))
-  const worksheetObjective = new Map<string, string>()
-  for (const sheet of state.worksheets) for (const item of sheet.items) {
-    const goal = item.objectiveId ?? (item.mistakeId !== undefined ? mistakeObjective.get(item.mistakeId) : undefined) ?? sheet.objectiveId
-    if (goal !== undefined) worksheetObjective.set(`${sheet.id}:${item.id}`, goal)
-  }
-  for (const attempt of state.attempts) add(attempt.objectiveId, { at: attempt.at, result: attempt.result, assistance: attempt.assistance })
-  for (const result of state.paperResults) add(worksheetObjective.get(`${result.worksheetId}:${result.itemId}`), { at: result.receivedAt, result: result.result, assistance: result.assistance })
   return index
 }
 
@@ -147,10 +147,10 @@ function outcomeIndex(state: StudyState): Map<string, Outcome[]> {
 function teachingNeeded(outcomes: Outcome[], queue: { confirmedAt: number }[]): boolean {
   const stuckAt = outcomes.flatMap(item => item.result === 'stuck' ? [item.at] : [])
   const latestStuck = stuckAt.length > 0 ? Math.max(...stuckAt) : undefined
-  if (latestStuck !== undefined && !outcomes.some(item => item.at > latestStuck && item.result === 'correct' && item.assistance === 'independent')) return true
+  if (latestStuck !== undefined && !outcomes.some(item => (item.evidence ? outcomes.filter(entry => entry.result === 'stuck' && entry.evidence).every(entry => demonstrablyAfter(item.evidence!, entry.evidence!)) : item.at > latestStuck) && item.result === 'correct' && item.assistance === 'independent')) return true
   const independentCorrect = outcomes.some(item => item.result === 'correct' && item.assistance === 'independent')
-  if (!independentCorrect && outcomes.some(item => item.result === 'correct' && item.assistance !== 'independent')) return true
-  return queue.some(item => !outcomes.some(outcome => outcome.at >= item.confirmedAt && outcome.result === 'correct' && outcome.assistance === 'independent'))
+  if (!independentCorrect && outcomes.some(item => item.result === 'correct' && ['hint', 'worked-example'].includes(item.assistance))) return true
+  return queue.some(item => !outcomes.some(outcome => (outcome.evidence ? demonstrablyAfter(outcome.evidence, item.confirmedAt) : outcome.at >= item.confirmedAt) && outcome.result === 'correct' && outcome.assistance === 'independent'))
 }
 
 /**
@@ -161,16 +161,16 @@ function teachingNeeded(outcomes: Outcome[], queue: { confirmedAt: number }[]): 
 function masteryOf(state: StudyState, base: ObjectiveBase, outcomes: Outcome[], now: number): ObjectiveInsight {
   const independentDays = new Set(outcomes.filter(item => item.result === 'correct' && item.assistance === 'independent').map(item => studyDay(item.at)))
   const lastAt = outcomes.reduce<number | undefined>((latest, item) => latest === undefined || item.at > latest ? item.at : latest, undefined)
-  const helpedOrWrong = outcomes.filter(item => item.at >= now - 14 * DAY && (item.result === 'incorrect' || item.result === 'partial' || (item.result === 'correct' && item.assistance !== 'independent'))).length
+  const helpedOrWrong = outcomes.filter(item => item.at >= now - 14 * DAY && (item.result === 'incorrect' || item.result === 'partial' || (item.result === 'correct' && ['hint', 'worked-example'].includes(item.assistance)))).length
   const wrongRecent = outcomes.filter(item => item.at >= now - 14 * DAY && (item.result === 'incorrect' || item.result === 'partial')).length
-  const mistakes = state.mistakes.filter(item => item.objectiveId === base.id && item.confirmedAt !== undefined)
+  const mistakes = state.mistakes.filter(item => item.objectiveId === base.id && item.confirmedAt !== undefined && item.confirmedAt <= now)
   const dueMistakes = mistakes.filter(item => item.dueAt !== undefined && item.dueAt <= now).length
   const activeMistakes = mistakes.filter(item => item.stage < 4).length
   const causeCounts = new Map<ErrorType, number>()
   for (const mistake of mistakes) if (mistake.errorType !== undefined) causeCounts.set(mistake.errorType, (causeCounts.get(mistake.errorType) ?? 0) + 1)
   const errorTypes = [...causeCounts.entries()].map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count || a.type.localeCompare(b.type)).slice(0, 5)
   const recurringTypes = [...causeCounts.values()].filter(count => count >= 2).length
-  const queue = state.teachingQueue.filter(item => item.objectiveId === base.id)
+  const queue = [...state.teachingQueue.filter(item => item.objectiveId === base.id && item.confirmedAt <= now), ...evidenceOf(state).stuckSignals.filter(item => item.objectiveId === base.id && item.at <= now).map(item => ({ confirmedAt: item.at }))]
   const teaching = teachingNeeded(outcomes, queue)
   const weak = teaching || activeMistakes >= 2 || helpedOrWrong >= 2 || (independentDays.size === 0 && wrongRecent >= 1)
   const stalled = !weak && independentDays.size < 3 && lastAt !== undefined && now - lastAt > 10 * DAY
@@ -187,8 +187,9 @@ function masteryOf(state: StudyState, base: ObjectiveBase, outcomes: Outcome[], 
   if (level === 'untouched') reasons.push({ code: 'not-started', count: 0 })
   const priority = level === 'mastered' ? 0
     : (teaching ? 64 : 0) + dueMistakes * 40 + Math.min(36, helpedOrWrong * 12) + Math.min(24, activeMistakes * 8) + Math.min(16, recurringTypes * 8) + (stalled ? 10 : 0) + (level === 'untouched' ? 5 : 0)
+  const dateOnlyLatest = lastAt !== undefined && outcomes.some(item => item.precision === 'day' && item.day === studyDay(lastAt))
   return { ...base, level, independentDays: independentDays.size, attempts: outcomes.length, helpedOrWrong,
-    ...(lastAt !== undefined ? { lastAt } : {}), activeMistakes, dueMistakes, masteredMistakes: mistakes.length - activeMistakes, errorTypes, priority, reasons }
+    ...(lastAt !== undefined ? dateOnlyLatest ? { lastDay: studyDay(lastAt) } : { lastAt } : {}), activeMistakes, dueMistakes, masteredMistakes: mistakes.length - activeMistakes, errorTypes, priority, reasons }
 }
 
 /** New learning stays inside the current unit, or inside every taught unit when catching up, unless a session scope overrides. A review week adds none. */
@@ -218,7 +219,7 @@ function learnable(state: StudyState, item: ObjectiveInsight, scope?: Curriculum
  * @returns objective insights, the five weakest points, per-subject check-in plans, at most two due clears and one recommendation.
  */
 export function studyInsight(state: StudyState, now: number): StudyInsight {
-  const outcomes = outcomeIndex(state)
+  const outcomes = outcomeIndex(state, now)
   const objectives: ObjectiveInsight[] = []
   const seen = new Set<string>()
   const include = (base: ObjectiveBase) => {
@@ -233,7 +234,7 @@ export function studyInsight(state: StudyState, now: number): StudyInsight {
     const pick = (item: ObjectiveInsight, reason: DiagnosticSample['reason']): DiagnosticSample => ({ id: item.id, title: item.title, unit: item.unit, unitName: item.unitName, reason })
     const untouched = pool.filter(item => item.level === 'untouched')
     const stalled = pool.filter(item => item.level === 'stalled')
-    const recheck = pool.filter(item => item.level === 'mastered' && item.lastAt !== undefined && now - item.lastAt >= RECHECK_AFTER)
+    const recheck = pool.filter(item => item.level === 'mastered' && lastEvidenceCutoff(item) !== undefined && now - lastEvidenceCutoff(item)! >= RECHECK_AFTER)
     const progress = pool.filter(item => item.level === 'practising')
     const rotated: DiagnosticSample[] = []
     const byUnit = new Map<string, ObjectiveInsight[]>()
@@ -395,7 +396,7 @@ export function studyInsight(state: StudyState, now: number): StudyInsight {
   }
   if (recommendation !== null && (recommendation.kind === 'preview' || recommendation.kind === 'learn') && recommendation.objectiveId !== undefined) {
     const nextTarget = objectives.find(candidate => candidate.id === recommendation.objectiveId)
-    const practised = objectives.filter(candidate => candidate.lastAt !== undefined).sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))[0]
+    const practised = objectives.filter(candidate => lastEvidenceCutoff(candidate) !== undefined).sort((a, b) => (lastEvidenceCutoff(b) ?? 0) - (lastEvidenceCutoff(a) ?? 0))[0]
     if (nextTarget !== undefined && (recommendation.kind === 'preview' || practised === undefined || practised.unit !== nextTarget.unit)) remind(nextTarget, 'before-next')
   }
   return { objectives, weakPoints, diagnostics, recommendation, dueToday, dueBacklog, subjectSteps, errorProfile, understandingReminders }
@@ -428,14 +429,14 @@ export function diagnosticFor(state: StudyState, subject: CurriculumSubject, now
     const scoped = scope.objectiveIds !== undefined ? map.filter(item => scope.objectiveIds?.includes(item.id))
       : scope.units !== undefined ? map.filter(item => item.unit !== '' && scope.units?.includes(item.unit))
         : map
-    const outcomes = outcomeIndex(state)
+    const outcomes = outcomeIndex(state, now)
     pool = scoped.map(base => current.objectives.find(item => item.id === base.id) ?? masteryOf(state, base, outcomes.get(base.id) ?? [], now))
   }
   const lastAt = state.sessions.filter(item => item.mode === 'diagnose' && item.subject === subject).reduce<number | undefined>((latest, item) => latest === undefined || item.startedAt > latest ? item.startedAt : latest, undefined)
   const pick = (item: ObjectiveInsight, reason: DiagnosticSample['reason']): DiagnosticSample => ({ id: item.id, title: item.title, unit: item.unit, unitName: item.unitName, reason })
   const untouched = pool.filter(item => item.level === 'untouched')
   const stalled = pool.filter(item => item.level === 'stalled')
-  const recheck = pool.filter(item => item.level === 'mastered' && item.lastAt !== undefined && now - item.lastAt >= RECHECK_AFTER)
+  const recheck = pool.filter(item => item.level === 'mastered' && lastEvidenceCutoff(item) !== undefined && now - lastEvidenceCutoff(item)! >= RECHECK_AFTER)
   const progress = pool.filter(item => item.level === 'practising')
   const rotated: DiagnosticSample[] = []
   const byUnit = new Map<string, ObjectiveInsight[]>()

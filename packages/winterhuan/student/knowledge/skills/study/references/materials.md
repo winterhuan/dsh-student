@@ -23,9 +23,9 @@
 
 ## 建立资料记录
 
-工作台保存的教材记录标题是地图标题，出版社是「随包知识地图」，依据写明没有封面或版权页。那只表示家长选了地图单元。家长给出实物或官方资料时，`material` 的 title、publisher、edition 来自已经看到的内容。scope 保存 region、grade、term、schoolYear 和 schoolSystem（five-four 或 six-three）；年份未知就暂缓校内关联，不猜测。locator 写具体官方页面、教材页码或家长提供的工作区课页路径；evidence 描述核对过的封面、版权页、目录或相关内容。版本不明时 editionStatus 为 unconfirmed，如实写“待核实”；核对后用新的资料 ID 登记 identified 版本，才能调用 `course` 建立校内关联。
+工作台保存的教材记录标题是地图标题，出版社是「随包知识地图」，依据写明没有封面或版权页。那只表示家长选了地图单元。家长给出实物或官方资料时，settings.materials 的 title、publisher、edition 来自已经看到的内容。scope 保存 region、grade、term、schoolYear 和 schoolSystem（five-four 或 six-three）；年份未知就暂缓校内关联，不猜测。locator 写具体官方页面、教材页码或家长提供的工作区课页路径；evidence 描述核对过的封面、版权页、目录或相关内容。版本不明时 editionStatus 为 unconfirmed，如实写“待核实”；核对后用新的资料 ID 登记 identified 版本，再把确认的课程与当前学校单元共同保存到 settings.courses，校验后确认校内关联。
 
-kind 区分 official-textbook（出版社或官方平台教材）、school-material（学校发放资料）、reference（词典、科普等参考）和 generated（AI 自编练习）。分类仅说明提供者，不自动证明内容正确。仅在家长确认具体版本与当前单元后调用 `course`；记录实际确认语句，不以搜索摘要或其他地区书单代替。
+kind 区分 official-textbook（出版社或官方平台教材）、school-material（学校发放资料）、reference（词典、科普等参考）和 generated（AI 自编练习）。分类仅说明提供者，不自动证明内容正确。仅在家长确认具体版本与当前单元后保存 settings.courses 并运行 CLI；记录实际确认语句，不以搜索摘要或其他地区书单代替。
 
 ## 没有课本时用试卷核对
 
@@ -40,3 +40,5 @@ kind 区分 official-textbook（出版社或官方平台教材）、school-mater
 每次只读取本次任务需要的题页。不能清晰识别的单位、负号、标点、拼音和图形条件都要保留疑点。学生原答案与订正答案分开保存；不覆盖学生最初的思路。
 
 answerEvidence 写可复查的页码、词典条目、教师讲解，或完整且复核过的推导。没有答案时可以独立求解，但必须标明推导与资料来源的区别。教师答案、书中答案和模型推导冲突时先核对题干及版本，无法消除的冲突标为待核对，不训练学生接受不确定结论。
+
+新增来源事实保存在正式 collections 的已确认概念、目标和来源中；不修改安装包知识文件。只有实际读到的内容才进入可复查依据，原目标含义与历史使用内容保持稳定。

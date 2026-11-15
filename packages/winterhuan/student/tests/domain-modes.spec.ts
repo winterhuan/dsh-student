@@ -13,7 +13,7 @@ import { expect, it, onTestFinished } from 'vitest'
 import * as student from '../src/agent.ts'
 
 const domains = [
-  { id: 'student', agent: student, tools: ['study_status', 'study_update'], skills: 1 },
+  { id: 'student', agent: student, tools: ['study_status'], skills: 1 },
 ]
 
 it('isolates domain capabilities from Standard and sibling modes, including native children', async () => {

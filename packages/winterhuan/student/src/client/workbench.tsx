@@ -13,6 +13,8 @@ import { IconPlayOutlineRegular, Toast } from '@deepseek-ai/dsh-client-ui-primit
 import { useEffect, useState } from 'react'
 import { tutorBridge, type AskTutor } from './bridge.ts'
 import { StudyDesk } from './desk.tsx'
+import { createStudentDraftStore, type DraftProps } from './drafts.tsx'
+import { createStudentManualActions, type StudentManualActions } from './manual-actions.ts'
 import { NS } from './locales.ts'
 import css from './workbench.module.css'
 
@@ -45,7 +47,7 @@ type WorkbenchInjected = {
 }
 type Notice = { success: boolean; sequence: number }
 type NoticeInjected = { hooks: { notice: ObservableSnapshot<Notice | null> }; dismissNotice: () => void }
-type SessionInjected = { ask: AskTutor }
+type SessionInjected = { ask: AskTutor } & StudentManualActions
 type SessionOwner = { chatVisible: boolean }
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface SlotMap {
@@ -53,7 +55,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
   }
 }
 type WorkbenchProps = PropsRuntime<'main'> & PropsRenderSlots<typeof sessionSlot> & PropsStore<ReturnType<typeof createWorkbenchStore>> & PropsLocale<typeof NS> & WorkbenchInjected
-type SessionProps = PropsRuntime<typeof sessionSlot> & PropsRenderFactories & PropsLocale<typeof NS> & SessionInjected
+type SessionProps = PropsRuntime<typeof sessionSlot> & PropsRenderFactories & PropsLocale<typeof NS> & DraftProps & SessionInjected
 
 /** Select live main Student conversations within one learner workspace.
  * @param props - framework catalogs, preferences and native Session callbacks.
@@ -118,12 +120,12 @@ function SelectedSession({ sessionId, chatVisible, retainSession, SessionProvide
   if (failed) return <div className={css.empty}><p role="alert">{t('openConversationError')}</p><button type="button" onClick={() => { setFailed(false); setBinding(null); setRetry(value => value + 1) }}>{t('reload')}</button></div>
   return binding ? <SessionProvider session={binding}>{renderSlot(sessionSlot, { chatVisible })}</SessionProvider> : <Loading />
 }
-function LearningSession({ sessionId, chatVisible, ask, useSession, useConversation, renderFactorySlot, t }: SessionProps) {
+function LearningSession({ sessionId, chatVisible, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, t }: SessionProps) {
   const session = useSession(state => state)
   const conversation = useConversation(state => state)
   const settling = session.openState === 'loading' && !conversation.activeTargets.size
   return <div className={`${css.body} ${chatVisible ? css.withChat : ''}`}>
-    <div className={css.study}><StudyDesk sessionId={sessionId} visible={true} running={!!session.running} ask={ask} t={t} /></div>
+    <div className={css.study}><StudyDesk sessionId={sessionId} visible={true} running={!!session.running} ask={ask} t={t} useResource={useResource} {...{ useStore, actions, saveSettings, saveWorksheet, inspectSubmission }} /></div>
     {chatVisible && <aside className={css.chat} aria-label={t('tutorConversation')}><h2>{t('tutorConversation')}</h2>{renderFactorySlot('conversation.content', { variant: 'embedded', phase: settling ? 'settling' : 'active', hero: false })}</aside>}
   </div>
 }
@@ -135,8 +137,9 @@ function WorkbenchNotice({ useNotice, dismissNotice, t }: InjectFace<NoticeInjec
 
 /** Register the global entry and its strict Session child through native services.
  * @param context - mounted Student client services.
+ * @param draftStore - shared learning-form drafts for both workbench and sidebar.
  */
-export function registerWorkbench(context: Context): void {
+export function registerWorkbench(context: Context, draftStore: ReturnType<typeof createStudentDraftStore>): void {
   const t = context.locale.bind(NS)
   const notice = createSnapshotStore<Notice | null>(null)
   let sequence = 0
@@ -150,8 +153,8 @@ export function registerWorkbench(context: Context): void {
       reportCreate: success => { notice.set({ success, sequence: ++sequence }) },
     }),
   }, Workbench))
-  context.slots.inject(sessionSlot, () => context.slots.register({ name: sessionSlot, locale: NS,
-    inject: (sessionId: SessionId): SessionInjected => ({ ask: tutorBridge(context, sessionId, t('sessionError'), t('sendError')) }),
+  context.slots.inject(sessionSlot, () => context.slots.register({ name: sessionSlot, locale: NS, store: draftStore,
+    inject: (sessionId: SessionId): SessionInjected => ({ ask: tutorBridge(context, sessionId, t('sessionError'), t('sendError')), ...createStudentManualActions(context.remote.student) }),
   }, LearningSession))
   context.slots.inject('sidebar.panellist', () => context.slots.register({ name: 'sidebar.panellist', id: 'student', order: 6, locale: NS, label: () => t('title') }, PanelIcon))
   context.slots.inject('shell.overlay', () => context.slots.register({ name: 'shell.overlay', id: 'student.workbench.notice', locale: NS,

@@ -90,7 +90,11 @@ export function sameSavedAnswer(task: { response?: string | undefined; rawRespon
 export type AttemptInput = StudyState['attempts'][number]
 
 export function todaySpent(state: StudyState, now: number): number {
-  return state.sessions.filter(session => studyDay(session.startedAt) === studyDay(now)).reduce((sum, session) => sum + spent(session, now), 0)
+  const start = Date.parse(`${studyDay(now)}T00:00:00+08:00`)
+  return state.sessions.reduce((sum, session) => {
+    const end = session.endedAt ?? now
+    return sum + Math.max(0, Math.min(end, now) - Math.max(session.startedAt, start))
+  }, 0)
 }
 
 export function activeSession(state: StudyState) { return state.sessions.find(session => session.endedAt === undefined) }
@@ -149,7 +153,7 @@ export function scopeSelects(scope: { grade: number; term: 'first' | 'second'; u
   return file?.units.some(item => item.id === unit) ?? false
 }
 
-export type Outcome = { at: number; result: string; assistance: string }
+export type Outcome = { at: number; result: string; assistance: string; day?: string; precision?: 'day' | 'instant'; evidence?: import('./evidence.ts').EffectiveEvidence }
 
 /** One objective's identity fields, shared by shipped and custom objectives in the insight. */
 export type ObjectiveBase = { id: string; subject: CurriculumSubject; title: string; goal: string; method: CurriculumMethod; unit: string; unitName: string; conceptIds: string[] }

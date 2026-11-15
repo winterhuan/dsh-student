@@ -6,13 +6,14 @@ import { builtinObjectiveIn, curriculumFor } from "../../curriculum.js";
 export function applyTask(ctx) {
     const { command, previous, state, active } = ctx;
     requireValue(active && active.id === command.task.sessionId && active.subject === command.task.subject, '请在当前学习段内出题。');
+    validateTaskScope(state, active, command.task.objectiveId);
     if (state.task?.id === command.task.id && state.task.sessionId === command.task.sessionId) {
         const { response: _response, rawResponse: _raw, answeredAt: _answeredAt, hintLevel: _hint, stuck: _stuck, ...stored } = state.task;
         requireValue(canonical(stored) === canonical(command.task), '这个学习段里的题目编号已用于另一道题。');
         return previous;
     }
     requireValue(!state.attempts.some(item => item.id === command.task.id && item.sessionId === command.task.sessionId), '这个学习段里的题目编号已使用。下一段学习可以再用同一个编号。');
-    requireValue(!state.task || state.task.sessionId !== active.id || state.task.response === undefined || state.attempts.some(item => item.id === state.task?.id), '请先完成当前已作答题目的反馈。');
+    requireValue(!state.task || state.task.sessionId !== active.id || state.task.response === undefined || state.attempts.some(item => item.id === state.task?.id && item.sessionId === state.task.sessionId), '请先完成当前已作答题目的反馈。');
     const mistake = state.mistakes.find(item => item.id === command.task.mistakeId);
     requireValue(active.mode !== 'review' || mistake, '复习题需要关联一条已确认的错题。');
     requireValue(active.mode !== 'diagnose' || command.task.objectiveId !== undefined, '摸底题必须关联学习目标（objectiveId）。');
@@ -31,7 +32,8 @@ export function applyAnswerOrHint(ctx) {
     const { command, previous, state, active, now } = ctx;
     const task = state.task;
     requireValue(task && task.id === command.taskId && active?.id === task.sessionId, '当前题目已结束，请刷新学习状态。');
-    requireValue(!state.attempts.some(item => item.id === task.id), '这道题已记录反馈。');
+    validateTaskScope(state, active, task.objectiveId);
+    requireValue(!state.attempts.some(item => item.id === task.id && item.sessionId === task.sessionId), '这道题已记录反馈。');
     if (command.action === 'answer') {
         if (task.response !== undefined) {
             requireValue(sameSavedAnswer(task, command.response), '答案已提交，请等待反馈。');
@@ -51,6 +53,15 @@ export function applyAnswerOrHint(ctx) {
         task.hintLevel += 1;
     }
     return state;
+}
+function validateTaskScope(state, active, objectiveId) {
+    if (!active.scope)
+        return;
+    requireValue(objectiveId, '范围内的题目必须关联学习目标。');
+    const objective = objectiveOf(state, objectiveId);
+    requireValue(objective?.subject === active.subject, '学习目标不存在或科目不符。');
+    const unit = 'unit' in objective && typeof objective.unit === 'string' ? objective.unit : '';
+    requireValue(scopeSelects(active.scope, active.subject, unit, objectiveId), '题目目标不在本段学习范围内。');
 }
 /** Record 不会 on the current task as a stuck attempt. */
 export function applyStuck(ctx) {
@@ -136,6 +147,7 @@ export function applyRecord(ctx) {
             return previous;
         throw new Error('该记录 ID 已用于另一条内容。完全相同的重试会直接成功；新的一条请换一个 ID。');
     }
+    requireValue(openTask, '反馈必须对应已保存的题目，请先发布题目并保存原始回答。');
     requireValue(active && active.id === attempt.sessionId && active.subject === attempt.subject, '作答必须属于当前学习段和科目。');
     if (aligned.objectiveId && active.scope) {
         const objective = objectiveOf(state, aligned.objectiveId);

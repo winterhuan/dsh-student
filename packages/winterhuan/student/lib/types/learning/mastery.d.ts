@@ -22,6 +22,8 @@ export interface ObjectiveInsight {
     attempts: number;
     helpedOrWrong: number;
     lastAt?: number;
+    /** Actual day when the latest evidence has day precision rather than an exact instant. */
+    lastDay?: string;
     activeMistakes: number;
     dueMistakes: number;
     masteredMistakes: number;
@@ -182,7 +184,7 @@ export declare function insightSummary(insight: StudyInsight): {
         id: string;
         subject: "chinese" | "math" | "english";
         title: string;
-        level: "due" | "weak" | "stalled" | "mastered" | "practising" | "untouched";
+        level: "practising" | "due" | "weak" | "stalled" | "mastered" | "untouched";
         priority: number;
         reasons: InsightReason[];
     }[];

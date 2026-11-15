@@ -36,7 +36,7 @@ export declare function todaySpent(state: StudyState, now: number): number;
 export declare function activeSession(state: StudyState): {
     id: string;
     subject: "chinese" | "math" | "english";
-    mode: "review" | "diagnose" | "foundation" | "school" | "explore";
+    mode: "review" | "foundation" | "school" | "explore" | "diagnose";
     startedAt: number;
     intensity?: "light" | "standard" | "deep" | undefined;
     endedAt?: number | undefined;
@@ -54,7 +54,7 @@ export declare function activeSession(state: StudyState): {
 /** Parent-confirmed class frontier; the default suggestion range, not a hard gate. Absent progress leaves the whole map in scope. */
 export declare function schoolGate(state: StudyState, subject: CurriculumSubject): {
     posture: "keep-up" | "catch-up";
-    pace: "review" | "teaching";
+    pace: "teaching" | "review";
     previewUnit?: string;
     taught: Set<string>;
     current: string;
@@ -89,6 +89,9 @@ export type Outcome = {
     at: number;
     result: string;
     assistance: string;
+    day?: string;
+    precision?: 'day' | 'instant';
+    evidence?: import('./evidence.ts').EffectiveEvidence;
 };
 /** One objective's identity fields, shared by shipped and custom objectives in the insight. */
 export type ObjectiveBase = {

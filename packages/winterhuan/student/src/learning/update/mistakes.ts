@@ -4,13 +4,7 @@ import { objectiveOf } from '../view.ts'
 import { errorTypesBySubject } from '../../vocabulary.ts'
 import type { UpdateContext } from './index.ts'
 import type { StudyState } from '../../schema.ts'
-
-/** Learning methods each subject allows for custom objectives; mirrors the shipped maps. */
-const subjectMethods = {
-  chinese: ['recognize', 'read-evidence', 'express'],
-  math: ['represent', 'reason', 'verify'],
-  english: ['context', 'listen', 'speak'],
-} as const
+import { customObjectiveMethods as subjectMethods } from '../../schema.ts'
 
 /** Save or update an unconfirmed mistake transcription. */
 export function applyMistake(ctx: UpdateContext<'mistake'>): StudyState {

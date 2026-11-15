@@ -21,9 +21,9 @@ export function objectiveInfo(state, objectiveId) {
     const objective = objectiveOf(state, objectiveId);
     return objective ? { title: objective.title, subject: objective.subject } : undefined;
 }
-/** The goal a worksheet question tests: its own, then its source mistake's, then the sheet's. */
-export function itemObjectiveId(state, worksheet, item) {
-    return item.objectiveId ?? (item.mistakeId ? state.mistakes.find(mistake => mistake.id === item.mistakeId)?.objectiveId : undefined) ?? worksheet.objectiveId;
+/** Published question goals are frozen; legacy items can use only their saved sheet goal. */
+export function itemObjectiveId(_state, worksheet, item) {
+    return item.objectiveId ?? worksheet.objectiveId;
 }
 export function questionObjectiveId(state, worksheet, itemId) {
     const item = worksheet.items.find(question => question.id === itemId);

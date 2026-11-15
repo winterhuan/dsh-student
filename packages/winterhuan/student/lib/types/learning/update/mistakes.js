@@ -2,12 +2,7 @@ import { canonical, requireValue } from "../shared.js";
 import { duplicate } from "./context.js";
 import { objectiveOf } from "../view.js";
 import { errorTypesBySubject } from "../../vocabulary.js";
-/** Learning methods each subject allows for custom objectives; mirrors the shipped maps. */
-const subjectMethods = {
-    chinese: ['recognize', 'read-evidence', 'express'],
-    math: ['represent', 'reason', 'verify'],
-    english: ['context', 'listen', 'speak'],
-};
+import { customObjectiveMethods as subjectMethods } from "../../schema.js";
 /** Save or update an unconfirmed mistake transcription. */
 export function applyMistake(ctx) {
     const { command, previous, state } = ctx;

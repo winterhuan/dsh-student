@@ -1,0 +1,315 @@
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
+import { Context } from '@deepseek-ai/cordis'
+import type { Agent } from '@deepseek-ai/dsh-agent'
+import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { it, expect, onTestFinished } from 'vitest'
+import { applicationStudyFiles } from '../src/files/application.ts'
+import { nodeStudyFiles } from '../src/files/node.ts'
+import { readWorkspace } from '../src/files/read.ts'
+import { saveManual, manualFields, type ManualSaveRequest } from '../src/files/manual.ts'
+import { blockSchema, worksheetSchema } from '../src/files/schema.ts'
+import { studyStore } from '../src/store.ts'
+import { readBackups, describeRestore, retainObservedBackups, sourceSha256 } from '../src/files/recovery.ts'
+import { NOW, setup, material, course } from './fixtures.ts'
+import { readLessonFile } from '../src/files/lessons.ts'
+import { readInteractiveLessons } from '../src/openmaic.ts'
+
+async function fixture() {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-manual-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study'), { recursive: true })
+  const settings = { format: 2, kind: 'term-settings', termId: 'term-1', revision: 1, updatedAt: NOW, profile: setup.profile, materials: [], courses: [] }
+  const save = (value: unknown) => writeFile(join(cwd, '.study/settings.json'), JSON.stringify(value))
+  await save(settings)
+  const ctx = new Context()
+  onTestFinished(() => ctx.fiber.dispose())
+  await ctx.plugin(LocalFileSystem, { cwd })
+  const agent = { session: { header: { cwd } }, ctx: { root: ctx.root, get: (name: string) => name === 'sandboxPolicy' ? { resolve: () => undefined } : ctx.get(name) } } as Agent
+  const signal = new AbortController().signal
+  const fs = applicationStudyFiles({ agent, signal })
+  const read = await readWorkspace(fs, signal)
+  const intent: ManualSaveRequest['intent'] = { kind: 'settings', editedProfileFields: ['nickname'], command: { ...setup, profile: { ...setup.profile, nickname: 'New nickname' } } }
+  const request: ManualSaveRequest = { termId: read.workspace!.settings.termId, expectedVersions: read.files.map(({ path, version }) => ({ path, version })), baseline: manualFields(read, intent), intent }
+  return { fs, signal, read, request, settings, save, cwd, agent }
+}
+
+it('rejects a manual request with missing relevant expected versions before touching settings', async () => {
+  const { fs, signal, request } = await fixture()
+  const result = await saveManual(fs, { ...request, expectedVersions: [] }, NOW, signal)
+  expect(result.status).toBe('conflict')
+  expect((await readWorkspace(fs, signal)).workspace!.settings.profile.nickname).toBe(setup.profile.nickname)
+})
+
+it('rebases a nickname draft over an unrelated profile field and retains current values on a nickname conflict', async () => {
+  const { fs, signal, request, settings, save } = await fixture()
+  await save({ ...settings, profile: { ...settings.profile, schoolAlias: 'Externally updated school' } })
+  const saved = await saveManual(fs, request, NOW, signal)
+  expect(saved).toMatchObject({ status: 'saved', read: { workspace: { settings: { profile: { nickname: 'New nickname', schoolAlias: 'Externally updated school' } } } } })
+  await save({ ...settings, profile: { ...settings.profile, nickname: 'Competing nickname', schoolAlias: 'Externally updated school' } })
+  const conflict = await saveManual(fs, request, NOW + 1, signal)
+  expect(conflict).toMatchObject({ status: 'conflict', current: { 'profile:nickname': 'Competing nickname' } })
+  expect(request.intent).toMatchObject({ command: { profile: { nickname: 'New nickname' } } })
+  expect((await readWorkspace(fs, signal)).workspace!.settings.profile.nickname).toBe('Competing nickname')
+})
+
+it('application reads v2 files, bounds observed backups and describes an explicit restore while retaining invalid originals', async () => {
+  const { fs, signal, settings, save, cwd, agent } = await fixture()
+  for (let index = 0; index < 5; index += 1) {
+    await save({ ...settings, profile: { ...settings.profile, nickname: `Observed ${index}` } })
+    expect((await studyStore({ agent, signal }))!.profile.nickname).toBe(`Observed ${index}`)
+  }
+  const backups = await readBackups(fs, signal)
+  expect(backups.issues).toEqual([])
+  expect(backups.backups).toHaveLength(3)
+  await writeFile(join(cwd, '.study/settings.json'), '{broken')
+  await expect(studyStore({ agent, signal })).rejects.toThrow()
+  const invalid = await readWorkspace(fs, signal)
+  const chosen = backups.backups.sort((a, b) => b.backup.observedAt - a.backup.observedAt)[0]!
+  const restore = describeRestore(invalid, chosen)
+  expect(restore).toMatchObject({ status: 'available', destinationPath: '.study/settings.json', preserveCurrent: { path: '.study/settings.json' } })
+  expect(new TextDecoder().decode(await fs.read('.study/settings.json', signal, 100))).toBe('{broken')
+  await mkdir(join(cwd, '.study/blocks'))
+  await writeFile(join(cwd, '.study/blocks/other-term.json'), JSON.stringify({ format: 2, kind: 'block', termId: 'term-2', id: 'other-term', subject: 'math', mode: 'foundation', startedAt: NOW, context: { profile: setup.profile }, questions: [], responses: [], hints: [], assessments: [] }))
+  expect(describeRestore(await readWorkspace(fs, signal), chosen)).toMatchObject({ status: 'blocked', issues: expect.arrayContaining([expect.objectContaining({ rule: 'term-identity' })]) })
+  await rm(join(cwd, '.study/blocks/other-term.json'))
+  const current = (await fs.stat('.study/settings.json', signal))!
+  await fs.write!('.study/restore-original.json', '{broken', { kind: 'createIfAbsent' }, signal)
+  await fs.write!('.study/settings.json', Buffer.from(chosen.backup.bytesBase64, 'base64').toString('utf8'), { kind: 'replaceIfVersion', version: current.version }, signal)
+  expect((await readWorkspace(fs, signal)).status).toBe('valid')
+})
+
+it('profile changes preserve the active school context while a future incompatible school block requires confirmation', async () => {
+  const { fs, signal, settings, save, cwd } = await fixture()
+  await save({ ...settings, materials: [material], courses: [course] })
+  await mkdir(join(cwd, '.study/blocks'))
+  const block = { format: 2, kind: 'block', termId: 'term-1', id: 'school-1', subject: 'math', mode: 'school', startedAt: NOW, context: { profile: setup.profile, material }, questions: [], responses: [], hints: [], assessments: [] }
+  await writeFile(join(cwd, '.study/blocks/school-1.json'), JSON.stringify(block))
+  const read = await readWorkspace(fs, signal)
+  const intent: ManualSaveRequest['intent'] = { kind: 'settings', editedProfileFields: ['grade'], command: { ...setup, profile: { ...setup.profile, grade: 3 } } }
+  const result = await saveManual(fs, { termId: read.workspace!.settings.termId, expectedVersions: read.files.map(({ path, version }) => ({ path, version })), baseline: manualFields(read, intent), intent }, NOW + 1, signal)
+  expect(result).toMatchObject({ status: 'saved', read: { workspace: { blocks: [{ context: { profile: { grade: 2 } } }] } } })
+  await writeFile(join(cwd, '.study/blocks/school-1.json'), JSON.stringify({ ...block, endedAt: NOW + 2 }))
+  await writeFile(join(cwd, '.study/blocks/school-2.json'), JSON.stringify({ ...block, id: 'school-2', startedAt: NOW + 3 }))
+  expect(await readWorkspace(fs, signal)).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ rule: 'future-course-confirmation' })]) })
+})
+
+it.each(['unknown', 'independent'] as const)('confirms paper help from %s and corrects the actual date without replacing the original response', async assistance => {
+  const { fs, signal, cwd } = await fixture()
+  await mkdir(join(cwd, '.study/worksheets'))
+  const sheet = worksheetSchema.parse({ format: 2, kind: 'worksheet', termId: 'term-1', id: 'sheet-1', subject: 'math', origin: 'prepared', createdAt: NOW, context: { profile: setup.profile },
+    items: [{ id: 'q1', objectiveId: 'm2a-o-sub', topic: 'Subtraction', prompt: '18 - 7?', answer: '11', explanation: 'Subtract seven', answerEvidence: '11 + 7 = 18', source: { kind: 'authored', description: 'Original' } }],
+    answerDate: { kind: 'day', day: '2026-10-01', parentConfirmation: 'Actual worksheet day confirmed' },
+    responses: [{ id: 'r1', questionId: 'q1', rawResponse: '11', assistance, source: { kind: 'paper', imagePaths: ['attachments/a.png'], parentConfirmation: 'Parent confirmed original response' } }],
+    assessments: [{ id: 'a1', responseId: 'r1', result: 'correct', assistance, feedback: 'Correct', answerEvidence: 'Verified', assessedAt: NOW, userConfirmation: 'Parent confirmed' }], drafts: [] })
+  await writeFile(join(cwd, '.study/worksheets/sheet-1.json'), JSON.stringify(sheet))
+  const read = await readWorkspace(fs, signal)
+  const intent = { kind: 'worksheet-assessments' as const, worksheetId: sheet.id, assessments: [{ ...sheet.assessments[0]!, assistance: 'hint' as const }], responseUpdates: [{ responseId: sheet.responses[0]!.id, assistance: 'hint' as const, answerDate: { kind: 'day' as const, day: '2026-10-01', parentConfirmation: 'Actual day confirmed' }, userConfirmation: 'A hint was used' }] }
+  const result = await saveManual(fs, { termId: read.workspace!.settings.termId, expectedVersions: read.files.map(({ path, version }) => ({ path, version })), baseline: manualFields(read, intent), intent }, NOW + 1, signal)
+  expect(result).toMatchObject({ status: 'saved', read: { workspace: { worksheets: [{ responses: [{ id: 'r1', rawResponse: '11', assistance: 'hint', answerDate: { kind: 'day', day: '2026-10-01' } }], assessments: [{ responseId: 'r1', assessedAt: NOW, correctedAt: NOW + 1 }] }] } } })
+  const corrected = { kind: 'worksheet-assessments' as const, worksheetId: sheet.id, assessments: [], responseUpdates: [{ responseId: sheet.responses[0]!.id, answerDate: { kind: 'unknown' as const }, userConfirmation: 'Parent confirms the previous date is unverified' }] }
+  const cleared = await saveManual(fs, { termId: read.workspace!.settings.termId, expectedVersions: result.read.files.map(({ path, version }) => ({ path, version })), baseline: manualFields(result.read, corrected), intent: corrected }, NOW + 2, signal)
+  expect(cleared).toMatchObject({ status: 'saved', read: { workspace: { worksheets: [{ responses: [{ id: 'r1', rawResponse: '11', assistance: 'hint', answerDate: { kind: 'unknown' } }] }] } } })
+})
+
+it('rebases unrelated edits, retains current values on relevant conflict and rejects equal-revision old terms', async () => {
+  const { fs, signal, request, settings, save } = await fixture()
+  await save({ ...settings, interests: { tags: ['动物', '足球', '太空'], parentConfirmation: 'Confirmed' } })
+  expect((await saveManual(fs, request, NOW, signal)).status).toBe('saved')
+  const conflicting = await saveManual(fs, { ...request, intent: { kind: 'settings', editedProfileFields: ['nickname'], command: { ...setup, profile: { ...setup.profile, nickname: 'Other nickname' } } } }, NOW, signal)
+  expect(conflicting).toMatchObject({ status: 'conflict', current: { 'profile:nickname': 'New nickname' } })
+  await save({ ...settings, termId: 'term-2' })
+  expect((await saveManual(fs, request, NOW, signal)).status).toBe('old-term')
+})
+
+it('saves course and confirmed progress in one owning file and permits the next current-version save', async () => {
+  const { fs, signal, read } = await fixture()
+  const intent: ManualSaveRequest['intent'] = { kind: 'settings', command: { action: 'configure-course', material, course, progress: { unitId: 'm2a-u-sub', posture: 'keep-up', preview: 'off', pace: 'teaching', parentConfirmation: 'Confirmed together' } } }
+  const result = await saveManual(fs, { termId: read.workspace!.settings.termId, expectedVersions: read.files.map(({ path, version }) => ({ path, version })), baseline: manualFields(read, intent), intent }, NOW, signal)
+  expect(result).toMatchObject({ status: 'saved', read: { workspace: { settings: { revision: 2, courses: [{ progress: { unitId: 'm2a-u-sub' } }] } } } })
+  const next: ManualSaveRequest['intent'] = { kind: 'settings', command: { action: 'interests', tags: ['动物', '足球', '太空'], parentConfirmation: 'Confirmed' } }
+  expect((await saveManual(fs, { termId: result.read.workspace!.settings.termId, expectedVersions: result.read.files.map(({ path, version }) => ({ path, version })), baseline: manualFields(result.read, next), intent: next }, NOW + 1, signal)).status).toBe('saved')
+})
+
+it('validates the complete lesson file beyond the twenty-row application display', async () => {
+  const { fs, signal, cwd, agent } = await fixture()
+  const lessons = Array.from({ length: 21 }, (_, index) => ({ id: `om-${index}`, status: 'ready', createdAt: '2026-10-01T00:00:00.000Z', updatedAt: '2026-10-01T00:01:00.000Z', title: 'Subtraction', requirement: 'Explain subtraction', base: 'http://localhost:3000', url: `http://localhost:3000/classroom/room-${index}` }))
+  await writeFile(join(cwd, '.study/openmaic-lessons.json'), JSON.stringify({ format: 1, lessons }))
+  expect((await readLessonFile(fs, signal)).file!.lessons).toHaveLength(21)
+  expect((await readInteractiveLessons(agent, signal, undefined)).lessons).toHaveLength(20)
+  lessons[20]!.createdAt = '2026-11-02T00:00:00.000Z'
+  lessons[20]!.updatedAt = '2026-11-01T00:00:00.000Z'
+  await writeFile(join(cwd, '.study/openmaic-lessons.json'), JSON.stringify({ format: 1, lessons }))
+  expect(await readLessonFile(fs, signal)).toMatchObject({ status: 'invalid', issues: [expect.objectContaining({ field: 'lessons.20.updatedAt' })] })
+  const shown = await readInteractiveLessons(agent, signal, undefined)
+  expect(shown.error).toBeDefined()
+  expect(shown.lessons.some(lesson => lesson.id === 'om-20')).toBe(false)
+})
+
+it('returns an invalid manual outcome for a bad compound progress command and permits unrelated invalid data', async () => {
+  const { fs, signal, read, request, cwd } = await fixture()
+  const intent: ManualSaveRequest['intent'] = { kind: 'settings', command: { action: 'configure-course', material, course, progress: { unitId: 'absent', posture: 'keep-up', preview: 'off', pace: 'teaching', parentConfirmation: 'Confirmed' } } }
+  const invalid = await saveManual(fs, { ...request, intent, baseline: manualFields(read, intent) }, NOW, signal)
+  expect(invalid.status).toBe('invalid')
+  expect((await readWorkspace(fs, signal)).workspace!.settings.courses).toEqual([])
+  await mkdir(join(cwd, '.study/worksheets'))
+  await writeFile(join(cwd, '.study/worksheets/broken.json'), '{broken')
+  expect((await saveManual(fs, request, NOW, signal)).status).toBe('saved')
+  await writeFile(join(cwd, '.study/settings.json'), '{broken')
+  expect((await saveManual(fs, request, NOW, signal)).status).toBe('invalid')
+})
+
+it.each(['list', 'stat', 'remove'] as const)('keeps valid settings and manual saves usable when backup %s fails', async operation => {
+  const { fs, signal, settings, save, request } = await fixture()
+  for (let index = 0; index < 3; index++) {
+    await save({ ...settings, profile: { ...settings.profile, nickname: `Version ${index}` } })
+    await retainObservedBackups(fs, await readWorkspace(fs, signal), NOW + index, signal)
+  }
+  await save(settings)
+  let stats = 0
+  const failure = new Error('Backup unavailable ' + 'x'.repeat(1000))
+  const failing = {
+    ...fs,
+    async list(path: string, signal: AbortSignal) {
+      if (operation === 'list' && path === '.study/backups') throw failure
+      return fs.list(path, signal)
+    },
+    async stat(path: string, signal: AbortSignal) {
+      if (operation === 'stat' && path.startsWith('.study/backups/') && ++stats > 6) throw failure
+      return fs.stat(path, signal)
+    },
+    async remove(...args: Parameters<NonNullable<typeof fs.remove>>) {
+      if (operation === 'remove') throw failure
+      return fs.remove!(...args)
+    },
+  }
+  const read = await readWorkspace(failing, signal, [])
+  expect(read.status).toBe('valid')
+  const retained = await retainObservedBackups(failing, read, NOW + 4, signal)
+  expect(retained.issues).toContainEqual(expect.objectContaining({ rule: operation === 'list' ? 'backup-list' : 'backup-prune' }))
+  expect(retained.issues.every(issue => issue.correction.length <= 500)).toBe(true)
+  const result = await saveManual(failing, request, NOW + 5, signal)
+  expect(result).toMatchObject({ status: 'saved', read: { workspace: { settings: { profile: { nickname: 'New nickname' } } } } })
+  expect(result.read.backupIssues?.length).toBeGreaterThan(0)
+})
+
+it('propagates cancellation during backup discovery', async () => {
+  const { fs } = await fixture()
+  const abort = new AbortController()
+  const reason = new Error('Closed during discovery')
+  await expect(readBackups({ ...fs, async list() { abort.abort(reason); throw reason } }, abort.signal)).rejects.toBe(reason)
+})
+
+it('bounds physical backups after a published write rejects its version result', async () => {
+  const { fs, signal, cwd } = await fixture()
+  const block = blockSchema.parse({ format: 2, kind: 'block', termId: 'term-1', id: 'current', subject: 'math', mode: 'foundation', startedAt: NOW, endedAt: NOW + 1, context: { profile: setup.profile }, questions: [], responses: [], hints: [], assessments: [] })
+  await mkdir(join(cwd, '.study/blocks'))
+  await writeFile(join(cwd, '.study/blocks/current.json'), JSON.stringify(block))
+  await mkdir(join(cwd, '.study/backups'))
+  await Promise.all(Array.from({ length: 127 }, async (_, index) => {
+    const id = `old-${index}`
+    const bytes = new TextEncoder().encode(JSON.stringify({ ...block, id }))
+    await writeFile(join(cwd, `.study/backups/${id}.json`), JSON.stringify({ format: 1, kind: 'observed-version', sourcePath: `.study/blocks/${id}.json`, targetKey: `old-target-${index}`, version: `old-version-${index}`, observedAt: index, sha256: sourceSha256(bytes), bytesBase64: Buffer.from(bytes).toString('base64') }))
+  }))
+  const read = await readWorkspace(fs, signal)
+  expect(read.status).toBe('valid')
+  let writes = 0
+  const rejecting = { ...fs, async write(...args: Parameters<NonNullable<typeof fs.write>>) {
+    const version = await fs.write!(...args)
+    // LocalFS probes the new version after publication; a probe failure retains the committed bytes.
+    if (++writes === 1) throw new Error('Post-publication version probe failed')
+    return version
+  } }
+  const result = await retainObservedBackups(rejecting, read, NOW, signal)
+  expect(writes).toBe(2)
+  expect(result.issues).toEqual([])
+  expect(result.backups).toHaveLength(128)
+  expect(await fs.list('.study/backups', signal)).toHaveLength(128)
+  const observed = await readBackups(fs, signal)
+  expect(observed.issues).toEqual([])
+  expect(observed.backups.map(entry => entry.path).sort()).toEqual(result.backups.map(entry => entry.path).sort())
+  for (const source of read.files) expect(observed.backups).toContainEqual(expect.objectContaining({ backup: expect.objectContaining({ sourcePath: source.path, sha256: sourceSha256(source.bytes), bytesBase64: Buffer.from(source.bytes).toString('base64') }) }))
+})
+
+it.each(['write-failure', 'cancellation'] as const)('preserves independent backup outcomes on %s', async outcome => {
+  const { fs, signal, cwd } = await fixture()
+  await mkdir(join(cwd, '.study/blocks'))
+  await writeFile(join(cwd, '.study/blocks/current.json'), JSON.stringify({ format: 2, kind: 'block', termId: 'term-1', id: 'current', subject: 'math', mode: 'foundation', startedAt: NOW, endedAt: NOW + 1, context: { profile: setup.profile }, questions: [], responses: [], hints: [], assessments: [] }))
+  const read = await readWorkspace(fs, signal)
+  const abort = new AbortController()
+  const failure = new Error(outcome)
+  let writes = 0
+  const failing = { ...fs, async write(...args: Parameters<NonNullable<typeof fs.write>>) {
+    if (++writes === 1 && outcome === 'write-failure') throw failure
+    const version = await fs.write!(...args)
+    if (outcome === 'cancellation') { abort.abort(failure); throw failure }
+    return version
+  } }
+  const retaining = retainObservedBackups(failing, read, NOW, abort.signal)
+  if (outcome === 'cancellation') {
+    await expect(retaining).rejects.toBe(failure)
+    expect(writes).toBe(1)
+  } else {
+    expect(await retaining).toMatchObject({ backups: [expect.objectContaining({ backup: expect.objectContaining({ sourcePath: '.study/blocks/current.json' }) })], issues: [expect.objectContaining({ path: expect.stringMatching(/^\.study\/backups\//u), rule: 'backup-write' })] })
+    expect(writes).toBe(2)
+  }
+  expect((await readBackups(fs, signal)).backups).toHaveLength(1)
+  expect((await readWorkspace(fs, signal)).status).toBe('valid')
+})
+
+it('keeps published unanswered worksheet content frozen after source deletion across a validator process restart', async () => {
+  const { fs, signal, cwd, read } = await fixture()
+  await mkdir(join(cwd, '.study/worksheets'))
+  const mistake = { id: 'm1', subject: 'math', topic: 'Subtraction', prompt: '18 - 7?', learnerAnswer: '10', correction: '11', explanation: 'Subtract seven', answerEvidence: '11 + 7 = 18', uncertainties: '', objectiveId: 'm2a-o-sub', confirmedAt: NOW, userConfirmation: 'Confirmed' }
+  const collections = { format: 2, kind: 'collections', termId: read.workspace!.settings.termId, mistakes: [mistake], rewards: [] }
+  const sheet = worksheetSchema.parse({ format: 2, kind: 'worksheet', termId: read.workspace!.settings.termId, id: 'published', subject: 'math', origin: 'prepared', createdAt: NOW, context: { profile: setup.profile },
+    items: [{ id: 'q1', objectiveId: 'm2a-o-sub', mistakeId: 'm1', source: { kind: 'mistake', mistakeId: 'm1', description: 'Varied published practice' }, topic: 'Subtraction', prompt: '28 - 7?', answer: '21', explanation: 'Subtract seven', answerEvidence: '21 + 7 = 28' }], responses: [], assessments: [], drafts: [] })
+  await writeFile(join(cwd, '.study/collections.json'), JSON.stringify(collections))
+  await writeFile(join(cwd, '.study/worksheets/published.json'), JSON.stringify(sheet))
+  const published = await readWorkspace(fs, signal)
+  expect(published.status).toBe('valid')
+  await retainObservedBackups(fs, published, NOW, signal)
+  await writeFile(join(cwd, '.study/collections.json'), JSON.stringify({ ...collections, mistakes: [] }))
+  const cli = new URL('../src/cli.ts', import.meta.url)
+  const run = () => promisify(execFile)(process.execPath, ['--import', 'tsx/esm', cli.pathname, 'validate', '--workspace', cwd], { timeout: 30_000 })
+  expect(JSON.parse((await run()).stdout)).toMatchObject({ ok: true, status: 'valid' })
+  const cold = await readWorkspace(nodeStudyFiles(cwd), new AbortController().signal)
+  expect(cold).toMatchObject({ status: 'valid', workspace: { worksheets: [{ id: 'published', responses: [], items: [expect.objectContaining({ prompt: '28 - 7?', objectiveId: 'm2a-o-sub' })] }] } })
+  sheet.items[0]!.prompt = '38 - 7?'
+  await writeFile(join(cwd, '.study/worksheets/published.json'), JSON.stringify(sheet))
+  await expect(run()).rejects.toMatchObject({ code: 1, killed: false })
+  const backups = await readBackups(fs, signal)
+  const { backupVersions } = await import('../src/files/recovery.ts')
+  expect(await readWorkspace(fs, signal, backupVersions(backups.backups))).toMatchObject({ status: 'invalid', issues: expect.arrayContaining([expect.objectContaining({ rule: 'frozen-content' })]) })
+  const invalid = await readWorkspace(nodeStudyFiles(cwd), signal)
+  const chosen = backups.backups.find(entry => entry.backup.sourcePath === '.study/worksheets/published.json')!
+  const damaged = await fs.read(chosen.backup.sourcePath, signal, 100_000)
+  const restore = describeRestore(invalid, chosen)
+  expect(restore).toMatchObject({ status: 'available', destinationPath: chosen.backup.sourcePath, preserveCurrent: { version: invalid.files.find(file => file.path === chosen.backup.sourcePath)!.version, sha256: sourceSha256(damaged) } })
+  expect(await fs.read(chosen.backup.sourcePath, signal, 100_000)).toEqual(damaged)
+  expect(describeRestore(invalid, { ...chosen, backup: { ...chosen.backup, bytesBase64: Buffer.from('{}').toString('base64') } }).status).toBe('blocked')
+  await fs.write!('.study/restore-original.json', new TextDecoder().decode(damaged), { kind: 'createIfAbsent' }, signal)
+  await fs.write!(chosen.backup.sourcePath, Buffer.from(chosen.backup.bytesBase64, 'base64').toString('utf8'), { kind: 'replaceIfVersion', version: restore.preserveCurrent!.version }, signal)
+  expect(sourceSha256(await fs.read('.study/restore-original.json', signal, 100_000))).toBe(restore.preserveCurrent!.sha256)
+  expect(JSON.parse((await run()).stdout)).toMatchObject({ ok: true, status: 'valid' })
+  const restored = await readWorkspace(fs, signal)
+  expect(restored).toMatchObject({ status: 'valid', workspace: { worksheets: [{ id: 'published', termId: read.workspace!.settings.termId, items: [expect.objectContaining({ prompt: '28 - 7?', objectiveId: 'm2a-o-sub' })] }] } })
+  expect(sourceSha256(await fs.read(chosen.backup.sourcePath, signal, 100_000))).toBe(chosen.backup.sha256)
+  const answered = structuredClone(restored.workspace!.worksheets[0]!)
+  answered.responses.push({ id: 'saved-answer', questionId: 'q1', rawResponse: '21', assistance: 'unknown', answerDate: { kind: 'unknown' }, source: { kind: 'unknown' } })
+  await writeFile(join(cwd, chosen.backup.sourcePath), JSON.stringify(answered))
+  const used = await readWorkspace(fs, signal)
+  expect(used.status).toBe('valid')
+  expect(describeRestore(used, chosen)).toMatchObject({ status: 'blocked', issues: expect.arrayContaining([expect.objectContaining({ rule: 'original-response' })]) })
+  const retargeted = structuredClone(answered)
+  retargeted.items[0]!.objectiveId = 'm2a-o-meaning'
+  const bytes = new TextEncoder().encode(JSON.stringify(retargeted))
+  expect(describeRestore(used, { ...chosen, backup: { ...chosen.backup, bytesBase64: Buffer.from(bytes).toString('base64'), sha256: sourceSha256(bytes) } })).toMatchObject({ status: 'blocked', issues: expect.arrayContaining([expect.objectContaining({ rule: 'frozen-content' })]) })
+  const orphan = structuredClone(answered)
+  orphan.responses[0]!.questionId = 'missing-question'
+  const orphanBytes = new TextEncoder().encode(JSON.stringify(orphan))
+  expect(describeRestore(used, { ...chosen, backup: { ...chosen.backup, bytesBase64: Buffer.from(orphanBytes).toString('base64'), sha256: sourceSha256(orphanBytes) } })).toMatchObject({ status: 'blocked', issues: expect.arrayContaining([expect.objectContaining({ rule: 'question-reference' })]) })
+})

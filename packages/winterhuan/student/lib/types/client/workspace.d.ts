@@ -1,7 +1,7 @@
-import type { Dashboard, MistakeStatus } from '../dashboard.ts';
-import type { TimeStatus } from '../learning/status.ts';
-import type { Command } from '../schema.ts';
-/** Query identity for one visible workbench: the open tab, notebook page, subject, notebook filter, an optional knowledge-map scope and an optional check-in scope. */
+import type { ResourceSnapshot } from '@deepseek-ai/dsh-client-resources/client';
+import type { MistakeStatus } from '../dashboard.ts';
+import type { StudentQueryResult, StudentSessionId, StudentJsonValue } from '../types.ts';
+/** One dashboard selection; browsing and diagnostic ranges do not change the active block. */
 export interface StudyQuery {
     tab: 'today' | 'map' | 'mistakes' | 'parent';
     offset: number;
@@ -13,15 +13,11 @@ export interface StudyQuery {
     diagTerm?: 'first' | 'second';
     diagUnit?: string;
 }
-/** One conditional poll response: evidence unchanged, only the time-derived state moved. */
-type PollResponse = Dashboard & {
-    error?: string;
-    unchanged?: boolean;
-    time?: TimeStatus;
-};
-/** Poll visible workbenches; preserve data on failure and discard obsolete responses. */
-export declare function useStudy(sessionId: string, visible: boolean, networkError: string, query: StudyQuery): {
-    data: {
+/** Native resource hook supplied by the enclosing DSH slot. */
+export type UseStudentResource = (address: string) => ResourceSnapshot<StudentQueryResult>;
+/** Read validated dashboard and stable learning identities through the shared resource lifetime. */
+export declare function useStudy(sessionId: StudentSessionId, visible: boolean, networkError: string, query: StudyQuery, useResource: UseStudentResource): {
+    data: (StudentJsonValue & ({
         serverNow: number;
         revision: number;
         study: null;
@@ -269,6 +265,22 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 objectiveId?: string | undefined;
                 imagePath?: string | undefined;
             }[];
+            workbookResults: {
+                id: string;
+                subject: "chinese" | "math" | "english";
+                prompt: string;
+                outcome: "stuck" | "hinted" | "independent-wrong" | "independent-correct";
+                uncertainties: string;
+                receivedAt: number;
+                confirmedAt: number;
+                userConfirmation: string;
+                response?: string | undefined;
+                objectiveId?: string | undefined;
+                imagePath?: string | undefined;
+                correction?: string | undefined;
+                explanation?: string | undefined;
+                answerEvidence?: string | undefined;
+            }[];
             teachingQueue: {
                 id: string;
                 subject: "chinese" | "math" | "english";
@@ -279,15 +291,15 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
             }[];
             recentAttempts: {
                 result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
-                assistance: "hint" | "independent" | "worked-example";
+                assistance: "unknown" | "independent" | "hint" | "worked-example";
                 id: string;
                 sessionId: string;
                 subject: "chinese" | "math" | "english";
                 topic: string;
                 prompt: string;
                 response: string;
-                feedback: string;
                 answerEvidence: string;
+                feedback: string;
                 at: number;
                 mistakeId?: string | undefined;
                 objectiveId?: string | undefined;
@@ -487,6 +499,8 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 } | undefined;
                 materialId?: string | undefined;
                 rawResponse?: string | undefined;
+                questionId?: string | undefined;
+                responseId?: string | undefined;
             }[];
             recommendation: {
                 kind: "review" | "practice" | "diagnose" | "learn" | "preview" | "hold";
@@ -506,7 +520,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 id: string;
                 subject: "chinese" | "math" | "english";
                 title: string;
-                level: "due" | "mastered" | "practising" | "weak" | "stalled" | "untouched";
+                level: "practising" | "due" | "weak" | "stalled" | "mastered" | "untouched";
                 priority: number;
                 reasons: import("../learning/mastery.ts").InsightReason[];
             }[];
@@ -561,10 +575,11 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 objectiveTitle: string;
                 open: boolean;
                 results: {
+                    errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                     itemId: string;
                     result: "correct" | "partial" | "incorrect" | "unassessed";
                     response: string;
-                    assistance: "hint" | "independent" | "worked-example";
+                    assistance: "unknown" | "independent" | "hint" | "worked-example";
                 }[];
                 drafts: {
                     confidence?: "high" | "low";
@@ -572,7 +587,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                     itemId: string;
                     response: string;
                     result: "correct" | "partial" | "incorrect" | "unassessed";
-                    assistance: "hint" | "independent" | "worked-example";
+                    assistance: "unknown" | "independent" | "hint" | "worked-example";
                     uncertainties: string;
                 }[];
                 sources: {
@@ -876,7 +891,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
             active: {
                 id: string;
                 subject: "chinese" | "math" | "english";
-                mode: "foundation" | "school" | "review" | "explore" | "diagnose";
+                mode: "review" | "foundation" | "school" | "explore" | "diagnose";
                 startedAt: number;
                 intensity?: "light" | "standard" | "deep" | undefined;
                 endedAt?: number | undefined;
@@ -907,7 +922,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                     confirmedAt: number;
                     posture: "keep-up" | "catch-up";
                     preview: boolean;
-                    pace: "review" | "teaching";
+                    pace: "teaching" | "review";
                 } | undefined;
             }[];
             unconfirmedSubjects: string[];
@@ -928,7 +943,7 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 hintLevel: number;
                 choices?: string[] | undefined;
                 steps?: string[] | undefined;
-                phase?: "demo" | "guide" | "try" | "vary" | undefined;
+                phase?: "demo" | "try" | "vary" | "guide" | undefined;
                 variant?: "numeric" | "context" | "reasoning" | undefined;
                 mistakeId?: string | undefined;
                 objectiveId?: string | undefined;
@@ -1128,19 +1143,20 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 response?: string | undefined;
                 rawResponse?: string | undefined;
                 answeredAt?: number | undefined;
+                responseId?: string | undefined;
                 stuck?: boolean | undefined;
             } | null;
             feedback: {
                 result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
-                assistance: "hint" | "independent" | "worked-example";
+                assistance: "unknown" | "independent" | "hint" | "worked-example";
                 id: string;
                 sessionId: string;
                 subject: "chinese" | "math" | "english";
                 topic: string;
                 prompt: string;
                 response: string;
-                feedback: string;
                 answerEvidence: string;
+                feedback: string;
                 at: number;
                 mistakeId?: string | undefined;
                 objectiveId?: string | undefined;
@@ -1340,6 +1356,8 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
                 } | undefined;
                 materialId?: string | undefined;
                 rawResponse?: string | undefined;
+                questionId?: string | undefined;
+                responseId?: string | undefined;
             } | null;
             revision: number;
             profile: {
@@ -1356,12 +1374,12 @@ export declare function useStudy(sessionId: string, visible: boolean, networkErr
             interestFocus: string;
         };
         interactiveLessons: import("../openmaic.ts").InteractiveLessons;
-    } | undefined;
+    })) | undefined;
+    context: StudentJsonValue | undefined;
+    termId: string | undefined;
+    value: StudentQueryResult | undefined;
+    stale: boolean;
     error: string;
-    busy: boolean;
-    reload: () => Promise<void>;
-    change: (command: Command, revision?: number) => Promise<PollResponse>;
     offset: import("react").MutableRefObject<number>;
 };
-export {};
 //# sourceMappingURL=workspace.d.ts.map

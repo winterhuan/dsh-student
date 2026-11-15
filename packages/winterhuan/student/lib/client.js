@@ -7,8 +7,11 @@ window.__ModuleLoader__.load({
 		let react_jsx_runtime = require("react/jsx-runtime");
 		let _deepseek_ai_dsh_client_ui_primitives = require("@deepseek-ai/dsh-client-ui-primitives");
 		let react = require("react");
-		let react_dom = require("react-dom");
+		let zod = require("zod");
 		let _deepseek_ai_dsh_client_store = require("@deepseek-ai/dsh-client-store");
+		let _deepseek_ai_dsh_api_gateway_client = require("@deepseek-ai/dsh-api-gateway/client");
+		require("@deepseek-ai/cordis");
+		let react_dom = require("react-dom");
 		//#region \0dsh-global-css:/Users/winter/dsh-creative/plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
 		const css$1 = ".student-desk{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font:13px/1.5 var(--dsw-font-family);flex-direction:column;gap:12px;padding:0 12px 20px;display:flex;overflow:auto}.student-top{z-index:2;background:var(--dsw-alias-bg-base);border-bottom:1px solid var(--dsw-alias-border-l2);flex-direction:column;gap:8px;margin:0 -12px;padding:10px 12px 8px;display:flex;position:sticky;top:0}.student-toolbar{align-items:center;gap:8px;display:flex}.student-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;display:grid}.student-subjects{background:var(--dsw-alias-bg-layer-1);border-radius:8px;flex:1;gap:2px;padding:2px;display:flex}.student-subjects button{background:0 0;border:0;flex:1}.student-quiet{background:0 0;border:0;flex:none;padding:6px 8px}.student-desk section{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);border-radius:10px;flex-direction:column;gap:8px;padding:12px;display:flex}.student-desk details{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:10px;padding:10px 12px}.student-desk h3{margin:0;font-size:13px;font-weight:500}.student-desk p{overflow-wrap:anywhere;white-space:pre-wrap;margin:0}.student-desk form,.student-desk fieldset,.student-desk label{flex-direction:column;gap:8px;min-width:0;display:flex}.student-desk fieldset{border:0;margin:0;padding:0}.student-desk button,.student-desk input,.student-desk select,.student-desk textarea{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);box-sizing:border-box;border-radius:8px;min-width:0;max-width:100%;padding:8px}.student-desk button{cursor:pointer}.student-desk .student-subjects button,.student-desk .student-quiet{background:0 0;border:0}.student-desk button:hover:enabled:not([aria-pressed=true]):not(.student-primary){background:var(--dsw-alias-button-ghost-active-fill)}.student-desk .student-tabs button[aria-pressed=true],.student-desk .student-views button[aria-pressed=true],.student-desk .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-desk .student-tabs button[aria-pressed=true]:hover:enabled,.student-desk .student-views button[aria-pressed=true]:hover:enabled,.student-desk .student-primary:hover:enabled{background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-foreground)}.student-desk .student-subjects button[aria-pressed=true],.student-desk .student-segments button[aria-pressed=true],.student-desk .student-segments button[aria-checked=true]{background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);box-shadow:inset 0 0 0 1px var(--dsw-alias-state-business-primary)}.student-desk :disabled{opacity:.6;cursor:default}.student-desk :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.student-desk textarea{resize:vertical;min-height:72px}.student-desk .student-check{flex-direction:row;align-items:flex-start}.student-desk .student-check input{flex:none}.student-desk img{object-fit:contain;background:var(--dsw-alias-bg-base);border-radius:8px;width:100%;max-height:240px}.student-status{gap:6px}.student-desk .student-question{background:var(--dsw-alias-bg-base);border-radius:8px;padding:12px;font-size:16px;line-height:1.45}.student-desk summary{cursor:pointer;overflow-wrap:anywhere;font-weight:500}.student-desk .student-pages{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-plan{border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-1))}.student-desk details>details,.student-desk details>div,.student-desk details>p{margin-top:8px}.student-muted{color:var(--dsw-alias-label-secondary)}.student-unit{border-top:1px solid var(--dsw-alias-border-l2);padding-top:8px}.student-choices{flex-direction:column;gap:8px;display:flex}.student-choices button{text-align:left;width:100%;padding:12px 14px;font-size:15px}.student-result{font-size:15px;font-weight:500}.student-scope{flex-wrap:wrap;align-items:flex-end;gap:8px;display:flex}.student-scope label{flex:120px}.student-segments{flex-wrap:wrap;gap:6px;display:flex}.student-desk .student-grade{border-top:1px solid var(--dsw-alias-border-l2);padding:8px 0}.student-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px;height:8px;display:flex;overflow:hidden}.student-bar span{height:100%;display:block}.student-level-mastered,.student-fill-mastered{background:var(--dsw-alias-state-success-primary)}.student-level-practising,.student-fill-practising{background:var(--dsw-alias-state-business-primary)}.student-level-stalled,.student-fill-stalled{background:var(--dsw-alias-state-warn-primary)}.student-level-weak,.student-fill-weak{background:var(--dsw-alias-state-error-primary)}.student-level-due,.student-fill-due{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, var(--dsw-alias-state-warn-primary))}.student-level-untouched,.student-fill-untouched{background:var(--dsw-alias-label-tertiary)}.student-legend{flex-wrap:wrap;gap:8px 12px;display:flex}.student-dot{vertical-align:middle;border-radius:50%;width:8px;height:8px;margin-right:4px;display:inline-block}.student-chips{flex-direction:column;gap:6px;display:flex}.student-chip{text-align:left;border-radius:8px;align-items:center;gap:6px;width:100%;padding:8px 10px;display:flex}.student-views{grid-template-columns:1fr 1fr;gap:6px;display:grid}.student-pair{grid-template-columns:1fr 1fr;gap:8px;display:grid}.student-mastery{align-items:center;gap:6px;display:flex}.student-mastery span{border-radius:50%;width:10px;height:10px}.student-simon{flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-simon li{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 8px}.student-simon-done{opacity:.7}.student-simon-current{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, var(--dsw-alias-bg-base));font-weight:500}.student-steps{flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-map-inline{border:1px solid var(--dsw-alias-border-l2);border-left:3px solid var(--dsw-alias-state-business-primary);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base));border-radius:8px;margin:4px 0 8px;padding:8px 10px}.student-map-links{margin-top:8px}.student-mindmap-unit{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:8px;margin:8px 0;padding:10px}.student-mindmap-unit>summary{cursor:pointer;font-weight:500}.student-mindmap-branch{border-left:2px solid var(--dsw-alias-border-l2);flex-direction:column;gap:6px;margin:8px 0 0;padding:0 0 0 12px;list-style:none;display:flex}.student-mindmap-node{flex-direction:column;gap:4px;display:flex}.student-mindmap-concept{text-align:left;align-items:center;gap:6px;width:100%;display:flex}.student-mindmap-concept[aria-pressed=true]{background:var(--dsw-alias-bg-layer-2,transparent)}.student-mindmap-concept.student-level-mastered{box-shadow:inset 3px 0 0 var(--dsw-alias-state-success-primary)}.student-mindmap-concept.student-level-practising{box-shadow:inset 3px 0 0 var(--dsw-alias-state-business-primary)}.student-mindmap-concept.student-level-stalled{box-shadow:inset 3px 0 0 var(--dsw-alias-state-warn-primary)}.student-mindmap-concept.student-level-weak,.student-mindmap-concept.student-level-due{box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}.student-figure svg{width:100%;height:auto;max-height:220px;color:var(--dsw-alias-label-primary)}.student-figure circle,.student-figure rect,.student-figure line,.student-figure path,.student-figure polyline,.student-figure polygon{fill:none;stroke:currentColor;stroke-width:1.4px}.student-figure text{fill:currentColor;stroke:none}.student-figure .student-fill{fill:currentColor}.student-desk progress{width:100%;height:8px}.student-desk progress::-webkit-progress-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px}.student-desk progress::-webkit-progress-value{background:var(--dsw-alias-state-business-primary);border-radius:999px}.student-sheet-portal{font:13px/1.5 var(--dsw-font-family)}.student-sheet-portal button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);cursor:pointer;border-radius:8px;padding:8px}.student-sheet-portal .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-sheet-portal .student-quiet{background:0 0;border:0}.student-sheet-backdrop{z-index:1000;box-sizing:border-box;background:color-mix(in srgb, var(--dsw-alias-label-primary) 32%, transparent);justify-content:center;align-items:flex-start;padding:32px 16px;display:flex;position:fixed;inset:0;overflow:auto}.student-sheet-dialog{box-sizing:border-box;background:var(--dsw-alias-bg-base);border-radius:10px;flex-direction:column;gap:8px;width:min(720px,100%);padding:12px;display:flex}.student-sheet-toolbar{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.student-sheet-toolbar .student-muted{flex:200px;margin:0}.student-sheet-scroll{overflow:auto}.student-sheet{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);color:#333;font:14px/1.6 var(--dsw-font-family);background:#fff;border-radius:8px;flex-direction:column;gap:12px;padding:24px;display:flex}.student-url{user-select:text;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.student-sheet h2{text-align:center;margin:0;font-size:18px;font-weight:500}.student-sheet-meta{text-align:center;margin:0;font-size:12px}.student-sheet-item{break-inside:avoid;flex-direction:column;gap:8px;display:flex}.student-sheet-item>p{white-space:pre-wrap;margin:0}.student-sheet .student-figure svg{color:#333;width:100%;height:auto;max-height:260px}.student-sheet-lines{flex-direction:column;display:flex}.student-sheet-rule{border-bottom:1px solid #b9c0c7;height:22px}.student-sheet-box{border:1px dashed #b9c0c7;border-radius:4px;height:84px}@page{size:A4;margin:12mm 14mm}@media print{body>:not(.student-sheet-portal){display:none!important}.student-sheet-backdrop{background:0 0;padding:0;display:block;position:static;overflow:visible}.student-sheet-dialog{display:contents}.student-sheet-toolbar{display:none}.student-sheet-scroll{overflow:visible}.student-sheet{border:0;border-radius:0;width:100%;padding:0}.student-sheet-item{page-break-inside:avoid}}";
 		const tagId$1 = "@winterhuan/dsh-student/plugin.css";
@@ -62,6 +65,8 @@ window.__ModuleLoader__.load({
 		//#region lib/types/client/locales.js
 		const NS = "studentDesk";
 		const zh = {
+			"legacyFilesHelp": "已有旧版学习档案。请在辅导对话中让助手检查迁移方案，再由家长确认迁移；原档案会保留",
+			"unavailableFilesHelp": "当前学期档案尚无法完整读取，请在辅导对话中检查档案状态并修复",
 			"workbenchHelp": "选择孩子的工作区，学习记录和辅导对话一起打开",
 			"learnerWorkspace": "学习工作区",
 			"learningConversation": "学习对话",
@@ -77,6 +82,50 @@ window.__ModuleLoader__.load({
 			"noLearnerWorkspace": "请先在左侧创建孩子的学习工作区，再回来开始学习",
 			"welcomeWorkbench": "从这里开始今天的学习",
 			"createLearningHelp": "新建学习对话后，家长先确认学生资料，再选择科目开始学习",
+			"feedback": "评估反馈",
+			"manualWorksheet": "可选：修订已保存练习记录",
+			"manualWorksheetHelp": "保留原答和题目依据；仅保存你修改的评估、帮助或实际作答日期",
+			"assistanceLabel": "作答时使用的帮助",
+			"actualAnswerDay": "实际作答日期",
+			"worksheetAnswerDay": "整张练习单作答日期",
+			"worksheetAnswerDayHelp": "未单独填写日期的回答使用此日期；逐题日期或待核对覆盖值保持不变",
+			"answerDayHelp": "填写家长确认的实际日期；留空表示日期待核对，不使用照片接收或评分日期",
+			"workedExampleHelp": "看过示范",
+			"assistanceUnknown": "帮助情况待核对",
+			"staleData": "当前档案无法核验，保留的内容可能已过期；请通过对话检查并修复",
+			"submissionStatus": "发送与保存进度",
+			"messageAdmitted": "原生消息已接收",
+			"messageUnknown": "消息是否接收尚不确定，请先检查",
+			"answerSaved": "原始回答已核验保存",
+			"answerPending": "原始回答等待核验",
+			"assessmentSaved": "评估已核验保存",
+			"assessmentPending": "评估等待核验",
+			"inspectSubmission": "检查原消息与保存结果",
+			"switchLearning": "切换学习",
+			"setupConversation": "通过对话设置学习档案",
+			"setupIntent": "请和家长核对昵称、地区、年级、学期、学年与学制，确认后保存新的学期学习档案。基础学习不必等待校内课程配置。",
+			"parentPractice": "待处理与练习记录",
+			"parentProgress": "知识与进度",
+			"parentProfile": "档案与总结",
+			"manualForms": "可选：手动填写并保存",
+			"sendIntent": "交给对话处理",
+			"intentAdmitted": "请求已交给对话；档案保存以核验结果为准",
+			"switchBlock": "切换学习，保留未完成回答",
+			"answerDateUnknown": "作答日期待核对",
+			"pendingFacts": "待核对的作答记录",
+			"answerSourceUnknown": "作答来源待核对",
+			"answerBasisUnknown": "题目依据待核对",
+			"answerGoalUnknown": "学习目标待核对",
+			"currentValues": "当前已保存值",
+			"manualConflict": "相关内容已更新，草稿已保留；请核对当前值后决定",
+			"manualOldTerm": "这是旧学期草稿，不能写入当前学期",
+			"manualInvalid": "当前档案无法核验，请先通过对话修复",
+			"useCurrentValues": "采用当前值",
+			"keepDraft": "核对后保留我的改动",
+			"manualSummary": "手动保存直接更新已核验档案；对话设置仍是主要入口",
+			"profileConversation": "通过对话调整档案",
+			"courseConversation": "通过对话确认课程与学校进度",
+			"archiveConversation": "通过对话归档学期",
 			"chooseSchoolYear": "请选择学年",
 			"schoolYearHelp": "学年跨两个年份，例如 2026–2027；请按孩子实际就读学年选择",
 			"schoolAliasHelp": "可填写“二年级课程”等备注，无需官方代码或真实校名",
@@ -407,6 +456,7 @@ window.__ModuleLoader__.load({
 			"assistIndependent": "独立完成",
 			"assistHint": "提示后完成",
 			"assistWorked": "示范后完成",
+			"assistUnknown": "帮助程度待确认",
 			"checkin": "学习摸底",
 			"checkinHelp": "摸底是重复进行的小样本探查：每科按单元轮流抽取未探查、久未练习和需要抽查的目标，结果直接进入掌握状态和薄弱点。不计分、不排名",
 			"coverage": "探查覆盖",
@@ -559,6 +609,8 @@ window.__ModuleLoader__.load({
 			"openmaicEffective": "当前使用"
 		};
 		const en = {
+			"legacyFilesHelp": "Existing learning records use the previous format. Ask the tutor to inspect a migration plan, then let a parent confirm migration; the originals are retained",
+			"unavailableFilesHelp": "The current term records cannot be read in full. Ask the tutor to check the record status and repair it",
 			"workbenchHelp": "Choose the learner’s workspace to open study records and tutoring together",
 			"learnerWorkspace": "Learning workspace",
 			"learningConversation": "Learning conversation",
@@ -574,11 +626,55 @@ window.__ModuleLoader__.load({
 			"noLearnerWorkspace": "Create the learner’s workspace in the sidebar, then return to start learning",
 			"welcomeWorkbench": "Start today’s learning here",
 			"createLearningHelp": "Create a learning conversation, confirm the learner’s profile, then choose a subject to begin",
+			"feedback": "Assessment feedback",
+			"manualWorksheet": "Optional: correct saved worksheet records",
+			"manualWorksheetHelp": "Keep the original answer and question basis; save only the assessment, assistance or actual answer day you edit",
+			"assistanceLabel": "Help used",
+			"actualAnswerDay": "Actual answer day",
+			"worksheetAnswerDay": "Worksheet answer day",
+			"worksheetAnswerDayHelp": "Responses without their own date use this day; per-response dates and unknown overrides stay unchanged",
+			"answerDayHelp": "Enter the parent-confirmed actual day. An empty field means unknown; receipt and assessment dates do not supply it",
+			"workedExampleHelp": "Used a worked example",
+			"assistanceUnknown": "Assistance awaiting verification",
+			"staleData": "Current records could not be verified. Retained content may be stale; inspect and repair through chat",
+			"submissionStatus": "Message and saving status",
+			"messageAdmitted": "Native message admitted",
+			"messageUnknown": "Message admission is uncertain; inspect first",
+			"answerSaved": "Original answer verified and saved",
+			"answerPending": "Original answer awaiting verification",
+			"assessmentSaved": "Assessment verified and saved",
+			"assessmentPending": "Assessment awaiting verification",
+			"inspectSubmission": "Inspect original message and saved result",
+			"switchLearning": "Switch learning",
+			"setupConversation": "Set up learning through chat",
+			"setupIntent": "Confirm nickname, region, grade, term, school year and school system with the parent, then save a new learning term. Foundation learning can begin before school alignment.",
+			"parentPractice": "Pending work and practice",
+			"parentProgress": "Knowledge and progress",
+			"parentProfile": "Profile and summary",
+			"manualForms": "Optional: edit and save manually",
+			"sendIntent": "Send to chat",
+			"intentAdmitted": "Request sent to chat; saved records require independent verification",
+			"switchBlock": "Switch learning and keep unfinished answers",
+			"answerDateUnknown": "Answer date awaiting verification",
+			"pendingFacts": "Response facts awaiting verification",
+			"answerSourceUnknown": "Answer source awaiting verification",
+			"answerBasisUnknown": "Question basis awaiting verification",
+			"answerGoalUnknown": "Learning goal awaiting verification",
+			"currentValues": "Current saved values",
+			"manualConflict": "Relevant values changed. Your draft is retained; compare the current values before continuing",
+			"manualOldTerm": "This draft belongs to an earlier term and cannot change the current term",
+			"manualInvalid": "Current records cannot be verified; repair them through chat first",
+			"useCurrentValues": "Use current values",
+			"keepDraft": "Keep my edits after comparison",
+			"manualSummary": "Manual saving updates verified records directly; chat remains the main setup path",
+			"profileConversation": "Update profile through chat",
+			"courseConversation": "Confirm course and school progress through chat",
+			"archiveConversation": "Archive term through chat",
 			"chooseSchoolYear": "Select a school year",
 			"schoolYearHelp": "A school year spans two years, for example 2026–2027. Choose the learner’s actual school year",
 			"schoolAliasHelp": "An optional label such as “Grade two course”; no official code or real school name is needed",
 			"todayStars": "Stars today",
-			"otherSubjectActive": "The open block is {subject}. Starting here will close it first",
+			"otherSubjectActive": "The open block is {subject}. Browsing keeps its question; use Switch learning to change blocks",
 			"chatHelp": "Answer here, or review a microphone transcript in chat before sending it. Explanations and feedback appear in chat",
 			"learningMethod": "Learning method",
 			"chineseMethod": "For characters, read radicals then check them in words. For reading, mark evidence sentences. For writing, say who–what–how before writing.",
@@ -904,6 +1000,7 @@ window.__ModuleLoader__.load({
 			"assistIndependent": "Independent",
 			"assistHint": "With a hint",
 			"assistWorked": "After a worked example",
+			"assistUnknown": "Assistance pending confirmation",
 			"checkin": "Check-ins",
 			"checkinHelp": "A check-in is a small recurring probe: each subject samples untouched, stalled and spot-check goals across units, and the results feed mastery and weak points directly. No score, no ranking",
 			"coverage": "Coverage",
@@ -1057,6 +1154,14 @@ window.__ModuleLoader__.load({
 		};
 		//#endregion
 		//#region lib/types/client/bridge.js
+		/** A failed native call retains its request identity for deliberate inspection. */
+		var StudySubmissionError = class extends Error {
+			requestId;
+			constructor(requestId, reason) {
+				super(reason instanceof Error ? reason.message : String(reason));
+				this.requestId = requestId;
+			}
+		};
 		/** Register the native submission echo without changing the user's composer draft. */
 		function tutorBridge(context, sessionId, unavailable, failed) {
 			return async (text, photo) => {
@@ -1084,65 +1189,4094 @@ window.__ModuleLoader__.load({
 						name: photo.name
 					}] : []], "queue", void 0, submission.requestId);
 					if (!result.ok) throw new Error(result.error.message || failed);
+					return {
+						requestId: submission.requestId,
+						admission: "accepted"
+					};
 				} catch (error) {
 					submission.abandon();
-					throw error;
+					throw new StudySubmissionError(submission.requestId, error);
 				}
 			};
+		}
+		//#endregion
+		//#region ../../../node_modules/.pnpm/@deepseek-ai+dsh-typert-protocol@0.2.2-rc.1_@deepseek-ai+cordis@4.1.0/node_modules/@deepseek-ai/dsh-typert-protocol/lib/types/remote-info.js
+		/** Lazy assembly of generated Remote definitions using caller-supplied Zod; no runtime imports. */
+		/**
+		* Retain one generated definition per endpoint without constructing parsers or projections.
+		* The class instance builds its shared descriptor/method index on first access;
+		* input schemas and JSON Schema projections are cached only when requested.
+		* @param spec - compiler-produced method facts and Zod factories.
+		* @param zod - the generated artifact's Zod runtime for named-input parsers.
+		* @returns a lazy, mountable info instance with no registration or transport effects.
+		*/
+		function createTypertRemoteInfo(spec, zod) {
+			return new RemoteInfo(spec, zod);
+		}
+		var RemoteInfo = class {
+			spec;
+			zod;
+			index;
+			constructor(spec, zod) {
+				this.spec = spec;
+				this.zod = zod;
+			}
+			get package() {
+				return this.spec.package;
+			}
+			get descriptors() {
+				return this.resolve().descriptors;
+			}
+			get methods() {
+				return this.resolve().methods;
+			}
+			resolve() {
+				if (this.index !== void 0) return this.index;
+				const zod = this.zod;
+				const descriptors = [];
+				const methods = Object.create(null);
+				for (const [endpoint, definition] of Object.entries(this.spec.methods)) {
+					const separator = endpoint.indexOf("/");
+					const namespace = endpoint.slice(0, separator);
+					const method = endpoint.slice(separator + 1);
+					const parameters = definition.parameters.map((parameter) => ({
+						...parameter,
+						wire: parameter.wire ?? parameter.name
+					}));
+					const descriptor = {
+						...definition,
+						id: `${this.spec.package}#${endpoint}`,
+						namespace,
+						method,
+						parameters,
+						result: definition.result.description === void 0 ? definition.result : new ResultValue(definition.result)
+					};
+					if (definition.invocation.kind === "direct") {
+						const inputs = [];
+						methods[endpoint] = Object.assign(descriptor, {
+							input(options) {
+								const strict = options?.strict === true;
+								return inputs[strict ? 1 : 0] ??= new NamedInput(parameters, strict, zod);
+							},
+							invoke(remote, input, signal) {
+								const named = input;
+								const values = parameters.map((parameter) => named[parameter.wire]);
+								if (definition.cancellation !== void 0) values.push(signal);
+								const receiver = Reflect.get(remote, namespace);
+								return Reflect.get(receiver, method).apply(receiver, values);
+							}
+						});
+					}
+					descriptors.push(descriptor);
+				}
+				return this.index = {
+					descriptors,
+					methods
+				};
+			}
+		};
+		function optional(parameter) {
+			return parameter.source === "json" && parameter.acceptsUndefined === true;
+		}
+		var NamedInput = class {
+			parameters;
+			strict;
+			zod;
+			schema;
+			projection;
+			constructor(parameters, strict, zod) {
+				this.parameters = parameters;
+				this.strict = strict;
+				this.zod = zod;
+			}
+			codec(parameter) {
+				return this.strict ? parameter.strictCodec : parameter.codec;
+			}
+			create = () => this.schema ??= this.zod.strictObject(Object.fromEntries(this.parameters.map((parameter) => {
+				const value = this.codec(parameter).create();
+				return [parameter.wire, optional(parameter) ? value.optional() : value.nonoptional()];
+			})));
+			get jsonSchema() {
+				return this.project().jsonSchema;
+			}
+			get jsonSchemaError() {
+				return this.project().jsonSchemaError;
+			}
+			project() {
+				if (this.projection !== void 0) return this.projection;
+				const unavailable = this.parameters.find((parameter) => this.codec(parameter).jsonSchema === void 0);
+				if (unavailable !== void 0) return this.projection = { jsonSchemaError: this.codec(unavailable).jsonSchemaError ?? `No JSON Schema for parameter ${unavailable.wire}` };
+				return this.projection = { jsonSchema: {
+					type: "object",
+					properties: Object.fromEntries(this.parameters.map((parameter) => [parameter.wire, {
+						...this.codec(parameter).jsonSchema,
+						...parameter.description === void 0 ? {} : { description: parameter.description }
+					}])),
+					required: this.parameters.filter((parameter) => !optional(parameter)).map((parameter) => parameter.wire),
+					additionalProperties: false
+				} };
+			}
+		};
+		var ResultValue = class {
+			spec;
+			projection;
+			constructor(spec) {
+				this.spec = spec;
+			}
+			get mode() {
+				return this.spec.mode;
+			}
+			get typeSymbol() {
+				return this.spec.typeSymbol;
+			}
+			get create() {
+				return this.spec.create;
+			}
+			get decode() {
+				return this.spec.decode;
+			}
+			get encode() {
+				return this.spec.encode;
+			}
+			get description() {
+				return this.spec.description;
+			}
+			get jsonSchemaError() {
+				return this.spec.jsonSchemaError;
+			}
+			get jsonSchema() {
+				if (this.projection === void 0) {
+					const schema = this.spec.jsonSchema;
+					this.projection = { value: schema === void 0 ? void 0 : {
+						...schema,
+						description: this.spec.description
+					} };
+				}
+				return this.projection.value;
+			}
+		};
+		//#endregion
+		//#region lib/typert.remote-client.js
+		let StudentJsonValueRemoteCodec$schema$value;
+		const StudentJsonValueRemoteCodec$schema = () => StudentJsonValueRemoteCodec$schema$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema()))
+		]);
+		let StudentJsonValueRemoteCodec$schema2$value;
+		const StudentJsonValueRemoteCodec$schema2 = () => StudentJsonValueRemoteCodec$schema2$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2()))
+		]);
+		let StudentJsonValueRemoteCodec$schema3$value;
+		const StudentJsonValueRemoteCodec$schema3 = () => StudentJsonValueRemoteCodec$schema3$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema3())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema3()))
+		]);
+		let StudentJsonValueRemoteCodec$schema4$value;
+		const StudentJsonValueRemoteCodec$schema4 = () => StudentJsonValueRemoteCodec$schema4$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4()))
+		]);
+		let StudentJsonValueRemoteCodec$schema5$value;
+		const StudentJsonValueRemoteCodec$schema5 = () => StudentJsonValueRemoteCodec$schema5$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5()))
+		]);
+		let _winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema$value;
+		const _winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema = () => _winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_inspectSubmission_parameter_1$schema$value;
+		const _winterhuan_dsh_student_student_inspectSubmission_parameter_1$schema = () => _winterhuan_dsh_student_student_inspectSubmission_parameter_1$schema$value ??= zod.z.object({
+			"requestId": zod.z.string(),
+			"response": zod.z.union([zod.z.undefined(), zod.z.object({
+				"termId": zod.z.string(),
+				"owner": zod.z.union([zod.z.object({
+					"kind": zod.z.literal("block"),
+					"id": zod.z.string()
+				}), zod.z.object({
+					"kind": zod.z.literal("worksheet"),
+					"id": zod.z.string()
+				})]),
+				"responseId": zod.z.string()
+			})]).optional()
+		});
+		let _winterhuan_dsh_student_student_inspectSubmission_result$schema$value;
+		const _winterhuan_dsh_student_student_inspectSubmission_result$schema = () => _winterhuan_dsh_student_student_inspectSubmission_result$schema$value ??= zod.z.object({
+			"requestId": zod.z.string(),
+			"admission": zod.z.union([zod.z.literal("unknown"), zod.z.literal("accepted")]),
+			"nativeStates": zod.z.array(zod.z.union([
+				zod.z.literal("pending"),
+				zod.z.literal("consumed"),
+				zod.z.literal("claimed"),
+				zod.z.literal("removed")
+			])),
+			"nativeSourceStatus": zod.z.union([zod.z.literal("available"), zod.z.literal("unavailable")]),
+			"cut": zod.z.union([zod.z.undefined(), zod.z.object({
+				"sessionId": zod.z.string(),
+				"cursor": zod.z.number(),
+				"source": zod.z.union([zod.z.literal("live"), zod.z.literal("prepared")]),
+				"inheritedEventCount": zod.z.number(),
+				"revision": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+			})]).optional(),
+			"answer": zod.z.union([
+				zod.z.literal("unavailable"),
+				zod.z.literal("missing"),
+				zod.z.literal("saved"),
+				zod.z.literal("not-requested")
+			]),
+			"assessment": zod.z.union([
+				zod.z.literal("pending"),
+				zod.z.literal("unavailable"),
+				zod.z.literal("valid"),
+				zod.z.literal("not-requested")
+			]),
+			"readStatus": zod.z.union([
+				zod.z.literal("valid"),
+				zod.z.literal("missing"),
+				zod.z.literal("invalid"),
+				zod.z.literal("future-format"),
+				zod.z.literal("changing"),
+				zod.z.literal("legacy"),
+				zod.z.literal("archived")
+			]),
+			"versions": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"targetKey": zod.z.string(),
+				"version": zod.z.string()
+			})),
+			"issues": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			})),
+			"backupIssues": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			}))]).optional()
+		});
+		let _winterhuan_dsh_student_student_manualContext_parameter_0$schema$value;
+		const _winterhuan_dsh_student_student_manualContext_parameter_0$schema = () => _winterhuan_dsh_student_student_manualContext_parameter_0$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_manualContext_parameter_1$schema$value;
+		const _winterhuan_dsh_student_student_manualContext_parameter_1$schema = () => _winterhuan_dsh_student_student_manualContext_parameter_1$schema$value ??= zod.z.union([
+			zod.z.object({
+				"kind": zod.z.literal("settings"),
+				"command": zod.z.object({
+					"action": zod.z.literal("setup"),
+					"profile": zod.z.object({
+						"region": zod.z.string(),
+						"grade": zod.z.number(),
+						"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+						"schoolYear": zod.z.string(),
+						"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")]),
+						"nickname": zod.z.string(),
+						"schoolAlias": zod.z.string(),
+						"parentConfirmation": zod.z.string()
+					})
+				}),
+				"editedProfileFields": zod.z.array(zod.z.union([
+					zod.z.literal("region"),
+					zod.z.literal("schoolYear"),
+					zod.z.literal("grade"),
+					zod.z.literal("term"),
+					zod.z.literal("schoolSystem"),
+					zod.z.literal("nickname"),
+					zod.z.literal("schoolAlias"),
+					zod.z.literal("parentConfirmation")
+				]))
+			}),
+			zod.z.object({
+				"kind": zod.z.literal("settings"),
+				"command": zod.z.union([
+					zod.z.object({
+						"action": zod.z.literal("configure-course"),
+						"material": zod.z.object({
+							"id": zod.z.string(),
+							"subject": zod.z.union([
+								zod.z.literal("math"),
+								zod.z.literal("chinese"),
+								zod.z.literal("english")
+							]),
+							"scope": zod.z.object({
+								"region": zod.z.string(),
+								"grade": zod.z.number(),
+								"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+								"schoolYear": zod.z.string(),
+								"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")])
+							}),
+							"title": zod.z.string(),
+							"publisher": zod.z.string(),
+							"edition": zod.z.string(),
+							"editionStatus": zod.z.union([zod.z.literal("unconfirmed"), zod.z.literal("identified")]),
+							"kind": zod.z.union([
+								zod.z.literal("official-textbook"),
+								zod.z.literal("school-material"),
+								zod.z.literal("reference"),
+								zod.z.literal("generated")
+							]),
+							"locator": zod.z.string(),
+							"evidence": zod.z.string()
+						}),
+						"course": zod.z.object({
+							"subject": zod.z.union([
+								zod.z.literal("math"),
+								zod.z.literal("chinese"),
+								zod.z.literal("english")
+							]),
+							"materialId": zod.z.string(),
+							"unit": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						}),
+						"progress": zod.z.union([zod.z.undefined(), zod.z.object({
+							"unitId": zod.z.string(),
+							"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+							"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+							"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+							"parentConfirmation": zod.z.string()
+						})]).optional()
+					}),
+					zod.z.object({
+						"unitId": zod.z.string(),
+						"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+						"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+						"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+						"parentConfirmation": zod.z.string(),
+						"action": zod.z.literal("school-progress"),
+						"subject": zod.z.union([
+							zod.z.literal("math"),
+							zod.z.literal("chinese"),
+							zod.z.literal("english")
+						])
+					}),
+					zod.z.object({
+						"action": zod.z.literal("openmaic-settings"),
+						"baseUrl": zod.z.string(),
+						"parentConfirmation": zod.z.string()
+					}),
+					zod.z.object({
+						"action": zod.z.literal("interests"),
+						"tags": zod.z.array(zod.z.string()),
+						"parentConfirmation": zod.z.string()
+					})
+				]),
+				"editedProfileFields": zod.z.undefined().optional()
+			}),
+			zod.z.object({
+				"kind": zod.z.literal("worksheet-assessments"),
+				"worksheetId": zod.z.string(),
+				"assessments": zod.z.array(zod.z.object({
+					"id": zod.z.string(),
+					"responseId": zod.z.string(),
+					"result": zod.z.union([
+						zod.z.literal("correct"),
+						zod.z.literal("partial"),
+						zod.z.literal("incorrect"),
+						zod.z.literal("unassessed"),
+						zod.z.literal("stuck")
+					]),
+					"assistance": zod.z.union([
+						zod.z.literal("unknown"),
+						zod.z.literal("independent"),
+						zod.z.literal("hint"),
+						zod.z.literal("worked-example")
+					]),
+					"feedback": zod.z.string(),
+					"answerEvidence": zod.z.string(),
+					"assessedAt": zod.z.number(),
+					"correctedAt": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+					"userConfirmation": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+					"errorType": zod.z.union([
+						zod.z.undefined(),
+						zod.z.literal("pattern"),
+						zod.z.literal("place-value"),
+						zod.z.literal("carry-borrow"),
+						zod.z.literal("operation-choice"),
+						zod.z.literal("calculation"),
+						zod.z.literal("unit-quantity"),
+						zod.z.literal("reading-task"),
+						zod.z.literal("geometry-feature"),
+						zod.z.literal("money-measure"),
+						zod.z.literal("reasoning-incomplete"),
+						zod.z.literal("pinyin-tone"),
+						zod.z.literal("character-form"),
+						zod.z.literal("character-usage"),
+						zod.z.literal("word-meaning"),
+						zod.z.literal("reading-evidence"),
+						zod.z.literal("order"),
+						zod.z.literal("expression-incomplete"),
+						zod.z.literal("punctuation"),
+						zod.z.literal("listening"),
+						zod.z.literal("spelling"),
+						zod.z.literal("word-form"),
+						zod.z.literal("sentence-pattern"),
+						zod.z.literal("usage-context"),
+						zod.z.literal("spoken-response"),
+						zod.z.literal("writing-complete")
+					]).optional()
+				})),
+				"answerDate": zod.z.union([
+					zod.z.undefined(),
+					zod.z.object({ "kind": zod.z.literal("unknown") }),
+					zod.z.object({
+						"kind": zod.z.literal("day"),
+						"day": zod.z.string(),
+						"parentConfirmation": zod.z.string()
+					})
+				]).optional(),
+				"responseUpdates": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+					"responseId": zod.z.string(),
+					"assistance": zod.z.union([
+						zod.z.undefined(),
+						zod.z.literal("unknown"),
+						zod.z.literal("independent"),
+						zod.z.literal("hint"),
+						zod.z.literal("worked-example")
+					]).optional(),
+					"answerDate": zod.z.union([
+						zod.z.undefined(),
+						zod.z.object({ "kind": zod.z.literal("unknown") }),
+						zod.z.object({
+							"kind": zod.z.literal("day"),
+							"day": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						})
+					]).optional(),
+					"userConfirmation": zod.z.string()
+				}))]).optional()
+			})
+		]);
+		let _winterhuan_dsh_student_student_manualContext_result$schema$value;
+		const _winterhuan_dsh_student_student_manualContext_result$schema = () => _winterhuan_dsh_student_student_manualContext_result$schema$value ??= zod.z.object({
+			"readStatus": zod.z.union([
+				zod.z.literal("valid"),
+				zod.z.literal("missing"),
+				zod.z.literal("invalid"),
+				zod.z.literal("future-format"),
+				zod.z.literal("changing"),
+				zod.z.literal("legacy"),
+				zod.z.literal("archived")
+			]),
+			"termId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"versions": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"targetKey": zod.z.string(),
+				"version": zod.z.string()
+			})),
+			"baseline": zod.z.record(zod.z.string(), zod.z.union([
+				zod.z.literal(null),
+				zod.z.string(),
+				zod.z.number(),
+				zod.z.literal(false),
+				zod.z.literal(true),
+				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5()))
+			])),
+			"issues": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			})),
+			"backupIssues": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			}))]).optional()
+		});
+		let _winterhuan_dsh_student_student_query_parameter_0$schema$value;
+		const _winterhuan_dsh_student_student_query_parameter_0$schema = () => _winterhuan_dsh_student_student_query_parameter_0$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_query_parameter_1$schema$value;
+		const _winterhuan_dsh_student_student_query_parameter_1$schema = () => _winterhuan_dsh_student_student_query_parameter_1$schema$value ??= zod.z.union([zod.z.object({
+			"kind": zod.z.union([
+				zod.z.literal("learning-context"),
+				zod.z.literal("summary"),
+				zod.z.literal("files"),
+				zod.z.literal("settings"),
+				zod.z.literal("status"),
+				zod.z.literal("curriculum"),
+				zod.z.literal("elements"),
+				zod.z.literal("exercises"),
+				zod.z.literal("review-sheet"),
+				zod.z.literal("diagnose"),
+				zod.z.literal("weak"),
+				zod.z.literal("due"),
+				zod.z.literal("pending"),
+				zod.z.literal("progress"),
+				zod.z.literal("concepts"),
+				zod.z.literal("objectives"),
+				zod.z.literal("relations"),
+				zod.z.literal("worksheets"),
+				zod.z.literal("paper-results"),
+				zod.z.literal("materials"),
+				zod.z.literal("mistakes"),
+				zod.z.literal("sessions"),
+				zod.z.literal("attempts")
+			]),
+			"subject": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("math"),
+				zod.z.literal("chinese"),
+				zod.z.literal("english")
+			]).optional(),
+			"id": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"unit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"grade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+			"term": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("first"),
+				zod.z.literal("second")
+			]).optional(),
+			"offset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional()
+		}), zod.z.object({
+			"kind": zod.z.literal("dashboard"),
+			"options": zod.z.union([zod.z.undefined(), zod.z.object({
+				"subject": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("math"),
+					zod.z.literal("chinese"),
+					zod.z.literal("english")
+				]).optional(),
+				"mistakeOffset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mistakeStatus": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("due"),
+					zod.z.literal("all"),
+					zod.z.literal("reviewing"),
+					zod.z.literal("mastered")
+				]).optional(),
+				"mapGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mapTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"diagTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagUnit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+				"tab": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("mistakes"),
+					zod.z.literal("map"),
+					zod.z.literal("today"),
+					zod.z.literal("parent")
+				]).optional()
+			})]).optional()
+		})]);
+		let _winterhuan_dsh_student_student_query_result$schema$value;
+		const _winterhuan_dsh_student_student_query_result$schema = () => _winterhuan_dsh_student_student_query_result$schema$value ??= zod.z.object({
+			"data": zod.z.union([
+				zod.z.literal(null),
+				zod.z.string(),
+				zod.z.number(),
+				zod.z.literal(false),
+				zod.z.literal(true),
+				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema3())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema3()))
+			]),
+			"readAt": zod.z.number(),
+			"refreshAfter": zod.z.number(),
+			"token": zod.z.string(),
+			"native": zod.z.object({
+				"status": zod.z.union([zod.z.literal("available"), zod.z.literal("unavailable")]),
+				"cut": zod.z.union([zod.z.undefined(), zod.z.object({
+					"sessionId": zod.z.string(),
+					"cursor": zod.z.number(),
+					"source": zod.z.union([zod.z.literal("live"), zod.z.literal("prepared")]),
+					"inheritedEventCount": zod.z.number(),
+					"revision": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+				})]).optional(),
+				"inputs": zod.z.array(zod.z.object({
+					"status": zod.z.literal("consumed"),
+					"messageId": zod.z.string(),
+					"requestId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+					"inputVersion": zod.z.string(),
+					"consumedSeq": zod.z.number(),
+					"rawResponse": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+					"textUnavailable": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+					"receipt": zod.z.union([zod.z.object({
+						"kind": zod.z.literal("known"),
+						"at": zod.z.number(),
+						"seq": zod.z.number()
+					}), zod.z.object({
+						"kind": zod.z.literal("unknown"),
+						"reason": zod.z.string()
+					})]),
+					"attachments": zod.z.array(zod.z.object({
+						"kind": zod.z.union([zod.z.literal("file"), zod.z.literal("image")]),
+						"attachmentId": zod.z.string()
+					})),
+					"omittedAttachments": zod.z.number()
+				})),
+				"admissions": zod.z.array(zod.z.object({
+					"messageId": zod.z.string(),
+					"requestId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+					"status": zod.z.union([
+						zod.z.literal("pending"),
+						zod.z.literal("consumed"),
+						zod.z.literal("claimed"),
+						zod.z.literal("removed")
+					])
+				})),
+				"omitted": zod.z.number(),
+				"omittedAdmissions": zod.z.number(),
+				"reason": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+			}),
+			"backupIssues": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			})),
+			"status": zod.z.union([
+				zod.z.literal("partial"),
+				zod.z.literal("valid"),
+				zod.z.literal("missing"),
+				zod.z.literal("invalid"),
+				zod.z.literal("future-format"),
+				zod.z.literal("changing"),
+				zod.z.literal("legacy"),
+				zod.z.literal("archived")
+			]),
+			"versions": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"targetKey": zod.z.string(),
+				"version": zod.z.string()
+			})),
+			"issues": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			}))]).optional()
+		});
+		let _winterhuan_dsh_student_student_saveManual_parameter_0$schema$value;
+		const _winterhuan_dsh_student_student_saveManual_parameter_0$schema = () => _winterhuan_dsh_student_student_saveManual_parameter_0$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_saveManual_parameter_1$schema$value;
+		const _winterhuan_dsh_student_student_saveManual_parameter_1$schema = () => _winterhuan_dsh_student_student_saveManual_parameter_1$schema$value ??= zod.z.object({
+			"baseline": zod.z.record(zod.z.string(), zod.z.union([
+				zod.z.literal(null),
+				zod.z.string(),
+				zod.z.number(),
+				zod.z.literal(false),
+				zod.z.literal(true),
+				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2()))
+			])),
+			"intent": zod.z.union([
+				zod.z.object({
+					"kind": zod.z.literal("settings"),
+					"command": zod.z.object({
+						"action": zod.z.literal("setup"),
+						"profile": zod.z.object({
+							"region": zod.z.string(),
+							"grade": zod.z.number(),
+							"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+							"schoolYear": zod.z.string(),
+							"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")]),
+							"nickname": zod.z.string(),
+							"schoolAlias": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						})
+					}),
+					"editedProfileFields": zod.z.array(zod.z.union([
+						zod.z.literal("region"),
+						zod.z.literal("schoolYear"),
+						zod.z.literal("grade"),
+						zod.z.literal("term"),
+						zod.z.literal("schoolSystem"),
+						zod.z.literal("nickname"),
+						zod.z.literal("schoolAlias"),
+						zod.z.literal("parentConfirmation")
+					]))
+				}),
+				zod.z.object({
+					"kind": zod.z.literal("settings"),
+					"command": zod.z.union([
+						zod.z.object({
+							"action": zod.z.literal("configure-course"),
+							"material": zod.z.object({
+								"id": zod.z.string(),
+								"subject": zod.z.union([
+									zod.z.literal("math"),
+									zod.z.literal("chinese"),
+									zod.z.literal("english")
+								]),
+								"scope": zod.z.object({
+									"region": zod.z.string(),
+									"grade": zod.z.number(),
+									"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+									"schoolYear": zod.z.string(),
+									"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")])
+								}),
+								"title": zod.z.string(),
+								"publisher": zod.z.string(),
+								"edition": zod.z.string(),
+								"editionStatus": zod.z.union([zod.z.literal("unconfirmed"), zod.z.literal("identified")]),
+								"kind": zod.z.union([
+									zod.z.literal("official-textbook"),
+									zod.z.literal("school-material"),
+									zod.z.literal("reference"),
+									zod.z.literal("generated")
+								]),
+								"locator": zod.z.string(),
+								"evidence": zod.z.string()
+							}),
+							"course": zod.z.object({
+								"subject": zod.z.union([
+									zod.z.literal("math"),
+									zod.z.literal("chinese"),
+									zod.z.literal("english")
+								]),
+								"materialId": zod.z.string(),
+								"unit": zod.z.string(),
+								"parentConfirmation": zod.z.string()
+							}),
+							"progress": zod.z.union([zod.z.undefined(), zod.z.object({
+								"unitId": zod.z.string(),
+								"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+								"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+								"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+								"parentConfirmation": zod.z.string()
+							})]).optional()
+						}),
+						zod.z.object({
+							"unitId": zod.z.string(),
+							"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+							"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+							"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+							"parentConfirmation": zod.z.string(),
+							"action": zod.z.literal("school-progress"),
+							"subject": zod.z.union([
+								zod.z.literal("math"),
+								zod.z.literal("chinese"),
+								zod.z.literal("english")
+							])
+						}),
+						zod.z.object({
+							"action": zod.z.literal("openmaic-settings"),
+							"baseUrl": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						}),
+						zod.z.object({
+							"action": zod.z.literal("interests"),
+							"tags": zod.z.array(zod.z.string()),
+							"parentConfirmation": zod.z.string()
+						})
+					]),
+					"editedProfileFields": zod.z.undefined().optional()
+				}),
+				zod.z.object({
+					"kind": zod.z.literal("worksheet-assessments"),
+					"worksheetId": zod.z.string(),
+					"assessments": zod.z.array(zod.z.object({
+						"id": zod.z.string(),
+						"responseId": zod.z.string(),
+						"result": zod.z.union([
+							zod.z.literal("correct"),
+							zod.z.literal("partial"),
+							zod.z.literal("incorrect"),
+							zod.z.literal("unassessed"),
+							zod.z.literal("stuck")
+						]),
+						"assistance": zod.z.union([
+							zod.z.literal("unknown"),
+							zod.z.literal("independent"),
+							zod.z.literal("hint"),
+							zod.z.literal("worked-example")
+						]),
+						"feedback": zod.z.string(),
+						"answerEvidence": zod.z.string(),
+						"assessedAt": zod.z.number(),
+						"correctedAt": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+						"userConfirmation": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+						"errorType": zod.z.union([
+							zod.z.undefined(),
+							zod.z.literal("pattern"),
+							zod.z.literal("place-value"),
+							zod.z.literal("carry-borrow"),
+							zod.z.literal("operation-choice"),
+							zod.z.literal("calculation"),
+							zod.z.literal("unit-quantity"),
+							zod.z.literal("reading-task"),
+							zod.z.literal("geometry-feature"),
+							zod.z.literal("money-measure"),
+							zod.z.literal("reasoning-incomplete"),
+							zod.z.literal("pinyin-tone"),
+							zod.z.literal("character-form"),
+							zod.z.literal("character-usage"),
+							zod.z.literal("word-meaning"),
+							zod.z.literal("reading-evidence"),
+							zod.z.literal("order"),
+							zod.z.literal("expression-incomplete"),
+							zod.z.literal("punctuation"),
+							zod.z.literal("listening"),
+							zod.z.literal("spelling"),
+							zod.z.literal("word-form"),
+							zod.z.literal("sentence-pattern"),
+							zod.z.literal("usage-context"),
+							zod.z.literal("spoken-response"),
+							zod.z.literal("writing-complete")
+						]).optional()
+					})),
+					"answerDate": zod.z.union([
+						zod.z.undefined(),
+						zod.z.object({ "kind": zod.z.literal("unknown") }),
+						zod.z.object({
+							"kind": zod.z.literal("day"),
+							"day": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						})
+					]).optional(),
+					"responseUpdates": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+						"responseId": zod.z.string(),
+						"assistance": zod.z.union([
+							zod.z.undefined(),
+							zod.z.literal("unknown"),
+							zod.z.literal("independent"),
+							zod.z.literal("hint"),
+							zod.z.literal("worked-example")
+						]).optional(),
+						"answerDate": zod.z.union([
+							zod.z.undefined(),
+							zod.z.object({ "kind": zod.z.literal("unknown") }),
+							zod.z.object({
+								"kind": zod.z.literal("day"),
+								"day": zod.z.string(),
+								"parentConfirmation": zod.z.string()
+							})
+						]).optional(),
+						"userConfirmation": zod.z.string()
+					}))]).optional()
+				})
+			]),
+			"termId": zod.z.string(),
+			"expectedVersions": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"version": zod.z.string()
+			}))
+		});
+		let _winterhuan_dsh_student_student_saveManual_result$schema$value;
+		const _winterhuan_dsh_student_student_saveManual_result$schema = () => _winterhuan_dsh_student_student_saveManual_result$schema$value ??= zod.z.object({
+			"status": zod.z.union([
+				zod.z.literal("unknown"),
+				zod.z.literal("invalid"),
+				zod.z.literal("saved"),
+				zod.z.literal("unchanged"),
+				zod.z.literal("conflict"),
+				zod.z.literal("old-term")
+			]),
+			"current": zod.z.record(zod.z.string(), zod.z.union([
+				zod.z.literal(null),
+				zod.z.string(),
+				zod.z.number(),
+				zod.z.literal(false),
+				zod.z.literal(true),
+				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema()))
+			])),
+			"termId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"versions": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"targetKey": zod.z.string(),
+				"version": zod.z.string()
+			})),
+			"readStatus": zod.z.union([
+				zod.z.literal("valid"),
+				zod.z.literal("missing"),
+				zod.z.literal("invalid"),
+				zod.z.literal("future-format"),
+				zod.z.literal("changing"),
+				zod.z.literal("legacy"),
+				zod.z.literal("archived")
+			]),
+			"issues": zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			})),
+			"backupIssues": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+				"path": zod.z.string(),
+				"field": zod.z.string(),
+				"rule": zod.z.string(),
+				"correction": zod.z.string()
+			}))]).optional(),
+			"reason": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+		});
+		let _winterhuan_dsh_student_student_watch_parameter_0$schema$value;
+		const _winterhuan_dsh_student_student_watch_parameter_0$schema = () => _winterhuan_dsh_student_student_watch_parameter_0$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_watch_parameter_1$schema$value;
+		const _winterhuan_dsh_student_student_watch_parameter_1$schema = () => _winterhuan_dsh_student_student_watch_parameter_1$schema$value ??= zod.z.union([zod.z.object({
+			"kind": zod.z.union([
+				zod.z.literal("learning-context"),
+				zod.z.literal("summary"),
+				zod.z.literal("files"),
+				zod.z.literal("settings"),
+				zod.z.literal("status"),
+				zod.z.literal("curriculum"),
+				zod.z.literal("elements"),
+				zod.z.literal("exercises"),
+				zod.z.literal("review-sheet"),
+				zod.z.literal("diagnose"),
+				zod.z.literal("weak"),
+				zod.z.literal("due"),
+				zod.z.literal("pending"),
+				zod.z.literal("progress"),
+				zod.z.literal("concepts"),
+				zod.z.literal("objectives"),
+				zod.z.literal("relations"),
+				zod.z.literal("worksheets"),
+				zod.z.literal("paper-results"),
+				zod.z.literal("materials"),
+				zod.z.literal("mistakes"),
+				zod.z.literal("sessions"),
+				zod.z.literal("attempts")
+			]),
+			"subject": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("math"),
+				zod.z.literal("chinese"),
+				zod.z.literal("english")
+			]).optional(),
+			"id": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"unit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"grade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+			"term": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("first"),
+				zod.z.literal("second")
+			]).optional(),
+			"offset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional()
+		}), zod.z.object({
+			"kind": zod.z.literal("dashboard"),
+			"options": zod.z.union([zod.z.undefined(), zod.z.object({
+				"subject": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("math"),
+					zod.z.literal("chinese"),
+					zod.z.literal("english")
+				]).optional(),
+				"mistakeOffset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mistakeStatus": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("due"),
+					zod.z.literal("all"),
+					zod.z.literal("reviewing"),
+					zod.z.literal("mastered")
+				]).optional(),
+				"mapGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mapTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"diagTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagUnit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+				"tab": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("mistakes"),
+					zod.z.literal("map"),
+					zod.z.literal("today"),
+					zod.z.literal("parent")
+				]).optional()
+			})]).optional()
+		})]);
+		let _winterhuan_dsh_student_student_watch_result$schema$value;
+		const _winterhuan_dsh_student_student_watch_result$schema = () => _winterhuan_dsh_student_student_watch_result$schema$value ??= zod.z.union([zod.z.object({
+			"kind": zod.z.literal("snapshot"),
+			"value": zod.z.object({
+				"data": zod.z.union([
+					zod.z.literal(null),
+					zod.z.string(),
+					zod.z.number(),
+					zod.z.literal(false),
+					zod.z.literal(true),
+					zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4())),
+					zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4()))
+				]),
+				"readAt": zod.z.number(),
+				"refreshAfter": zod.z.number(),
+				"token": zod.z.string(),
+				"native": zod.z.object({
+					"status": zod.z.union([zod.z.literal("available"), zod.z.literal("unavailable")]),
+					"cut": zod.z.union([zod.z.undefined(), zod.z.object({
+						"sessionId": zod.z.string(),
+						"cursor": zod.z.number(),
+						"source": zod.z.union([zod.z.literal("live"), zod.z.literal("prepared")]),
+						"inheritedEventCount": zod.z.number(),
+						"revision": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+					})]).optional(),
+					"inputs": zod.z.array(zod.z.object({
+						"status": zod.z.literal("consumed"),
+						"messageId": zod.z.string(),
+						"requestId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+						"inputVersion": zod.z.string(),
+						"consumedSeq": zod.z.number(),
+						"rawResponse": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+						"textUnavailable": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+						"receipt": zod.z.union([zod.z.object({
+							"kind": zod.z.literal("known"),
+							"at": zod.z.number(),
+							"seq": zod.z.number()
+						}), zod.z.object({
+							"kind": zod.z.literal("unknown"),
+							"reason": zod.z.string()
+						})]),
+						"attachments": zod.z.array(zod.z.object({
+							"kind": zod.z.union([zod.z.literal("file"), zod.z.literal("image")]),
+							"attachmentId": zod.z.string()
+						})),
+						"omittedAttachments": zod.z.number()
+					})),
+					"admissions": zod.z.array(zod.z.object({
+						"messageId": zod.z.string(),
+						"requestId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+						"status": zod.z.union([
+							zod.z.literal("pending"),
+							zod.z.literal("consumed"),
+							zod.z.literal("claimed"),
+							zod.z.literal("removed")
+						])
+					})),
+					"omitted": zod.z.number(),
+					"omittedAdmissions": zod.z.number(),
+					"reason": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+				}),
+				"backupIssues": zod.z.array(zod.z.object({
+					"path": zod.z.string(),
+					"field": zod.z.string(),
+					"rule": zod.z.string(),
+					"correction": zod.z.string()
+				})),
+				"status": zod.z.union([
+					zod.z.literal("partial"),
+					zod.z.literal("valid"),
+					zod.z.literal("missing"),
+					zod.z.literal("invalid"),
+					zod.z.literal("future-format"),
+					zod.z.literal("changing"),
+					zod.z.literal("legacy"),
+					zod.z.literal("archived")
+				]),
+				"versions": zod.z.array(zod.z.object({
+					"path": zod.z.string(),
+					"targetKey": zod.z.string(),
+					"version": zod.z.string()
+				})),
+				"issues": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+					"path": zod.z.string(),
+					"field": zod.z.string(),
+					"rule": zod.z.string(),
+					"correction": zod.z.string()
+				}))]).optional()
+			})
+		}), zod.z.object({
+			"kind": zod.z.literal("failure"),
+			"message": zod.z.string()
+		})]);
+		let closed$StudentJsonValueRemoteCodec$schema$value;
+		const closed$StudentJsonValueRemoteCodec$schema = () => closed$StudentJsonValueRemoteCodec$schema$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))
+		]);
+		let _winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema$value;
+		const _winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema = () => _winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_inspectSubmission_parameter_1_strict$schema$value;
+		const _winterhuan_dsh_student_student_inspectSubmission_parameter_1_strict$schema = () => _winterhuan_dsh_student_student_inspectSubmission_parameter_1_strict$schema$value ??= zod.z.strictObject({
+			"requestId": zod.z.string(),
+			"response": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+				"termId": zod.z.string(),
+				"owner": zod.z.union([zod.z.strictObject({
+					"kind": zod.z.literal("block"),
+					"id": zod.z.string()
+				}), zod.z.strictObject({
+					"kind": zod.z.literal("worksheet"),
+					"id": zod.z.string()
+				})]),
+				"responseId": zod.z.string()
+			})]).optional()
+		});
+		let _winterhuan_dsh_student_student_manualContext_parameter_0_strict$schema$value;
+		const _winterhuan_dsh_student_student_manualContext_parameter_0_strict$schema = () => _winterhuan_dsh_student_student_manualContext_parameter_0_strict$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_manualContext_parameter_1_strict$schema$value;
+		const _winterhuan_dsh_student_student_manualContext_parameter_1_strict$schema = () => _winterhuan_dsh_student_student_manualContext_parameter_1_strict$schema$value ??= zod.z.union([
+			zod.z.strictObject({
+				"kind": zod.z.literal("settings"),
+				"command": zod.z.strictObject({
+					"action": zod.z.literal("setup"),
+					"profile": zod.z.strictObject({
+						"region": zod.z.string(),
+						"grade": zod.z.number(),
+						"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+						"schoolYear": zod.z.string(),
+						"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")]),
+						"nickname": zod.z.string(),
+						"schoolAlias": zod.z.string(),
+						"parentConfirmation": zod.z.string()
+					})
+				}),
+				"editedProfileFields": zod.z.array(zod.z.union([
+					zod.z.literal("region"),
+					zod.z.literal("schoolYear"),
+					zod.z.literal("grade"),
+					zod.z.literal("term"),
+					zod.z.literal("schoolSystem"),
+					zod.z.literal("nickname"),
+					zod.z.literal("schoolAlias"),
+					zod.z.literal("parentConfirmation")
+				]))
+			}),
+			zod.z.strictObject({
+				"kind": zod.z.literal("settings"),
+				"command": zod.z.union([
+					zod.z.strictObject({
+						"action": zod.z.literal("configure-course"),
+						"material": zod.z.strictObject({
+							"id": zod.z.string(),
+							"subject": zod.z.union([
+								zod.z.literal("math"),
+								zod.z.literal("chinese"),
+								zod.z.literal("english")
+							]),
+							"scope": zod.z.strictObject({
+								"region": zod.z.string(),
+								"grade": zod.z.number(),
+								"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+								"schoolYear": zod.z.string(),
+								"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")])
+							}),
+							"title": zod.z.string(),
+							"publisher": zod.z.string(),
+							"edition": zod.z.string(),
+							"editionStatus": zod.z.union([zod.z.literal("unconfirmed"), zod.z.literal("identified")]),
+							"kind": zod.z.union([
+								zod.z.literal("official-textbook"),
+								zod.z.literal("school-material"),
+								zod.z.literal("reference"),
+								zod.z.literal("generated")
+							]),
+							"locator": zod.z.string(),
+							"evidence": zod.z.string()
+						}),
+						"course": zod.z.strictObject({
+							"subject": zod.z.union([
+								zod.z.literal("math"),
+								zod.z.literal("chinese"),
+								zod.z.literal("english")
+							]),
+							"materialId": zod.z.string(),
+							"unit": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						}),
+						"progress": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+							"unitId": zod.z.string(),
+							"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+							"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+							"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+							"parentConfirmation": zod.z.string()
+						})]).optional()
+					}),
+					zod.z.strictObject({
+						"unitId": zod.z.string(),
+						"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+						"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+						"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+						"parentConfirmation": zod.z.string(),
+						"action": zod.z.literal("school-progress"),
+						"subject": zod.z.union([
+							zod.z.literal("math"),
+							zod.z.literal("chinese"),
+							zod.z.literal("english")
+						])
+					}),
+					zod.z.strictObject({
+						"action": zod.z.literal("openmaic-settings"),
+						"baseUrl": zod.z.string(),
+						"parentConfirmation": zod.z.string()
+					}),
+					zod.z.strictObject({
+						"action": zod.z.literal("interests"),
+						"tags": zod.z.array(zod.z.string()),
+						"parentConfirmation": zod.z.string()
+					})
+				]),
+				"editedProfileFields": zod.z.undefined().optional()
+			}),
+			zod.z.strictObject({
+				"kind": zod.z.literal("worksheet-assessments"),
+				"worksheetId": zod.z.string(),
+				"assessments": zod.z.array(zod.z.strictObject({
+					"id": zod.z.string(),
+					"responseId": zod.z.string(),
+					"result": zod.z.union([
+						zod.z.literal("correct"),
+						zod.z.literal("partial"),
+						zod.z.literal("incorrect"),
+						zod.z.literal("unassessed"),
+						zod.z.literal("stuck")
+					]),
+					"assistance": zod.z.union([
+						zod.z.literal("unknown"),
+						zod.z.literal("independent"),
+						zod.z.literal("hint"),
+						zod.z.literal("worked-example")
+					]),
+					"feedback": zod.z.string(),
+					"answerEvidence": zod.z.string(),
+					"assessedAt": zod.z.number(),
+					"correctedAt": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+					"userConfirmation": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+					"errorType": zod.z.union([
+						zod.z.undefined(),
+						zod.z.literal("pattern"),
+						zod.z.literal("place-value"),
+						zod.z.literal("carry-borrow"),
+						zod.z.literal("operation-choice"),
+						zod.z.literal("calculation"),
+						zod.z.literal("unit-quantity"),
+						zod.z.literal("reading-task"),
+						zod.z.literal("geometry-feature"),
+						zod.z.literal("money-measure"),
+						zod.z.literal("reasoning-incomplete"),
+						zod.z.literal("pinyin-tone"),
+						zod.z.literal("character-form"),
+						zod.z.literal("character-usage"),
+						zod.z.literal("word-meaning"),
+						zod.z.literal("reading-evidence"),
+						zod.z.literal("order"),
+						zod.z.literal("expression-incomplete"),
+						zod.z.literal("punctuation"),
+						zod.z.literal("listening"),
+						zod.z.literal("spelling"),
+						zod.z.literal("word-form"),
+						zod.z.literal("sentence-pattern"),
+						zod.z.literal("usage-context"),
+						zod.z.literal("spoken-response"),
+						zod.z.literal("writing-complete")
+					]).optional()
+				})),
+				"answerDate": zod.z.union([
+					zod.z.undefined(),
+					zod.z.strictObject({ "kind": zod.z.literal("unknown") }),
+					zod.z.strictObject({
+						"kind": zod.z.literal("day"),
+						"day": zod.z.string(),
+						"parentConfirmation": zod.z.string()
+					})
+				]).optional(),
+				"responseUpdates": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.strictObject({
+					"responseId": zod.z.string(),
+					"assistance": zod.z.union([
+						zod.z.undefined(),
+						zod.z.literal("unknown"),
+						zod.z.literal("independent"),
+						zod.z.literal("hint"),
+						zod.z.literal("worked-example")
+					]).optional(),
+					"answerDate": zod.z.union([
+						zod.z.undefined(),
+						zod.z.strictObject({ "kind": zod.z.literal("unknown") }),
+						zod.z.strictObject({
+							"kind": zod.z.literal("day"),
+							"day": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						})
+					]).optional(),
+					"userConfirmation": zod.z.string()
+				}))]).optional()
+			})
+		]);
+		let _winterhuan_dsh_student_student_query_parameter_0_strict$schema$value;
+		const _winterhuan_dsh_student_student_query_parameter_0_strict$schema = () => _winterhuan_dsh_student_student_query_parameter_0_strict$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_query_parameter_1_strict$schema$value;
+		const _winterhuan_dsh_student_student_query_parameter_1_strict$schema = () => _winterhuan_dsh_student_student_query_parameter_1_strict$schema$value ??= zod.z.union([zod.z.strictObject({
+			"kind": zod.z.union([
+				zod.z.literal("learning-context"),
+				zod.z.literal("summary"),
+				zod.z.literal("files"),
+				zod.z.literal("settings"),
+				zod.z.literal("status"),
+				zod.z.literal("curriculum"),
+				zod.z.literal("elements"),
+				zod.z.literal("exercises"),
+				zod.z.literal("review-sheet"),
+				zod.z.literal("diagnose"),
+				zod.z.literal("weak"),
+				zod.z.literal("due"),
+				zod.z.literal("pending"),
+				zod.z.literal("progress"),
+				zod.z.literal("concepts"),
+				zod.z.literal("objectives"),
+				zod.z.literal("relations"),
+				zod.z.literal("worksheets"),
+				zod.z.literal("paper-results"),
+				zod.z.literal("materials"),
+				zod.z.literal("mistakes"),
+				zod.z.literal("sessions"),
+				zod.z.literal("attempts")
+			]),
+			"subject": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("math"),
+				zod.z.literal("chinese"),
+				zod.z.literal("english")
+			]).optional(),
+			"id": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"unit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"grade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+			"term": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("first"),
+				zod.z.literal("second")
+			]).optional(),
+			"offset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional()
+		}), zod.z.strictObject({
+			"kind": zod.z.literal("dashboard"),
+			"options": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+				"subject": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("math"),
+					zod.z.literal("chinese"),
+					zod.z.literal("english")
+				]).optional(),
+				"mistakeOffset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mistakeStatus": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("due"),
+					zod.z.literal("all"),
+					zod.z.literal("reviewing"),
+					zod.z.literal("mastered")
+				]).optional(),
+				"mapGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mapTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"diagTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagUnit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+				"tab": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("mistakes"),
+					zod.z.literal("map"),
+					zod.z.literal("today"),
+					zod.z.literal("parent")
+				]).optional()
+			})]).optional()
+		})]);
+		let _winterhuan_dsh_student_student_saveManual_parameter_0_strict$schema$value;
+		const _winterhuan_dsh_student_student_saveManual_parameter_0_strict$schema = () => _winterhuan_dsh_student_student_saveManual_parameter_0_strict$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema$value;
+		const _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema = () => _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema$value ??= zod.z.strictObject({
+			"baseline": zod.z.record(zod.z.string(), zod.z.union([
+				zod.z.literal(null),
+				zod.z.string(),
+				zod.z.number(),
+				zod.z.literal(false),
+				zod.z.literal(true),
+				zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))
+			])),
+			"intent": zod.z.union([
+				zod.z.strictObject({
+					"kind": zod.z.literal("settings"),
+					"command": zod.z.strictObject({
+						"action": zod.z.literal("setup"),
+						"profile": zod.z.strictObject({
+							"region": zod.z.string(),
+							"grade": zod.z.number(),
+							"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+							"schoolYear": zod.z.string(),
+							"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")]),
+							"nickname": zod.z.string(),
+							"schoolAlias": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						})
+					}),
+					"editedProfileFields": zod.z.array(zod.z.union([
+						zod.z.literal("region"),
+						zod.z.literal("schoolYear"),
+						zod.z.literal("grade"),
+						zod.z.literal("term"),
+						zod.z.literal("schoolSystem"),
+						zod.z.literal("nickname"),
+						zod.z.literal("schoolAlias"),
+						zod.z.literal("parentConfirmation")
+					]))
+				}),
+				zod.z.strictObject({
+					"kind": zod.z.literal("settings"),
+					"command": zod.z.union([
+						zod.z.strictObject({
+							"action": zod.z.literal("configure-course"),
+							"material": zod.z.strictObject({
+								"id": zod.z.string(),
+								"subject": zod.z.union([
+									zod.z.literal("math"),
+									zod.z.literal("chinese"),
+									zod.z.literal("english")
+								]),
+								"scope": zod.z.strictObject({
+									"region": zod.z.string(),
+									"grade": zod.z.number(),
+									"term": zod.z.union([zod.z.literal("first"), zod.z.literal("second")]),
+									"schoolYear": zod.z.string(),
+									"schoolSystem": zod.z.union([zod.z.literal("five-four"), zod.z.literal("six-three")])
+								}),
+								"title": zod.z.string(),
+								"publisher": zod.z.string(),
+								"edition": zod.z.string(),
+								"editionStatus": zod.z.union([zod.z.literal("unconfirmed"), zod.z.literal("identified")]),
+								"kind": zod.z.union([
+									zod.z.literal("official-textbook"),
+									zod.z.literal("school-material"),
+									zod.z.literal("reference"),
+									zod.z.literal("generated")
+								]),
+								"locator": zod.z.string(),
+								"evidence": zod.z.string()
+							}),
+							"course": zod.z.strictObject({
+								"subject": zod.z.union([
+									zod.z.literal("math"),
+									zod.z.literal("chinese"),
+									zod.z.literal("english")
+								]),
+								"materialId": zod.z.string(),
+								"unit": zod.z.string(),
+								"parentConfirmation": zod.z.string()
+							}),
+							"progress": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+								"unitId": zod.z.string(),
+								"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+								"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+								"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+								"parentConfirmation": zod.z.string()
+							})]).optional()
+						}),
+						zod.z.strictObject({
+							"unitId": zod.z.string(),
+							"posture": zod.z.union([zod.z.literal("keep-up"), zod.z.literal("catch-up")]),
+							"preview": zod.z.union([zod.z.literal("on"), zod.z.literal("off")]),
+							"pace": zod.z.union([zod.z.literal("teaching"), zod.z.literal("review")]),
+							"parentConfirmation": zod.z.string(),
+							"action": zod.z.literal("school-progress"),
+							"subject": zod.z.union([
+								zod.z.literal("math"),
+								zod.z.literal("chinese"),
+								zod.z.literal("english")
+							])
+						}),
+						zod.z.strictObject({
+							"action": zod.z.literal("openmaic-settings"),
+							"baseUrl": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						}),
+						zod.z.strictObject({
+							"action": zod.z.literal("interests"),
+							"tags": zod.z.array(zod.z.string()),
+							"parentConfirmation": zod.z.string()
+						})
+					]),
+					"editedProfileFields": zod.z.undefined().optional()
+				}),
+				zod.z.strictObject({
+					"kind": zod.z.literal("worksheet-assessments"),
+					"worksheetId": zod.z.string(),
+					"assessments": zod.z.array(zod.z.strictObject({
+						"id": zod.z.string(),
+						"responseId": zod.z.string(),
+						"result": zod.z.union([
+							zod.z.literal("correct"),
+							zod.z.literal("partial"),
+							zod.z.literal("incorrect"),
+							zod.z.literal("unassessed"),
+							zod.z.literal("stuck")
+						]),
+						"assistance": zod.z.union([
+							zod.z.literal("unknown"),
+							zod.z.literal("independent"),
+							zod.z.literal("hint"),
+							zod.z.literal("worked-example")
+						]),
+						"feedback": zod.z.string(),
+						"answerEvidence": zod.z.string(),
+						"assessedAt": zod.z.number(),
+						"correctedAt": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+						"userConfirmation": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+						"errorType": zod.z.union([
+							zod.z.undefined(),
+							zod.z.literal("pattern"),
+							zod.z.literal("place-value"),
+							zod.z.literal("carry-borrow"),
+							zod.z.literal("operation-choice"),
+							zod.z.literal("calculation"),
+							zod.z.literal("unit-quantity"),
+							zod.z.literal("reading-task"),
+							zod.z.literal("geometry-feature"),
+							zod.z.literal("money-measure"),
+							zod.z.literal("reasoning-incomplete"),
+							zod.z.literal("pinyin-tone"),
+							zod.z.literal("character-form"),
+							zod.z.literal("character-usage"),
+							zod.z.literal("word-meaning"),
+							zod.z.literal("reading-evidence"),
+							zod.z.literal("order"),
+							zod.z.literal("expression-incomplete"),
+							zod.z.literal("punctuation"),
+							zod.z.literal("listening"),
+							zod.z.literal("spelling"),
+							zod.z.literal("word-form"),
+							zod.z.literal("sentence-pattern"),
+							zod.z.literal("usage-context"),
+							zod.z.literal("spoken-response"),
+							zod.z.literal("writing-complete")
+						]).optional()
+					})),
+					"answerDate": zod.z.union([
+						zod.z.undefined(),
+						zod.z.strictObject({ "kind": zod.z.literal("unknown") }),
+						zod.z.strictObject({
+							"kind": zod.z.literal("day"),
+							"day": zod.z.string(),
+							"parentConfirmation": zod.z.string()
+						})
+					]).optional(),
+					"responseUpdates": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.strictObject({
+						"responseId": zod.z.string(),
+						"assistance": zod.z.union([
+							zod.z.undefined(),
+							zod.z.literal("unknown"),
+							zod.z.literal("independent"),
+							zod.z.literal("hint"),
+							zod.z.literal("worked-example")
+						]).optional(),
+						"answerDate": zod.z.union([
+							zod.z.undefined(),
+							zod.z.strictObject({ "kind": zod.z.literal("unknown") }),
+							zod.z.strictObject({
+								"kind": zod.z.literal("day"),
+								"day": zod.z.string(),
+								"parentConfirmation": zod.z.string()
+							})
+						]).optional(),
+						"userConfirmation": zod.z.string()
+					}))]).optional()
+				})
+			]),
+			"termId": zod.z.string(),
+			"expectedVersions": zod.z.array(zod.z.strictObject({
+				"path": zod.z.string(),
+				"version": zod.z.string()
+			}))
+		});
+		let _winterhuan_dsh_student_student_watch_parameter_0_strict$schema$value;
+		const _winterhuan_dsh_student_student_watch_parameter_0_strict$schema = () => _winterhuan_dsh_student_student_watch_parameter_0_strict$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_watch_parameter_1_strict$schema$value;
+		const _winterhuan_dsh_student_student_watch_parameter_1_strict$schema = () => _winterhuan_dsh_student_student_watch_parameter_1_strict$schema$value ??= zod.z.union([zod.z.strictObject({
+			"kind": zod.z.union([
+				zod.z.literal("learning-context"),
+				zod.z.literal("summary"),
+				zod.z.literal("files"),
+				zod.z.literal("settings"),
+				zod.z.literal("status"),
+				zod.z.literal("curriculum"),
+				zod.z.literal("elements"),
+				zod.z.literal("exercises"),
+				zod.z.literal("review-sheet"),
+				zod.z.literal("diagnose"),
+				zod.z.literal("weak"),
+				zod.z.literal("due"),
+				zod.z.literal("pending"),
+				zod.z.literal("progress"),
+				zod.z.literal("concepts"),
+				zod.z.literal("objectives"),
+				zod.z.literal("relations"),
+				zod.z.literal("worksheets"),
+				zod.z.literal("paper-results"),
+				zod.z.literal("materials"),
+				zod.z.literal("mistakes"),
+				zod.z.literal("sessions"),
+				zod.z.literal("attempts")
+			]),
+			"subject": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("math"),
+				zod.z.literal("chinese"),
+				zod.z.literal("english")
+			]).optional(),
+			"id": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"unit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"grade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+			"term": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("first"),
+				zod.z.literal("second")
+			]).optional(),
+			"offset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional()
+		}), zod.z.strictObject({
+			"kind": zod.z.literal("dashboard"),
+			"options": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+				"subject": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("math"),
+					zod.z.literal("chinese"),
+					zod.z.literal("english")
+				]).optional(),
+				"mistakeOffset": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mistakeStatus": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("due"),
+					zod.z.literal("all"),
+					zod.z.literal("reviewing"),
+					zod.z.literal("mastered")
+				]).optional(),
+				"mapGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"mapTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagGrade": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+				"diagTerm": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("first"),
+					zod.z.literal("second")
+				]).optional(),
+				"diagUnit": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+				"tab": zod.z.union([
+					zod.z.undefined(),
+					zod.z.literal("mistakes"),
+					zod.z.literal("map"),
+					zod.z.literal("today"),
+					zod.z.literal("parent")
+				]).optional()
+			})]).optional()
+		})]);
+		const TYPERT_REMOTE = createTypertRemoteInfo({
+			package: "@winterhuan/dsh-student",
+			methods: {
+				"student/inspectSubmission": {
+					service: "student",
+					description: "Inspect an uncertain submission before deliberate recovery; this method never submits input.",
+					invocation: { kind: "direct" },
+					parameters: [{
+						name: "sessionId",
+						description: "registered main native Session identity.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema,
+							jsonSchema: { "type": "string" }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema,
+							jsonSchema: { "type": "string" }
+						}
+					}, {
+						name: "request",
+						description: "original native request and optional term/owner/response identity.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSubmissionRequest",
+							create: _winterhuan_dsh_student_student_inspectSubmission_parameter_1$schema,
+							jsonSchema: {
+								"type": "object",
+								"properties": {
+									"requestId": { "type": "string" },
+									"response": {
+										"type": "object",
+										"properties": {
+											"termId": { "type": "string" },
+											"owner": { "oneOf": [{
+												"type": "object",
+												"properties": {
+													"kind": {
+														"type": "string",
+														"const": "block"
+													},
+													"id": { "type": "string" }
+												},
+												"required": ["kind", "id"],
+												"additionalProperties": true
+											}, {
+												"type": "object",
+												"properties": {
+													"kind": {
+														"type": "string",
+														"const": "worksheet"
+													},
+													"id": { "type": "string" }
+												},
+												"required": ["kind", "id"],
+												"additionalProperties": true
+											}] },
+											"responseId": { "type": "string" }
+										},
+										"required": [
+											"termId",
+											"owner",
+											"responseId"
+										],
+										"additionalProperties": true
+									}
+								},
+								"required": ["requestId"],
+								"additionalProperties": true
+							}
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSubmissionRequest",
+							create: _winterhuan_dsh_student_student_inspectSubmission_parameter_1_strict$schema,
+							jsonSchema: {
+								"type": "object",
+								"properties": {
+									"requestId": { "type": "string" },
+									"response": {
+										"type": "object",
+										"properties": {
+											"termId": { "type": "string" },
+											"owner": { "oneOf": [{
+												"type": "object",
+												"properties": {
+													"kind": {
+														"type": "string",
+														"const": "block"
+													},
+													"id": { "type": "string" }
+												},
+												"required": ["kind", "id"],
+												"additionalProperties": false
+											}, {
+												"type": "object",
+												"properties": {
+													"kind": {
+														"type": "string",
+														"const": "worksheet"
+													},
+													"id": { "type": "string" }
+												},
+												"required": ["kind", "id"],
+												"additionalProperties": false
+											}] },
+											"responseId": { "type": "string" }
+										},
+										"required": [
+											"termId",
+											"owner",
+											"responseId"
+										],
+										"additionalProperties": false
+									}
+								},
+								"required": ["requestId"],
+								"additionalProperties": false
+							}
+						}
+					}],
+					cancellation: { parameter: "signal" },
+					result: {
+						mode: "strict",
+						typeSymbol: "@winterhuan/dsh-student/types#StudentSubmissionInspection",
+						create: _winterhuan_dsh_student_student_inspectSubmission_result$schema,
+						description: "admission, saved-answer and valid-assessment facts separately; omitted admission remains unknown.",
+						jsonSchema: {
+							"type": "object",
+							"properties": {
+								"requestId": { "type": "string" },
+								"admission": {
+									"type": "string",
+									"enum": ["unknown", "accepted"]
+								},
+								"nativeStates": {
+									"type": "array",
+									"items": {
+										"type": "string",
+										"enum": [
+											"pending",
+											"consumed",
+											"claimed",
+											"removed"
+										]
+									}
+								},
+								"nativeSourceStatus": {
+									"type": "string",
+									"enum": ["available", "unavailable"]
+								},
+								"cut": {
+									"type": "object",
+									"properties": {
+										"sessionId": { "type": "string" },
+										"cursor": { "type": "number" },
+										"source": {
+											"type": "string",
+											"enum": ["live", "prepared"]
+										},
+										"inheritedEventCount": { "type": "number" },
+										"revision": { "type": "string" }
+									},
+									"required": [
+										"sessionId",
+										"cursor",
+										"source",
+										"inheritedEventCount"
+									],
+									"additionalProperties": true
+								},
+								"answer": {
+									"type": "string",
+									"enum": [
+										"unavailable",
+										"missing",
+										"saved",
+										"not-requested"
+									]
+								},
+								"assessment": {
+									"type": "string",
+									"enum": [
+										"pending",
+										"unavailable",
+										"valid",
+										"not-requested"
+									]
+								},
+								"readStatus": {
+									"type": "string",
+									"enum": [
+										"valid",
+										"missing",
+										"invalid",
+										"future-format",
+										"changing",
+										"legacy",
+										"archived"
+									]
+								},
+								"versions": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"path": { "type": "string" },
+											"targetKey": { "type": "string" },
+											"version": { "type": "string" }
+										},
+										"required": [
+											"path",
+											"targetKey",
+											"version"
+										],
+										"additionalProperties": true
+									}
+								},
+								"issues": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"path": { "type": "string" },
+											"field": { "type": "string" },
+											"rule": { "type": "string" },
+											"correction": { "type": "string" }
+										},
+										"required": [
+											"path",
+											"field",
+											"rule",
+											"correction"
+										],
+										"additionalProperties": true
+									}
+								},
+								"backupIssues": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"path": { "type": "string" },
+											"field": { "type": "string" },
+											"rule": { "type": "string" },
+											"correction": { "type": "string" }
+										},
+										"required": [
+											"path",
+											"field",
+											"rule",
+											"correction"
+										],
+										"additionalProperties": true
+									}
+								}
+							},
+							"required": [
+								"requestId",
+								"admission",
+								"nativeStates",
+								"nativeSourceStatus",
+								"answer",
+								"assessment",
+								"readStatus",
+								"versions",
+								"issues"
+							],
+							"additionalProperties": true
+						}
+					},
+					sourceLocation: {
+						"file": "packages/winterhuan/student/src/remote-service.ts",
+						"line": 127,
+						"column": 9
+					}
+				},
+				"student/manualContext": {
+					service: "student",
+					description: "Capture the shared owner's edited-field values from one actual read.",
+					invocation: { kind: "direct" },
+					parameters: [{
+						name: "sessionId",
+						description: "registered main native Session identity.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_manualContext_parameter_0$schema,
+							jsonSchema: { "type": "string" }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_manualContext_parameter_0_strict$schema,
+							jsonSchema: { "type": "string" }
+						}
+					}, {
+						name: "intent",
+						description: "typed manual operation; setup must identify editedProfileFields.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student#student/manualContext:intent",
+							create: _winterhuan_dsh_student_student_manualContext_parameter_1$schema,
+							jsonSchemaError: "typert tool schema: unsupported undefined value"
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student#student/manualContext:intent",
+							create: _winterhuan_dsh_student_student_manualContext_parameter_1_strict$schema,
+							jsonSchemaError: "typert tool schema: unsupported undefined value"
+						}
+					}],
+					cancellation: { parameter: "signal" },
+					result: {
+						mode: "strict",
+						typeSymbol: "@winterhuan/dsh-student/types#StudentManualContext",
+						create: _winterhuan_dsh_student_student_manualContext_result$schema,
+						description: "exact current term identity, observed versions, draft baseline and read issues.",
+						jsonSchemaError: "typert tool schema: recursive selected type requires a supported JSON value declaration"
+					},
+					sourceLocation: {
+						"file": "packages/winterhuan/student/src/remote-service.ts",
+						"line": 97,
+						"column": 9
+					}
+				},
+				"student/query": {
+					service: "student",
+					description: "Read a shared validated Student projection without activating an absent Agent.",
+					invocation: { kind: "direct" },
+					parameters: [{
+						name: "sessionId",
+						description: "native Session identity resolved through the registered main Agent lookup.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_query_parameter_0$schema,
+							jsonSchema: { "type": "string" }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_query_parameter_0_strict$schema,
+							jsonSchema: { "type": "string" }
+						}
+					}, {
+						name: "request",
+						description: "shared projection selector; it never names a learning block as a Session.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentQueryRequest",
+							create: _winterhuan_dsh_student_student_query_parameter_1$schema,
+							jsonSchema: { "oneOf": [{
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"enum": [
+											"learning-context",
+											"summary",
+											"files",
+											"settings",
+											"status",
+											"curriculum",
+											"elements",
+											"exercises",
+											"review-sheet",
+											"diagnose",
+											"weak",
+											"due",
+											"pending",
+											"progress",
+											"concepts",
+											"objectives",
+											"relations",
+											"worksheets",
+											"paper-results",
+											"materials",
+											"mistakes",
+											"sessions",
+											"attempts"
+										]
+									},
+									"subject": {
+										"type": "string",
+										"enum": [
+											"math",
+											"chinese",
+											"english"
+										]
+									},
+									"id": { "type": "string" },
+									"unit": { "type": "string" },
+									"grade": { "type": "number" },
+									"term": {
+										"type": "string",
+										"enum": ["first", "second"]
+									},
+									"offset": { "type": "number" }
+								},
+								"required": ["kind"],
+								"additionalProperties": true
+							}, {
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"const": "dashboard"
+									},
+									"options": {
+										"type": "object",
+										"properties": {
+											"subject": {
+												"type": "string",
+												"enum": [
+													"math",
+													"chinese",
+													"english"
+												]
+											},
+											"mistakeOffset": { "type": "number" },
+											"mistakeStatus": {
+												"type": "string",
+												"enum": [
+													"due",
+													"all",
+													"reviewing",
+													"mastered"
+												]
+											},
+											"mapGrade": { "type": "number" },
+											"mapTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagGrade": { "type": "number" },
+											"diagTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagUnit": { "type": "string" },
+											"tab": {
+												"type": "string",
+												"enum": [
+													"mistakes",
+													"map",
+													"today",
+													"parent"
+												]
+											}
+										},
+										"required": [],
+										"additionalProperties": true
+									}
+								},
+								"required": ["kind"],
+								"additionalProperties": true
+							}] }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentQueryRequest",
+							create: _winterhuan_dsh_student_student_query_parameter_1_strict$schema,
+							jsonSchema: { "oneOf": [{
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"enum": [
+											"learning-context",
+											"summary",
+											"files",
+											"settings",
+											"status",
+											"curriculum",
+											"elements",
+											"exercises",
+											"review-sheet",
+											"diagnose",
+											"weak",
+											"due",
+											"pending",
+											"progress",
+											"concepts",
+											"objectives",
+											"relations",
+											"worksheets",
+											"paper-results",
+											"materials",
+											"mistakes",
+											"sessions",
+											"attempts"
+										]
+									},
+									"subject": {
+										"type": "string",
+										"enum": [
+											"math",
+											"chinese",
+											"english"
+										]
+									},
+									"id": { "type": "string" },
+									"unit": { "type": "string" },
+									"grade": { "type": "number" },
+									"term": {
+										"type": "string",
+										"enum": ["first", "second"]
+									},
+									"offset": { "type": "number" }
+								},
+								"required": ["kind"],
+								"additionalProperties": false
+							}, {
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"const": "dashboard"
+									},
+									"options": {
+										"type": "object",
+										"properties": {
+											"subject": {
+												"type": "string",
+												"enum": [
+													"math",
+													"chinese",
+													"english"
+												]
+											},
+											"mistakeOffset": { "type": "number" },
+											"mistakeStatus": {
+												"type": "string",
+												"enum": [
+													"due",
+													"all",
+													"reviewing",
+													"mastered"
+												]
+											},
+											"mapGrade": { "type": "number" },
+											"mapTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagGrade": { "type": "number" },
+											"diagTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagUnit": { "type": "string" },
+											"tab": {
+												"type": "string",
+												"enum": [
+													"mistakes",
+													"map",
+													"today",
+													"parent"
+												]
+											}
+										},
+										"required": [],
+										"additionalProperties": false
+									}
+								},
+								"required": ["kind"],
+								"additionalProperties": false
+							}] }
+						}
+					}],
+					cancellation: { parameter: "signal" },
+					result: {
+						mode: "strict",
+						typeSymbol: "@winterhuan/dsh-student/types#StudentQueryResult",
+						create: _winterhuan_dsh_student_student_query_result$schema,
+						description: "current projection, actual file versions, cut and explicit partial or unavailable status.",
+						jsonSchemaError: "typert tool schema: recursive selected type requires a supported JSON value declaration"
+					},
+					sourceLocation: {
+						"file": "packages/winterhuan/student/src/remote-service.ts",
+						"line": 48,
+						"column": 9
+					}
+				},
+				"student/saveManual": {
+					service: "student",
+					description: "Save an explicit manual draft through the shared guarded filesystem owner.",
+					invocation: { kind: "direct" },
+					parameters: [{
+						name: "sessionId",
+						description: "registered main native Session identity.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_saveManual_parameter_0$schema,
+							jsonSchema: { "type": "string" }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_saveManual_parameter_0_strict$schema,
+							jsonSchema: { "type": "string" }
+						}
+					}, {
+						name: "request",
+						description: "actual observed term, file versions, edited fields and retained baseline.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentManualSaveRequest",
+							create: _winterhuan_dsh_student_student_saveManual_parameter_1$schema,
+							jsonSchemaError: "typert tool schema: recursive selected type requires a supported JSON value declaration"
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentManualSaveRequest",
+							create: _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema,
+							jsonSchemaError: "typert tool schema: recursive selected type requires a supported JSON value declaration"
+						}
+					}],
+					cancellation: { parameter: "signal" },
+					result: {
+						mode: "strict",
+						typeSymbol: "@winterhuan/dsh-student/types#StudentManualReply",
+						create: _winterhuan_dsh_student_student_saveManual_result$schema,
+						description: "thin save outcome, current edited values and versions for subsequent draft saves.",
+						jsonSchemaError: "typert tool schema: recursive selected type requires a supported JSON value declaration"
+					},
+					sourceLocation: {
+						"file": "packages/winterhuan/student/src/remote-service.ts",
+						"line": 112,
+						"column": 9
+					}
+				},
+				"student/watch": {
+					service: "student",
+					description: "Follow current files and time thresholds; unchanged version/cut/projection tokens produce no frame.",
+					mode: "stream",
+					invocation: { kind: "direct" },
+					parameters: [{
+						name: "sessionId",
+						description: "registered main native Session identity, authorized before the stream opens.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_watch_parameter_0$schema,
+							jsonSchema: { "type": "string" }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_watch_parameter_0_strict$schema,
+							jsonSchema: { "type": "string" }
+						}
+					}, {
+						name: "request",
+						description: "shared bounded projection selector.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentQueryRequest",
+							create: _winterhuan_dsh_student_student_watch_parameter_1$schema,
+							jsonSchema: { "oneOf": [{
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"enum": [
+											"learning-context",
+											"summary",
+											"files",
+											"settings",
+											"status",
+											"curriculum",
+											"elements",
+											"exercises",
+											"review-sheet",
+											"diagnose",
+											"weak",
+											"due",
+											"pending",
+											"progress",
+											"concepts",
+											"objectives",
+											"relations",
+											"worksheets",
+											"paper-results",
+											"materials",
+											"mistakes",
+											"sessions",
+											"attempts"
+										]
+									},
+									"subject": {
+										"type": "string",
+										"enum": [
+											"math",
+											"chinese",
+											"english"
+										]
+									},
+									"id": { "type": "string" },
+									"unit": { "type": "string" },
+									"grade": { "type": "number" },
+									"term": {
+										"type": "string",
+										"enum": ["first", "second"]
+									},
+									"offset": { "type": "number" }
+								},
+								"required": ["kind"],
+								"additionalProperties": true
+							}, {
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"const": "dashboard"
+									},
+									"options": {
+										"type": "object",
+										"properties": {
+											"subject": {
+												"type": "string",
+												"enum": [
+													"math",
+													"chinese",
+													"english"
+												]
+											},
+											"mistakeOffset": { "type": "number" },
+											"mistakeStatus": {
+												"type": "string",
+												"enum": [
+													"due",
+													"all",
+													"reviewing",
+													"mastered"
+												]
+											},
+											"mapGrade": { "type": "number" },
+											"mapTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagGrade": { "type": "number" },
+											"diagTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagUnit": { "type": "string" },
+											"tab": {
+												"type": "string",
+												"enum": [
+													"mistakes",
+													"map",
+													"today",
+													"parent"
+												]
+											}
+										},
+										"required": [],
+										"additionalProperties": true
+									}
+								},
+								"required": ["kind"],
+								"additionalProperties": true
+							}] }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentQueryRequest",
+							create: _winterhuan_dsh_student_student_watch_parameter_1_strict$schema,
+							jsonSchema: { "oneOf": [{
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"enum": [
+											"learning-context",
+											"summary",
+											"files",
+											"settings",
+											"status",
+											"curriculum",
+											"elements",
+											"exercises",
+											"review-sheet",
+											"diagnose",
+											"weak",
+											"due",
+											"pending",
+											"progress",
+											"concepts",
+											"objectives",
+											"relations",
+											"worksheets",
+											"paper-results",
+											"materials",
+											"mistakes",
+											"sessions",
+											"attempts"
+										]
+									},
+									"subject": {
+										"type": "string",
+										"enum": [
+											"math",
+											"chinese",
+											"english"
+										]
+									},
+									"id": { "type": "string" },
+									"unit": { "type": "string" },
+									"grade": { "type": "number" },
+									"term": {
+										"type": "string",
+										"enum": ["first", "second"]
+									},
+									"offset": { "type": "number" }
+								},
+								"required": ["kind"],
+								"additionalProperties": false
+							}, {
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"const": "dashboard"
+									},
+									"options": {
+										"type": "object",
+										"properties": {
+											"subject": {
+												"type": "string",
+												"enum": [
+													"math",
+													"chinese",
+													"english"
+												]
+											},
+											"mistakeOffset": { "type": "number" },
+											"mistakeStatus": {
+												"type": "string",
+												"enum": [
+													"due",
+													"all",
+													"reviewing",
+													"mastered"
+												]
+											},
+											"mapGrade": { "type": "number" },
+											"mapTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagGrade": { "type": "number" },
+											"diagTerm": {
+												"type": "string",
+												"enum": ["first", "second"]
+											},
+											"diagUnit": { "type": "string" },
+											"tab": {
+												"type": "string",
+												"enum": [
+													"mistakes",
+													"map",
+													"today",
+													"parent"
+												]
+											}
+										},
+										"required": [],
+										"additionalProperties": false
+									}
+								},
+								"required": ["kind"],
+								"additionalProperties": false
+							}] }
+						}
+					}],
+					cancellation: { parameter: "signal" },
+					result: {
+						mode: "strict",
+						typeSymbol: "@winterhuan/dsh-student/types#StudentWatchFrame",
+						create: _winterhuan_dsh_student_student_watch_result$schema,
+						description: "an initial snapshot and later changes or recoverable read-failure frames.",
+						jsonSchemaError: "typert tool schema: recursive selected type requires a supported JSON value declaration"
+					},
+					sourceLocation: {
+						"file": "packages/winterhuan/student/src/remote-service.ts",
+						"line": 70,
+						"column": 10
+					}
+				}
+			}
+		}, zod.z);
+		//#endregion
+		//#region lib/types/client/drafts.js
+		/**
+		* Declare persisted interaction drafts; official files remain the business authority.
+		* @returns the registration handle seeded before its first render.
+		*/
+		function createStudentDraftStore() {
+			return (0, _deepseek_ai_dsh_client_store.defineStore)({
+				init: () => {
+					const drafts = {};
+					try {
+						for (let index = 0; index < window.sessionStorage.length; index++) {
+							const key = window.sessionStorage.key(index);
+							if (key?.startsWith("student:draft:")) drafts[key] = window.sessionStorage.getItem(key) ?? "";
+						}
+					} catch {}
+					return { drafts };
+				},
+				persist: "student:drafts",
+				actions: {
+					setDraft: (state, key, value) => {
+						state.drafts[key] = value;
+					},
+					clearDraft: (state, key) => {
+						delete state.drafts[key];
+					}
+				}
+			});
+		}
+		/**
+		* Parse optional browser drafts before their first render; malformed values supply no baseline.
+		* @param value - persisted browser interaction text.
+		* @returns valid retained fields, or no retained baseline.
+		*/
+		function readFormDraft(value) {
+			if (!value) return void 0;
+			try {
+				const entry = JSON.parse(value);
+				if (typeof entry.baseline !== "string" || typeof entry.revision !== "number" || !entry.values || typeof entry.values !== "object" || Array.isArray(entry.values)) return void 0;
+				if (!Object.values(entry.values).every((value) => [
+					"string",
+					"number",
+					"boolean"
+				].includes(typeof value))) return void 0;
+				return {
+					baseline: entry.baseline,
+					revision: entry.revision,
+					values: entry.values,
+					edited: Array.isArray(entry.edited) ? entry.edited.filter((name) => typeof name === "string") : [],
+					...typeof entry.confirmedFrom === "string" ? { confirmedFrom: entry.confirmedFrom } : {},
+					...typeof entry.observation === "string" ? { observation: entry.observation } : {}
+				};
+			} catch {
+				return;
+			}
+		}
+		/**
+		* Name a form within its Session and term namespace.
+		* @param entity - edited entity or answer identity.
+		* @param namespace - Session and term prefix; standalone confirmations use their own prefix.
+		* @returns the declared-store draft key.
+		*/
+		function formDraftKey(entity, namespace = "student:standalone") {
+			return `${namespace}:${entity}`;
 		}
 		//#endregion
 		//#region lib/types/interests.js
 		/** One saved tag: 2–16 Han characters, letters or digits, with no spaces. */
 		const INTEREST_TAG = /^[\p{Script=Han}A-Za-z0-9]{2,16}$/u;
+		//#endregion
+		//#region lib/types/vocabulary.js
+		/**
+		* Subject-scoped learning vocabularies shared by the host schemas and the workbench.
+		*
+		* Kept free of schema dependencies so client code can import the lists without pulling zod.
+		* @module @winterhuan/dsh-student/vocabulary
+		*/
+		/** Error causes offered for math mistakes. */
+		const mathErrorTypes = [
+			"carry-borrow",
+			"place-value",
+			"operation-choice",
+			"calculation",
+			"unit-quantity",
+			"reading-task",
+			"pattern",
+			"geometry-feature",
+			"money-measure",
+			"reasoning-incomplete"
+		];
+		/** Error causes offered for Chinese mistakes. */
+		const chineseErrorTypes = [
+			"pinyin-tone",
+			"character-form",
+			"character-usage",
+			"word-meaning",
+			"reading-evidence",
+			"order",
+			"expression-incomplete",
+			"punctuation",
+			"listening"
+		];
+		/** Error causes offered for English mistakes. */
+		const englishErrorTypes = [
+			"spelling",
+			"word-meaning",
+			"word-form",
+			"sentence-pattern",
+			"usage-context",
+			"listening",
+			"spoken-response",
+			"writing-complete"
+		];
 		/** Error causes offered for one subject; the parent can change any classification. */
 		const errorTypesBySubject = {
-			math: [
-				"carry-borrow",
-				"place-value",
-				"operation-choice",
-				"calculation",
-				"unit-quantity",
-				"reading-task",
-				"pattern",
-				"geometry-feature",
-				"money-measure",
-				"reasoning-incomplete"
-			],
-			chinese: [
-				"pinyin-tone",
-				"character-form",
-				"character-usage",
-				"word-meaning",
-				"reading-evidence",
-				"order",
-				"expression-incomplete",
-				"punctuation",
-				"listening"
-			],
-			english: [
-				"spelling",
-				"word-meaning",
-				"word-form",
-				"sentence-pattern",
-				"usage-context",
-				"listening",
-				"spoken-response",
-				"writing-complete"
-			]
+			math: mathErrorTypes,
+			chinese: chineseErrorTypes,
+			english: englishErrorTypes
 		};
+		/** Daily-practice focuses offered for Chinese units. */
+		const chineseFocus = [
+			"literacy",
+			"pinyin",
+			"reading",
+			"writing",
+			"review"
+		];
+		/** Daily-practice focuses offered for math units. */
+		const mathFocus = [
+			"concepts",
+			"calculation",
+			"geometry",
+			"measurement",
+			"review"
+		];
+		/** Daily-practice focuses offered for English units. */
+		const englishFocus = [
+			"words",
+			"sentences",
+			"story",
+			"listen",
+			"project",
+			"review"
+		];
+		//#endregion
+		//#region lib/types/schema.js
+		const text$1 = zod.z.string().trim().min(1).max(2e3);
+		const id$1 = zod.z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u);
+		const time$1 = zod.z.number().int().nonnegative();
+		const subject$1 = zod.z.enum([
+			"chinese",
+			"math",
+			"english"
+		]);
+		const stepText = zod.z.string().trim().min(1).max(240);
+		/** Deduplicate enum source values while keeping the tuple type `z.enum` requires. */
+		function enumValues(values) {
+			const [first, ...rest] = [...new Set(values)];
+			if (first === void 0) throw new Error("枚举不能为空。");
+			return [first, ...rest];
+		}
+		/** Model-suggested cause of one mistake; the parent can review and change it in the panel. */
+		const errorTypeSchema = zod.z.enum(enumValues([
+			...mathErrorTypes,
+			...chineseErrorTypes,
+			...englishErrorTypes
+		]));
+		/** How far one review question departs from the original mistake. */
+		const variantSchema = zod.z.enum([
+			"numeric",
+			"context",
+			"reasoning"
+		]);
+		zod.z.enum(enumValues([
+			...chineseFocus,
+			...mathFocus,
+			...englishFocus
+		]));
+		/** Which variation axes one objective supports. */
+		const variationAxisSchema = zod.z.enum([
+			"numbers",
+			"context",
+			"representation",
+			"reverse",
+			"explain"
+		]);
+		/** One printable sheet's role; absent keeps the legacy title heuristic. */
+		const sheetKindSchema = zod.z.enum([
+			"daily",
+			"practice",
+			"review"
+		]);
+		/** One exercise item's pedagogical role in diagnosis, Simon four-step teaching, or daily routines. */
+		const exerciseRoleSchema = zod.z.enum([
+			"diagnose",
+			"demo",
+			"try",
+			"vary",
+			"daily"
+		]);
+		const scope$1 = zod.z.object({
+			region: text$1,
+			grade: zod.z.number().int().min(1).max(6),
+			term: zod.z.enum(["first", "second"]),
+			schoolYear: text$1,
+			schoolSystem: zod.z.enum(["five-four", "six-three"])
+		}).strict();
+		const profile = scope$1.extend({
+			nickname: text$1,
+			schoolAlias: zod.z.string().trim().max(2e3),
+			parentConfirmation: text$1.default("家长已确认学习档案")
+		}).strict();
+		const material = zod.z.object({
+			id: id$1,
+			subject: subject$1,
+			scope: scope$1,
+			title: text$1,
+			publisher: text$1,
+			edition: text$1,
+			editionStatus: zod.z.enum(["unconfirmed", "identified"]),
+			kind: zod.z.enum([
+				"official-textbook",
+				"school-material",
+				"reference",
+				"generated"
+			]),
+			locator: text$1,
+			evidence: text$1
+		}).strict();
+		const schoolProgress = zod.z.object({
+			unitId: id$1,
+			confirmedAt: time$1,
+			posture: zod.z.enum(["keep-up", "catch-up"]),
+			preview: zod.z.boolean(),
+			pace: zod.z.enum(["teaching", "review"])
+		}).strict();
+		const courseInput = zod.z.object({
+			subject: subject$1,
+			materialId: id$1,
+			unit: text$1,
+			parentConfirmation: text$1.default("家长已确认教材与当前单元")
+		}).strict();
+		const course = courseInput.extend({ progress: schoolProgress.optional() }).strict();
+		const mistake = zod.z.object({
+			id: id$1,
+			subject: subject$1,
+			topic: text$1,
+			prompt: text$1,
+			learnerAnswer: text$1,
+			correction: text$1,
+			explanation: text$1,
+			answerEvidence: text$1,
+			imagePath: text$1.optional(),
+			uncertainties: zod.z.string().max(2e3),
+			materialId: id$1.optional(),
+			objectiveId: id$1.optional(),
+			errorType: errorTypeSchema.optional()
+		}).strict();
+		const concept = zod.z.object({
+			id: id$1,
+			subject: subject$1,
+			name: text$1,
+			definition: text$1,
+			example: text$1,
+			source: text$1,
+			facts: zod.z.array(stepText).min(2).max(8).optional(),
+			misconceptions: zod.z.array(text$1).max(3).optional()
+		}).strict();
+		const objective = zod.z.object({
+			id: id$1,
+			subject: subject$1,
+			title: text$1,
+			goal: text$1,
+			conceptIds: zod.z.array(id$1).min(1).max(5),
+			method: zod.z.enum([
+				"recognize",
+				"read-evidence",
+				"express",
+				"represent",
+				"reason",
+				"verify",
+				"context",
+				"listen",
+				"speak"
+			]),
+			errorTypes: zod.z.array(errorTypeSchema).max(4).optional(),
+			questionPoints: zod.z.array(text$1).max(4).optional(),
+			variationAxes: zod.z.array(variationAxisSchema).max(4).optional()
+		}).strict();
+		const relation = zod.z.object({
+			id: id$1,
+			fromId: id$1,
+			toId: id$1,
+			kind: zod.z.enum([
+				"prerequisite",
+				"part-of",
+				"contrast",
+				"explains",
+				"cause-effect"
+			]),
+			explanation: text$1,
+			source: text$1
+		}).strict();
+		const label = zod.z.string().trim().max(24);
+		const count = (max) => zod.z.number().int().min(0).max(max);
+		const denomination = zod.z.enum([
+			"1分",
+			"2分",
+			"5分",
+			"1角",
+			"2角",
+			"5角",
+			"1元",
+			"5元",
+			"10元",
+			"20元",
+			"50元",
+			"100元"
+		]);
+		const sketchPoint = zod.z.object({
+			x: zod.z.number().int().min(0).max(480),
+			y: zod.z.number().int().min(0).max(259)
+		}).strict();
+		const sketchElement = zod.z.discriminatedUnion("draw", [
+			zod.z.object({
+				draw: zod.z.literal("line"),
+				from: sketchPoint,
+				to: sketchPoint
+			}).strict(),
+			zod.z.object({
+				draw: zod.z.literal("polyline"),
+				points: zod.z.array(sketchPoint).min(2).max(12),
+				closed: zod.z.enum(["yes", "no"]).optional()
+			}).strict(),
+			zod.z.object({
+				draw: zod.z.literal("rect"),
+				x: zod.z.number().int().min(0).max(480),
+				y: zod.z.number().int().min(0).max(259),
+				width: zod.z.number().int().min(1).max(480),
+				height: zod.z.number().int().min(1).max(259)
+			}).strict(),
+			zod.z.object({
+				draw: zod.z.literal("circle"),
+				x: zod.z.number().int().min(0).max(480),
+				y: zod.z.number().int().min(0).max(259),
+				radius: zod.z.number().int().min(2).max(80)
+			}).strict(),
+			zod.z.object({
+				draw: zod.z.literal("text"),
+				x: zod.z.number().int().min(0).max(480),
+				y: zod.z.number().int().min(0).max(259),
+				label,
+				align: zod.z.enum(["left", "center"]).optional()
+			}).strict(),
+			zod.z.object({
+				draw: zod.z.literal("arrow"),
+				from: sketchPoint,
+				to: sketchPoint
+			}).strict()
+		]);
+		/** Printable figures drawn by the SVG renderer; an empty label prints an answer box. */
+		const figureSchema = zod.z.discriminatedUnion("kind", [
+			zod.z.object({
+				kind: zod.z.literal("bar-model"),
+				bars: zod.z.array(zod.z.object({
+					name: label,
+					segments: zod.z.array(zod.z.object({
+						label,
+						units: zod.z.number().int().min(1).max(20),
+						style: zod.z.enum(["solid", "dashed"]).optional()
+					}).strict()).min(1).max(4),
+					total: label.optional()
+				}).strict()).min(1).max(3)
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("money"),
+				items: zod.z.array(zod.z.union([denomination, zod.z.object({
+					denomination,
+					count: zod.z.number().int().min(1).max(9)
+				}).strict()])).min(1).max(16)
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("place-value"),
+				tens: count(9),
+				ones: count(9),
+				crossTens: count(9),
+				crossOnes: count(19),
+				regroup: zod.z.enum(["yes", "no"])
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("hundred-chart"),
+				hidden: zod.z.array(zod.z.number().int().min(1).max(100)).max(20).optional(),
+				window: zod.z.object({ center: zod.z.number().int().min(12).max(89) }).strict().optional()
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("number-line"),
+				from: zod.z.number().int().min(-999).max(9999),
+				to: zod.z.number().int().min(-999).max(9999),
+				step: zod.z.number().int().min(1).max(100),
+				marks: zod.z.array(zod.z.object({
+					value: zod.z.number().int(),
+					label: label.optional()
+				}).strict()).max(4).optional(),
+				jumps: zod.z.array(zod.z.object({
+					from: zod.z.number().int(),
+					to: zod.z.number().int(),
+					label: label.optional()
+				}).strict()).max(3).optional()
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("clock"),
+				clocks: zod.z.array(zod.z.object({
+					hour: zod.z.number().int().min(1).max(12),
+					minute: zod.z.number().int().min(0).max(59)
+				}).strict()).min(1).max(2)
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("sticks"),
+				bundles: count(9),
+				singles: count(9),
+				crossBundles: count(9).optional(),
+				crossSingles: count(9).optional()
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("vertical"),
+				count: zod.z.number().int().min(1).max(3)
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("shapes"),
+				rows: zod.z.array(zod.z.object({
+					name: label,
+					shape: zod.z.enum([
+						"circle",
+						"square",
+						"triangle"
+					]),
+					count: count(20),
+					blank: count(20)
+				}).strict()).min(1).max(3)
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("overlap"),
+				left: label,
+				right: label,
+				leftOnly: label,
+				both: label,
+				rightOnly: label,
+				total: label.optional()
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("split"),
+				parts: zod.z.array(zod.z.object({
+					top: label,
+					left: label,
+					right: label
+				}).strict()).min(1).max(3)
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("sequence"),
+				items: zod.z.array(zod.z.object({
+					shape: zod.z.enum([
+						"circle",
+						"square",
+						"triangle",
+						"star"
+					]),
+					count: zod.z.number().int().min(1).max(6)
+				}).strict()).min(1).max(6),
+				blank: count(6).optional()
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("wall"),
+				rows: zod.z.array(zod.z.array(label).min(1).max(5)).min(2).max(5)
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("grid"),
+				columns: zod.z.array(label).min(1).max(8).optional(),
+				rows: zod.z.array(zod.z.object({
+					name: label.optional(),
+					cells: zod.z.array(label).min(1).max(8)
+				}).strict()).min(1).max(8)
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("dot-array"),
+				rows: zod.z.number().int().min(1).max(9),
+				columns: zod.z.number().int().min(1).max(9),
+				total: label.optional()
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("plane"),
+				items: zod.z.array(zod.z.object({
+					shape: zod.z.enum([
+						"circle",
+						"triangle",
+						"square",
+						"rectangle",
+						"quadrilateral",
+						"curved"
+					]),
+					count: zod.z.number().int().min(1).max(4)
+				}).strict()).min(1).max(6),
+				mark: zod.z.enum(["yes", "no"])
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("solid"),
+				items: zod.z.array(zod.z.object({
+					shape: zod.z.enum([
+						"cube",
+						"cuboid",
+						"cylinder",
+						"sphere"
+					]),
+					count: zod.z.number().int().min(1).max(4)
+				}).strict()).min(1).max(6),
+				mark: zod.z.enum(["yes", "no"])
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("counter"),
+				hundreds: count(9),
+				tens: count(9),
+				ones: count(9)
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("measure"),
+				bars: zod.z.array(zod.z.object({
+					name: label,
+					length: zod.z.number().int().min(1).max(15),
+					style: zod.z.enum(["straight", "curved"]).optional()
+				}).strict()).min(1).max(3),
+				ruler: zod.z.enum(["yes", "no"])
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("compass"),
+				blank: zod.z.enum(["yes", "no"])
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("balance"),
+				left: label,
+				right: label,
+				tilt: zod.z.enum([
+					"left",
+					"right",
+					"level"
+				])
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("writing"),
+				style: zod.z.enum(["tianzige", "fourline"]),
+				count: zod.z.number().int().min(1).max(8).optional(),
+				example: label.optional()
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("sketch"),
+				height: zod.z.number().int().min(40).max(260),
+				elements: zod.z.array(sketchElement).min(1).max(24)
+			}).strict()
+		]).superRefine((value, context) => {
+			const fail = (message) => context.addIssue({
+				code: "custom",
+				message
+			});
+			if (value.kind === "money") {
+				if (value.items.reduce((sum, item) => sum + (typeof item === "string" ? 1 : item.count), 0) > 30) fail("钱币图最多展示 30 枚。");
+			}
+			if (value.kind === "hundred-chart") {
+				if (value.window !== void 0 && value.hidden !== void 0) fail("百数表不能同时使用隐藏格和邻域窗口。");
+				if (value.window !== void 0 && ((value.window.center - 1) % 10 < 1 || (value.window.center - 1) % 10 > 8)) fail("邻域窗口的中心数必须避开百数表左右边界。");
+			}
+			if (value.kind === "number-line") {
+				if (value.from >= value.to) fail("数轴的起点必须小于终点。");
+				if ((value.to - value.from) % value.step !== 0) fail("数轴的步长必须整除区间长度。");
+				for (const mark of value.marks ?? []) if (mark.value < value.from || mark.value > value.to) fail("数轴标注必须落在区间内。");
+				for (const jump of value.jumps ?? []) if (jump.from < value.from || jump.from > value.to || jump.to < value.from || jump.to > value.to) fail("数轴跳数必须落在区间内。");
+			}
+			if (value.kind === "sticks" && ((value.crossBundles ?? 0) > value.bundles || (value.crossSingles ?? 0) > value.singles)) fail("划去的小棒不能多于画出的小棒。");
+			if (value.kind === "place-value") {
+				if (value.regroup === "yes" && (value.crossTens > 0 || value.crossOnes > 0)) fail("退位点子图不划线：退位过程配计数器或竖式，划线数数用 regroup \"no\"。");
+				if (value.regroup === "no" && (value.crossTens > value.tens || value.crossOnes > value.ones)) fail("划掉的点不能多于画出的点。");
+			}
+			if (value.kind === "wall") {
+				for (const [index, row] of value.rows.entries()) if (row.length !== index + 1) fail("数墙第一行一格、每往下一行多一格。");
+			}
+			if (value.kind === "grid") {
+				const width = value.rows[0]?.cells.length ?? 0;
+				if (value.rows.some((row) => row.cells.length !== width)) fail("方格表每行的格子数要一致。");
+				if (value.columns !== void 0 && value.columns.length !== width) fail("方格表的表头列数要和每行一致。");
+			}
+			if (value.kind === "clock") {
+				for (const item of value.clocks) if (item.minute % 5 !== 0) fail("钟面的分钟只画到 5 分的刻度。");
+			}
+			if ((value.kind === "plane" || value.kind === "solid") && value.items.reduce((sum, item) => sum + item.count, 0) > 12) fail("一行图形最多 12 个。");
+			if (value.kind === "sketch") {
+				for (const element of value.elements) if ((element.draw === "line" || element.draw === "arrow" ? [element.from, element.to] : element.draw === "polyline" ? element.points : element.draw === "circle" ? [{
+					x: element.x,
+					y: element.y + element.radius
+				}] : element.draw === "rect" ? [{
+					x: element.x,
+					y: element.y + element.height
+				}] : [{
+					x: element.x,
+					y: element.y
+				}]).some((point) => point.y > value.height)) fail("简笔画的笔画不能超出画布高度。");
+			}
+		});
+		const figure = figureSchema;
+		/** One structured exercise item shared by the shipped exercise bank and the workspace collection. */
+		const exerciseItemSchema = zod.z.object({
+			id: id$1,
+			subject: subject$1,
+			objectiveId: id$1,
+			role: exerciseRoleSchema,
+			variant: variantSchema,
+			prompt: text$1,
+			choices: zod.z.array(text$1).min(2).max(4).optional(),
+			figure: figure.optional(),
+			steps: zod.z.array(stepText).min(2).max(4),
+			answer: text$1,
+			explanation: text$1,
+			answerEvidence: text$1,
+			errorType: errorTypeSchema.optional()
+		}).strict();
+		const workspaceExerciseInput = zod.z.object({
+			id: id$1,
+			subject: subject$1,
+			objectiveId: id$1,
+			role: exerciseRoleSchema.default("try"),
+			variant: variantSchema.default("numeric"),
+			prompt: text$1,
+			choices: zod.z.array(text$1).min(2).max(4).optional(),
+			figure: figure.optional(),
+			steps: zod.z.array(stepText).min(2).max(4),
+			answer: text$1,
+			explanation: text$1,
+			answerEvidence: text$1,
+			errorType: errorTypeSchema.optional()
+		}).strict();
+		/** One step of teaching the current task: show, guide, independent try, then a variation. */
+		const phaseSchema = zod.z.enum([
+			"demo",
+			"guide",
+			"try",
+			"vary"
+		]);
+		const attemptResult = zod.z.enum([
+			"correct",
+			"partial",
+			"incorrect",
+			"unassessed",
+			"stuck"
+		]);
+		const assistance = zod.z.enum([
+			"independent",
+			"hint",
+			"worked-example",
+			"unknown"
+		]);
+		const attemptBody = {
+			id: id$1,
+			sessionId: id$1,
+			subject: subject$1,
+			topic: text$1,
+			prompt: text$1,
+			response: text$1,
+			feedback: text$1,
+			answerEvidence: text$1,
+			mistakeId: id$1.optional(),
+			objectiveId: id$1.optional(),
+			variant: variantSchema.optional(),
+			figure: figure.optional()
+		};
+		const attempt = zod.z.object({
+			...attemptBody,
+			result: attemptResult,
+			assistance
+		}).strict();
+		/** A record may omit assistance; the saved attempt always stores the resolved value. */
+		const recordAttempt = zod.z.object({
+			...attemptBody,
+			result: attemptResult,
+			assistance: assistance.optional()
+		}).strict();
+		const task = zod.z.object({
+			id: id$1,
+			sessionId: id$1,
+			subject: subject$1,
+			topic: text$1,
+			prompt: text$1,
+			choices: zod.z.array(text$1).min(2).max(4).optional(),
+			steps: zod.z.array(stepText).min(2).max(5).optional(),
+			phase: phaseSchema.optional(),
+			variant: variantSchema.optional(),
+			mistakeId: id$1.optional(),
+			objectiveId: id$1.optional(),
+			figure: figure.optional()
+		}).strict();
+		const answerSpace = zod.z.enum([
+			"none",
+			"line",
+			"lines",
+			"box"
+		]);
+		const worksheetItem = zod.z.object({
+			id: id$1,
+			objectiveId: id$1.optional(),
+			mistakeId: id$1.optional(),
+			variant: variantSchema.optional(),
+			prompt: text$1,
+			figure: figure.optional(),
+			space: answerSpace.optional(),
+			answer: text$1,
+			explanation: text$1,
+			answerEvidence: text$1
+		}).strict();
+		const worksheet = zod.z.object({
+			id: id$1,
+			subject: subject$1,
+			kind: sheetKindSchema.optional(),
+			objectiveId: id$1.optional(),
+			items: zod.z.array(worksheetItem).min(1).max(8)
+		}).strict();
+		const result = zod.z.enum([
+			"correct",
+			"partial",
+			"incorrect",
+			"unassessed"
+		]);
+		const paperResult = zod.z.object({
+			worksheetId: id$1,
+			itemId: id$1,
+			response: text$1,
+			result,
+			assistance,
+			feedback: text$1,
+			answerEvidence: text$1,
+			userConfirmation: text$1.default("家长在面板批改")
+		}).strict();
+		const paperDraft = zod.z.object({
+			worksheetId: id$1,
+			itemId: id$1,
+			response: text$1,
+			result,
+			assistance,
+			uncertainties: zod.z.string().max(2e3),
+			errorType: errorTypeSchema.optional(),
+			confidence: zod.z.enum(["high", "low"]).optional()
+		}).strict();
+		const gradeSheet = zod.z.object({
+			worksheetId: id$1,
+			results: zod.z.array(zod.z.object({
+				itemId: id$1,
+				result: zod.z.enum([
+					"correct",
+					"partial",
+					"incorrect"
+				]),
+				response: text$1.optional(),
+				assistance: assistance.optional(),
+				errorType: errorTypeSchema.optional()
+			}).strict()).min(1).max(8),
+			userConfirmation: text$1.default("家长在面板批改")
+		}).strict();
+		const workbookOutcome = zod.z.enum([
+			"stuck",
+			"hinted",
+			"independent-wrong",
+			"independent-correct"
+		]);
+		const workbookDraft = zod.z.object({
+			id: id$1,
+			subject: subject$1,
+			prompt: text$1,
+			response: text$1.optional(),
+			outcome: workbookOutcome,
+			objectiveId: id$1.optional(),
+			uncertainties: zod.z.string().max(2e3),
+			imagePath: text$1.optional()
+		}).strict();
+		const teachingItem = zod.z.object({
+			id: id$1,
+			subject: subject$1,
+			prompt: text$1,
+			objectiveId: id$1.optional(),
+			confirmedAt: time$1,
+			sourceDraftId: id$1.optional()
+		}).strict();
+		const schoolProgressInput = zod.z.object({
+			unitId: id$1,
+			posture: zod.z.enum(["keep-up", "catch-up"]),
+			preview: zod.z.enum(["on", "off"]),
+			pace: zod.z.enum(["teaching", "review"]),
+			parentConfirmation: text$1.default("家长确认学校进度")
+		}).strict();
+		zod.z.discriminatedUnion("action", [
+			zod.z.object({
+				action: zod.z.literal("setup"),
+				profile
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("material"),
+				material
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("course"),
+				course: courseInput
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("start"),
+				id: id$1,
+				subject: subject$1,
+				mode: zod.z.enum([
+					"foundation",
+					"school",
+					"review",
+					"explore",
+					"diagnose"
+				]),
+				intensity: zod.z.enum([
+					"light",
+					"standard",
+					"deep"
+				]).optional(),
+				scope: zod.z.object({
+					grade: zod.z.number().int().min(1).max(6),
+					term: zod.z.enum(["first", "second"]),
+					units: zod.z.array(id$1).max(20).optional(),
+					objectiveIds: zod.z.array(id$1).max(60).optional()
+				}).strict().optional()
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("task"),
+				task
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("answer"),
+				taskId: id$1,
+				response: text$1
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("hint"),
+				taskId: id$1
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("configure-course"),
+				material,
+				course: courseInput,
+				progress: schoolProgressInput.optional()
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("school-progress"),
+				subject: subject$1,
+				...schoolProgressInput.shape
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("record"),
+				attempt: recordAttempt
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("stuck"),
+				taskId: id$1
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("stop"),
+				sessionId: id$1,
+				reflection: zod.z.string().max(2e3)
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("mistake"),
+				mistake
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("confirm-mistake"),
+				id: id$1,
+				subject: subject$1.optional(),
+				topic: text$1.optional(),
+				objectiveId: zod.z.union([id$1, zod.z.literal("")]).optional(),
+				prompt: text$1,
+				learnerAnswer: text$1.optional(),
+				correction: text$1,
+				explanation: text$1,
+				answerEvidence: text$1,
+				errorType: errorTypeSchema.optional(),
+				userConfirmation: text$1.default("家长已核对错题与订正")
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("delete-mistake"),
+				id: id$1
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("save-exercise"),
+				exercise: workspaceExerciseInput
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("delete-exercise"),
+				id: id$1
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("concept"),
+				concept
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("confirm-concept"),
+				id: id$1,
+				definition: text$1.optional(),
+				example: text$1.optional(),
+				source: text$1.optional(),
+				userConfirmation: text$1.default("家长已核对概念")
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("objective"),
+				objective
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("relation"),
+				relation
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("link-mistake"),
+				mistakeId: id$1,
+				objectiveId: id$1
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("classify-mistake"),
+				mistakeId: id$1,
+				errorType: zod.z.union([errorTypeSchema, zod.z.literal("")]).optional()
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("worksheet"),
+				worksheet
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("paper-draft"),
+				paperDraft
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("grade-sheet"),
+				grade: gradeSheet
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("confirm-paper"),
+				worksheetId: id$1,
+				results: zod.z.array(zod.z.object({
+					itemId: id$1,
+					result: zod.z.enum([
+						"correct",
+						"partial",
+						"incorrect"
+					]),
+					response: text$1.optional(),
+					assistance: assistance.optional(),
+					errorType: errorTypeSchema.optional()
+				}).strict()).min(1).max(8),
+				userConfirmation: text$1.default("家长已核对转录结果")
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("discard-sheet"),
+				worksheetId: id$1
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("workbook-draft"),
+				draft: workbookDraft
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("confirm-workbook"),
+				id: id$1,
+				outcome: workbookOutcome.optional(),
+				objectiveId: zod.z.union([id$1, zod.z.literal("")]).optional(),
+				correction: text$1.optional(),
+				explanation: text$1.optional(),
+				answerEvidence: text$1.optional(),
+				userConfirmation: text$1.default("家长已核对练习册题目")
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("dismiss-teaching"),
+				id: id$1
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("archive-term"),
+				parentConfirmation: text$1.default("家长确认归档本学期")
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("openmaic-settings"),
+				baseUrl: zod.z.string().trim().max(200),
+				parentConfirmation: text$1.default("家长确认 OpenMAIC 地址")
+			}).strict(),
+			zod.z.object({
+				action: zod.z.literal("interests"),
+				tags: zod.z.array(zod.z.string().trim().regex(INTEREST_TAG)).min(3).max(8),
+				parentConfirmation: text$1.default("家长确认兴趣标签")
+			}).strict()
+		]);
+		/** One learner and term per workspace; previous materials and attempts are retained. */
+		const stateSchema = zod.z.object({
+			format: zod.z.literal(1),
+			revision: time$1,
+			updatedAt: time$1,
+			profile,
+			/** Set by archive-term; a state file carrying it reads as absent so a new term can be set up. */
+			archivedAt: time$1.optional(),
+			materials: zod.z.array(material).max(500),
+			courses: zod.z.array(course).max(3),
+			sessions: zod.z.array(zod.z.object({
+				id: id$1,
+				subject: subject$1,
+				mode: zod.z.enum([
+					"foundation",
+					"school",
+					"review",
+					"explore",
+					"diagnose"
+				]),
+				intensity: zod.z.enum([
+					"light",
+					"standard",
+					"deep"
+				]).optional(),
+				startedAt: time$1,
+				endedAt: time$1.optional(),
+				spentMs: time$1.optional(),
+				materialId: id$1.optional(),
+				unit: text$1.optional(),
+				reflection: zod.z.string().max(2e3).optional(),
+				scope: zod.z.object({
+					grade: zod.z.number().int().min(1).max(6),
+					term: zod.z.enum(["first", "second"]),
+					units: zod.z.array(id$1).max(20).optional(),
+					objectiveIds: zod.z.array(id$1).max(60).optional()
+				}).strict().optional()
+			}).strict()).max(5e3),
+			attempts: zod.z.array(attempt.extend({
+				feedback: zod.z.string().max(2e3),
+				at: time$1,
+				materialId: id$1.optional(),
+				rawResponse: text$1.optional(),
+				questionId: id$1.optional(),
+				responseId: id$1.optional()
+			}).strict()).max(2e4),
+			mistakes: zod.z.array(mistake.extend({
+				confirmedAt: time$1.optional(),
+				userConfirmation: text$1.optional(),
+				dueAt: time$1.optional(),
+				source: zod.z.object({
+					worksheetId: id$1,
+					itemId: id$1
+				}).strict().optional(),
+				independentDays: zod.z.array(zod.z.string()).default([]),
+				stage: zod.z.number().int().min(0).max(4).default(0)
+			}).strict()).max(5e3),
+			exercises: zod.z.array(exerciseItemSchema.extend({ savedAt: time$1.optional() }).strict()).max(1e3).default([]),
+			concepts: zod.z.array(concept.extend({
+				confirmedAt: time$1.optional(),
+				userConfirmation: text$1.optional()
+			}).strict()).max(1e3).default([]),
+			objectives: zod.z.array(objective).max(1e3).default([]),
+			relations: zod.z.array(relation).max(2e3).default([]),
+			worksheets: zod.z.array(worksheet.extend({
+				createdAt: time$1,
+				discardedAt: time$1.optional()
+			}).strict()).max(500).default([]),
+			paperResults: zod.z.array(paperResult.extend({ receivedAt: time$1 }).strict()).max(4e3).default([]),
+			paperDrafts: zod.z.array(paperDraft.extend({ receivedAt: time$1 }).strict()).max(500).default([]),
+			workbookDrafts: zod.z.array(workbookDraft.extend({ receivedAt: time$1 }).strict()).max(500).default([]),
+			workbookResults: zod.z.array(workbookDraft.extend({
+				receivedAt: time$1,
+				confirmedAt: time$1,
+				userConfirmation: text$1,
+				correction: text$1.optional(),
+				explanation: text$1.optional(),
+				answerEvidence: text$1.optional()
+			}).strict()).max(500).default([]),
+			teachingQueue: zod.z.array(teachingItem).max(500).default([]),
+			/** Parent override for the OpenMAIC origin. Absent means the environment or the localhost default. */
+			openmaic: zod.z.object({
+				baseUrl: zod.z.string().trim().min(1).max(200),
+				parentConfirmation: text$1
+			}).strict().optional(),
+			/** Parent theme tags. Absent profiles still read the example list; facts stay on the knowledge map. */
+			interests: zod.z.object({
+				tags: zod.z.array(zod.z.string().trim().regex(INTEREST_TAG)).min(3).max(8),
+				parentConfirmation: text$1
+			}).strict().optional(),
+			rewards: zod.z.array(zod.z.object({
+				day: zod.z.string(),
+				reason: zod.z.enum(["participation", "reflection"])
+			}).strict()).max(1e3),
+			task: task.extend({
+				response: text$1.optional(),
+				rawResponse: text$1.optional(),
+				answeredAt: time$1.optional(),
+				responseId: id$1.optional(),
+				hintLevel: zod.z.number().int().min(0).max(3),
+				stuck: zod.z.boolean().optional()
+			}).strict().optional()
+		}).strict();
+		zod.z.object({
+			action: zod.z.literal("archive-term"),
+			parentConfirmation: zod.z.string().trim().min(1).max(2e3).default("家长确认归档本学期")
+		}).strict();
+		//#endregion
+		//#region lib/types/files/schema.js
+		/** Strict official Student files. Entity identity is independent of file observation and business revision. */
+		const id = zod.z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u);
+		const text = zod.z.string().min(1).max(2e3);
+		const time = zod.z.number().int().nonnegative().max(864e13);
+		const subject = zod.z.enum([
+			"chinese",
+			"math",
+			"english"
+		]);
+		const termId = id.transform((value) => value);
+		const blockId = id.transform((value) => value);
+		const worksheetId = id.transform((value) => value);
+		const responseId = id.transform((value) => value);
+		const base = {
+			format: zod.z.literal(2),
+			termId
+		};
+		const scope = stateSchema.shape.sessions.element.shape.scope.unwrap();
+		/** Known assistance and unknown assistance remain separate from correctness. */
+		const assistanceSchema = zod.z.enum([
+			"independent",
+			"hint",
+			"worked-example",
+			"unknown"
+		]);
+		const day$1 = zod.z.string().regex(/^\d{4}-\d{2}-\d{2}$/u).refine((value) => {
+			const parsed = Date.parse(`${value}T00:00:00+08:00`);
+			return Number.isFinite(parsed) && new Date(parsed + 288e5).toISOString().slice(0, 10) === value;
+		}, "Use an actual calendar date.");
+		/** Actual answer time; parent day precision never supplies a within-day order. */
+		const answerDateSchema = zod.z.discriminatedUnion("kind", [
+			zod.z.object({ kind: zod.z.literal("unknown") }).strict(),
+			zod.z.object({
+				kind: zod.z.literal("day"),
+				day: day$1,
+				parentConfirmation: text
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("instant"),
+				at: time,
+				basis: zod.z.enum(["native-input", "current-manual"]),
+				sourceVersion: text
+			}).strict()
+		]);
+		/** Native input version or preserved source; missing receipt matching is explicitly unknown. */
+		const responseSourceSchema = zod.z.discriminatedUnion("kind", [
+			zod.z.object({ kind: zod.z.literal("unknown") }).strict(),
+			zod.z.object({
+				kind: zod.z.literal("native"),
+				sessionId: text,
+				messageId: text,
+				inputVersion: text,
+				receiptAt: time.optional(),
+				attachments: zod.z.array(text).max(8).optional()
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("paper"),
+				imagePaths: zod.z.array(text).max(8),
+				parentConfirmation: text
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("manual"),
+				entry: zod.z.enum(["current", "historical"]),
+				parentConfirmation: text
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("legacy"),
+				sourcePath: text,
+				row: text
+			}).strict()
+		]);
+		const target = zod.z.union([id, zod.z.object({
+			kind: zod.z.literal("pending"),
+			reason: text
+		}).strict()]);
+		/** Published question source, including unresolved legacy material. */
+		const questionSourceSchema = zod.z.discriminatedUnion("kind", [
+			zod.z.object({
+				kind: zod.z.literal("authored"),
+				description: text
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("exercise"),
+				exerciseId: id,
+				description: text
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("mistake"),
+				mistakeId: id,
+				description: text
+			}).strict(),
+			zod.z.object({
+				kind: zod.z.literal("legacy"),
+				sourcePath: text,
+				row: text
+			}).strict()
+		]);
+		/** Published question content reused by blocks and worksheets, including every supported figure. */
+		const questionSchema = zod.z.object({
+			id,
+			objectiveId: target,
+			mistakeId: id.optional(),
+			source: questionSourceSchema,
+			topic: text,
+			prompt: text,
+			answer: text,
+			explanation: text,
+			answerEvidence: text,
+			basisStatus: zod.z.literal("legacy-pending").optional(),
+			choices: zod.z.array(text).min(2).max(4).optional(),
+			steps: zod.z.array(text.max(240)).min(2).max(5).optional(),
+			figure: figureSchema.optional(),
+			phase: phaseSchema.optional(),
+			variant: variantSchema.optional(),
+			space: zod.z.enum([
+				"none",
+				"line",
+				"lines",
+				"box"
+			]).optional()
+		}).strict();
+		/** Original learner wording and its actual date; assessments cannot replace these fields. */
+		const responseSchema = zod.z.object({
+			id: responseId,
+			questionId: id,
+			rawResponse: text,
+			response: text.optional(),
+			assistance: assistanceSchema,
+			assistanceConfirmation: text.optional(),
+			answerDateConfirmation: text.optional(),
+			answerDate: answerDateSchema.optional(),
+			source: responseSourceSchema
+		}).strict();
+		/** The current assessment of one response. A correction replaces this entry under the same response identity. */
+		const assessmentSchema = zod.z.object({
+			id,
+			responseId,
+			result: zod.z.enum([
+				"correct",
+				"partial",
+				"incorrect",
+				"unassessed",
+				"stuck"
+			]),
+			assistance: assistanceSchema,
+			feedback: text,
+			answerEvidence: text,
+			assessedAt: time,
+			correctedAt: time.optional(),
+			userConfirmation: text.optional(),
+			errorType: errorTypeSchema.optional()
+		}).strict();
+		const pending = zod.z.object({
+			sourcePath: text,
+			row: text,
+			fields: zod.z.array(text).min(1).max(20),
+			reason: text
+		}).strict();
+		zod.z.object({
+			...base,
+			kind: zod.z.literal("term-settings"),
+			revision: time,
+			updatedAt: time,
+			profile: stateSchema.shape.profile.extend({ parentConfirmation: text }),
+			materials: stateSchema.shape.materials,
+			courses: zod.z.array(stateSchema.shape.courses.element.extend({ parentConfirmation: text })).max(3),
+			interests: stateSchema.shape.interests,
+			openmaic: stateSchema.shape.openmaic,
+			archivedAt: time.optional(),
+			migration: zod.z.object({
+				sourcePath: text,
+				sourceSha256: zod.z.string().regex(/^[a-f0-9]{64}$/u),
+				backupPath: text
+			}).strict().optional()
+		}).strict();
+		zod.z.object({
+			...base,
+			kind: zod.z.literal("block"),
+			id: blockId,
+			subject,
+			mode: stateSchema.shape.sessions.element.shape.mode,
+			intensity: stateSchema.shape.sessions.element.shape.intensity,
+			startedAt: time,
+			endedAt: time.optional(),
+			spentMs: time.optional(),
+			reflection: zod.z.string().max(2e3).optional(),
+			context: zod.z.object({
+				profile: stateSchema.shape.profile.optional(),
+				pendingProfile: text.optional(),
+				scope: scope.optional(),
+				material: stateSchema.shape.materials.element.optional()
+			}).strict(),
+			currentQuestionId: id.optional(),
+			questions: zod.z.array(questionSchema).max(200),
+			responses: zod.z.array(responseSchema).max(500),
+			currentResponseId: responseId.optional(),
+			hints: zod.z.array(zod.z.object({
+				questionId: id,
+				responseId: responseId.optional(),
+				level: zod.z.number().int().min(1).max(3),
+				at: time
+			}).strict()).max(500),
+			stuckSignals: zod.z.array(zod.z.object({
+				questionId: id,
+				at: time
+			}).strict()).max(200).optional(),
+			assessments: zod.z.array(assessmentSchema).max(500),
+			pendingLegacy: zod.z.array(pending).max(500).optional()
+		}).strict();
+		/** One worksheet owns frozen question targets, photo drafts and all confirmed workbook outcomes. */
+		const worksheetSchema = zod.z.object({
+			...base,
+			kind: zod.z.literal("worksheet"),
+			id: worksheetId,
+			subject,
+			worksheetKind: sheetKindSchema.optional(),
+			origin: zod.z.enum(["prepared", "workbook"]),
+			createdAt: time,
+			discardedAt: time.optional(),
+			context: zod.z.object({
+				profile: stateSchema.shape.profile.optional(),
+				pendingProfile: text.optional(),
+				scope: scope.optional()
+			}).strict(),
+			answerDate: answerDateSchema.optional(),
+			items: zod.z.array(questionSchema).min(1).max(8),
+			responses: zod.z.array(responseSchema).max(500),
+			assessments: zod.z.array(assessmentSchema).max(500),
+			drafts: zod.z.array(zod.z.object({
+				id,
+				questionId: id,
+				response: text,
+				result: assessmentSchema.shape.result,
+				assistance: assistanceSchema,
+				confidence: zod.z.enum(["high", "low"]),
+				uncertainties: zod.z.string().max(2e3),
+				imagePaths: zod.z.array(text).max(8),
+				receivedAt: time
+			}).strict()).max(500),
+			pendingLegacy: zod.z.array(pending).max(500).optional()
+		}).strict();
+		zod.z.object({
+			...base,
+			kind: zod.z.literal("collections"),
+			mistakes: zod.z.array(stateSchema.shape.mistakes.element.omit({
+				stage: true,
+				independentDays: true,
+				dueAt: true
+			})).max(5e3),
+			exercises: stateSchema.shape.exercises,
+			concepts: stateSchema.shape.concepts,
+			objectives: stateSchema.shape.objectives,
+			relations: stateSchema.shape.relations,
+			teachingQueue: stateSchema.shape.teachingQueue,
+			rewards: zod.z.array(stateSchema.shape.rewards.element.extend({ day: day$1 })).max(1e3),
+			pendingLegacy: zod.z.array(pending).max(5e3).optional()
+		}).strict();
 		//#endregion
 		//#region lib/types/client/forms.js
+		function savedSettingsForm(result, entity, original, subject) {
+			if (!result.manual) return result;
+			const current = result.manual.current;
+			const observation = result.manual.versions.find((file) => file.path === ".study/settings.json").version;
+			const retained = JSON.parse(original).baseline;
+			const values = (value) => value && typeof value === "object" ? Object.fromEntries(Object.entries(value).filter((entry) => [
+				"string",
+				"number",
+				"boolean"
+			].includes(typeof entry[1]))) : {};
+			if (entity === "profile") {
+				const profile = JSON.parse(retained) ?? {};
+				for (const [key, value] of Object.entries(current)) if (key.startsWith("profile:")) profile[key.slice(8)] = value;
+				return {
+					baseline: JSON.stringify(profile),
+					currentValues: values(profile),
+					observation
+				};
+			}
+			if (entity === "course") {
+				const baseline = JSON.parse(retained);
+				const course = current[`course:${subject}`];
+				baseline.course = course;
+				const fields = values(course);
+				if (course && typeof course === "object" && "progress" in course && course.progress && typeof course.progress === "object" && "unitId" in course.progress && typeof course.progress.unitId === "string") fields.unitId = course.progress.unitId;
+				if (subject) fields.subject = subject;
+				return {
+					baseline: JSON.stringify(baseline),
+					currentValues: fields,
+					observation
+				};
+			}
+			if (entity === "progress") {
+				const progress = current[`progress:${subject}`];
+				return {
+					baseline: JSON.stringify(progress),
+					currentValues: values(progress),
+					observation
+				};
+			}
+			if (entity === "openmaic") {
+				const config = current.openmaic;
+				const baseUrl = config && typeof config === "object" && "baseUrl" in config && typeof config.baseUrl === "string" ? config.baseUrl : "";
+				return {
+					baseline: baseUrl,
+					currentValues: { baseUrl },
+					observation
+				};
+			}
+			return {
+				baseline: JSON.stringify(current.interests ?? []),
+				currentValues: { tags: JSON.stringify(current.interests ?? []) },
+				observation
+			};
+		}
 		const subjects$1 = [
 			"chinese",
 			"math",
 			"english"
 		];
 		const read = (form, name) => String(form.get(name) ?? "").trim();
-		/** Labelled native field with browser validation, preserving unsaved text across polling. */
-		function Field({ name, label, value = "", type = "text", min, max, required = true }) {
-			return (0, react_jsx_runtime.jsxs)("label", { children: [label, (0, react_jsx_runtime.jsx)("input", {
+		function useDraftValue({ useStore, draftKey, observation }, name) {
+			const entry = readFormDraft(useStore((state) => state.drafts[draftKey]));
+			return name && entry && (entry.confirmedFrom === observation || entry.edited.includes(name)) ? entry.values[name] : void 0;
+		}
+		/** Native controls read their declared draft before rendering and retain their DOM identity. */
+		function DraftInput({ useStore, draftKey, observation, ...props }) {
+			const retained = useDraftValue({
+				useStore,
+				draftKey,
+				observation
+			}, props.name);
+			const { defaultValue, defaultChecked, value, checked, onChange, ...rest } = props;
+			return (0, react_jsx_runtime.jsx)("input", {
+				...rest,
+				...props.type === "checkbox" ? { checked: retained === void 0 ? checked ?? defaultChecked ?? false : retained === true || retained === "on" } : { value: retained === void 0 ? value ?? defaultValue ?? "" : String(retained) },
+				onChange: onChange ?? (() => {})
+			});
+		}
+		function DraftSelect({ useStore, draftKey, observation, ...props }) {
+			const retained = useDraftValue({
+				useStore,
+				draftKey,
+				observation
+			}, props.name);
+			const { defaultValue, value, onChange, ...rest } = props;
+			return (0, react_jsx_runtime.jsx)("select", {
+				...rest,
+				value: retained === void 0 ? value ?? defaultValue ?? "" : String(retained),
+				onChange: onChange ?? (() => {})
+			});
+		}
+		function DraftTextarea({ useStore, draftKey, observation, ...props }) {
+			const retained = useDraftValue({
+				useStore,
+				draftKey,
+				observation
+			}, props.name);
+			const { defaultValue, value, onChange, ...rest } = props;
+			return (0, react_jsx_runtime.jsx)("textarea", {
+				...rest,
+				value: retained === void 0 ? value ?? defaultValue ?? "" : String(retained),
+				onChange: onChange ?? (() => {})
+			});
+		}
+		/** Labelled native field with browser validation. */
+		function Field({ name, label, value = "", type = "text", min, max, required = true, ...draft }) {
+			return (0, react_jsx_runtime.jsxs)("label", { children: [label, (0, react_jsx_runtime.jsx)(DraftInput, {
+				...draft,
 				name,
-				defaultValue: value,
+				value,
 				type,
 				min,
 				max,
@@ -1150,21 +5284,87 @@ window.__ModuleLoader__.load({
 				maxLength: 2e3
 			})] });
 		}
-		function SaveForm({ revision, submit, children, t, disabled = false, button = "save" }) {
-			const [base, setBase] = (0, react.useState)(revision);
+		function SaveForm({ revision, baseline, submit, children, t, disabled = false, button = "save", entity = "confirmation", draftScope, currentValues, resetValues, observation = `${revision}:${baseline}`, useStore, actions }) {
+			const key = formDraftKey(entity, draftScope);
+			const retained = readFormDraft(useStore((state) => state.drafts[key]));
+			const edited = retained?.edited ?? [];
+			const confirmed = retained?.confirmedFrom === observation;
+			const base = retained && (confirmed || edited.length > 0 && retained.baseline !== baseline) ? {
+				revision: retained.revision,
+				baseline: retained.baseline
+			} : {
+				revision,
+				baseline
+			};
+			const form = (0, react.useRef)(null);
+			function retain(event) {
+				const target = event.target;
+				const names = new Set(edited);
+				if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
+					if (!target.name) {
+						setSaved(false);
+						return;
+					}
+					names.add(target.name);
+				}
+				if (!form.current) return;
+				const values = {
+					...retained?.values,
+					...Object.fromEntries([...new FormData(form.current)].flatMap(([name, value]) => typeof value === "string" ? [[name, value]] : []))
+				};
+				for (const input of form.current.querySelectorAll("input[type=\"checkbox\"]")) if (input instanceof HTMLInputElement && names.has(input.name)) values[input.name] = input.checked ? "on" : "";
+				actions.setDraft(key, JSON.stringify({
+					...base,
+					edited: [...names],
+					values,
+					...confirmed ? {
+						confirmedFrom: retained.confirmedFrom,
+						observation: retained.observation
+					} : {}
+				}));
+				setSaved(false);
+			}
 			const [busy, setBusy] = (0, react.useState)(false);
 			const [error, setError] = (0, react.useState)("");
 			const [saved, setSaved] = (0, react.useState)(false);
+			function resolveDraft(keep) {
+				if (!form.current) return;
+				if (keep) actions.setDraft(key, JSON.stringify({
+					revision,
+					baseline,
+					edited,
+					values: retained?.values ?? {}
+				}));
+				else {
+					resetValues?.();
+					actions.clearDraft(key);
+				}
+				setError("");
+				setSaved(false);
+			}
 			async function save(event) {
 				event.preventDefault();
 				if (busy) return;
 				const values = new FormData(event.currentTarget);
+				const submitter = event.nativeEvent.submitter;
+				if (submitter instanceof HTMLButtonElement) values.set("move", submitter.value);
 				setBusy(true);
 				setSaved(false);
 				setError("");
 				try {
-					const result = await submit(values, base);
-					setBase(result.revision);
+					const result = await submit(values, base.revision, JSON.stringify({
+						baseline: base.baseline,
+						editedFields: edited
+					}));
+					if (result && "baseline" in result) actions.setDraft(key, JSON.stringify({
+						revision,
+						baseline: result.baseline,
+						edited: [],
+						values: result.currentValues,
+						confirmedFrom: observation,
+						observation: result.observation
+					}));
+					else actions.clearDraft(key);
 					setSaved(true);
 				} catch (reason) {
 					setError(reason instanceof Error ? reason.message : t("networkError"));
@@ -1173,22 +5373,36 @@ window.__ModuleLoader__.load({
 				}
 			}
 			return (0, react_jsx_runtime.jsxs)("form", {
+				ref: form,
 				onSubmit: (event) => {
 					save(event);
 				},
-				onChange: () => setSaved(false),
+				onChange: retain,
 				children: [
 					(0, react_jsx_runtime.jsxs)("fieldset", {
 						disabled: disabled || busy,
-						children: [children, (0, react_jsx_runtime.jsx)("button", {
+						children: [children, button && (0, react_jsx_runtime.jsx)("button", {
 							type: "submit",
 							children: busy ? t("busy") : t(button)
 						})]
 					}),
-					error && (0, react_jsx_runtime.jsx)("p", {
+					error && (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [(0, react_jsx_runtime.jsx)("p", {
 						role: "alert",
 						children: error
-					}),
+					}), (0, react_jsx_runtime.jsxs)("div", {
+						className: "student-segments",
+						children: [(currentValues || resetValues) && (0, react_jsx_runtime.jsx)("button", {
+							type: "button",
+							disabled: disabled || busy,
+							onClick: () => resolveDraft(false),
+							children: t("useCurrentValues")
+						}), (0, react_jsx_runtime.jsx)("button", {
+							type: "button",
+							disabled: disabled || busy,
+							onClick: () => resolveDraft(true),
+							children: t("keepDraft")
+						})]
+					})] }),
 					saved && (0, react_jsx_runtime.jsx)("p", {
 						role: "status",
 						children: t("saved")
@@ -1197,19 +5411,46 @@ window.__ModuleLoader__.load({
 			});
 		}
 		/** Parent-confirmed setup or in-place profile update, plus an atomic textbook/course update. */
-		function ParentSettings({ data, change, t, curriculum = null, subject = "math", onSubject }) {
+		function ParentSettings({ data, change, t, curriculum = null, subject = "math", onSubject, draftScope, observation, useStore, actions }) {
 			const [progressError, setProgressError] = (0, react.useState)("");
+			const draft = {
+				useStore,
+				actions
+			};
+			const field = (entity, baseline) => ({
+				useStore,
+				draftKey: formDraftKey(entity, draftScope),
+				observation: observation ?? `${data.revision}:${baseline}`
+			});
 			const study = data.study;
 			const profile = study?.profile;
+			const profileBaseline = JSON.stringify(profile ?? null);
+			const courseBaseline = JSON.stringify({
+				scope: profile ? {
+					region: profile.region,
+					grade: profile.grade,
+					term: profile.term,
+					schoolYear: profile.schoolYear,
+					schoolSystem: profile.schoolSystem
+				} : void 0,
+				course: study?.courses.find((item) => item.subject === subject)
+			});
+			const progressBaseline = JSON.stringify(study?.courses.find((course) => course.subject === subject)?.progress ?? null);
 			const today = new Date(data.serverNow + 288e5);
 			const currentYear = today.getUTCFullYear() - (today.getUTCMonth() < 8 ? 1 : 0);
 			const years = Array.from({ length: 7 }, (_, index) => `${currentYear + 1 - index}–${currentYear + 2 - index}`);
 			return (0, react_jsx_runtime.jsxs)("section", { children: [
 				(0, react_jsx_runtime.jsx)("p", { children: t("parentHelp") }),
 				(0, react_jsx_runtime.jsxs)(SaveForm, {
+					...draft,
+					observation,
+					draftScope,
+					entity: "profile",
+					currentValues: profile ?? {},
 					revision: data.revision,
+					baseline: profileBaseline,
 					t,
-					submit: (form, revision) => change({
+					submit: (form, revision, original) => change({
 						action: "setup",
 						profile: {
 							nickname: read(form, "nickname"),
@@ -1221,19 +5462,22 @@ window.__ModuleLoader__.load({
 							schoolSystem: form.get("schoolSystem") === "six-three" ? "six-three" : "five-four",
 							parentConfirmation: t("profileConfirm")
 						}
-					}, revision),
+					}, revision, original).then((result) => savedSettingsForm(result, "profile", original)),
 					children: [
 						(0, react_jsx_runtime.jsx)(Field, {
+							...field("profile", profileBaseline),
 							name: "nickname",
 							label: t("nickname"),
 							value: profile?.nickname ?? ""
 						}),
 						(0, react_jsx_runtime.jsx)(Field, {
+							...field("profile", profileBaseline),
 							name: "region",
 							label: t("region"),
 							value: profile?.region ?? "上海市"
 						}),
 						(0, react_jsx_runtime.jsx)(Field, {
+							...field("profile", profileBaseline),
 							name: "grade",
 							label: t("grade"),
 							value: profile?.grade ?? 2,
@@ -1241,7 +5485,8 @@ window.__ModuleLoader__.load({
 							min: 1,
 							max: 6
 						}),
-						(0, react_jsx_runtime.jsxs)("label", { children: [t("term"), (0, react_jsx_runtime.jsxs)("select", {
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("term"), (0, react_jsx_runtime.jsxs)(DraftSelect, {
+							...field("profile", profileBaseline),
 							name: "term",
 							"aria-label": t("term"),
 							defaultValue: profile?.term ?? "first",
@@ -1253,7 +5498,8 @@ window.__ModuleLoader__.load({
 								children: t("second")
 							})]
 						})] }),
-						(0, react_jsx_runtime.jsxs)("label", { children: [t("schoolYear"), (0, react_jsx_runtime.jsxs)("select", {
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("schoolYear"), (0, react_jsx_runtime.jsxs)(DraftSelect, {
+							...field("profile", profileBaseline),
 							name: "schoolYear",
 							"aria-label": t("schoolYear"),
 							defaultValue: profile?.schoolYear ?? "",
@@ -1269,13 +5515,15 @@ window.__ModuleLoader__.load({
 						})] }),
 						(0, react_jsx_runtime.jsx)("p", { children: t("schoolYearHelp") }),
 						(0, react_jsx_runtime.jsx)(Field, {
+							...field("profile", profileBaseline),
 							name: "schoolAlias",
 							label: t("schoolAlias"),
 							value: profile?.schoolAlias ?? "",
 							required: false
 						}),
 						(0, react_jsx_runtime.jsx)("p", { children: t("schoolAliasHelp") }),
-						(0, react_jsx_runtime.jsxs)("label", { children: [t("schoolSystem"), (0, react_jsx_runtime.jsxs)("select", {
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("schoolSystem"), (0, react_jsx_runtime.jsxs)(DraftSelect, {
+							...field("profile", profileBaseline),
 							name: "schoolSystem",
 							"aria-label": t("schoolSystem"),
 							defaultValue: profile?.schoolSystem ?? "five-four",
@@ -1288,7 +5536,7 @@ window.__ModuleLoader__.load({
 							})]
 						})] })
 					]
-				}, profile ? `profile-${profile.nickname}-${profile.grade}-${profile.term}-${profile.schoolYear}` : "setup"),
+				}),
 				profile && (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
 					(0, react_jsx_runtime.jsx)("h3", { children: t("curriculum") }),
 					(0, react_jsx_runtime.jsx)("p", { children: t("materialHelp") }),
@@ -1300,16 +5548,27 @@ window.__ModuleLoader__.load({
 						course.unit
 					] }, course.subject)),
 					(0, react_jsx_runtime.jsxs)(SaveForm, {
+						...draft,
+						observation,
+						draftScope,
+						entity: `course:${subject}`,
+						currentValues: {
+							subject,
+							unitId: study.courses.find((item) => item.subject === subject)?.progress?.unitId ?? "",
+							unit: study.courses.find((item) => item.subject === subject)?.unit ?? ""
+						},
 						revision: data.revision,
+						baseline: courseBaseline,
 						t,
-						submit: async (form, revision) => {
+						submit: async (form, revision, original) => {
 							const materialId = crypto.randomUUID();
 							const selected = read(form, "subject");
 							const courseSubject = subjects$1.find((item) => item === selected) ?? subject;
 							const unitId = read(form, "unitId");
 							const unit = curriculum?.scope.current ? curriculum.units.find((item) => item.id === unitId) : void 0;
 							const { region, grade, term, schoolYear, schoolSystem } = profile;
-							const saved = await change({
+							const existing = study.courses.find((item) => item.subject === courseSubject)?.progress;
+							return change({
 								action: "configure-course",
 								material: {
 									id: materialId,
@@ -1334,21 +5593,18 @@ window.__ModuleLoader__.load({
 									materialId,
 									unit: unit?.name ?? read(form, "unit"),
 									parentConfirmation: t("materialConfirm")
-								}
-							}, revision);
-							if (!unit) return saved;
-							const existing = saved.study?.courses.find((item) => item.subject === courseSubject)?.progress;
-							return change({
-								action: "school-progress",
-								subject: courseSubject,
-								unitId: unit.id,
-								posture: existing?.posture ?? "keep-up",
-								preview: existing?.preview ? "on" : "off",
-								pace: existing?.pace ?? "teaching",
-								parentConfirmation: t("confirmSchoolProgress")
-							}, saved.revision);
+								},
+								...unit ? { progress: {
+									unitId: unit.id,
+									posture: existing?.posture ?? "keep-up",
+									preview: existing?.preview ? "on" : "off",
+									pace: existing?.pace ?? "teaching",
+									parentConfirmation: t("confirmSchoolProgress")
+								} } : {}
+							}, revision, original).then((result) => savedSettingsForm(result, "course", original, courseSubject));
 						},
-						children: [(0, react_jsx_runtime.jsxs)("label", { children: [t("subject"), (0, react_jsx_runtime.jsx)("select", {
+						children: [(0, react_jsx_runtime.jsxs)("label", { children: [t("subject"), (0, react_jsx_runtime.jsx)(DraftSelect, {
+							...field(`course:${subject}`, courseBaseline),
 							name: "subject",
 							"aria-label": t("subject"),
 							value: subject,
@@ -1360,20 +5616,22 @@ window.__ModuleLoader__.load({
 								value: item,
 								children: t(item)
 							}, item))
-						})] }), curriculum?.scope.current ? (0, react_jsx_runtime.jsxs)("label", { children: [t("unit"), (0, react_jsx_runtime.jsxs)("select", {
+						})] }), curriculum?.scope.current ? (0, react_jsx_runtime.jsxs)("label", { children: [t("unit"), (0, react.createElement)(DraftSelect, {
+							...field(`course:${subject}`, courseBaseline),
 							name: "unitId",
 							"aria-label": t("unit"),
+							key: subject,
 							defaultValue: study.courses.find((item) => item.subject === subject)?.progress?.unitId ?? "",
-							required: true,
-							children: [(0, react_jsx_runtime.jsx)("option", {
-								value: "",
-								disabled: true,
-								children: t("chooseUnit")
-							}), curriculum.units.map((unit) => (0, react_jsx_runtime.jsx)("option", {
-								value: unit.id,
-								children: unit.name
-							}, unit.id))]
-						}, subject)] }) : (0, react_jsx_runtime.jsx)(Field, {
+							required: true
+						}, (0, react_jsx_runtime.jsx)("option", {
+							value: "",
+							disabled: true,
+							children: t("chooseUnit")
+						}), curriculum.units.map((unit) => (0, react_jsx_runtime.jsx)("option", {
+							value: unit.id,
+							children: unit.name
+						}, unit.id)))] }) : (0, react_jsx_runtime.jsx)(Field, {
+							...field(`course:${subject}`, courseBaseline),
 							name: "unit",
 							label: t("unit")
 						})]
@@ -1391,23 +5649,26 @@ window.__ModuleLoader__.load({
 								children: t(item)
 							}, item))
 						}),
-						study.courses.some((course) => course.subject === subject) ? (0, react_jsx_runtime.jsxs)("form", {
-							onSubmit: (event) => {
-								event.preventDefault();
-								const form = new FormData(event.currentTarget);
-								const submitter = event.nativeEvent.submitter;
-								const move = submitter instanceof HTMLButtonElement ? submitter.value : "stay";
+						study.courses.some((course) => course.subject === subject) ? (0, react_jsx_runtime.jsxs)(SaveForm, {
+							...draft,
+							observation,
+							draftScope,
+							entity: `progress:${subject}`,
+							currentValues: study.courses.find((course) => course.subject === subject)?.progress ?? {},
+							revision: data.revision,
+							baseline: progressBaseline,
+							t,
+							button: false,
+							submit: (form, revision, original) => {
+								const move = form.get("move") ?? "stay";
 								const units = curriculum.units;
 								const selected = String(form.get("unitId") ?? "");
 								const index = units.findIndex((unit) => unit.id === selected);
 								const next = units[index + 1];
-								if (index < 0) return;
-								if (move === "next" && !next) {
-									setProgressError(t("noNextUnit"));
-									return;
-								}
+								if (index < 0) throw new Error(t("chooseUnit"));
+								if (move === "next" && !next) throw new Error(t("noNextUnit"));
 								setProgressError("");
-								change({
+								return change({
 									action: "school-progress",
 									subject,
 									unitId: move === "next" && next ? next.id : selected,
@@ -1415,10 +5676,11 @@ window.__ModuleLoader__.load({
 									preview: form.get("preview") === "on" ? "on" : "off",
 									pace: move === "review" ? "review" : "teaching",
 									parentConfirmation: t("confirmSchoolProgress")
-								}, data.revision);
+								}, revision, original).then((result) => savedSettingsForm(result, "progress", original, subject));
 							},
 							children: [
-								(0, react_jsx_runtime.jsxs)("label", { children: [t("schoolFrontier"), (0, react_jsx_runtime.jsx)("select", {
+								(0, react_jsx_runtime.jsxs)("label", { children: [t("schoolFrontier"), (0, react_jsx_runtime.jsx)(DraftSelect, {
+									...field(`progress:${subject}`, progressBaseline),
 									name: "unitId",
 									"aria-label": t("schoolFrontier"),
 									defaultValue: study.courses.find((course) => course.subject === subject)?.progress?.unitId ?? curriculum.units[0]?.id,
@@ -1428,7 +5690,8 @@ window.__ModuleLoader__.load({
 										children: unit.name
 									}, unit.id))
 								})] }),
-								(0, react_jsx_runtime.jsxs)("label", { children: [t("keepUp"), (0, react_jsx_runtime.jsxs)("select", {
+								(0, react_jsx_runtime.jsxs)("label", { children: [t("keepUp"), (0, react_jsx_runtime.jsxs)(DraftSelect, {
+									...field(`progress:${subject}`, progressBaseline),
 									name: "posture",
 									"aria-label": t("keepUp"),
 									defaultValue: study.courses.find((course) => course.subject === subject)?.progress?.posture ?? "keep-up",
@@ -1442,7 +5705,8 @@ window.__ModuleLoader__.load({
 								})] }),
 								(0, react_jsx_runtime.jsxs)("label", {
 									className: "student-check",
-									children: [(0, react_jsx_runtime.jsx)("input", {
+									children: [(0, react_jsx_runtime.jsx)(DraftInput, {
+										...field(`progress:${subject}`, progressBaseline),
 										type: "checkbox",
 										name: "preview",
 										defaultChecked: study.courses.find((course) => course.subject === subject)?.progress?.preview === true
@@ -1473,13 +5737,16 @@ window.__ModuleLoader__.load({
 									]
 								})
 							]
-						}, `${subject}:${study.courses.find((course) => course.subject === subject)?.progress?.unitId ?? ""}`) : (0, react_jsx_runtime.jsx)("p", { children: t("schoolProgressNeedsCourse") })
+						}) : (0, react_jsx_runtime.jsx)("p", { children: t("schoolProgressNeedsCourse") })
 					] }),
 					(0, react_jsx_runtime.jsx)(InterestsForm, {
+						...draft,
 						tags: study.interests,
 						revision: data.revision,
 						change,
-						t
+						t,
+						draftScope,
+						observation
 					}),
 					(0, react_jsx_runtime.jsx)("h3", { children: t("openmaicTitle") }),
 					(0, react_jsx_runtime.jsx)("p", {
@@ -1492,14 +5759,21 @@ window.__ModuleLoader__.load({
 						data.interactiveLessons.baseUrl
 					] }),
 					(0, react_jsx_runtime.jsxs)(SaveForm, {
+						...draft,
+						observation,
+						draftScope,
+						entity: "openmaic",
+						currentValues: { baseUrl: study.openmaic?.savedBaseUrl ?? "" },
 						revision: data.revision,
+						baseline: study.openmaic?.savedBaseUrl ?? "",
 						t,
-						submit: (form, revision) => change({
+						submit: (form, revision, original) => change({
 							action: "openmaic-settings",
 							baseUrl: read(form, "baseUrl"),
 							parentConfirmation: t("openmaicConfirm")
-						}, revision),
+						}, revision, original).then((result) => savedSettingsForm(result, "openmaic", original)),
 						children: [(0, react_jsx_runtime.jsx)(Field, {
+							...field("openmaic", study.openmaic?.savedBaseUrl ?? ""),
 							name: "baseUrl",
 							label: t("openmaicBase"),
 							value: study.openmaic?.savedBaseUrl ?? "",
@@ -1532,20 +5806,49 @@ window.__ModuleLoader__.load({
 			] });
 		}
 		/** Parent theme tags. The saved list is edited here; an empty profile shows the example tags from status. */
-		function InterestsForm({ tags, revision, change, t }) {
-			const [draft, setDraft] = (0, react.useState)(tags);
+		function InterestsForm({ tags, revision, change, t, draftScope, observation, useStore, actions }) {
+			const draft = {
+				useStore,
+				actions
+			};
+			const key = formDraftKey("interests", draftScope);
+			const retained = readFormDraft(useStore((state) => state.drafts[key]));
+			const baseline = JSON.stringify(tags);
+			const observed = observation ?? `${revision}:${baseline}`;
+			const stored = retained && (retained.edited.length > 0 || retained.confirmedFrom === observed) ? retained.values.tags : void 0;
+			let tagsDraft = tags;
+			try {
+				const saved = typeof stored === "string" ? JSON.parse(stored) : void 0;
+				if (Array.isArray(saved) && saved.every((item) => typeof item === "string")) tagsDraft = saved;
+			} catch {}
+			function updateTags(next) {
+				actions.setDraft(key, JSON.stringify({
+					...retained ?? {
+						revision,
+						baseline
+					},
+					edited: ["tags"],
+					values: { tags: JSON.stringify(next) }
+				}));
+			}
 			return (0, react_jsx_runtime.jsxs)(SaveForm, {
+				...draft,
+				observation,
+				draftScope,
+				entity: "interests",
+				currentValues: { tags: baseline },
 				revision,
+				baseline: JSON.stringify(tags),
 				t,
-				submit: (_form, nextRevision) => {
-					const next = [...new Set(draft.map((tag) => tag.trim()).filter((tag) => tag !== ""))];
+				submit: async (_form, nextRevision, original) => {
+					const next = [...new Set(tagsDraft.map((tag) => tag.trim()).filter((tag) => tag !== ""))];
 					if (next.length < 3 || next.length > 8) throw new Error(t("interestCount"));
 					if (next.some((tag) => !INTEREST_TAG.test(tag))) throw new Error(t("interestShape"));
-					return change({
+					return savedSettingsForm(await change({
 						action: "interests",
 						tags: next,
 						parentConfirmation: t("interestConfirm")
-					}, nextRevision);
+					}, nextRevision, original), "interests", original);
 				},
 				children: [
 					(0, react_jsx_runtime.jsx)("h3", { children: t("interestsTitle") }),
@@ -1553,7 +5856,7 @@ window.__ModuleLoader__.load({
 						className: "student-muted",
 						children: t("interestsHelp")
 					}),
-					draft.map((tag, index) => (0, react_jsx_runtime.jsxs)("label", { children: [
+					tagsDraft.map((tag, index) => (0, react_jsx_runtime.jsxs)("label", { children: [
 						t("interestTag"),
 						" ",
 						index + 1,
@@ -1563,18 +5866,18 @@ window.__ModuleLoader__.load({
 							required: true,
 							minLength: 2,
 							maxLength: 16,
-							onChange: (event) => setDraft(draft.map((item, itemIndex) => itemIndex === index ? event.target.value : item))
+							onChange: (event) => updateTags(tagsDraft.map((item, itemIndex) => itemIndex === index ? event.target.value : item))
 						})
 					] }, index)),
 					(0, react_jsx_runtime.jsxs)("div", {
 						className: "student-segments",
-						children: [draft.length < 8 && (0, react_jsx_runtime.jsx)("button", {
+						children: [tagsDraft.length < 8 && (0, react_jsx_runtime.jsx)("button", {
 							type: "button",
-							onClick: () => setDraft([...draft, ""]),
+							onClick: () => updateTags([...tagsDraft, ""]),
 							children: t("addInterest")
-						}), draft.length > 3 && (0, react_jsx_runtime.jsx)("button", {
+						}), tagsDraft.length > 3 && (0, react_jsx_runtime.jsx)("button", {
 							type: "button",
-							onClick: () => setDraft(draft.slice(0, -1)),
+							onClick: () => updateTags(tagsDraft.slice(0, -1)),
 							children: t("removeInterest")
 						})]
 					})
@@ -1582,7 +5885,12 @@ window.__ModuleLoader__.load({
 			});
 		}
 		/** Confirmation retains the unedited image transcription until a user explicitly saves it. */
-		function MistakeConfirmation({ mistake, revision, change, t }) {
+		function MistakeConfirmation({ mistake, revision, change, t, useStore, actions }) {
+			const field = {
+				useStore,
+				draftKey: formDraftKey(`mistake:${mistake.id}`),
+				observation: `${revision}:${JSON.stringify(mistake)}`
+			};
 			return (0, react_jsx_runtime.jsxs)("details", { children: [
 				(0, react_jsx_runtime.jsx)("summary", { children: mistake.topic }),
 				(0, react_jsx_runtime.jsxs)("p", { children: [
@@ -1596,7 +5904,11 @@ window.__ModuleLoader__.load({
 					mistake.uncertainties
 				] }),
 				(0, react_jsx_runtime.jsxs)(SaveForm, {
+					useStore,
+					actions,
+					entity: `mistake:${mistake.id}`,
 					revision,
+					baseline: JSON.stringify(mistake),
 					t,
 					button: "confirm",
 					submit: (form, base) => {
@@ -1620,13 +5932,15 @@ window.__ModuleLoader__.load({
 						"correction",
 						"explanation",
 						"answerEvidence"
-					].map((name) => (0, react_jsx_runtime.jsxs)("label", { children: [t(name), (0, react_jsx_runtime.jsx)("textarea", {
+					].map((name) => (0, react_jsx_runtime.jsxs)("label", { children: [t(name), (0, react_jsx_runtime.jsx)(DraftTextarea, {
+						...field,
 						"aria-label": t(name),
 						name,
 						defaultValue: mistake[name],
 						required: true,
 						maxLength: 2e3
-					})] }, name)), (0, react_jsx_runtime.jsxs)("label", { children: [t("errorTypeLabel"), (0, react_jsx_runtime.jsxs)("select", {
+					})] }, name)), (0, react_jsx_runtime.jsxs)("label", { children: [t("errorTypeLabel"), (0, react_jsx_runtime.jsxs)(DraftSelect, {
+						...field,
 						name: "errorType",
 						defaultValue: mistake.errorType ?? "",
 						children: [(0, react_jsx_runtime.jsx)("option", {
@@ -1641,120 +5955,488 @@ window.__ModuleLoader__.load({
 			] });
 		}
 		//#endregion
-		//#region lib/types/client/workspace.js
-		/** Poll visible workbenches; preserve data on failure and discard obsolete responses. */
-		function useStudy(sessionId, visible, networkError, query) {
-			const [data, setData] = (0, react.useState)();
-			const [error, setError] = (0, react.useState)("");
-			const [busy, setBusy] = (0, react.useState)(false);
-			const latest = (0, react.useRef)(0);
-			const alive = (0, react.useRef)(true);
-			const writing = (0, react.useRef)(false);
-			const offset = (0, react.useRef)(0);
-			const controllers = (0, react.useRef)(/* @__PURE__ */ new Set());
-			const seenSignature = (0, react.useRef)("");
-			const seenRevision = (0, react.useRef)(void 0);
-			const signature = `${query.tab}:${query.offset}:${query.subject}:${query.status}:${query.mapGrade ?? ""}:${query.mapTerm ?? ""}:${query.diagGrade ?? ""}:${query.diagTerm ?? ""}:${query.diagUnit ?? ""}`;
-			const request = (0, react.useCallback)(async (change, revision, conditional) => {
-				const sequence = ++latest.current;
-				const controller = new AbortController();
-				controllers.current.add(controller);
-				try {
-					const scope = `${query.mapGrade !== void 0 ? `&mapGrade=${query.mapGrade}` : ""}${query.mapTerm !== void 0 ? `&mapTerm=${query.mapTerm}` : ""}${query.diagGrade !== void 0 ? `&diagGrade=${query.diagGrade}` : ""}${query.diagTerm !== void 0 ? `&diagTerm=${query.diagTerm}` : ""}${query.diagUnit !== void 0 && query.diagUnit !== "" ? `&diagUnit=${encodeURIComponent(query.diagUnit)}` : ""}`;
-					const response = await fetch(`/student/workspace?sessionId=${encodeURIComponent(sessionId)}&tab=${query.tab}&mistakeOffset=${query.offset}&subject=${query.subject}&mistakeStatus=${query.status}${scope}${conditional !== void 0 ? `&revision=${conditional}` : ""}`, {
-						signal: controller.signal,
-						...change ? {
-							method: "POST",
-							headers: { "content-type": "application/json" },
-							body: JSON.stringify({
-								revision,
-								change
-							})
-						} : {}
-					});
-					const value = await response.json();
-					if (!response.ok) throw new Error(value.error ?? networkError);
-					if (alive.current && sequence === latest.current) {
-						offset.current = value.serverNow - Date.now();
-						if (value.unchanged === true && value.time !== void 0) setData((previous) => previous && previous.study ? {
-							...previous,
-							serverNow: value.serverNow,
-							...value.interactiveLessons !== void 0 ? { interactiveLessons: value.interactiveLessons } : {},
-							study: {
-								...previous.study,
-								...value.time
-							}
-						} : previous);
-						else {
-							seenSignature.current = signature;
-							seenRevision.current = value.revision;
-							setData(value);
+		//#region ../../../node_modules/.pnpm/@deepseek-ai+dsh-typert-protocol@0.2.2-rc.1_@deepseek-ai+cordis@4.1.0/node_modules/@deepseek-ai/dsh-typert-protocol/lib/index.js
+		/** The one Remote failure class shared by owners, the Gateway, and consumers. */
+		/**
+		* One Remote call failure: a real Error carrying its stable code and typed
+		* details. Owners throw it at the failure point; the Host Gateway encodes it
+		* onto the wire unchanged; the Client face rebuilds an instance for the
+		* `RemoteResult` error branch, so `throw result.error` keeps throw semantics.
+		* Discrimination is always by `code`, never by instanceof.
+		*/
+		var RemoteError = class extends Error {
+			code;
+			details;
+			/** Structural marker: cross-realm/bundle identification never uses instanceof. */
+			isDSHRemoteError = true;
+			/**
+			* @param code - stable failure code declared in {@link RemoteErrorDetailsMap}.
+			* @param message - human diagnostic carried across the wire.
+			* @param details - structured payload typed by the code.
+			* @param options - standard Error options (`cause` survives in-process only).
+			*/
+			constructor(code, message, details, options) {
+				super(message, options);
+				this.code = code;
+				this.details = details;
+				this.name = "RemoteError";
+			}
+		};
+		//#endregion
+		//#region lib/types/client/resource.js
+		/**
+		* Address one shared query in a native Session; block and term identities remain in query data.
+		* @param sessionId - native Session identity.
+		* @param request - bounded shared query selector.
+		* @returns the resource URI accepted by the Student provider.
+		*/
+		function studentResourceAddress(sessionId, request) {
+			return `dsh-resource://student/session/${encodeURIComponent(sessionId)}?query=${encodeURIComponent(JSON.stringify(request))}`;
+		}
+		/**
+		* Follow generated Host snapshots through the native reconnect supervisor.
+		* @param remote - mounted Student Remote and native stream supervisor.
+		* @returns one provider owner; disposal waits for its physical stream iterators.
+		*/
+		function createStudentResourceOwner(remote) {
+			const streams = /* @__PURE__ */ new Set();
+			let disposed = false;
+			return {
+				provider: {
+					protocol: "student",
+					async *open(address, { signal }) {
+						if (signal.aborted || disposed) return;
+						let input;
+						try {
+							const uri = new URL(address);
+							const parts = uri.pathname.split("/");
+							if (uri.protocol !== "dsh-resource:" || uri.hostname !== "student" || parts.length !== 3 || parts[1] !== "session" || !parts[2] || uri.hash || uri.searchParams.getAll("query").length !== 1) throw new Error("Invalid Student address.");
+							input = TYPERT_REMOTE.methods["student/query"].input({ strict: true }).create().parse({
+								sessionId: decodeURIComponent(parts[2]),
+								request: JSON.parse(uri.searchParams.get("query"))
+							});
+						} catch (_error) {
+							yield {
+								ok: false,
+								error: new RemoteError("student/invalid-address", "Invalid Student resource address.", {})
+							};
+							return;
 						}
-						setError("");
+						let carrier = Promise.withResolvers();
+						const stream = remote.$stream({
+							name: "Student resource",
+							open: (generationSignal) => remote.student.watch(input.sessionId, input.request, AbortSignal.any([signal, generationSignal])),
+							ended: () => new _deepseek_ai_dsh_api_gateway_client.RemoteStreamCarrierError("Student resource stream ended before cancellation."),
+							carrierFailed: (error) => carrier.resolve(error)
+						});
+						streams.add(stream);
+						const abort = () => {
+							stream.dispose();
+						};
+						signal.addEventListener("abort", abort, { once: true });
+						const iterator = stream[Symbol.asyncIterator]();
+						let pending = iterator.next();
+						try {
+							while (true) {
+								const outcome = await Promise.race([pending.then((result) => ({
+									kind: "frame",
+									result
+								})), carrier.promise.then((error) => ({
+									kind: "carrier",
+									error
+								}))]);
+								if (outcome.kind === "carrier") {
+									carrier = Promise.withResolvers();
+									if (!signal.aborted && !disposed) yield {
+										ok: false,
+										error: new RemoteError("student/unavailable", outcome.error.message, {})
+									};
+									continue;
+								}
+								if (outcome.result.done) return;
+								const item = outcome.result.value;
+								pending = iterator.next();
+								if (signal.aborted || disposed || item.signal.aborted) return;
+								const frame = item.value;
+								item.accept();
+								if (frame.kind === "failure") {
+									yield {
+										ok: false,
+										error: new RemoteError("student/unavailable", frame.message, {})
+									};
+									continue;
+								}
+								const value = frame.value;
+								if (value.status !== "valid" && value.status !== "partial" && value.status !== "missing" && value.status !== "legacy" && value.status !== "archived") yield {
+									ok: false,
+									error: new RemoteError("student/unavailable", value.issues?.[0]?.correction ?? "Current Student files are unavailable.", {})
+								};
+								else yield {
+									ok: true,
+									value
+								};
+							}
+						} catch (error) {
+							if (!signal.aborted && !disposed) yield {
+								ok: false,
+								error: error instanceof RemoteError ? error : new RemoteError("student/unavailable", error instanceof Error ? error.message : "Student resource disconnected.", {})
+							};
+						} finally {
+							signal.removeEventListener("abort", abort);
+							await stream.dispose();
+							await pending.catch(() => {});
+							streams.delete(stream);
+						}
 					}
-					return value;
-				} catch (reason) {
-					if (alive.current && !controller.signal.aborted && sequence === latest.current) setError(reason instanceof Error ? reason.message : networkError);
-					throw reason;
-				} finally {
-					controllers.current.delete(controller);
+				},
+				async dispose() {
+					disposed = true;
+					await Promise.all([...streams].map((stream) => stream.dispose()));
 				}
-			}, [
-				sessionId,
-				networkError,
-				query.tab,
-				query.offset,
-				query.subject,
-				query.status,
-				query.mapGrade,
-				query.mapTerm,
-				query.diagGrade,
-				query.diagTerm,
-				query.diagUnit,
-				signature
-			]);
-			const reload = (0, react.useCallback)(async () => {
-				if (writing.current) return;
-				await request(void 0, void 0, seenSignature.current === signature ? seenRevision.current : void 0).catch(() => {});
-			}, [request, signature]);
-			(0, react.useEffect)(() => {
-				alive.current = true;
-				return () => {
-					alive.current = false;
-					latest.current++;
-					for (const controller of controllers.current) controller.abort();
-				};
-			}, []);
-			(0, react.useEffect)(() => {
-				if (!visible) return;
-				reload();
-				const timer = window.setInterval(() => {
-					if (document.visibilityState !== "hidden") reload();
-				}, 3e3);
-				return () => window.clearInterval(timer);
-			}, [visible, reload]);
+			};
+		}
+		/**
+		* Mount the generated namespace and register its provider under one awaited Client lifetime.
+		* @param ctx - Client Context with native Remote and resources services.
+		* @param contribution - generated Student descriptors; defaults to the packaged contribution.
+		* @returns once both namespace and provider are installed; cleanup is registered on ctx.
+		*/
+		async function mountStudentResource(ctx, contribution = TYPERT_REMOTE) {
+			const remoteDispose = await ctx.remote.$mount(contribution);
+			ctx.effect(() => remoteDispose, "student: remote namespace");
+			ctx.inject(["remote.student"], (scope) => {
+				const owner = createStudentResourceOwner({
+					student: scope.remote.student,
+					$stream: (options) => scope.remote.$stream(options)
+				});
+				const release = scope.resources.register(owner.provider);
+				scope.effect(() => async () => {
+					release();
+					await owner.dispose();
+				}, "student: resource transport");
+			});
+		}
+		//#endregion
+		//#region lib/types/client/worksheet-corrections.js
+		/** Optional corrections edit confirmed records; the original response and frozen question stay visible. */
+		function WorksheetCorrections({ sessionId, termId, draftScope, useResource, save, t, disabled, useStore, actions }) {
+			const resource = useResource(studentResourceAddress(sessionId, { kind: "files" }));
+			const value = resource.value?.data;
+			const sheets = (value && typeof value === "object" && "worksheets" in value && Array.isArray(value.worksheets) ? value.worksheets : []).flatMap((candidate) => {
+				const parsed = worksheetSchema.safeParse(candidate);
+				return parsed.success && parsed.data.termId === termId && parsed.data.discardedAt === void 0 ? [parsed.data] : [];
+			}).slice(-20);
+			return (0, react_jsx_runtime.jsxs)("details", {
+				className: "student-fold",
+				children: [
+					(0, react_jsx_runtime.jsx)("summary", { children: t("manualWorksheet") }),
+					(0, react_jsx_runtime.jsx)("p", { children: t("manualWorksheetHelp") }),
+					resource.status === "failed" && (0, react_jsx_runtime.jsx)("p", {
+						role: "alert",
+						children: t("staleData")
+					}),
+					sheets.map((sheet) => (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsxs)(SaveForm, {
+						useStore,
+						actions,
+						observation: resource.value?.versions.find((file) => file.path === `.study/worksheets/${sheet.id}.json`)?.version,
+						entity: `worksheet:${sheet.id}:date`,
+						draftScope,
+						t,
+						disabled: disabled || resource.status !== "live",
+						currentValues: { answerDay: sheet.answerDate?.kind === "day" ? sheet.answerDate.day : "" },
+						revision: 0,
+						baseline: JSON.stringify(sheet.answerDate ?? null),
+						submit: async (form, _revision, retained) => {
+							const original = JSON.parse(retained);
+							const day = String(form.get("answerDay") ?? "");
+							const result = await save({
+								kind: "worksheet-assessments",
+								worksheetId: sheet.id,
+								assessments: [],
+								answerDate: day ? {
+									kind: "day",
+									day,
+									parentConfirmation: t("gradeConfirmation")
+								} : { kind: "unknown" }
+							}, { answerDate: JSON.parse(original.baseline) });
+							if (result) {
+								const date = answerDateSchema.parse(result.current.answerDate);
+								return {
+									baseline: JSON.stringify(date),
+									currentValues: { answerDay: date.kind === "day" ? date.day : "" },
+									observation: result.versions.find((file) => file.path === `.study/worksheets/${sheet.id}.json`).version
+								};
+							}
+						},
+						children: [(0, react_jsx_runtime.jsxs)("label", { children: [
+							t("worksheetAnswerDay"),
+							" · ",
+							sheet.id,
+							(0, react_jsx_runtime.jsx)(DraftInput, {
+								useStore,
+								draftKey: formDraftKey(`worksheet:${sheet.id}:date`, draftScope),
+								observation: resource.value?.versions.find((file) => file.path === `.study/worksheets/${sheet.id}.json`)?.version ?? `0:${JSON.stringify(sheet.answerDate ?? null)}`,
+								name: "answerDay",
+								type: "date",
+								"aria-label": t("worksheetAnswerDay"),
+								defaultValue: sheet.answerDate?.kind === "day" ? sheet.answerDate.day : ""
+							})
+						] }), (0, react_jsx_runtime.jsx)("p", { children: t("worksheetAnswerDayHelp") })]
+					}), sheet.responses.map((response) => (0, react_jsx_runtime.jsx)(Correction, {
+						useStore,
+						actions,
+						sheet,
+						response,
+						draftScope,
+						save,
+						t,
+						observation: resource.value?.versions.find((file) => file.path === `.study/worksheets/${sheet.id}.json`)?.version,
+						disabled: disabled || resource.status !== "live"
+					}, response.id))] }, sheet.id))
+				]
+			});
+		}
+		function Correction({ sheet, response, draftScope, save, t, disabled, observation, useStore, actions }) {
+			const assessment = sheet.assessments.find((item) => item.responseId === response.id);
+			const question = sheet.items.find((item) => item.id === response.questionId);
+			const answerDate = response.answerDate ?? sheet.answerDate;
+			const field = {
+				useStore,
+				draftKey: formDraftKey(`worksheet:${sheet.id}:${response.id}`, draftScope),
+				observation: observation ?? `0:${JSON.stringify({
+					response,
+					assessment: assessment ?? null
+				})}`
+			};
+			return (0, react_jsx_runtime.jsxs)("section", { children: [
+				(0, react_jsx_runtime.jsx)("p", { children: question.prompt }),
+				(0, react_jsx_runtime.jsxs)("p", { children: [
+					t("learnerAnswer"),
+					": ",
+					response.rawResponse
+				] }),
+				(0, react_jsx_runtime.jsxs)("p", { children: [
+					t("answerEvidence"),
+					": ",
+					question.answerEvidence
+				] }),
+				(0, react_jsx_runtime.jsxs)(SaveForm, {
+					useStore,
+					actions,
+					entity: `worksheet:${sheet.id}:${response.id}`,
+					draftScope,
+					t,
+					disabled,
+					observation,
+					currentValues: {
+						result: assessment?.result ?? "unassessed",
+						feedback: assessment?.feedback ?? question.explanation,
+						answerEvidence: assessment?.answerEvidence ?? question.answerEvidence,
+						assistance: response.assistance,
+						answerDay: answerDate?.kind === "day" ? answerDate.day : "",
+						errorType: assessment?.errorType ?? ""
+					},
+					revision: 0,
+					baseline: JSON.stringify({
+						response,
+						assessment: assessment ?? null
+					}),
+					submit: async (form, _revision, retained) => {
+						const entry = JSON.parse(retained);
+						const original = JSON.parse(entry.baseline);
+						const before = responseSchema.parse(original.response);
+						const oldAssessment = original.assessment === null ? void 0 : assessmentSchema.parse(original.assessment);
+						const edited = entry.editedFields;
+						const helpChanged = edited.includes("assistance");
+						const dateChanged = edited.includes("answerDay");
+						const assessmentChanged = [
+							"result",
+							"feedback",
+							"answerEvidence",
+							"errorType"
+						].some((field) => edited.includes(field)) || helpChanged && !!assessment;
+						const assistance = helpChanged ? assistanceSchema.parse(form.get("assistance")) : response.assistance;
+						const confirmation = t("gradeConfirmation");
+						const baseline = {};
+						const assessments = [];
+						if (assessmentChanged) {
+							const current = assessment ?? {
+								id: `assessment-${response.id}`.slice(0, 80),
+								responseId: response.id,
+								result: "unassessed",
+								assistance,
+								feedback: question.explanation,
+								answerEvidence: question.answerEvidence,
+								assessedAt: Date.now()
+							};
+							const parsed = assessmentSchema.parse({
+								...current,
+								assistance,
+								userConfirmation: confirmation,
+								...edited.includes("result") ? { result: form.get("result") } : {},
+								...edited.includes("feedback") ? { feedback: form.get("feedback") } : {},
+								...edited.includes("answerEvidence") ? { answerEvidence: form.get("answerEvidence") } : {}
+							});
+							if (edited.includes("errorType")) {
+								const cause = errorTypesBySubject[sheet.subject].find((type) => type === form.get("errorType"));
+								if (cause) parsed.errorType = cause;
+								else delete parsed.errorType;
+							}
+							assessments.push(parsed);
+							baseline[`assessment:${response.id}`] = zod.z.json().parse(JSON.parse(JSON.stringify(oldAssessment ?? null)));
+						}
+						const responseUpdates = [];
+						if (helpChanged || dateChanged) {
+							const day = String(form.get("answerDay") ?? "");
+							responseUpdates.push({
+								responseId: response.id,
+								userConfirmation: confirmation,
+								...helpChanged ? { assistance } : {},
+								...dateChanged ? { answerDate: day ? {
+									kind: "day",
+									day,
+									parentConfirmation: confirmation
+								} : { kind: "unknown" } } : {}
+							});
+							baseline[`response:${response.id}`] = {
+								...helpChanged ? { assistance: before.assistance } : {},
+								...dateChanged ? { answerDate: before.answerDate ?? null } : {}
+							};
+						}
+						const result = await save({
+							kind: "worksheet-assessments",
+							worksheetId: sheet.id,
+							assessments,
+							...responseUpdates.length ? { responseUpdates } : {}
+						}, baseline);
+						if (result) {
+							const updated = result.current[`response:${response.id}`];
+							const nextResponse = responseSchema.parse({
+								...before,
+								...updated && typeof updated === "object" ? updated : {}
+							});
+							const savedAssessment = result.current[`assessment:${response.id}`];
+							const nextAssessment = savedAssessment ? assessmentSchema.parse(savedAssessment) : oldAssessment;
+							const date = nextResponse.answerDate ?? sheet.answerDate;
+							return {
+								baseline: JSON.stringify({
+									response: nextResponse,
+									assessment: nextAssessment ?? null
+								}),
+								currentValues: {
+									result: nextAssessment?.result ?? "unassessed",
+									feedback: nextAssessment?.feedback ?? question.explanation,
+									answerEvidence: nextAssessment?.answerEvidence ?? question.answerEvidence,
+									assistance: nextResponse.assistance,
+									answerDay: date?.kind === "day" ? date.day : "",
+									errorType: nextAssessment?.errorType ?? ""
+								},
+								observation: result.versions.find((file) => file.path === `.study/worksheets/${sheet.id}.json`).version
+							};
+						}
+					},
+					children: [
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("draftChoice"), (0, react_jsx_runtime.jsx)(DraftSelect, {
+							...field,
+							name: "result",
+							defaultValue: assessment?.result ?? "unassessed",
+							children: [
+								"correct",
+								"partial",
+								"incorrect",
+								"unassessed",
+								"stuck"
+							].map((value) => (0, react_jsx_runtime.jsx)("option", {
+								value,
+								children: t(value === "correct" ? "markCorrect" : value === "partial" ? "markPartial" : value === "incorrect" ? "markWrong" : value === "stuck" ? "workbookStuck" : "notGraded")
+							}, value))
+						})] }),
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("feedback"), (0, react_jsx_runtime.jsx)(DraftTextarea, {
+							...field,
+							name: "feedback",
+							defaultValue: assessment?.feedback ?? question.explanation,
+							required: true,
+							maxLength: 2e3
+						})] }),
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("answerEvidence"), (0, react_jsx_runtime.jsx)(DraftTextarea, {
+							...field,
+							name: "answerEvidence",
+							defaultValue: assessment?.answerEvidence ?? question.answerEvidence,
+							required: true,
+							maxLength: 2e3
+						})] }),
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("assistanceLabel"), (0, react_jsx_runtime.jsx)(DraftSelect, {
+							...field,
+							name: "assistance",
+							defaultValue: response.assistance,
+							children: [
+								"independent",
+								"hint",
+								"worked-example",
+								"unknown"
+							].map((value) => (0, react_jsx_runtime.jsx)("option", {
+								value,
+								children: t(value === "independent" ? "assistIndependent" : value === "hint" ? "assistHint" : value === "worked-example" ? "workedExampleHelp" : "assistanceUnknown")
+							}, value))
+						})] }),
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("actualAnswerDay"), (0, react_jsx_runtime.jsx)(DraftInput, {
+							...field,
+							type: "date",
+							name: "answerDay",
+							defaultValue: answerDate?.kind === "day" ? answerDate.day : ""
+						})] }),
+						(0, react_jsx_runtime.jsx)("p", {
+							className: "student-muted",
+							children: t("answerDayHelp")
+						}),
+						(0, react_jsx_runtime.jsxs)("label", { children: [t("errorTypeLabel"), (0, react_jsx_runtime.jsxs)(DraftSelect, {
+							...field,
+							name: "errorType",
+							defaultValue: assessment?.errorType ?? "",
+							children: [(0, react_jsx_runtime.jsx)("option", {
+								value: "",
+								children: t("errorTypeNone")
+							}), errorTypesBySubject[sheet.subject].map((value) => (0, react_jsx_runtime.jsx)("option", {
+								value,
+								children: t(value)
+							}, value))]
+						})] })
+					]
+				})
+			] });
+		}
+		//#endregion
+		//#region lib/types/client/workspace.js
+		/** Read validated dashboard and stable learning identities through the shared resource lifetime. */
+		function useStudy(sessionId, visible, networkError, query, useResource) {
+			const { offset: mistakeOffset, status: mistakeStatus, ...options } = query;
+			const resource = useResource(visible ? studentResourceAddress(sessionId, {
+				kind: "dashboard",
+				options: {
+					...options,
+					mistakeOffset,
+					mistakeStatus
+				}
+			}) : "");
+			const context = useResource(visible ? studentResourceAddress(sessionId, { kind: "learning-context" }) : "");
+			const data = resource.value && dashboardValue(resource.value.data) ? resource.value.data : void 0;
+			const offset = (0, react.useRef)(0);
+			if (data) offset.current = data.serverNow - Date.now();
+			const facts = context.value?.data;
+			const termId = facts && typeof facts === "object" && "termId" in facts && typeof facts.termId === "string" ? facts.termId : void 0;
+			const stale = resource.status === "failed" || context.status === "failed";
 			return {
 				data,
-				error,
-				busy,
-				reload,
-				change: (0, react.useCallback)(async (command, revision = data?.revision ?? 0) => {
-					if (writing.current) throw new Error(networkError);
-					writing.current = true;
-					setBusy(true);
-					try {
-						return await request(command, revision);
-					} finally {
-						writing.current = false;
-						if (alive.current) setBusy(false);
-					}
-				}, [
-					request,
-					data?.revision,
-					networkError
-				]),
+				context: facts,
+				termId,
+				value: resource.value,
+				stale,
+				error: stale ? networkError : "",
 				offset
 			};
+		}
+		function dashboardValue(value) {
+			return value !== null && typeof value === "object" && "serverNow" in value && typeof value.serverNow === "number" && "revision" in value && "study" in value && "interactiveLessons" in value;
 		}
 		//#endregion
 		//#region lib/types/client/display.js
@@ -1812,7 +6494,8 @@ window.__ModuleLoader__.load({
 		const assistKeys = {
 			independent: "assistIndependent",
 			hint: "assistHint",
-			"worked-example": "assistWorked"
+			"worked-example": "assistWorked",
+			unknown: "assistUnknown"
 		};
 		const focusKeys = {
 			literacy: "focusLiteracy",
@@ -2555,7 +7238,7 @@ window.__ModuleLoader__.load({
 		//#endregion
 		//#region lib/types/client/prompts.js
 		/** Natural-language tutor requests. The study skill owns the teaching rules. */
-		const continuePrompt = "请加载 study 技能，查询 study_status，继续当前学习段。先处理未反馈的答案或提示，再出下一题。一次一题。没有时长限制，孩子想继续就继续；想休息就 stop。";
+		const continuePrompt = "请加载 study 技能，查询 study_status，继续当前学习段。先处理未反馈的答案或提示，保留当前题目；只有明确要求下一题时才换题。一次一题。没有时长限制，孩子想继续就继续；想休息就 stop。";
 		/** Ask the child to teach the idea back like a little teacher (Feynman). */
 		function feynmanPrompt(topic) {
 			return `请加载 study 技能。你扮演好奇的同桌。请孩子${topic ? `围绕「${topic}」` : "围绕刚才学的内容"}当小老师讲一讲：用简单的话说明是什么、怎么做、为什么。孩子讲完后，用一两句追问帮他发现漏洞并补齐；不要直接替他讲完整答案。`;
@@ -2642,6 +7325,10 @@ window.__ModuleLoader__.load({
 		}
 		/** Transcribe a workbook photo that is not tied to a saved worksheet. */
 		const workbookPhotoPrompt = "请加载 study 技能。这是练习册照片，事先没有练习单。用 workbook-draft 按题保存草稿：不会用 stuck，提示后才对用 hinted，独立做错用 independent-wrong，独立做对用 independent-correct。能对应目标就写 objectiveId。不要直接入库，等家长确认。";
+		/** Complete panel intention; official file validation determines business completion. */
+		function nativeIntentPrompt(intent, request) {
+			return `请加载 study 技能。在当前原生会话处理下面的意图，先核对学期和实体身份。通过原生文件工具读写正式业务文件，再运行安装包中的只读校验 CLI；保留学生原话、回答身份和附件关联。未完成的回答先保存再评估；结束或切换时保留待评估回答，迟到的反馈仍属于原题。不要自动换题或重发不确定的回答。\nStudent intention:\n${JSON.stringify(intent)}\n${request}`;
+		}
 		//#endregion
 		//#region lib/types/client/figure-view.js
 		/** On-screen teaching figure for the current task. The prompt stays the question; the drawing is the given information. */
@@ -3714,7 +8401,7 @@ window.__ModuleLoader__.load({
 			incorrect: "markWrong"
 		};
 		/** Parent practice page: the mistake notebook, printed sheets, and due review. */
-		function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, epoch, t }) {
+		function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, epoch, t, useStore, actions }) {
 			return (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
 				(0, react_jsx_runtime.jsx)(PhotoIntake, {
 					ask,
@@ -4003,6 +8690,8 @@ window.__ModuleLoader__.load({
 					] }),
 					study.pendingMistakes.length === 0 && (0, react_jsx_runtime.jsx)("p", { children: t("empty") }),
 					study.pendingMistakes.map((item) => (0, react_jsx_runtime.jsx)(MistakeConfirmation, {
+						useStore,
+						actions,
 						mistake: item,
 						revision,
 						change,
@@ -4160,19 +8849,23 @@ window.__ModuleLoader__.load({
 			const [marks, setMarks] = (0, react.useState)(() => Object.fromEntries(worksheet.results.flatMap((item) => item.result === "unassessed" ? [] : [[item.itemId, item.result]])));
 			const [answers, setAnswers] = (0, react.useState)({});
 			const [causes, setCauses] = (0, react.useState)({});
-			const [helped, setHelped] = (0, react.useState)(() => Object.fromEntries(worksheet.results.flatMap((item) => item.result === "correct" && item.assistance === "hint" ? [[item.itemId, true]] : [])));
+			const [helped, setHelped] = (0, react.useState)({});
 			const [paper, setPaper] = (0, react.useState)(() => Object.fromEntries(worksheet.drafts.map((draft) => [draft.itemId, {
 				...draft.result === "correct" || draft.result === "partial" || draft.result === "incorrect" ? { result: draft.result } : {},
 				response: draft.response,
 				errorType: draft.errorType ?? ""
 			}])));
 			const [saving, setSaving] = (0, react.useState)(false);
+			function assistanceFor(itemId) {
+				const saved = worksheet.results.find((item) => item.itemId === itemId)?.assistance ?? worksheet.drafts.find((item) => item.itemId === itemId)?.assistance ?? "independent";
+				return helped[itemId] === void 0 ? saved : helped[itemId] ? saved === "worked-example" ? "worked-example" : "hint" : "independent";
+			}
 			const changed = worksheet.items.filter((item) => {
 				const before = worksheet.results.find((result) => result.itemId === item.id);
 				const mark = marks[item.id];
 				if (mark === void 0) return false;
-				const assistance = mark === "correct" ? helped[item.id] ? "hint" : "independent" : void 0;
-				return mark !== before?.result || (answers[item.id]?.trim() ?? "") !== "" || mark === "correct" && before !== void 0 && assistance !== before.assistance;
+				const assistance = assistanceFor(item.id);
+				return mark !== before?.result || (answers[item.id]?.trim() ?? "") !== "" || before !== void 0 && assistance !== before.assistance || mark !== "correct" && causes[item.id] !== void 0 && causes[item.id] !== (before?.errorType ?? "");
 			});
 			function markAllRight() {
 				setMarks((previous) => {
@@ -4199,12 +8892,12 @@ window.__ModuleLoader__.load({
 							results: changed.map((item) => {
 								const response = answers[item.id]?.trim();
 								const mark = marks[item.id] ?? "correct";
-								const cause = causes[item.id];
+								const cause = causes[item.id] ?? worksheet.results.find((result) => result.itemId === item.id)?.errorType;
 								return {
 									itemId: item.id,
 									result: mark,
 									...response ? { response } : {},
-									...mark === "correct" ? { assistance: helped[item.id] ? "hint" : "independent" } : {},
+									assistance: assistanceFor(item.id),
 									...mark !== "correct" && cause ? { errorType: cause } : {}
 								};
 							})
@@ -4218,7 +8911,7 @@ window.__ModuleLoader__.load({
 					setSaving(false);
 				}
 			}
-			const highConfidence = worksheet.drafts.filter((draft) => draft.confidence === "high");
+			const highConfidence = worksheet.drafts.filter((draft) => draft.confidence === "high" && draft.result === "correct" && draft.assistance !== "unknown" && draft.uncertainties === "");
 			async function confirmBatch(drafts) {
 				setSaving(true);
 				setError("");
@@ -4230,7 +8923,7 @@ window.__ModuleLoader__.load({
 						userConfirmation: t("confirmPaper"),
 						results: drafts.map((draft) => ({
 							itemId: draft.itemId,
-							result: draft.result === "unassessed" ? "correct" : draft.result,
+							result: "correct",
 							response: draft.response,
 							assistance: draft.assistance,
 							...draft.errorType !== void 0 ? { errorType: draft.errorType } : {}
@@ -4381,7 +9074,7 @@ window.__ModuleLoader__.load({
 							marks[item.id] === "correct" && (0, react_jsx_runtime.jsxs)("label", { children: [
 								(0, react_jsx_runtime.jsx)("input", {
 									type: "checkbox",
-									checked: helped[item.id] === true,
+									checked: assistanceFor(item.id) !== "independent",
 									onChange: (event) => {
 										const checked = event.target.checked;
 										setHelped((previous) => ({
@@ -4405,7 +9098,7 @@ window.__ModuleLoader__.load({
 								}
 							})] }),
 							marks[item.id] !== void 0 && marks[item.id] !== "correct" && (0, react_jsx_runtime.jsxs)("label", { children: [t("errorTypeLabel"), (0, react_jsx_runtime.jsxs)("select", {
-								value: causes[item.id] ?? "",
+								value: causes[item.id] ?? result?.errorType ?? "",
 								onChange: (event) => {
 									const type = errorTypesBySubject[worksheet.subject].find((candidate) => candidate === event.target.value);
 									setCauses((previous) => ({
@@ -4960,9 +9653,9 @@ window.__ModuleLoader__.load({
 		//#endregion
 		//#region lib/types/client/today-view.js
 		/** The learner's page: one recommended next step, the current question, and a folded set of other ways to practise. */
-		function TodayView({ study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom }) {
+		function TodayView({ study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom, draftScope, useStore, actions }) {
 			const active = study.active;
-			const ownSession = !!active && active.subject === subject;
+			const ownSession = !!active;
 			const task = ownSession && study.task?.sessionId === active.id ? study.task : void 0;
 			const available = ownSession;
 			const recommendation = study.recommendation;
@@ -5036,14 +9729,11 @@ window.__ModuleLoader__.load({
 							className: "student-muted",
 							children: t(subject === "chinese" ? "chineseMethod" : subject === "math" ? "mathMethod" : "englishMethod")
 						}),
-						ownSession ? (0, react_jsx_runtime.jsxs)("p", { children: [
+						active && (0, react_jsx_runtime.jsxs)("p", { children: [
 							t(active.subject),
 							" · ",
 							t(active.mode)
-						] }) : active && active.subject !== subject ? (0, react_jsx_runtime.jsx)("p", {
-							className: "student-muted",
-							children: t("otherSubjectActive").replace("{subject}", t(active.subject))
-						}) : null
+						] })
 					]
 				}),
 				ownSession && (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [(0, react_jsx_runtime.jsxs)("section", {
@@ -5054,6 +9744,9 @@ window.__ModuleLoader__.load({
 							children: t("chatHelp")
 						}),
 						task ? (0, react_jsx_runtime.jsx)(Task, {
+							useStore,
+							actions,
+							draftScope,
 							study,
 							goalTitle: goalTitle(study, task.objectiveId),
 							goalText: objectiveMeta?.goal,
@@ -5062,14 +9755,14 @@ window.__ModuleLoader__.load({
 							t,
 							act,
 							tutor
-						}) : (0, react_jsx_runtime.jsx)("p", { children: t("waiting") }),
+						}, `${task.sessionId}:${task.id}`) : (0, react_jsx_runtime.jsx)("p", { children: t("waiting") }),
 						available && (running ? (0, react_jsx_runtime.jsx)("p", {
 							role: "status",
 							children: t("tutorWorking")
 						}) : (!task || study.feedback || task.response !== void 0 || task.hintLevel > 0) && (0, react_jsx_runtime.jsx)("button", {
 							disabled,
 							onClick: () => {
-								tutor("").catch(() => {});
+								tutor(study.feedback ? "明确请求下一题。先保留上一题的原回答和有效反馈，再准备下一题。" : "检查当前题的未完成答案或提示，不换题，不自动重发原回答。", true).catch(() => {});
 							},
 							children: t(!task ? "prepareTask" : study.feedback ? "nextTask" : task.response !== void 0 ? "retryFeedback" : "retryHint")
 						}))
@@ -5095,7 +9788,7 @@ window.__ModuleLoader__.load({
 							type: "button",
 							disabled: disabled || running,
 							onClick: () => {
-								tutor(feynmanPrompt(explain?.title ?? goalTitle(study, task?.objectiveId))).catch(() => {});
+								tutor(feynmanPrompt(explain?.title ?? goalTitle(study, task?.objectiveId)), true).catch(() => {});
 							},
 							children: t("feynmanTeach")
 						})]
@@ -5260,7 +9953,7 @@ window.__ModuleLoader__.load({
 						children: t("dueLater").replace("{count}", String(study.dueBacklog - study.dueToday.length))
 					})
 				] }),
-				!ownSession && (0, react_jsx_runtime.jsx)(Alternate, {
+				(0, react_jsx_runtime.jsx)(Alternate, {
 					study,
 					activity,
 					setActivity,
@@ -5540,10 +10233,13 @@ window.__ModuleLoader__.load({
 							})] }), scoped && (0, react_jsx_runtime.jsxs)("label", { children: [t("scopeUnit"), (0, react_jsx_runtime.jsxs)("select", {
 								"aria-label": t("scopeUnit"),
 								value: scope.unit ?? "",
-								onChange: (event) => setScope({
-									...scope,
-									...event.target.value ? { unit: event.target.value } : {}
-								}),
+								onChange: (event) => {
+									const { unit: _unit, ...book } = scope;
+									setScope({
+										...book,
+										...event.target.value ? { unit: event.target.value } : {}
+									});
+								},
 								children: [(0, react_jsx_runtime.jsx)("option", {
 									value: "",
 									children: t("scopeWholeMap")
@@ -5568,7 +10264,7 @@ window.__ModuleLoader__.load({
 								type: "submit",
 								className: "student-primary",
 								disabled: uiMode === "review" && !due,
-								children: t("start")
+								children: t(study.active ? "switchLearning" : "start")
 							})
 						]
 					})
@@ -5599,11 +10295,13 @@ window.__ModuleLoader__.load({
 				}, step))
 			});
 		}
-		function Task({ study, goalTitle: title, goalText, days, disabled, t, act, tutor }) {
+		function Task({ study, goalTitle: title, goalText, days, disabled, t, act, tutor, draftScope, useStore, actions }) {
 			const task = study.task;
 			if (!task) return null;
 			const hintLabel = task.hintLevel > 0 ? t("hintMore") : t("hint");
 			const [checked, setChecked] = (0, react.useState)({});
+			const key = formDraftKey(`answer:${task.sessionId}:${task.id}`, draftScope);
+			const answer = useStore((state) => state.drafts[key]) ?? "";
 			return (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
 				(0, react_jsx_runtime.jsx)("h3", { children: task.topic }),
 				title && (0, react_jsx_runtime.jsxs)("p", {
@@ -5664,12 +10362,12 @@ window.__ModuleLoader__.load({
 						className: "student-result",
 						children: t(study.feedback.result)
 					}),
-					(0, react_jsx_runtime.jsx)("p", { children: study.feedback.feedback }),
+					(0, react_jsx_runtime.jsx)("p", { children: study.feedback.result === "unassessed" ? t("assessmentPending") : study.feedback.feedback }),
 					study.feedback.result === "correct" && (0, react_jsx_runtime.jsx)("button", {
 						type: "button",
 						disabled,
 						onClick: () => {
-							tutor(feynmanPrompt(title)).catch(() => {});
+							tutor(feynmanPrompt(title), true).catch(() => {});
 						},
 						children: t("feynmanTeach")
 					})
@@ -5729,6 +10427,11 @@ window.__ModuleLoader__.load({
 						children: [
 							(0, react_jsx_runtime.jsxs)("label", { children: [t("answer"), (0, react_jsx_runtime.jsx)("input", {
 								name: "answer",
+								"aria-label": t("answer"),
+								value: answer,
+								onChange: (event) => {
+									actions.setDraft(key, event.target.value);
+								},
 								required: true,
 								maxLength: 2e3
 							})] }),
@@ -5785,7 +10488,7 @@ window.__ModuleLoader__.load({
 			} catch {}
 		}
 		/** Workbench actions share the same persisted state as the native tutoring tools. */
-		function StudyDesk({ sessionId, visible, ask, running, t }) {
+		function StudyDesk({ sessionId, visible, ask, running, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, inspectSubmission, useStore, actions }) {
 			const [subject, setSubject] = (0, react.useState)(storedSubject);
 			const [mistakeOffset, setMistakeOffset] = (0, react.useState)(0);
 			const [mistakeStatus, setMistakeStatus] = (0, react.useState)("all");
@@ -5796,11 +10499,12 @@ window.__ModuleLoader__.load({
 			const [scopeChoice, setScopeChoice] = (0, react.useState)({});
 			const [view, setView] = (0, react.useState)("student");
 			const [parentTab, setParentTab] = (0, react.useState)("map");
+			const [knowledgeView, setKnowledgeView] = (0, react.useState)("map");
 			const scopeOf = (target) => scopeChoice[target] ?? {};
 			const activeScope = scopeOf(subject);
-			const showMap = view === "parent" && parentTab === "map";
-			const tab = view === "student" ? "today" : parentTab === "map" || parentTab === "ideas" ? "map" : parentTab === "mistakes" ? "mistakes" : "parent";
-			const showBook = view === "parent" && (parentTab === "map" || parentTab === "ideas");
+			const showMap = view === "parent" && parentTab === "map" && knowledgeView === "map";
+			const tab = view === "student" ? "today" : parentTab === "map" ? "map" : parentTab === "mistakes" ? "mistakes" : "parent";
+			const showBook = view === "parent" && parentTab === "map";
 			const workspace = useStudy(sessionId, visible, t("networkError"), {
 				tab,
 				offset: mistakeOffset,
@@ -5811,8 +10515,8 @@ window.__ModuleLoader__.load({
 				...activeScope.grade !== void 0 ? { diagGrade: activeScope.grade } : {},
 				...activeScope.term !== void 0 ? { diagTerm: activeScope.term } : {},
 				...activeScope.unit ? { diagUnit: activeScope.unit } : {}
-			});
-			const { data, busy, change } = workspace;
+			}, useResource);
+			const { data } = workspace;
 			const [activity, setActivity] = (0, react.useState)({
 				subject: storedSubject(),
 				mode: "foundation"
@@ -5827,22 +10531,121 @@ window.__ModuleLoader__.load({
 				const timer = window.setInterval(() => setLocalNow(Date.now()), 1e3);
 				return () => window.clearInterval(timer);
 			}, [visible, workspace.offset]);
-			async function tutor(text = continuePrompt, photo) {
+			const responseIds = (0, react.useRef)(/* @__PURE__ */ new Map());
+			const [submissions, setSubmissions] = (0, react.useState)(() => {
+				try {
+					const entries = JSON.parse(window.sessionStorage.getItem(`student:submissions:${sessionId}`) ?? "[]");
+					if (!Array.isArray(entries)) return [];
+					return entries.slice(-12).flatMap((entry) => {
+						try {
+							if (entry.admission !== "accepted" && entry.admission !== "unknown") return [];
+							return [{
+								...TYPERT_REMOTE.methods["student/inspectSubmission"].input({ strict: true }).create().parse({
+									sessionId,
+									request: {
+										requestId: entry.requestId,
+										...entry.response ? { response: entry.response } : {}
+									}
+								}).request,
+								admission: entry.admission,
+								...typeof entry.questionId === "string" ? { questionId: entry.questionId } : {}
+							}];
+						} catch {
+							return [];
+						}
+					});
+				} catch {
+					return [];
+				}
+			});
+			(0, react.useEffect)(() => {
+				try {
+					window.sessionStorage.setItem(`student:submissions:${sessionId}`, JSON.stringify(submissions.map(({ inspection: _inspection, ...item }) => item)));
+				} catch {}
+			}, [sessionId, submissions]);
+			function identity(command) {
+				const task = data?.study?.task;
+				const ownerId = task?.sessionId ?? data?.study?.active?.id;
+				const key = JSON.stringify([
+					workspace.termId,
+					ownerId,
+					task?.id
+				]);
+				const retained = submissions.find((item) => item.questionId === task?.id && item.response?.owner.id === ownerId && item.response?.termId === workspace.termId && item.admission === "unknown");
+				if (retained?.response) responseIds.current.set(key, retained.response.responseId);
+				if (command?.action === "answer" && !responseIds.current.has(key)) responseIds.current.set(key, crypto.randomUUID());
+				return {
+					termId: workspace.termId,
+					blockId: ownerId,
+					questionId: task?.id,
+					responseId: task?.responseId ?? responseIds.current.get(key)
+				};
+			}
+			async function tutor(text = continuePrompt, photo, command, currentBlock = false) {
+				const ids = identity(command);
+				if (command?.action === "answer" && submissions.some((item) => item.response?.responseId === ids.responseId && item.admission === "unknown" && !item.inspection)) {
+					setSendError(t("messageUnknown"));
+					throw new Error(t("messageUnknown"));
+				}
 				setSending(true);
 				setSendError("");
+				const active = data?.study?.active;
+				const selection = active && (currentBlock || command?.action === "answer" || command?.action === "hint" || command?.action === "stuck" || command?.action === "stop") ? {
+					subject: active.subject,
+					goalId: data?.study?.task?.objectiveId,
+					scope: active.scope
+				} : {
+					subject: command?.action === "start" ? command.subject : subject,
+					goalId: selectedObjectiveId || void 0,
+					scope: command?.action === "start" ? command.scope : scopeCommand(subject).scope
+				};
+				const intent = {
+					nativeSessionId: sessionId,
+					...ids,
+					selection,
+					...command ? { operation: command } : {},
+					request: text.trim() === "" ? continuePrompt : text
+				};
+				const retain = (requestId, admission) => setSubmissions((previous) => [...previous, {
+					requestId,
+					admission,
+					...ids.questionId ? { questionId: ids.questionId } : {},
+					...command?.action === "answer" && ids.termId && ids.blockId && ids.responseId ? { response: {
+						termId: ids.termId,
+						owner: {
+							kind: "block",
+							id: ids.blockId
+						},
+						responseId: ids.responseId
+					} } : {}
+				}].slice(-12));
 				try {
-					await ask(text.trim() === "" ? continuePrompt : text, photo);
+					const result = await ask(nativeIntentPrompt(intent, intent.request), photo);
+					if (result) retain(result.requestId, result.admission);
 				} catch (reason) {
+					if (reason instanceof StudySubmissionError) retain(reason.requestId, "unknown");
 					setSendError(reason instanceof Error ? reason.message : t("sendError"));
 					throw reason;
 				} finally {
 					setSending(false);
 				}
 			}
-			async function act(command, withTutor = false, prompt = continuePrompt) {
+			async function change(command, _revision, _baseline) {
+				await tutor(continuePrompt, void 0, command);
+				if (!data) throw new Error(t("networkError"));
+				return data;
+			}
+			async function manual(command, _revision, original) {
+				if (!data || !workspace.termId || workspace.stale) throw new Error(t("manualInvalid"));
+				return saveSettings(sessionId, command, data, workspace.termId, original, t);
+			}
+			async function saveWorksheet(intent, baseline) {
+				if (!workspace.termId || workspace.stale) throw new Error(t("manualInvalid"));
+				return saveWorksheetRecord(sessionId, intent, baseline, workspace.termId, t);
+			}
+			async function act(command, _withTutor = false, prompt = continuePrompt) {
 				try {
-					await change(command);
-					if (withTutor) await tutor(prompt);
+					await tutor(prompt, void 0, command);
 				} catch {}
 			}
 			function selectSubject(item) {
@@ -5852,7 +10655,7 @@ window.__ModuleLoader__.load({
 			const now = Math.max(localNow + workspace.offset.current, data?.serverNow ?? 0);
 			const study = data?.study;
 			const subjectLoading = !!study && study.confirmedSubject !== subject;
-			const disabled = busy || sending;
+			const disabled = sending || workspace.stale;
 			const active = study?.active;
 			(0, react.useEffect)(() => {
 				if (active) {
@@ -5934,8 +10737,8 @@ window.__ModuleLoader__.load({
 			}
 			function lessonRequest() {
 				const recommendation = study?.recommendation;
-				const objectiveId = recommendation?.objectiveId || selectedObjectiveId || void 0;
-				const subjectKey = recommendation?.objectiveId ? recommendation.subject : subject;
+				const objectiveId = selectedObjectiveId || recommendation?.objectiveId || void 0;
+				const subjectKey = selectedObjectiveId ? subject : recommendation?.objectiveId ? recommendation.subject : subject;
 				const progress = study?.courses.find((item) => item.subject === subjectKey)?.progress;
 				return {
 					objectiveId,
@@ -5947,6 +10750,10 @@ window.__ModuleLoader__.load({
 			}
 			function startInterest() {
 				const recommendation = study?.recommendation;
+				if (selectedObjectiveId) {
+					start(subject, "foundation");
+					return;
+				}
 				if (!recommendation || recommendation.kind === "hold" || !study) return;
 				const mode = resolveMode(recommendation.subject, "foundation");
 				const request = lessonRequest();
@@ -6009,7 +10816,28 @@ window.__ModuleLoader__.load({
 					mode
 				}, true, prompt);
 			}
+			const nativeT = (key) => [
+				"saved",
+				"gradesSaved",
+				"confirmPaperDone",
+				"teachQueued",
+				"workbookSaved"
+			].includes(key) ? t("intentAdmitted") : t(key);
 			const parentSettings = view === "parent" && parentTab === "parent";
+			const draft = {
+				useStore,
+				actions
+			};
+			const draftScope = `student:draft:${sessionId}:${workspace.termId ?? "setup"}`;
+			const context = workspace.context;
+			const pendingFacts = context && typeof context === "object" && "pendingFacts" in context && Array.isArray(context.pendingFacts) ? context.pendingFacts : [];
+			const pendingLabels = {
+				answerDate: "answerDateUnknown",
+				assistance: "assistanceUnknown",
+				source: "answerSourceUnknown",
+				answerBasis: "answerBasisUnknown",
+				objectiveId: "answerGoalUnknown"
+			};
 			return (0, react_jsx_runtime.jsxs)("main", {
 				className: "student-desk",
 				"aria-label": t("title"),
@@ -6040,26 +10868,20 @@ window.__ModuleLoader__.load({
 										type: "button",
 										"aria-pressed": parentTab === "map",
 										onClick: () => setParentTab("map"),
-										children: t("map")
-									}),
-									(0, react_jsx_runtime.jsx)("button", {
-										type: "button",
-										"aria-pressed": parentTab === "ideas",
-										onClick: () => setParentTab("ideas"),
-										children: t("ideas")
+										children: t("parentProgress")
 									}),
 									(0, react_jsx_runtime.jsxs)("button", {
 										type: "button",
 										"aria-label": t("mistakes"),
 										"aria-pressed": parentTab === "mistakes",
 										onClick: () => setParentTab("mistakes"),
-										children: [t("mistakes"), study && study.dueTotal > 0 ? ` · ${study.dueTotal}` : ""]
+										children: [t("parentPractice"), study && study.dueTotal > 0 ? ` · ${study.dueTotal}` : ""]
 									}),
 									(0, react_jsx_runtime.jsx)("button", {
 										type: "button",
 										"aria-pressed": parentTab === "parent",
 										onClick: () => setParentTab("parent"),
-										children: t("parent")
+										children: t("parentProfile")
 									})
 								]
 							}),
@@ -6086,9 +10908,9 @@ window.__ModuleLoader__.load({
 								}), (0, react_jsx_runtime.jsx)("button", {
 									type: "button",
 									className: "student-quiet",
-									disabled,
+									disabled: sending,
 									onClick: () => {
-										workspace.reload().then(() => setEpoch((value) => value + 1));
+										setEpoch((value) => value + 1);
 									},
 									children: t("reload")
 								})]
@@ -6097,20 +10919,68 @@ window.__ModuleLoader__.load({
 					}),
 					workspace.error && (0, react_jsx_runtime.jsx)("p", {
 						role: "alert",
-						children: workspace.error
+						children: t("staleData")
 					}),
 					sendError && (0, react_jsx_runtime.jsx)("p", {
 						role: "alert",
 						children: sendError
 					}),
-					!data ? !workspace.error && (0, react_jsx_runtime.jsx)("progress", { "aria-label": t("busy") }) : !study && view !== "parent" ? (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsx)("p", { children: t("setupFirst") }), (0, react_jsx_runtime.jsx)("button", {
+					study && pendingFacts.length > 0 && (0, react_jsx_runtime.jsxs)("section", {
+						"aria-label": t("pendingFacts"),
+						children: [(0, react_jsx_runtime.jsx)("h3", { children: t("pendingFacts") }), pendingFacts.map((item) => {
+							if (!item || typeof item !== "object" || !("responseId" in item) || typeof item.responseId !== "string" || !("fields" in item) || !Array.isArray(item.fields)) return null;
+							const labels = item.fields.flatMap((field) => typeof field === "string" && field in pendingLabels ? [t(pendingLabels[field])] : []);
+							return (0, react_jsx_runtime.jsxs)("p", { children: [
+								item.responseId,
+								" · ",
+								labels.join(" · ")
+							] }, JSON.stringify([item.ownerId, item.responseId]));
+						})]
+					}),
+					submissions.length > 0 && (0, react_jsx_runtime.jsxs)("details", {
+						className: "student-fold",
+						children: [(0, react_jsx_runtime.jsx)("summary", { children: t("submissionStatus") }), submissions.map((item) => (0, react_jsx_runtime.jsxs)("div", { children: [
+							(0, react_jsx_runtime.jsx)("p", { children: t(item.admission === "accepted" ? "messageAdmitted" : "messageUnknown") }),
+							item.response && (0, react_jsx_runtime.jsxs)("p", { children: [
+								t(item.inspection?.answer === "saved" ? "answerSaved" : "answerPending"),
+								" · ",
+								t(item.inspection?.assessment === "valid" ? "assessmentSaved" : "assessmentPending")
+							] }),
+							(0, react_jsx_runtime.jsx)("button", {
+								type: "button",
+								disabled: sending,
+								onClick: () => {
+									inspectSubmission(sessionId, {
+										requestId: item.requestId,
+										...item.response ? { response: item.response } : {}
+									}).then((result) => {
+										setSubmissions((previous) => previous.map((current) => current.requestId === item.requestId ? {
+											...current,
+											admission: result.admission,
+											inspection: result
+										} : current));
+									}).catch((reason) => setSendError(reason instanceof Error ? reason.message : t("networkError")));
+								},
+								children: t("inspectSubmission")
+							})
+						] }, item.requestId))]
+					}),
+					!data ? workspace.value?.status === "missing" ? (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsx)("p", { children: t("setupFirst") }), (0, react_jsx_runtime.jsx)("button", {
+						disabled: sending,
 						onClick: () => {
-							setView("parent");
-							setParentTab("parent");
+							tutor(t("setupIntent")).catch(() => {});
 						},
-						children: t("parent")
+						children: t("setupConversation")
+					})] }) : workspace.value ? (0, react_jsx_runtime.jsx)("section", { children: (0, react_jsx_runtime.jsx)("p", { children: t(workspace.value.status === "legacy" ? "legacyFilesHelp" : "unavailableFilesHelp") }) }) : !workspace.error && (0, react_jsx_runtime.jsx)("progress", { "aria-label": t("busy") }) : !study && view !== "parent" ? (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsx)("p", { children: t("setupFirst") }), (0, react_jsx_runtime.jsx)("button", {
+						disabled: sending,
+						onClick: () => {
+							tutor(t("setupIntent")).catch(() => {});
+						},
+						children: t("setupConversation")
 					})] }) : subjectLoading && !parentSettings ? (0, react_jsx_runtime.jsx)("progress", { "aria-label": t("busy") }) : (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
 						study && view === "student" && (0, react_jsx_runtime.jsx)(TodayView, {
+							...draft,
+							draftScope,
 							study,
 							subject,
 							activity,
@@ -6142,7 +11012,7 @@ window.__ModuleLoader__.load({
 							disabled,
 							running,
 							act,
-							tutor,
+							tutor: (text, currentBlock) => tutor(text, void 0, void 0, currentBlock),
 							t,
 							prompts: {
 								daily: dailySheetPrompt(subject),
@@ -6169,6 +11039,21 @@ window.__ModuleLoader__.load({
 							onReview: (classroomId) => {
 								tutor(openmaicReviewPrompt(classroomId)).catch(() => {});
 							}
+						}),
+						study && view === "parent" && parentTab === "map" && (0, react_jsx_runtime.jsxs)("nav", {
+							className: "student-segments",
+							"aria-label": t("parentProgress"),
+							children: [(0, react_jsx_runtime.jsx)("button", {
+								type: "button",
+								"aria-pressed": knowledgeView === "map",
+								onClick: () => setKnowledgeView("map"),
+								children: t("map")
+							}), (0, react_jsx_runtime.jsx)("button", {
+								type: "button",
+								"aria-pressed": knowledgeView === "ideas",
+								onClick: () => setKnowledgeView("ideas"),
+								children: t("ideas")
+							})]
 						}),
 						study && showMap && (0, react_jsx_runtime.jsx)(MapView, {
 							study,
@@ -6208,16 +11093,17 @@ window.__ModuleLoader__.load({
 							change: (command) => change(command).then(() => void 0),
 							t
 						}),
-						study && view === "parent" && parentTab === "ideas" && (0, react_jsx_runtime.jsx)(IdeasView, {
+						study && view === "parent" && parentTab === "map" && knowledgeView === "ideas" && (0, react_jsx_runtime.jsx)(IdeasView, {
 							study,
 							curriculum,
 							t,
 							onOpenConcept: (id) => {
 								setSelectedConceptId(id);
-								setParentTab("map");
+								setKnowledgeView("map");
 							}
 						}),
 						study && view === "parent" && parentTab === "mistakes" && (0, react_jsx_runtime.jsx)(PracticeView, {
+							...draft,
 							study,
 							now,
 							subject,
@@ -6240,22 +11126,70 @@ window.__ModuleLoader__.load({
 								setView("student");
 							},
 							epoch,
+							t: nativeT
+						}),
+						study && view === "parent" && parentTab === "mistakes" && workspace.termId && (0, react.createElement)(WorksheetCorrections, {
+							...draft,
+							key: draftScope,
+							sessionId,
+							termId: workspace.termId,
+							draftScope,
+							useResource,
+							save: saveWorksheet,
+							disabled,
 							t
 						}),
-						parentSettings && (0, react_jsx_runtime.jsx)(ParentSettings, {
-							data,
-							change,
-							t,
-							curriculum,
-							subject,
-							onSubject: (item) => {
-								selectSubject(item);
-								setActivity({
-									subject: item,
-									mode: "foundation"
-								});
-							}
-						}, epoch),
+						parentSettings && (0, react_jsx_runtime.jsxs)("section", { children: [
+							(0, react_jsx_runtime.jsx)("button", {
+								type: "button",
+								disabled,
+								onClick: () => {
+									tutor(t("setupIntent")).catch(() => {});
+								},
+								children: t("profileConversation")
+							}),
+							(0, react_jsx_runtime.jsx)("button", {
+								type: "button",
+								disabled,
+								onClick: () => {
+									tutor(t("courseConversation")).catch(() => {});
+								},
+								children: t("courseConversation")
+							}),
+							(0, react_jsx_runtime.jsx)("button", {
+								type: "button",
+								disabled,
+								onClick: () => {
+									tutor(t("archiveConversation")).catch(() => {});
+								},
+								children: t("archiveConversation")
+							})
+						] }),
+						parentSettings && study && (0, react_jsx_runtime.jsxs)("details", {
+							className: "student-fold",
+							children: [
+								(0, react_jsx_runtime.jsx)("summary", { children: t("manualForms") }),
+								(0, react_jsx_runtime.jsx)("p", { children: t("manualSummary") }),
+								(0, react.createElement)(ParentSettings, {
+									...draft,
+									key: draftScope + subject,
+									draftScope,
+									observation: workspace.value?.versions.find((file) => file.path === ".study/settings.json")?.version,
+									data,
+									change: manual,
+									t,
+									curriculum,
+									subject,
+									onSubject: (item) => {
+										selectSubject(item);
+										setActivity({
+											subject: item,
+											mode: "foundation"
+										});
+									}
+								})
+							]
+						}),
 						study && parentSettings && (0, react_jsx_runtime.jsx)(Growth, {
 							study,
 							curriculum,
@@ -6369,12 +11303,105 @@ window.__ModuleLoader__.load({
 						] }),
 						(0, react_jsx_runtime.jsx)("p", { children: item.prompt }),
 						(0, react_jsx_runtime.jsx)("p", { children: item.response }),
-						(0, react_jsx_runtime.jsx)("p", { children: item.feedback }),
+						(0, react_jsx_runtime.jsx)("p", { children: item.result === "unassessed" ? t("assessmentPending") : item.feedback }),
 						(0, react_jsx_runtime.jsx)("p", { children: item.answerEvidence })
 					] }, item.id))
 				] }),
 				(0, react_jsx_runtime.jsx)("p", { children: t("bounded") })
 			] });
+		}
+		//#endregion
+		//#region lib/types/client/manual-actions.js
+		/**
+		* Bind Gateway operations in the registration world and expose plain feature callbacks.
+		* @param remote - mounted Student manual-save and submission-inspection operations.
+		* @returns callbacks preserving original draft baselines and separate file outcomes.
+		*/
+		function createStudentManualActions(remote) {
+			async function saveSettings(sessionId, command, data, termId, original, t) {
+				const retained = original ? JSON.parse(original) : void 0;
+				const beforeText = retained && typeof retained.baseline === "string" ? retained.baseline : original;
+				const editedNames = retained && Array.isArray(retained.editedFields) ? retained.editedFields : void 0;
+				let intent;
+				let baseline;
+				if (command.action === "setup") {
+					const before = beforeText ? JSON.parse(beforeText) : data.study?.profile;
+					const fields = Object.keys(command.profile).filter((field) => field !== "parentConfirmation" && (editedNames ? editedNames.includes(field) : command.profile[field] !== before?.[field]));
+					intent = {
+						kind: "settings",
+						command,
+						editedProfileFields: fields
+					};
+					baseline = Object.fromEntries(fields.map((field) => [`profile:${field}`, before?.[field] ?? null]));
+				} else if (command.action === "configure-course") {
+					intent = {
+						kind: "settings",
+						command
+					};
+					const before = beforeText ? JSON.parse(beforeText) : { course: data.study?.courses.find((item) => item.subject === command.course.subject) };
+					baseline = {
+						[`material:${command.material.id}`]: null,
+						[`course:${command.course.subject}`]: before.course ?? null
+					};
+				} else if (command.action === "school-progress" || command.action === "interests" || command.action === "openmaic-settings") {
+					intent = {
+						kind: "settings",
+						command
+					};
+					if (command.action === "school-progress" && beforeText) baseline = { [`progress:${command.subject}`]: JSON.parse(beforeText) };
+					if (command.action === "interests" && beforeText) baseline = { interests: JSON.parse(beforeText) };
+					if (command.action === "openmaic-settings") baseline = beforeText ? void 0 : { openmaic: null };
+				} else throw new Error(t("manualInvalid"));
+				const controller = new AbortController();
+				const context = await remote.manualContext(sessionId, intent, controller.signal);
+				if (!context.ok) throw new Error(context.error.message);
+				if (!context.value.termId || context.value.termId !== termId) throw new Error(t("manualOldTerm"));
+				if (command.action === "openmaic-settings") {
+					const current = context.value.baseline.openmaic;
+					const currentBase = current && typeof current === "object" && "baseUrl" in current ? current.baseUrl : "";
+					if (beforeText !== void 0 && currentBase !== beforeText) throw new Error(`${t("manualConflict")} · ${t("currentValues")}: ${JSON.stringify(current)}`);
+					baseline = context.value.baseline;
+				}
+				if (command.action === "interests" && context.value.baseline.interests === null) baseline = { interests: null };
+				const result = await remote.saveManual(sessionId, {
+					termId: context.value.termId,
+					expectedVersions: context.value.versions,
+					baseline: baseline ?? context.value.baseline,
+					intent
+				}, controller.signal);
+				if (!result.ok) throw new Error(result.error.message);
+				if (result.value.status === "conflict") throw new Error(`${t("manualConflict")} · ${t("currentValues")}: ${JSON.stringify(result.value.current)}`);
+				if (result.value.status === "old-term") throw new Error(t("manualOldTerm"));
+				if (result.value.status !== "saved" && result.value.status !== "unchanged") throw new Error(result.value.reason ?? t("manualInvalid"));
+				return Object.assign({}, data, { manual: result.value });
+			}
+			async function saveWorksheet(sessionId, intent, baseline, termId, t) {
+				const controller = new AbortController();
+				const context = await remote.manualContext(sessionId, intent, controller.signal);
+				if (!context.ok) throw new Error(context.error.message);
+				if (context.value.termId !== termId) throw new Error(t("manualOldTerm"));
+				const result = await remote.saveManual(sessionId, {
+					termId: context.value.termId,
+					expectedVersions: context.value.versions,
+					baseline,
+					intent
+				}, controller.signal);
+				if (!result.ok) throw new Error(result.error.message);
+				if (result.value.status === "conflict") throw new Error(`${t("manualConflict")} · ${t("currentValues")}: ${JSON.stringify(result.value.current)}`);
+				if (result.value.status === "old-term") throw new Error(t("manualOldTerm"));
+				if (result.value.status !== "saved" && result.value.status !== "unchanged") throw new Error(result.value.reason ?? t("manualInvalid"));
+				return result.value;
+			}
+			async function inspectSubmission(sessionId, request) {
+				const reply = await remote.inspectSubmission(sessionId, request, new AbortController().signal);
+				if (!reply.ok) throw new Error(reply.error.message);
+				return reply.value;
+			}
+			return {
+				saveSettings,
+				saveWorksheet,
+				inspectSubmission
+			};
 		}
 		//#endregion
 		//#region \0dsh-css:/Users/winter/dsh-creative/plugins/dsh-student/packages/winterhuan/student/src/client/workbench.module.css.mjs
@@ -6581,7 +11608,7 @@ window.__ModuleLoader__.load({
 				children: renderSlot(sessionSlot, { chatVisible })
 			}) : (0, react_jsx_runtime.jsx)(Loading, {});
 		}
-		function LearningSession({ sessionId, chatVisible, ask, useSession, useConversation, renderFactorySlot, t }) {
+		function LearningSession({ sessionId, chatVisible, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, t }) {
 			const session = useSession((state) => state);
 			const conversation = useConversation((state) => state);
 			const settling = session.openState === "loading" && !conversation.activeTargets.size;
@@ -6594,7 +11621,13 @@ window.__ModuleLoader__.load({
 						visible: true,
 						running: !!session.running,
 						ask,
-						t
+						t,
+						useResource,
+						useStore,
+						actions,
+						saveSettings,
+						saveWorksheet,
+						inspectSubmission
 					})
 				}), chatVisible && (0, react_jsx_runtime.jsxs)("aside", {
 					className: workbench_module_css_default.chat,
@@ -6620,8 +11653,9 @@ window.__ModuleLoader__.load({
 		}
 		/** Register the global entry and its strict Session child through native services.
 		* @param context - mounted Student client services.
+		* @param draftStore - shared learning-form drafts for both workbench and sidebar.
 		*/
-		function registerWorkbench(context) {
+		function registerWorkbench(context, draftStore) {
 			const t = context.locale.bind(NS);
 			const notice = (0, _deepseek_ai_dsh_client_store.createSnapshotStore)(null);
 			let sequence = 0;
@@ -6654,7 +11688,11 @@ window.__ModuleLoader__.load({
 			context.slots.inject(sessionSlot, () => context.slots.register({
 				name: sessionSlot,
 				locale: NS,
-				inject: (sessionId) => ({ ask: tutorBridge(context, sessionId, t("sessionError"), t("sendError")) })
+				store: draftStore,
+				inject: (sessionId) => ({
+					ask: tutorBridge(context, sessionId, t("sessionError"), t("sendError")),
+					...createStudentManualActions(context.remote.student)
+				})
 			}, LearningSession));
 			context.slots.inject("sidebar.panellist", () => context.slots.register({
 				name: "sidebar.panellist",
@@ -6684,18 +11722,49 @@ window.__ModuleLoader__.load({
 			"uiSession",
 			"locale",
 			"sidebarRightTabs",
+			"remote",
+			"resources",
 			"workspaces",
 			"uiWorkspace",
 			"conversation"
 		];
+		function studentCallbacks(scope) {
+			const t = scope.locale.bind(NS);
+			return {
+				...createStudentManualActions(scope.remote.student),
+				askStudent: (sessionId, text, photo) => tutorBridge(scope, sessionId, t("sessionError"), t("sendError"))(text, photo)
+			};
+		}
+		function Sidebar({ sessionId, useTabInfo, useSession, useSessions, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission }) {
+			const preset = useSessions((state) => state.byId[sessionId]?.projectionValues?.agentPreset);
+			const { tab } = useTabInfo();
+			(0, react.useEffect)(() => {
+				if (typeof preset === "string" && preset !== "student") tab.actions.close();
+			}, [preset, tab.actions]);
+			const running = useSession((snapshot) => snapshot.running);
+			if (preset !== "student") return null;
+			return (0, react_jsx_runtime.jsx)(StudyDesk, {
+				sessionId,
+				visible: tab.visible,
+				running: !!running,
+				ask: (text, photo) => askStudent(sessionId, text, photo),
+				t,
+				useResource,
+				useStore,
+				actions,
+				saveSettings,
+				saveWorksheet,
+				inspectSubmission
+			}, sessionId);
+		}
 		/** Register the learning desk inside DSH's existing session sidebar. */
-		function apply(context) {
+		async function apply(context) {
+			await mountStudentResource(context);
 			context.effect(() => context.locale.register(NS, {
 				zh,
 				en
 			}), "student: dictionaries");
 			const t = context.locale.bind(NS);
-			registerWorkbench(context);
 			context.effect(() => registerModeTab(context, {
 				id: "@winterhuan/dsh-student",
 				kind: "student",
@@ -6708,28 +11777,17 @@ window.__ModuleLoader__.load({
 					icon: _deepseek_ai_dsh_client_ui_primitives.IconPlayOutlineRegular
 				}]
 			}), "student: sidebar");
-			function Sidebar({ sessionId, useTabInfo, useSession, useSessions, t }) {
-				const preset = useSessions((state) => state.byId[sessionId]?.projectionValues?.agentPreset);
-				const { tab } = useTabInfo();
-				(0, react.useEffect)(() => {
-					if (typeof preset === "string" && preset !== "student") tab.actions.close();
-				}, [preset, tab.actions]);
-				const running = useSession((snapshot) => snapshot.running);
-				const ask = (0, react.useMemo)(() => tutorBridge(context, sessionId, t("sessionError"), t("sendError")), [sessionId, t]);
-				if (preset !== "student") return null;
-				return (0, react_jsx_runtime.jsx)(StudyDesk, {
-					sessionId,
-					visible: tab.visible,
-					running: !!running,
-					ask,
-					t
-				}, sessionId);
-			}
-			context.slots.inject("sidebar.right.pane.tab", () => context.slots.register({
-				name: "sidebar.right.pane.tab",
-				key: "@winterhuan/dsh-student",
-				locale: NS
-			}, Sidebar));
+			context.inject(["remote.student"], (scope) => {
+				const store = createStudentDraftStore();
+				registerWorkbench(scope, store);
+				scope.slots.inject("sidebar.right.pane.tab", () => scope.slots.register({
+					name: "sidebar.right.pane.tab",
+					key: "@winterhuan/dsh-student",
+					locale: NS,
+					store,
+					inject: () => studentCallbacks(scope)
+				}, Sidebar));
+			});
 		}
 		//#endregion
 		exports.apply = apply;

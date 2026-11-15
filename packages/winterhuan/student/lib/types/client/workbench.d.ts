@@ -4,6 +4,7 @@ import type { SessionReference } from '@deepseek-ai/dsh-api-session-controller/c
 import type { SessionId } from '@deepseek-ai/dsh-session/types';
 import type { WorkspaceId } from '@deepseek-ai/dsh-api-workspace-controller/client';
 import type { PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots';
+import { createStudentDraftStore } from './drafts.tsx';
 import { NS } from './locales.ts';
 declare const sessionSlot = "student.workbench.session";
 declare module '@deepseek-ai/dsh-api-session-controller/client' {
@@ -50,7 +51,8 @@ type WorkbenchProps = PropsRuntime<'main'> & PropsRenderSlots<typeof sessionSlot
 export declare function Workbench({ useSessions, useWorkspaces, useStore, actions, retainSession, createSession, openSession, reportCreate, SessionProvider, renderSlot, t }: WorkbenchProps): import("react/jsx-runtime").JSX.Element;
 /** Register the global entry and its strict Session child through native services.
  * @param context - mounted Student client services.
+ * @param draftStore - shared learning-form drafts for both workbench and sidebar.
  */
-export declare function registerWorkbench(context: Context): void;
+export declare function registerWorkbench(context: Context, draftStore: ReturnType<typeof createStudentDraftStore>): void;
 export {};
 //# sourceMappingURL=workbench.d.ts.map

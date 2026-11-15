@@ -3,7 +3,7 @@ import { intensityKeys } from './display.ts'
 import type { Translate } from './locales.ts'
 
 /** Natural-language tutor requests. The study skill owns the teaching rules. */
-export const continuePrompt = '请加载 study 技能，查询 study_status，继续当前学习段。先处理未反馈的答案或提示，再出下一题。一次一题。没有时长限制，孩子想继续就继续；想休息就 stop。'
+export const continuePrompt = '请加载 study 技能，查询 study_status，继续当前学习段。先处理未反馈的答案或提示，保留当前题目；只有明确要求下一题时才换题。一次一题。没有时长限制，孩子想继续就继续；想休息就 stop。'
 
 /** Ask the child to teach the idea back like a little teacher (Feynman). */
 export function feynmanPrompt(topic: string | undefined): string {
@@ -118,3 +118,8 @@ export function openmaicReviewPrompt(classroomId: string): string {
 
 /** Transcribe a workbook photo that is not tied to a saved worksheet. */
 export const workbookPhotoPrompt = '请加载 study 技能。这是练习册照片，事先没有练习单。用 workbook-draft 按题保存草稿：不会用 stuck，提示后才对用 hinted，独立做错用 independent-wrong，独立做对用 independent-correct。能对应目标就写 objectiveId。不要直接入库，等家长确认。'
+
+/** Complete panel intention; official file validation determines business completion. */
+export function nativeIntentPrompt(intent: object, request: string): string {
+  return `请加载 study 技能。在当前原生会话处理下面的意图，先核对学期和实体身份。通过原生文件工具读写正式业务文件，再运行安装包中的只读校验 CLI；保留学生原话、回答身份和附件关联。未完成的回答先保存再评估；结束或切换时保留待评估回答，迟到的反馈仍属于原题。不要自动换题或重发不确定的回答。\nStudent intention:\n${JSON.stringify(intent)}\n${request}`
+}

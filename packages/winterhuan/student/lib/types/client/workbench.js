@@ -4,6 +4,7 @@ import { IconPlayOutlineRegular, Toast } from '@deepseek-ai/dsh-client-ui-primit
 import { useEffect, useState } from 'react';
 import { tutorBridge } from "./bridge.js";
 import { StudyDesk } from "./desk.js";
+import { createStudentManualActions } from "./manual-actions.js";
 import { NS } from "./locales.js";
 import css from './workbench.module.css';
 const sessionSlot = 'student.workbench.session';
@@ -83,11 +84,11 @@ function SelectedSession({ sessionId, chatVisible, retainSession, SessionProvide
         return _jsxs("div", { className: css.empty, children: [_jsx("p", { role: "alert", children: t('openConversationError') }), _jsx("button", { type: "button", onClick: () => { setFailed(false); setBinding(null); setRetry(value => value + 1); }, children: t('reload') })] });
     return binding ? _jsx(SessionProvider, { session: binding, children: renderSlot(sessionSlot, { chatVisible }) }) : _jsx(Loading, {});
 }
-function LearningSession({ sessionId, chatVisible, ask, useSession, useConversation, renderFactorySlot, t }) {
+function LearningSession({ sessionId, chatVisible, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, t }) {
     const session = useSession(state => state);
     const conversation = useConversation(state => state);
     const settling = session.openState === 'loading' && !conversation.activeTargets.size;
-    return _jsxs("div", { className: `${css.body} ${chatVisible ? css.withChat : ''}`, children: [_jsx("div", { className: css.study, children: _jsx(StudyDesk, { sessionId: sessionId, visible: true, running: !!session.running, ask: ask, t: t }) }), chatVisible && _jsxs("aside", { className: css.chat, "aria-label": t('tutorConversation'), children: [_jsx("h2", { children: t('tutorConversation') }), renderFactorySlot('conversation.content', { variant: 'embedded', phase: settling ? 'settling' : 'active', hero: false })] })] });
+    return _jsxs("div", { className: `${css.body} ${chatVisible ? css.withChat : ''}`, children: [_jsx("div", { className: css.study, children: _jsx(StudyDesk, { sessionId: sessionId, visible: true, running: !!session.running, ask: ask, t: t, useResource: useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission }) }), chatVisible && _jsxs("aside", { className: css.chat, "aria-label": t('tutorConversation'), children: [_jsx("h2", { children: t('tutorConversation') }), renderFactorySlot('conversation.content', { variant: 'embedded', phase: settling ? 'settling' : 'active', hero: false })] })] });
 }
 function PanelIcon({ size }) { return _jsx(IconPlayOutlineRegular, { size: size }); }
 function WorkbenchNotice({ useNotice, dismissNotice, t }) {
@@ -96,8 +97,9 @@ function WorkbenchNotice({ useNotice, dismissNotice, t }) {
 }
 /** Register the global entry and its strict Session child through native services.
  * @param context - mounted Student client services.
+ * @param draftStore - shared learning-form drafts for both workbench and sidebar.
  */
-export function registerWorkbench(context) {
+export function registerWorkbench(context, draftStore) {
     const t = context.locale.bind(NS);
     const notice = createSnapshotStore(null);
     let sequence = 0;
@@ -111,8 +113,8 @@ export function registerWorkbench(context) {
             reportCreate: success => { notice.set({ success, sequence: ++sequence }); },
         }),
     }, Workbench));
-    context.slots.inject(sessionSlot, () => context.slots.register({ name: sessionSlot, locale: NS,
-        inject: (sessionId) => ({ ask: tutorBridge(context, sessionId, t('sessionError'), t('sendError')) }),
+    context.slots.inject(sessionSlot, () => context.slots.register({ name: sessionSlot, locale: NS, store: draftStore,
+        inject: (sessionId) => ({ ask: tutorBridge(context, sessionId, t('sessionError'), t('sendError')), ...createStudentManualActions(context.remote.student) }),
     }, LearningSession));
     context.slots.inject('sidebar.panellist', () => context.slots.register({ name: 'sidebar.panellist', id: 'student', order: 6, locale: NS, label: () => t('title') }, PanelIcon));
     context.slots.inject('shell.overlay', () => context.slots.register({ name: 'shell.overlay', id: 'student.workbench.notice', locale: NS,

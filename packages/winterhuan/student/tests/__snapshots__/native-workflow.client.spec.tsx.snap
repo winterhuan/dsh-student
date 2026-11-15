@@ -1,0 +1,5 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`keeps incomplete historical facts in a folded parent view and sends the chosen block record for verification 1`] = `"请加载 study 技能，阅读 references/files.md，核对 .study/blocks/earlier-block.json 中 responseId=earlier-response 的作答记录。先解释题目、原回答、已有批改和缺少的信息，再依据原始证据或家长明确确认修正。无法核实的信息保留未知；不能把评分或接收时间当作答日期，不能把旧默认值当独立作答证明。保留原题和原回答，不新增一次作答，不更换当前学习题。"`;
+
+exports[`keeps incomplete historical facts in a folded parent view and sends the chosen worksheet record for verification 1`] = `"请加载 study 技能，阅读 references/files.md，核对 .study/worksheets/earlier-block.json 中 responseId=earlier-response 的作答记录。先解释题目、原回答、已有批改和缺少的信息，再依据原始证据或家长明确确认修正。无法核实的信息保留未知；不能把评分或接收时间当作答日期，不能把旧默认值当独立作答证明。保留原题和原回答，不新增一次作答，不更换当前学习题。"`;

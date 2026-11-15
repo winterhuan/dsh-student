@@ -48,6 +48,9 @@ export declare const zh: {
     switchBlock: string;
     answerDateUnknown: string;
     pendingFacts: string;
+    pendingFactsHelp: string;
+    pendingFactsMore: string;
+    verifySavedResponse: string;
     answerSourceUnknown: string;
     answerBasisUnknown: string;
     answerGoalUnknown: string;

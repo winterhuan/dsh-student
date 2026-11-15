@@ -1862,6 +1862,8 @@ function queryWorkspace(read, request, now) {
 		const elements = currentQuestion && typeof currentQuestion.objectiveId === "string" ? objectiveElements(scopedState, currentQuestion.objectiveId) : void 0;
 		const savedResponse = responses.find((response) => response.id === active?.currentResponseId) ?? responses.at(-1) ?? null;
 		const savedAssessment = savedResponse ? active?.assessments.find((assessment) => assessment.responseId === savedResponse.id) ?? null : null;
+		const discardedSheets = new Set(workspace.worksheets.filter((sheet) => sheet.discardedAt !== void 0).map((sheet) => sheet.id));
+		const pendingFacts = index.entries.filter((item) => (item.ownerKind !== "worksheet" || !discardedSheets.has(item.ownerId)) && (item.answerDate.kind === "unknown" || item.assistance === "unknown" || item.sourceStatus === "unknown" || !item.objectiveId));
 		return {
 			status: read.status === "valid" ? "valid" : "partial",
 			issues: read.issues,
@@ -1890,16 +1892,20 @@ function queryWorkspace(read, request, now) {
 					source: currentQuestion?.source,
 					facts: elements?.facts ?? []
 				} : null,
-				pendingFacts: index.entries.filter((item) => item.answerDate.kind === "unknown" || item.assistance === "unknown" || item.sourceStatus === "unknown" || !item.objectiveId).map((item) => ({
+				pendingFactCount: pendingFacts.length,
+				pendingFacts: pendingFacts.slice(0, 20).map((item) => ({
 					ownerId: item.ownerId,
+					ownerKind: item.ownerKind,
 					responseId: item.responseId,
+					subject: item.subject,
+					topic: item.topic,
 					fields: [
 						...item.answerDate.kind === "unknown" ? ["answerDate"] : [],
 						...item.assistance === "unknown" ? ["assistance"] : [],
 						...item.sourceStatus === "unknown" ? ["source"] : [],
 						...item.basisStatus ? ["answerBasis"] : !item.objectiveId ? ["objectiveId"] : []
 					]
-				})).slice(0, 20),
+				})),
 				seeds: currentQuestion && typeof currentQuestion.objectiveId === "string" ? subjectExercises(active.subject).filter((item) => item.objectiveId === currentQuestion.objectiveId).slice(0, 3) : [],
 				elements: elements ? {
 					...elements,

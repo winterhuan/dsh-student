@@ -41,6 +41,34 @@ it('reads saved original answers without turning unknown dates or assistance int
   expect(summary).toMatchObject({ data: { practisedGoals: 0, masteredGoals: 0, dueCompletion: { done: 0, total: 0 } } })
 })
 
+it('keeps discarded worksheet history out of actionable pending facts and identifies the remaining questions', async () => {
+  const { files, block, save } = await workspace()
+  const sheet = worksheetSchema.parse({ format: 2, kind: 'worksheet', termId: 'term-1', id: 'paper-1', subject: 'math', origin: 'prepared', createdAt: NOW, context: block.context,
+    items: block.questions, responses: [{ ...block.responses[0]!, id: 'paper-r1' }], assessments: [], drafts: [] })
+  await save('.study/worksheets/paper-1.json', sheet)
+  await save('.study/worksheets/discarded-1.json', { ...sheet, id: 'discarded-1', discardedAt: NOW })
+  const read = await readWorkspace(files, new AbortController().signal)
+  expect(read.status).toBe('valid')
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: {
+    pendingFactCount: 2, pendingFacts: [
+      { ownerId: 'block-1', ownerKind: 'block', responseId: 'r1', subject: 'math', topic: 'Addition', fields: ['answerDate', 'assistance', 'source'] },
+      { ownerId: 'paper-1', ownerKind: 'worksheet', responseId: 'paper-r1', subject: 'math', topic: 'Addition', fields: ['answerDate', 'assistance', 'source'] },
+    ],
+  } })
+  expect(read.workspace!.worksheets).toHaveLength(2)
+  expect(read.workspace!.worksheets.find(sheet => sheet.id === 'discarded-1')!.responses[0]!.rawResponse).toBe('15')
+})
+
+it('reports the full pending count when the learning context lists only its bounded sample', async () => {
+  const { files, block, save } = await workspace()
+  block.responses = Array.from({ length: 25 }, (_, index) => ({ ...block.responses[0]!, id: `r-${index}` }))
+  block.assessments = []
+  await save('.study/blocks/block-1.json', block)
+  const result = queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'learning-context' }, NOW)
+  expect(result).toMatchObject({ status: 'valid', data: { pendingFactCount: 25, pendingFacts: expect.any(Array) } })
+  expect((result.data as { pendingFacts: unknown[] }).pendingFacts).toHaveLength(20)
+})
+
 it('rejects a diagnostic teaching phase before displaying the question and accepts an unphased diagnostic', async () => {
   const { files, block, save } = await workspace()
   block.mode = 'diagnose'

@@ -1,7 +1,7 @@
-import { a as queryWorkspace, b as StudyReadCacheOwner, o as queryWorkspaceDashboard, r as queryJsonData, x as StudyBackupRetention, y as applicationStudyFiles } from "./queries-DJ6zMk-1.js";
+import { a as queryWorkspace, b as StudyReadCacheOwner, o as queryWorkspaceDashboard, r as queryJsonData, x as StudyBackupRetention, y as applicationStudyFiles } from "./queries-uLd6NB9L.js";
 import { c as readInteractiveLessons } from "./openmaic-CBuaaxeA.js";
-import { t as readStudentWorkspace } from "./transport-BPc8GbYp.js";
-import { n as saveManual, t as manualFields } from "./manual-XPvjnebA.js";
+import { t as readStudentWorkspace } from "./transport-CbFZ8REh.js";
+import { n as saveManual, t as manualFields } from "./manual-D3GoQx5U.js";
 import { createHash } from "node:crypto";
 import { setTimeout } from "node:timers/promises";
 import z from "@deepseek-ai/schemastery";

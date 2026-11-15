@@ -112,7 +112,10 @@ window.__ModuleLoader__.load({
 			"intentAdmitted": "请求已交给对话；档案保存以核验结果为准",
 			"switchBlock": "切换学习，保留未完成回答",
 			"answerDateUnknown": "作答日期待核对",
-			"pendingFacts": "待核对的作答记录",
+			"pendingFacts": "作答信息待核对",
+			"pendingFactsHelp": "这些记录的回答和批改已保留，但日期、帮助或题目依据等信息不完整。可以先保留未知，不影响继续学习；需要时让助手核对原记录，或在「待处理与练习记录」中修订纸上记录",
+			"pendingFactsMore": "这里显示前 20 条，其余记录可让助手在对话中查看",
+			"verifySavedResponse": "让助手核对",
 			"answerSourceUnknown": "作答来源待核对",
 			"answerBasisUnknown": "题目依据待核对",
 			"answerGoalUnknown": "学习目标待核对",
@@ -656,7 +659,10 @@ window.__ModuleLoader__.load({
 			"intentAdmitted": "Request sent to chat; saved records require independent verification",
 			"switchBlock": "Switch learning and keep unfinished answers",
 			"answerDateUnknown": "Answer date awaiting verification",
-			"pendingFacts": "Response facts awaiting verification",
+			"pendingFacts": "Answer details to verify",
+			"pendingFactsHelp": "Saved answers and assessments are retained, but dates, assistance or question evidence may be incomplete. You can leave them unknown and keep learning; ask the assistant to check the originals, or correct paper records in Pending and practice records",
+			"pendingFactsMore": "Shows the first 20 records; ask the assistant in chat for the rest",
+			"verifySavedResponse": "Ask assistant to verify",
 			"answerSourceUnknown": "Answer source awaiting verification",
 			"answerBasisUnknown": "Question basis awaiting verification",
 			"answerGoalUnknown": "Learning goal awaiting verification",
@@ -7239,6 +7245,10 @@ window.__ModuleLoader__.load({
 		//#region lib/types/client/prompts.js
 		/** Natural-language tutor requests. The study skill owns the teaching rules. */
 		const continuePrompt = "请加载 study 技能，查询 study_status，继续当前学习段。先处理未反馈的答案或提示，保留当前题目；只有明确要求下一题时才换题。一次一题。没有时长限制，孩子想继续就继续；想休息就 stop。";
+		/** Verify one saved response without replacing the current learning question. */
+		function pendingRecordPrompt(kind, ownerId, responseId) {
+			return `请加载 study 技能，阅读 references/files.md，核对 ${`.study/${kind === "block" ? "blocks" : "worksheets"}/${ownerId}.json`} 中 responseId=${responseId} 的作答记录。先解释题目、原回答、已有批改和缺少的信息，再依据原始证据或家长明确确认修正。无法核实的信息保留未知；不能把评分或接收时间当作答日期，不能把旧默认值当独立作答证明。保留原题和原回答，不新增一次作答，不更换当前学习题。`;
+		}
 		/** Ask the child to teach the idea back like a little teacher (Feynman). */
 		function feynmanPrompt(topic) {
 			return `请加载 study 技能。你扮演好奇的同桌。请孩子${topic ? `围绕「${topic}」` : "围绕刚才学的内容"}当小老师讲一讲：用简单的话说明是什么、怎么做、为什么。孩子讲完后，用一两句追问帮他发现漏洞并补齐；不要直接替他讲完整答案。`;
@@ -10849,6 +10859,7 @@ window.__ModuleLoader__.load({
 			const draftScope = `student:draft:${sessionId}:${workspace.termId ?? "setup"}`;
 			const context = workspace.context;
 			const pendingFacts = context && typeof context === "object" && "pendingFacts" in context && Array.isArray(context.pendingFacts) ? context.pendingFacts : [];
+			const pendingCount = context && typeof context === "object" && "pendingFactCount" in context && typeof context.pendingFactCount === "number" ? context.pendingFactCount : pendingFacts.length;
 			const pendingLabels = {
 				answerDate: "answerDateUnknown",
 				assistance: "assistanceUnknown",
@@ -10947,17 +10958,41 @@ window.__ModuleLoader__.load({
 						role: "alert",
 						children: sendError
 					}),
-					study && pendingFacts.length > 0 && (0, react_jsx_runtime.jsxs)("section", {
-						"aria-label": t("pendingFacts"),
-						children: [(0, react_jsx_runtime.jsx)("h3", { children: t("pendingFacts") }), pendingFacts.map((item) => {
-							if (!item || typeof item !== "object" || !("responseId" in item) || typeof item.responseId !== "string" || !("fields" in item) || !Array.isArray(item.fields)) return null;
-							const labels = item.fields.flatMap((field) => typeof field === "string" && field in pendingLabels ? [t(pendingLabels[field])] : []);
-							return (0, react_jsx_runtime.jsxs)("p", { children: [
-								item.responseId,
+					study && view === "parent" && pendingFacts.length > 0 && (0, react_jsx_runtime.jsxs)("details", {
+						className: "student-fold",
+						children: [
+							(0, react_jsx_runtime.jsxs)("summary", { children: [
+								t("pendingFacts"),
 								" · ",
-								labels.join(" · ")
-							] }, JSON.stringify([item.ownerId, item.responseId]));
-						})]
+								pendingCount
+							] }),
+							(0, react_jsx_runtime.jsx)("p", { children: t("pendingFactsHelp") }),
+							pendingFacts.map((item) => {
+								if (!item || typeof item !== "object" || !("responseId" in item) || typeof item.responseId !== "string" || !("fields" in item) || !Array.isArray(item.fields)) return null;
+								const responseId = item.responseId;
+								const labels = item.fields.flatMap((field) => typeof field === "string" && field in pendingLabels ? [t(pendingLabels[field])] : []);
+								const kind = item.ownerKind === "block" || item.ownerKind === "worksheet" ? item.ownerKind : void 0;
+								const ownerId = typeof item.ownerId === "string" ? item.ownerId : void 0;
+								const recordSubject = item.subject === "math" || item.subject === "chinese" || item.subject === "english" ? item.subject : void 0;
+								return (0, react_jsx_runtime.jsxs)("section", { children: [
+									(0, react_jsx_runtime.jsxs)("p", { children: [recordSubject && `${t(recordSubject)} · `, typeof item.topic === "string" ? item.topic : t("learnerAnswer")] }),
+									(0, react_jsx_runtime.jsx)("p", { children: labels.join(" · ") }),
+									kind && ownerId && (0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										disabled: disabled || running,
+										onClick: () => {
+											tutor(pendingRecordPrompt(kind, ownerId, responseId)).catch(() => {});
+										},
+										children: t("verifySavedResponse")
+									})
+								] }, JSON.stringify([
+									kind,
+									ownerId,
+									responseId
+								]));
+							}),
+							pendingCount > pendingFacts.length && (0, react_jsx_runtime.jsx)("p", { children: t("pendingFactsMore") })
+						]
 					}),
 					submissions.length > 0 && (0, react_jsx_runtime.jsxs)("details", {
 						className: "student-fold",

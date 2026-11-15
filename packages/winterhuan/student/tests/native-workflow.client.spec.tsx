@@ -187,14 +187,32 @@ it('shows the inherited worksheet day and saves an explicit unknown override wit
   expect(screen.getByText(`${en.learnerAnswer}: 24`)).toBeTruthy()
 })
 
-it('shows unresolved help, source and effective answer date beside the learning path', () => {
+it.each(['block', 'worksheet'] as const)('keeps incomplete historical facts in a folded parent view and sends the chosen %s record for verification', async kind => {
   const body = dashboard(updateStudy(undefined, setup, NOW), NOW)
-  const useResource = (address: string) => ({ status: 'live' as const, failure: undefined, value: { status: 'valid', token: 'one', readAt: NOW, refreshAfter: NOW + 1000, versions: [], native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [], data: new URL(address).searchParams.get('query')?.includes('learning-context') ? { termId: 'term-one', pendingFacts: [{ ownerId: 'earlier-block', responseId: 'earlier-response', fields: ['answerDate', 'assistance', 'source'] }] } : body } as StudentQueryResult })
-  render(<StudyDesk {...{ useResource }} {...createStudentManualActions({ inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() })} sessionId="current-native" visible running={false} ask={vi.fn()} t={t} />)
+  const useResource = (address: string) => ({ status: 'live' as const, failure: undefined, value: { status: 'valid', token: 'one', readAt: NOW, refreshAfter: NOW + 1000, versions: [], native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [], data: new URL(address).searchParams.get('query')?.includes('learning-context') ? { termId: 'term-one', pendingFactCount: 1, pendingFacts: [{ ownerId: 'earlier-block', ownerKind: kind, responseId: 'earlier-response', subject: 'math', topic: 'Addition practice', fields: ['answerDate', 'assistance', 'source'] }] } : body } as StudentQueryResult })
+  const ask = vi.fn().mockResolvedValue({ requestId: 'verify-1', admission: 'accepted' })
+  const saveManual = vi.fn()
+  render(<StudyDesk {...{ useResource, ask }} {...createStudentManualActions({ inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual })} sessionId="current-native" visible running={false} t={t} />)
+  expect(screen.queryByText(en.pendingFacts)).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: en.parentView }))
+  const fold = screen.getByText(`${en.pendingFacts} · 1`).closest('details')!
+  expect(fold.open).toBe(false)
+  fireEvent.click(screen.getByText(`${en.pendingFacts} · 1`))
+  expect(screen.getByText('Math · Addition practice')).toBeTruthy()
   expect(screen.getByText(en.answerDateUnknown, { exact: false })).toBeTruthy()
   expect(screen.getByText(en.assistanceUnknown, { exact: false })).toBeTruthy()
   expect(screen.getByText('Answer source awaiting verification', { exact: false })).toBeTruthy()
-  expect(screen.getByText('earlier-response', { exact: false })).toBeTruthy()
+  expect(screen.queryByText('earlier-response', { exact: false })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: en.verifySavedResponse }))
+  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+  const message = String(ask.mock.calls[0]![0])
+  expect(message).toContain(`.study/${kind === 'block' ? 'blocks' : 'worksheets'}/earlier-block.json`)
+  expect(message).toContain('earlier-response')
+  expect(message).toContain('无法核实的信息保留未知')
+  expect(message).toContain('不新增一次作答')
+  const intent = JSON.parse(message.split('Student intention:\n')[1]!.split('\n')[0]!)
+  expect(intent.request).toMatchSnapshot()
+  expect(saveManual).not.toHaveBeenCalled()
 })
 
 it('saves a worksheet-wide answer day while retaining per-response overrides', async () => {

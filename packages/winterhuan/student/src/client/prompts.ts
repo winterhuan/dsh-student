@@ -5,6 +5,12 @@ import type { Translate } from './locales.ts'
 /** Natural-language tutor requests. The study skill owns the teaching rules. */
 export const continuePrompt = '请加载 study 技能，查询 study_status，继续当前学习段。先处理未反馈的答案或提示，保留当前题目；只有明确要求下一题时才换题。一次一题。没有时长限制，孩子想继续就继续；想休息就 stop。'
 
+/** Verify one saved response without replacing the current learning question. */
+export function pendingRecordPrompt(kind: 'block' | 'worksheet', ownerId: string, responseId: string): string {
+  const path = `.study/${kind === 'block' ? 'blocks' : 'worksheets'}/${ownerId}.json`
+  return `请加载 study 技能，阅读 references/files.md，核对 ${path} 中 responseId=${responseId} 的作答记录。先解释题目、原回答、已有批改和缺少的信息，再依据原始证据或家长明确确认修正。无法核实的信息保留未知；不能把评分或接收时间当作答日期，不能把旧默认值当独立作答证明。保留原题和原回答，不新增一次作答，不更换当前学习题。`
+}
+
 /** Ask the child to teach the idea back like a little teacher (Feynman). */
 export function feynmanPrompt(topic: string | undefined): string {
   const focus = topic ? `围绕「${topic}」` : '围绕刚才学的内容'

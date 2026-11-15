@@ -20,7 +20,7 @@ import { IdeasView } from './ideas-view.tsx'
 import { MapView } from './map-view.tsx'
 import { PracticeView } from './practice-view.tsx'
 import { LessonsPanel, lessonsForSubject, openClassroom } from './lessons-view.tsx'
-import { continuePrompt, dailySheetPrompt, diagnosePrompt, dictationPrompt, dueClearPrompt, explorePrompt, goalPrompt, interestPracticePrompt, openmaicGeneratePrompt, openmaicRetryPrompt, openmaicReviewPrompt, organizePrompt, nativeIntentPrompt, previewPrompt, reviewPrompt, teachPrompt, teachQueuePrompt } from './prompts.ts'
+import { continuePrompt, dailySheetPrompt, diagnosePrompt, dictationPrompt, dueClearPrompt, explorePrompt, goalPrompt, interestPracticePrompt, openmaicGeneratePrompt, openmaicRetryPrompt, openmaicReviewPrompt, organizePrompt, nativeIntentPrompt, pendingRecordPrompt, previewPrompt, reviewPrompt, teachPrompt, teachQueuePrompt } from './prompts.ts'
 import { TodayView } from './today-view.tsx'
 
 type Study = NonNullable<Dashboard['study']>
@@ -219,6 +219,7 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
   const draftScope = `student:draft:${sessionId}:${workspace.termId ?? 'setup'}`
   const context = workspace.context
   const pendingFacts = context && typeof context === 'object' && 'pendingFacts' in context && Array.isArray(context.pendingFacts) ? context.pendingFacts : []
+  const pendingCount = context && typeof context === 'object' && 'pendingFactCount' in context && typeof context.pendingFactCount === 'number' ? context.pendingFactCount : pendingFacts.length
   const pendingLabels = { answerDate: 'answerDateUnknown', assistance: 'assistanceUnknown', source: 'answerSourceUnknown', answerBasis: 'answerBasisUnknown', objectiveId: 'answerGoalUnknown' } as const
   return <main className="student-desk" aria-label={t('title')}>
     <header className="student-top">
@@ -239,11 +240,18 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
     {readOnly && data && <p role="status">{t('legacyFilesHelp')}</p>}
     {workspace.error && <p role="alert">{t('staleData')}</p>}
     {sendError && <p role="alert">{sendError}</p>}
-    {study && pendingFacts.length > 0 && <section aria-label={t('pendingFacts')}><h3>{t('pendingFacts')}</h3>{pendingFacts.map(item => {
+    {study && view === 'parent' && pendingFacts.length > 0 && <details className="student-fold"><summary>{t('pendingFacts')} · {pendingCount}</summary><p>{t('pendingFactsHelp')}</p>{pendingFacts.map(item => {
       if (!item || typeof item !== 'object' || !('responseId' in item) || typeof item.responseId !== 'string' || !('fields' in item) || !Array.isArray(item.fields)) return null
+      const responseId = item.responseId
       const labels = item.fields.flatMap(field => typeof field === 'string' && field in pendingLabels ? [t(pendingLabels[field as keyof typeof pendingLabels])] : [])
-      return <p key={JSON.stringify([item.ownerId, item.responseId])}>{item.responseId} · {labels.join(' · ')}</p>
-    })}</section>}
+      const kind = item.ownerKind === 'block' || item.ownerKind === 'worksheet' ? item.ownerKind : undefined
+      const ownerId = typeof item.ownerId === 'string' ? item.ownerId : undefined
+      const recordSubject = item.subject === 'math' || item.subject === 'chinese' || item.subject === 'english' ? item.subject : undefined
+      return <section key={JSON.stringify([kind, ownerId, responseId])}>
+        <p>{recordSubject && `${t(recordSubject)} · `}{typeof item.topic === 'string' ? item.topic : t('learnerAnswer')}</p><p>{labels.join(' · ')}</p>
+        {kind && ownerId && <button type="button" disabled={disabled || running} onClick={() => { void tutor(pendingRecordPrompt(kind, ownerId, responseId)).catch(() => {}) }}>{t('verifySavedResponse')}</button>}
+      </section>
+    })}{pendingCount > pendingFacts.length && <p>{t('pendingFactsMore')}</p>}</details>}
     {submissions.length > 0 && <details className="student-fold"><summary>{t('submissionStatus')}</summary>{submissions.map(item => <div key={item.requestId}>
       <p>{t(item.admission === 'accepted' ? 'messageAdmitted' : 'messageUnknown')}</p>
       {item.response && <p>{t(item.inspection?.answer === 'saved' ? 'answerSaved' : 'answerPending')} · {t(item.inspection?.assessment === 'valid' ? 'assessmentSaved' : 'assessmentPending')}</p>}

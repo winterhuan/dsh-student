@@ -65,7 +65,7 @@ window.__ModuleLoader__.load({
 		//#region lib/types/client/locales.js
 		const NS = "studentDesk";
 		const zh = {
-			"legacyFilesHelp": "已有旧版学习档案。请在辅导对话中让助手检查迁移方案，再由家长确认迁移；原档案会保留",
+			"legacyFilesHelp": "正在查看旧版学习档案，原记录保持不变；继续保存前，请在辅导对话中让助手检查迁移方案，再由家长确认",
 			"unavailableFilesHelp": "当前学期档案尚无法完整读取，请在辅导对话中检查档案状态并修复",
 			"workbenchHelp": "选择孩子的工作区，学习记录和辅导对话一起打开",
 			"learnerWorkspace": "学习工作区",
@@ -609,7 +609,7 @@ window.__ModuleLoader__.load({
 			"openmaicEffective": "当前使用"
 		};
 		const en = {
-			"legacyFilesHelp": "Existing learning records use the previous format. Ask the tutor to inspect a migration plan, then let a parent confirm migration; the originals are retained",
+			"legacyFilesHelp": "Viewing previous-format learning records with the originals preserved. Before saving, ask the tutor to inspect a migration plan and let a parent confirm it",
 			"unavailableFilesHelp": "The current term records cannot be read in full. Ask the tutor to check the record status and repair it",
 			"workbenchHelp": "Choose the learner’s workspace to open study records and tutoring together",
 			"learnerWorkspace": "Learning workspace",
@@ -3177,7 +3177,7 @@ window.__ModuleLoader__.load({
 					},
 					sourceLocation: {
 						"file": "packages/winterhuan/student/src/remote-service.ts",
-						"line": 127,
+						"line": 129,
 						"column": 9
 					}
 				},
@@ -3228,7 +3228,7 @@ window.__ModuleLoader__.load({
 					},
 					sourceLocation: {
 						"file": "packages/winterhuan/student/src/remote-service.ts",
-						"line": 97,
+						"line": 99,
 						"column": 9
 					}
 				},
@@ -3540,7 +3540,7 @@ window.__ModuleLoader__.load({
 					},
 					sourceLocation: {
 						"file": "packages/winterhuan/student/src/remote-service.ts",
-						"line": 112,
+						"line": 114,
 						"column": 9
 					}
 				},
@@ -3802,7 +3802,7 @@ window.__ModuleLoader__.load({
 					},
 					sourceLocation: {
 						"file": "packages/winterhuan/student/src/remote-service.ts",
-						"line": 70,
+						"line": 72,
 						"column": 10
 					}
 				}
@@ -8417,12 +8417,15 @@ window.__ModuleLoader__.load({
 					ask,
 					t
 				}),
-				(0, react_jsx_runtime.jsx)(MistakeEditor, {
-					subject,
-					goals,
-					revision,
-					change,
-					t
+				(0, react_jsx_runtime.jsx)("fieldset", {
+					disabled,
+					children: (0, react_jsx_runtime.jsx)(MistakeEditor, {
+						subject,
+						goals,
+						revision,
+						change,
+						t
+					})
 				}),
 				(0, react_jsx_runtime.jsxs)("section", { children: [
 					(0, react_jsx_runtime.jsxs)("h3", { children: [
@@ -8504,59 +8507,64 @@ window.__ModuleLoader__.load({
 								sheet.items.length
 							]
 						}, sheet.id)),
-						(0, react_jsx_runtime.jsx)(MistakeObjective, {
-							mistake: item,
-							objectives: goals,
-							change,
-							t
-						}),
-						(0, react_jsx_runtime.jsx)(MistakeEditor, {
-							subject,
-							goals,
-							revision,
-							change,
-							t,
-							existing: item
-						}),
-						(0, react_jsx_runtime.jsxs)("div", {
-							className: "student-segments",
-							children: [(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								onClick: () => {
-									if (!window.confirm(t("deleteMistakeConfirm"))) return;
-									change({
-										action: "delete-mistake",
-										id: item.id
-									}, revision).catch(() => {});
-								},
-								children: t("deleteMistake")
-							}), item.objectiveId && (0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								onClick: () => {
-									const objectiveId = item.objectiveId;
-									change({
-										action: "save-exercise",
-										exercise: {
-											id: `ws-${item.id}`.slice(0, 80),
-											subject: item.subject,
-											objectiveId,
-											role: "vary",
-											variant: "numeric",
-											prompt: item.prompt,
-											steps: [
-												"先回忆错因",
-												"独立做一遍",
-												"对照订正"
-											],
-											answer: item.correction,
-											explanation: item.explanation,
-											answerEvidence: item.answerEvidence,
-											...item.errorType !== void 0 ? { errorType: item.errorType } : {}
-										}
-									}, revision).catch(() => {});
-								},
-								children: t("saveToExerciseBank")
-							})]
+						(0, react_jsx_runtime.jsxs)("fieldset", {
+							disabled,
+							children: [
+								(0, react_jsx_runtime.jsx)(MistakeObjective, {
+									mistake: item,
+									objectives: goals,
+									change,
+									t
+								}),
+								(0, react_jsx_runtime.jsx)(MistakeEditor, {
+									subject,
+									goals,
+									revision,
+									change,
+									t,
+									existing: item
+								}),
+								(0, react_jsx_runtime.jsxs)("div", {
+									className: "student-segments",
+									children: [(0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										onClick: () => {
+											if (!window.confirm(t("deleteMistakeConfirm"))) return;
+											change({
+												action: "delete-mistake",
+												id: item.id
+											}, revision).catch(() => {});
+										},
+										children: t("deleteMistake")
+									}), item.objectiveId && (0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										onClick: () => {
+											const objectiveId = item.objectiveId;
+											change({
+												action: "save-exercise",
+												exercise: {
+													id: `ws-${item.id}`.slice(0, 80),
+													subject: item.subject,
+													objectiveId,
+													role: "vary",
+													variant: "numeric",
+													prompt: item.prompt,
+													steps: [
+														"先回忆错因",
+														"独立做一遍",
+														"对照订正"
+													],
+													answer: item.correction,
+													explanation: item.explanation,
+													answerEvidence: item.answerEvidence,
+													...item.errorType !== void 0 ? { errorType: item.errorType } : {}
+												}
+											}, revision).catch(() => {});
+										},
+										children: t("saveToExerciseBank")
+									})]
+								})
+							]
 						})
 					] }, item.id)),
 					study.confirmedCount > 20 && (0, react_jsx_runtime.jsxs)("div", {
@@ -8610,6 +8618,7 @@ window.__ModuleLoader__.load({
 						] }),
 						(0, react_jsx_runtime.jsx)("button", {
 							type: "button",
+							disabled,
 							onClick: () => {
 								change({
 									action: "delete-exercise",
@@ -8689,13 +8698,16 @@ window.__ModuleLoader__.load({
 						study.pendingCount
 					] }),
 					study.pendingMistakes.length === 0 && (0, react_jsx_runtime.jsx)("p", { children: t("empty") }),
-					study.pendingMistakes.map((item) => (0, react_jsx_runtime.jsx)(MistakeConfirmation, {
-						useStore,
-						actions,
-						mistake: item,
-						revision,
-						change,
-						t
+					study.pendingMistakes.map((item) => (0, react_jsx_runtime.jsx)("fieldset", {
+						disabled,
+						children: (0, react_jsx_runtime.jsx)(MistakeConfirmation, {
+							useStore,
+							actions,
+							mistake: item,
+							revision,
+							change,
+							t
+						})
 					}, `${epoch}-${item.id}`))
 				] }),
 				(0, react_jsx_runtime.jsx)("p", { children: t("mistakeBounded") })
@@ -9011,7 +9023,6 @@ window.__ModuleLoader__.load({
 				}),
 				(0, react_jsx_runtime.jsx)("button", {
 					type: "button",
-					disabled,
 					onClick: () => {
 						setPreviewing(true);
 						setMessage("");
@@ -10517,6 +10528,7 @@ window.__ModuleLoader__.load({
 				...activeScope.unit ? { diagUnit: activeScope.unit } : {}
 			}, useResource);
 			const { data } = workspace;
+			const readOnly = workspace.value?.status === "legacy";
 			const [activity, setActivity] = (0, react.useState)({
 				subject: storedSubject(),
 				mode: "foundation"
@@ -10582,6 +10594,7 @@ window.__ModuleLoader__.load({
 				};
 			}
 			async function tutor(text = continuePrompt, photo, command, currentBlock = false) {
+				if (readOnly) throw new Error(t("legacyFilesHelp"));
 				const ids = identity(command);
 				if (command?.action === "answer" && submissions.some((item) => item.response?.responseId === ids.responseId && item.admission === "unknown" && !item.inspection)) {
 					setSendError(t("messageUnknown"));
@@ -10655,17 +10668,22 @@ window.__ModuleLoader__.load({
 			const now = Math.max(localNow + workspace.offset.current, data?.serverNow ?? 0);
 			const study = data?.study;
 			const subjectLoading = !!study && study.confirmedSubject !== subject;
-			const disabled = sending || workspace.stale;
+			const disabled = sending || workspace.stale || readOnly;
 			const active = study?.active;
+			const followedActive = (0, react.useRef)();
 			(0, react.useEffect)(() => {
-				if (active) {
+				if (active && (followedActive.current?.sessionId !== sessionId || followedActive.current.blockId !== active.id)) {
+					followedActive.current = {
+						sessionId,
+						blockId: active.id
+					};
 					selectSubject(active.subject);
 					setActivity({
 						subject: active.subject,
 						mode: active.mode
 					});
 				}
-			}, [active?.id]);
+			}, [active?.id, sessionId]);
 			const curriculum = study?.curriculum ?? null;
 			const scopeGrade = curriculum?.scope.grade ?? mapGrade ?? study?.profile.grade ?? 1;
 			const scopeTerm = curriculum?.scope.term ?? mapTerm ?? study?.profile.term ?? "first";
@@ -10916,6 +10934,10 @@ window.__ModuleLoader__.load({
 								})]
 							})
 						]
+					}),
+					readOnly && data && (0, react_jsx_runtime.jsx)("p", {
+						role: "status",
+						children: t("legacyFilesHelp")
 					}),
 					workspace.error && (0, react_jsx_runtime.jsx)("p", {
 						role: "alert",
@@ -11170,23 +11192,26 @@ window.__ModuleLoader__.load({
 							children: [
 								(0, react_jsx_runtime.jsx)("summary", { children: t("manualForms") }),
 								(0, react_jsx_runtime.jsx)("p", { children: t("manualSummary") }),
-								(0, react.createElement)(ParentSettings, {
-									...draft,
-									key: draftScope + subject,
-									draftScope,
-									observation: workspace.value?.versions.find((file) => file.path === ".study/settings.json")?.version,
-									data,
-									change: manual,
-									t,
-									curriculum,
-									subject,
-									onSubject: (item) => {
-										selectSubject(item);
-										setActivity({
-											subject: item,
-											mode: "foundation"
-										});
-									}
+								(0, react_jsx_runtime.jsx)("fieldset", {
+									disabled: readOnly,
+									children: (0, react.createElement)(ParentSettings, {
+										...draft,
+										key: draftScope + subject,
+										draftScope,
+										observation: workspace.value?.versions.find((file) => file.path === ".study/settings.json")?.version,
+										data,
+										change: manual,
+										t,
+										curriculum,
+										subject,
+										onSubject: (item) => {
+											selectSubject(item);
+											setActivity({
+												subject: item,
+												mode: "foundation"
+											});
+										}
+									})
 								})
 							]
 						}),

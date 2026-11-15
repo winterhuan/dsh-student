@@ -2,7 +2,8 @@
 import type { WorkspaceRead, ObservedFile } from '../files/read.ts'
 import type { FileIssue } from '../files/validation.ts'
 import type { TermSettings } from '../files/schema.ts'
-import type { StudyState } from '../schema.ts'
+import { stateSchema, type StudyState } from '../schema.ts'
+import { migrateStudyFile } from '../files/legacy.ts'
 import { dashboard } from '../dashboard.ts'
 import type { InteractiveLessons } from '../openmaic.ts'
 import { checkInHistory, curriculumView, exercisesFor, objectiveElements, reviewPlan } from './view.ts'
@@ -44,10 +45,11 @@ function workspaceProjection(read: WorkspaceRead, now: number) {
  * @param now - caller clock.
  * @param options - selected dashboard page and scope.
  * @param lessons - separately read classroom status.
- * @returns current data only for a fully valid workspace; failures retain their file issues.
+ * @returns current data for valid files or a labelled legacy display; failures retain their file issues.
  */
 export function queryWorkspaceDashboard(read: WorkspaceRead, now: number, options: Parameters<typeof dashboard>[2] = {}, lessons?: InteractiveLessons): WorkspaceQueryResult<ReturnType<typeof queryDashboard>> {
   const facts = { status: read.status, versions: read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), issues: read.issues }
+  if (read.status === 'legacy') return { ...facts, data: queryDashboard(stateSchema.parse(migrateStudyFile(structuredClone(read.legacy))), now, options, lessons) }
   return read.status === 'valid' && read.workspace ? { ...facts, data: queryDashboard(workspaceProjection(read, now).state, now, options, lessons) } : facts
 }
 /**

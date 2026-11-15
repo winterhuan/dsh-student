@@ -1,4 +1,4 @@
-import { $ as builtinObjectives, F as canonical, J as taughtUnit, N as DAY, P as activeSession, R as formatDuration, U as schoolGate, W as scopeSelects, X as builtinObjective, Y as todaySpent, Z as builtinObjectiveAnywhere, ct as stateSchema, dt as interestFocus, et as builtinObjectivesIn, ft as interestTagsOf, i as interactiveLessonsView, it as subjectIdeas, n as OPENMAIC_LESSONS_PATH, nt as exercisesForObjective, pt as StudyReadCache, q as studyDay, r as effectiveOpenmaicBase, rt as subjectExercises, t as OPENMAIC_COOKIE_PATH, tt as curriculumFor } from "./openmaic-aQGgUeGi.js";
+import { $ as builtinObjectives, F as canonical, J as taughtUnit, N as DAY, P as activeSession, R as formatDuration, U as schoolGate, W as scopeSelects, X as builtinObjective, Y as todaySpent, Z as builtinObjectiveAnywhere, at as migrateStudyFile, et as builtinObjectivesIn, ft as interestFocus, i as interactiveLessonsView, it as subjectIdeas, lt as stateSchema, mt as StudyReadCache, n as OPENMAIC_LESSONS_PATH, nt as exercisesForObjective, pt as interestTagsOf, q as studyDay, r as effectiveOpenmaicBase, rt as subjectExercises, t as OPENMAIC_COOKIE_PATH, tt as curriculumFor } from "./openmaic-CBuaaxeA.js";
 import { z } from "zod";
 import { Service } from "@deepseek-ai/cordis";
 //#region lib/types/files/backup-retention.js
@@ -1785,7 +1785,7 @@ function workspaceProjection(read, now) {
 * @param now - caller clock.
 * @param options - selected dashboard page and scope.
 * @param lessons - separately read classroom status.
-* @returns current data only for a fully valid workspace; failures retain their file issues.
+* @returns current data for valid files or a labelled legacy display; failures retain their file issues.
 */
 function queryWorkspaceDashboard(read, now, options = {}, lessons) {
 	const facts = {
@@ -1796,6 +1796,10 @@ function queryWorkspaceDashboard(read, now, options = {}, lessons) {
 			version
 		})),
 		issues: read.issues
+	};
+	if (read.status === "legacy") return {
+		...facts,
+		data: queryDashboard(stateSchema.parse(migrateStudyFile(structuredClone(read.legacy))), now, options, lessons)
 	};
 	return read.status === "valid" && read.workspace ? {
 		...facts,

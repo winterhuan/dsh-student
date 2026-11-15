@@ -2,7 +2,7 @@
 import type { WorkspaceRead, ObservedFile } from '../files/read.ts';
 import type { FileIssue } from '../files/validation.ts';
 import type { TermSettings } from '../files/schema.ts';
-import type { StudyState } from '../schema.ts';
+import { type StudyState } from '../schema.ts';
 import { dashboard } from '../dashboard.ts';
 import type { InteractiveLessons } from '../openmaic.ts';
 import type { StudentJsonValue } from '../types.ts';
@@ -30,7 +30,7 @@ export interface WorkspaceQueryResult<T = unknown> {
  * @param now - caller clock.
  * @param options - selected dashboard page and scope.
  * @param lessons - separately read classroom status.
- * @returns current data only for a fully valid workspace; failures retain their file issues.
+ * @returns current data for valid files or a labelled legacy display; failures retain their file issues.
  */
 export declare function queryWorkspaceDashboard(read: WorkspaceRead, now: number, options?: Parameters<typeof dashboard>[2], lessons?: InteractiveLessons): WorkspaceQueryResult<ReturnType<typeof queryDashboard>>;
 /**

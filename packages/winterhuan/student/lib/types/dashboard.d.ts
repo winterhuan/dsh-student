@@ -36,7 +36,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         diagnostics: import("./learning/mastery.ts").DiagnosticPlan[];
         materials: {
             id: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             scope: {
                 region: string;
                 grade: number;
@@ -54,7 +54,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         exercises: {
             id: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             objectiveId: string;
             role: "diagnose" | "demo" | "try" | "vary" | "daily";
             variant: "numeric" | "context" | "reasoning";
@@ -262,7 +262,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         workbookDrafts: {
             id: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             prompt: string;
             outcome: "stuck" | "hinted" | "independent-wrong" | "independent-correct";
             uncertainties: string;
@@ -273,7 +273,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         workbookResults: {
             id: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             prompt: string;
             outcome: "stuck" | "hinted" | "independent-wrong" | "independent-correct";
             uncertainties: string;
@@ -289,18 +289,18 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         teachingQueue: {
             id: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             prompt: string;
             confirmedAt: number;
             objectiveId?: string | undefined;
             sourceDraftId?: string | undefined;
         }[];
         recentAttempts: {
-            result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
+            result: "partial" | "correct" | "incorrect" | "unassessed" | "stuck";
             assistance: "unknown" | "independent" | "hint" | "worked-example";
             id: string;
             sessionId: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             topic: string;
             prompt: string;
             response: string;
@@ -524,9 +524,9 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         dueBacklog: number;
         weakPoints: {
             id: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             title: string;
-            level: "practising" | "due" | "weak" | "stalled" | "mastered" | "untouched";
+            level: "weak" | "due" | "practising" | "stalled" | "mastered" | "untouched";
             priority: number;
             reasons: import("./learning/mastery.ts").InsightReason[];
         }[];
@@ -548,7 +548,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         concepts: {
             id: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             name: string;
             definition: string;
             example: string;
@@ -560,14 +560,14 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         objectives: {
             id: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             title: string;
             goal: string;
             conceptIds: string[];
             method: "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "listen" | "speak";
             errorTypes?: ("pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
             questionPoints?: string[] | undefined;
-            variationAxes?: ("context" | "numbers" | "representation" | "reverse" | "explain")[] | undefined;
+            variationAxes?: ("reverse" | "context" | "numbers" | "representation" | "explain")[] | undefined;
         }[];
         relations: {
             id: string;
@@ -583,7 +583,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             results: {
                 errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                 itemId: string;
-                result: "correct" | "partial" | "incorrect" | "unassessed";
+                result: "partial" | "correct" | "incorrect" | "unassessed";
                 response: string;
                 assistance: "unknown" | "independent" | "hint" | "worked-example";
             }[];
@@ -592,7 +592,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                 errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                 itemId: string;
                 response: string;
-                result: "correct" | "partial" | "incorrect" | "unassessed";
+                result: "partial" | "correct" | "incorrect" | "unassessed";
                 assistance: "unknown" | "independent" | "hint" | "worked-example";
                 uncertainties: string;
             }[];
@@ -603,7 +603,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                 itemId: string;
             }[];
             id: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             items: {
                 id: string;
                 prompt: string;
@@ -822,15 +822,15 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         };
         dueMistakes: {
             id: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             topic: string;
         }[];
         dueCount: number;
         dueTotal: number;
-        dueSubjects: ("chinese" | "math" | "english")[];
+        dueSubjects: ("math" | "chinese" | "english")[];
         pendingMistakes: {
             id: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             topic: string;
             prompt: string;
             learnerAnswer: string;
@@ -855,7 +855,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         pendingCount: number;
         confirmedMistakes: {
             id: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             topic: string;
             prompt: string;
             learnerAnswer: string;
@@ -879,7 +879,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         confirmedCount: number;
         confirmedOffset: number;
-        confirmedSubject: "chinese" | "math" | "english";
+        confirmedSubject: "math" | "chinese" | "english";
         mistakeBook: {
             due: number;
             reviewing: number;
@@ -896,8 +896,8 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         checkIns: import("./learning/mastery.ts").CheckInRecord[];
         active: {
             id: string;
-            subject: "chinese" | "math" | "english";
-            mode: "review" | "foundation" | "school" | "explore" | "diagnose";
+            subject: "math" | "chinese" | "english";
+            mode: "diagnose" | "review" | "foundation" | "school" | "explore";
             startedAt: number;
             intensity?: "light" | "standard" | "deep" | undefined;
             endedAt?: number | undefined;
@@ -919,7 +919,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             cookiePath: string;
         };
         courses: {
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             materialId: string;
             unit: string;
             parentConfirmation: string;
@@ -943,7 +943,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         task: {
             id: string;
             sessionId: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             topic: string;
             prompt: string;
             hintLevel: number;
@@ -1153,11 +1153,11 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             stuck?: boolean | undefined;
         } | null;
         feedback: {
-            result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
+            result: "partial" | "correct" | "incorrect" | "unassessed" | "stuck";
             assistance: "unknown" | "independent" | "hint" | "worked-example";
             id: string;
             sessionId: string;
-            subject: "chinese" | "math" | "english";
+            subject: "math" | "chinese" | "english";
             topic: string;
             prompt: string;
             response: string;

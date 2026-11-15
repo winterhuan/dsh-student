@@ -23,8 +23,8 @@ export declare function lessonHttpUrl(value: string): string | undefined;
 export declare const lessonSchema: z.ZodObject<{
     id: z.ZodString;
     status: z.ZodEnum<{
-        generating: "generating";
         ready: "ready";
+        generating: "generating";
         failed: "failed";
     }>;
     createdAt: z.ZodString;
@@ -32,8 +32,8 @@ export declare const lessonSchema: z.ZodObject<{
     title: z.ZodString;
     requirement: z.ZodString;
     subject: z.ZodOptional<z.ZodEnum<{
-        chinese: "chinese";
         math: "math";
+        chinese: "chinese";
         english: "english";
     }>>;
     objectiveId: z.ZodOptional<z.ZodString>;
@@ -62,8 +62,8 @@ export declare const lessonFileSchema: z.ZodObject<{
     lessons: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
         status: z.ZodEnum<{
-            generating: "generating";
             ready: "ready";
+            generating: "generating";
             failed: "failed";
         }>;
         createdAt: z.ZodString;
@@ -71,8 +71,8 @@ export declare const lessonFileSchema: z.ZodObject<{
         title: z.ZodString;
         requirement: z.ZodString;
         subject: z.ZodOptional<z.ZodEnum<{
-            chinese: "chinese";
             math: "math";
+            chinese: "chinese";
             english: "english";
         }>>;
         objectiveId: z.ZodOptional<z.ZodString>;

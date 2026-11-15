@@ -23,8 +23,8 @@ export declare function timeStatus(state: StudyState, now: number): TimeStatus;
 export declare function studyStatus(state: StudyState, now: number): {
     active: {
         id: string;
-        subject: "chinese" | "math" | "english";
-        mode: "review" | "foundation" | "school" | "explore" | "diagnose";
+        subject: "math" | "chinese" | "english";
+        mode: "diagnose" | "review" | "foundation" | "school" | "explore";
         startedAt: number;
         intensity?: "light" | "standard" | "deep" | undefined;
         endedAt?: number | undefined;
@@ -46,7 +46,7 @@ export declare function studyStatus(state: StudyState, now: number): {
         cookiePath: string;
     };
     courses: {
-        subject: "chinese" | "math" | "english";
+        subject: "math" | "chinese" | "english";
         materialId: string;
         unit: string;
         parentConfirmation: string;
@@ -63,7 +63,7 @@ export declare function studyStatus(state: StudyState, now: number): {
     todayStars: number;
     dueMistakes: {
         id: string;
-        subject: "chinese" | "math" | "english";
+        subject: "math" | "chinese" | "english";
         topic: string;
     }[];
     pendingMistakes: string[];
@@ -85,7 +85,7 @@ export declare function studyStatus(state: StudyState, now: number): {
     task: {
         id: string;
         sessionId: string;
-        subject: "chinese" | "math" | "english";
+        subject: "math" | "chinese" | "english";
         topic: string;
         prompt: string;
         hintLevel: number;
@@ -295,11 +295,11 @@ export declare function studyStatus(state: StudyState, now: number): {
         stuck?: boolean | undefined;
     } | null;
     feedback: {
-        result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
+        result: "partial" | "correct" | "incorrect" | "unassessed" | "stuck";
         assistance: "unknown" | "independent" | "hint" | "worked-example";
         id: string;
         sessionId: string;
-        subject: "chinese" | "math" | "english";
+        subject: "math" | "chinese" | "english";
         topic: string;
         prompt: string;
         response: string;

@@ -863,7 +863,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({
         description: 'admission, saved-answer and valid-assessment facts separately; omitted admission remains unknown.',
         jsonSchema: {"type":"object","properties":{"requestId":{"type":"string"},"admission":{"type":"string","enum":["unknown","accepted"]},"nativeStates":{"type":"array","items":{"type":"string","enum":["pending","consumed","claimed","removed"]}},"nativeSourceStatus":{"type":"string","enum":["available","unavailable"]},"cut":{"type":"object","properties":{"sessionId":{"type":"string"},"cursor":{"type":"number"},"source":{"type":"string","enum":["live","prepared"]},"inheritedEventCount":{"type":"number"},"revision":{"type":"string"}},"required":["sessionId","cursor","source","inheritedEventCount"],"additionalProperties":true},"answer":{"type":"string","enum":["unavailable","missing","saved","not-requested"]},"assessment":{"type":"string","enum":["pending","unavailable","valid","not-requested"]},"readStatus":{"type":"string","enum":["valid","missing","invalid","future-format","changing","legacy","archived"]},"versions":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"targetKey":{"type":"string"},"version":{"type":"string"}},"required":["path","targetKey","version"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}},"backupIssues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}}},"required":["requestId","admission","nativeStates","nativeSourceStatus","answer","assessment","readStatus","versions","issues"],"additionalProperties":true},
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":127,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":129,"column":9},
     },
     'student/manualContext': {
       service: 'student',
@@ -913,7 +913,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({
         description: 'exact current term identity, observed versions, draft baseline and read issues.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":97,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":99,"column":9},
     },
     'student/query': {
       service: 'student',
@@ -1013,7 +1013,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({
         description: 'thin save outcome, current edited values and versions for subsequent draft saves.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":112,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":114,"column":9},
     },
     'student/watch': {
       service: 'student',
@@ -1064,7 +1064,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({
         description: 'an initial snapshot and later changes or recoverable read-failure frames.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":70,"column":10},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":72,"column":10},
     },
   },
 }, z)

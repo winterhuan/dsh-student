@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, it, onTestFinished, vi } from 'vitest'
 import StudentRemote from '../src/remote-service.ts'
-import { NOW, setup } from './fixtures.ts'
+import { NOW, setup, updateStudy, mistake, confirm, material, course } from './fixtures.ts'
 import type { ManualSaveRequest } from '../src/files/manual.ts'
 import type { StudentManualSaveRequest } from '../src/types.ts'
 import { applicationStudyFiles } from '../src/files/application.ts'
@@ -213,4 +213,20 @@ it('retains an earlier Session answer while its receipt stays pending outside th
   block.assessments[0]!.responseId = 'absent' as typeof block.responses[0]['id']
   await writeFile(path, JSON.stringify(block))
   expect(await ctx.student.inspectSubmission(id, { requestId: 'prior-request', response }, signal)).toMatchObject({ answer: 'unavailable', assessment: 'unavailable' })
+})
+
+it('preserves visible legacy learning records and separate lessons without rewriting the source', async () => {
+  const f = await fixture()
+  await rm(join(f.cwd, '.study/settings.json'))
+  let state = updateStudy(undefined, setup, NOW)
+  for (const command of [{ action: 'material' as const, material }, { action: 'course' as const, course }, { action: 'mistake' as const, mistake }, confirm]) state = updateStudy(state, command, NOW)
+  state.worksheets.push({ id: 'old-sheet', subject: 'math', createdAt: NOW, items: [{ id: 'old-question', prompt: '8 + 7?', answer: '15', explanation: 'Make ten', answerEvidence: '8 + 2 + 5 = 15' }] })
+  state.openmaic = { baseUrl: 'http://localhost:3456', parentConfirmation: 'The parent confirmed this classroom address.' }
+  const bytes = JSON.stringify(state)
+  await writeFile(join(f.cwd, '.study/state.json'), bytes)
+  await writeFile(join(f.cwd, '.study/openmaic-lessons.json'), JSON.stringify({ format: 1, lessons: [{ id: 'old-lesson', subject: 'math', objectiveId: 'm2a-o-sub', status: 'ready', title: 'Saved lesson', requirement: 'Review subtraction', classroomId: 'old-classroom', base: 'http://localhost:3456', createdAt: new Date(NOW).toISOString(), updatedAt: new Date(NOW).toISOString() }] }))
+  const view = await f.ctx.student.query(f.id, { kind: 'dashboard', options: { tab: 'mistakes', subject: 'math' } }, f.signal)
+  expect(view).toMatchObject({ status: 'legacy', data: { study: { profile: setup.profile, courses: [course], confirmedCount: 1, confirmedMistakes: [{ id: mistake.id }], worksheets: [{ id: 'old-sheet', items: [{ id: 'old-question' }] }] }, interactiveLessons: { baseUrl: 'http://localhost:3456', lessons: [{ id: 'old-lesson' }] } } })
+  expect(await readFile(join(f.cwd, '.study/state.json'), 'utf8')).toBe(bytes)
+  await expect(readFile(join(f.cwd, '.study/settings.json'))).rejects.toMatchObject({ code: 'ENOENT' })
 })

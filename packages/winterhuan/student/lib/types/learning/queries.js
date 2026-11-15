@@ -1,3 +1,5 @@
+import { stateSchema } from "../schema.js";
+import { migrateStudyFile } from "../files/legacy.js";
 import { dashboard } from "../dashboard.js";
 import { checkInHistory, curriculumView, exercisesFor, objectiveElements, reviewPlan } from "./view.js";
 import { evidenceOf } from "./evidence.js";
@@ -29,10 +31,12 @@ function workspaceProjection(read, now) {
  * @param now - caller clock.
  * @param options - selected dashboard page and scope.
  * @param lessons - separately read classroom status.
- * @returns current data only for a fully valid workspace; failures retain their file issues.
+ * @returns current data for valid files or a labelled legacy display; failures retain their file issues.
  */
 export function queryWorkspaceDashboard(read, now, options = {}, lessons) {
     const facts = { status: read.status, versions: read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), issues: read.issues };
+    if (read.status === 'legacy')
+        return { ...facts, data: queryDashboard(stateSchema.parse(migrateStudyFile(structuredClone(read.legacy))), now, options, lessons) };
     return read.status === 'valid' && read.workspace ? { ...facts, data: queryDashboard(workspaceProjection(read, now).state, now, options, lessons) } : facts;
 }
 export function queryWorkspace(read, request, now) {

@@ -1,7 +1,7 @@
-import { a as queryWorkspace, b as StudyReadCacheOwner, o as queryWorkspaceDashboard, r as queryJsonData, x as StudyBackupRetention, y as applicationStudyFiles } from "./queries-iJ_84FkM.js";
-import { c as readInteractiveLessons } from "./openmaic-aQGgUeGi.js";
-import { t as readStudentWorkspace } from "./transport-DTU-2uBR.js";
-import { n as saveManual, t as manualFields } from "./manual-Ji8Ou35W.js";
+import { a as queryWorkspace, b as StudyReadCacheOwner, o as queryWorkspaceDashboard, r as queryJsonData, x as StudyBackupRetention, y as applicationStudyFiles } from "./queries-DJ6zMk-1.js";
+import { c as readInteractiveLessons } from "./openmaic-CBuaaxeA.js";
+import { t as readStudentWorkspace } from "./transport-BPc8GbYp.js";
+import { n as saveManual, t as manualFields } from "./manual-XPvjnebA.js";
 import { createHash } from "node:crypto";
 import { setTimeout } from "node:timers/promises";
 import z from "@deepseek-ai/schemastery";
@@ -163,7 +163,17 @@ let StudentRemote = (() => {
 				signal
 			});
 			const now = Date.now();
-			const query = request.kind === "dashboard" ? queryWorkspaceDashboard(read, now, request.options, read.workspace ? await readInteractiveLessons(agent, signal, read.workspace.settings.openmaic?.baseUrl) : void 0) : queryWorkspace(read, request, now);
+			let query;
+			if (request.kind === "dashboard") {
+				const page = queryWorkspaceDashboard(read, now, request.options);
+				query = page.data ? {
+					...page,
+					data: {
+						...page.data,
+						interactiveLessons: await readInteractiveLessons(agent, signal, page.data.study?.openmaic.savedBaseUrl)
+					}
+				} : page;
+			} else query = queryWorkspace(read, request, now);
 			const { observations: _observations, ...view } = native;
 			const { data: _data, ...facts } = query;
 			const result = {

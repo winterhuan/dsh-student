@@ -2,7 +2,7 @@
 import type {} from '@deepseek-ai/dsh-client-ui-slots'
 export const NS = 'studentDesk'
 export const zh = {
-  "legacyFilesHelp": "已有旧版学习档案。请在辅导对话中让助手检查迁移方案，再由家长确认迁移；原档案会保留",
+  "legacyFilesHelp": "正在查看旧版学习档案，原记录保持不变；继续保存前，请在辅导对话中让助手检查迁移方案，再由家长确认",
   "unavailableFilesHelp": "当前学期档案尚无法完整读取，请在辅导对话中检查档案状态并修复",
 
   "workbenchHelp": "选择孩子的工作区，学习记录和辅导对话一起打开",
@@ -555,7 +555,7 @@ export const zh = {
   "openmaicEffective": "当前使用",
 }
 export const en: Record<keyof typeof zh, string> = {
-  "legacyFilesHelp": "Existing learning records use the previous format. Ask the tutor to inspect a migration plan, then let a parent confirm migration; the originals are retained",
+  "legacyFilesHelp": "Viewing previous-format learning records with the originals preserved. Before saving, ask the tutor to inspect a migration plan and let a parent confirm it",
   "unavailableFilesHelp": "The current term records cannot be read in full. Ask the tutor to check the record status and repair it",
 
   "workbenchHelp": "Choose the learner’s workspace to open study records and tutoring together",

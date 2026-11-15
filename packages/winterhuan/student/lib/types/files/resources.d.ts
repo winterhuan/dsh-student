@@ -6,8 +6,8 @@ declare const schemas: {
         lessons: z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             status: z.ZodEnum<{
-                generating: "generating";
                 ready: "ready";
+                generating: "generating";
                 failed: "failed";
             }>;
             createdAt: z.ZodString;
@@ -15,8 +15,8 @@ declare const schemas: {
             title: z.ZodString;
             requirement: z.ZodString;
             subject: z.ZodOptional<z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>>;
             objectiveId: z.ZodOptional<z.ZodString>;
@@ -337,8 +337,8 @@ declare const schemas: {
         materials: z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
             scope: z.ZodObject<{
@@ -372,8 +372,8 @@ declare const schemas: {
         }, z.core.$strict>>;
         courses: z.ZodArray<z.ZodObject<{
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
             materialId: z.ZodString;
@@ -414,16 +414,16 @@ declare const schemas: {
         kind: z.ZodLiteral<"block">;
         id: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").BlockId, string>>;
         subject: z.ZodEnum<{
-            chinese: "chinese";
             math: "math";
+            chinese: "chinese";
             english: "english";
         }>;
         mode: z.ZodEnum<{
+            diagnose: "diagnose";
             review: "review";
             foundation: "foundation";
             school: "school";
             explore: "explore";
-            diagnose: "diagnose";
         }>;
         intensity: z.ZodOptional<z.ZodEnum<{
             light: "light";
@@ -464,8 +464,8 @@ declare const schemas: {
             material: z.ZodOptional<z.ZodObject<{
                 id: z.ZodString;
                 subject: z.ZodEnum<{
-                    chinese: "chinese";
                     math: "math";
+                    chinese: "chinese";
                     english: "english";
                 }>;
                 scope: z.ZodObject<{
@@ -891,8 +891,8 @@ declare const schemas: {
             id: z.ZodString;
             responseId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").ResponseId, string>>;
             result: z.ZodEnum<{
-                correct: "correct";
                 partial: "partial";
+                correct: "correct";
                 incorrect: "incorrect";
                 unassessed: "unassessed";
                 stuck: "stuck";
@@ -949,8 +949,8 @@ declare const schemas: {
         kind: z.ZodLiteral<"worksheet">;
         id: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").WorksheetId, string>>;
         subject: z.ZodEnum<{
-            chinese: "chinese";
             math: "math";
+            chinese: "chinese";
             english: "english";
         }>;
         worksheetKind: z.ZodOptional<z.ZodEnum<{
@@ -1388,8 +1388,8 @@ declare const schemas: {
             id: z.ZodString;
             responseId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").ResponseId, string>>;
             result: z.ZodEnum<{
-                correct: "correct";
                 partial: "partial";
+                correct: "correct";
                 incorrect: "incorrect";
                 unassessed: "unassessed";
                 stuck: "stuck";
@@ -1438,8 +1438,8 @@ declare const schemas: {
             questionId: z.ZodString;
             response: z.ZodString;
             result: z.ZodEnum<{
-                correct: "correct";
                 partial: "partial";
+                correct: "correct";
                 incorrect: "incorrect";
                 unassessed: "unassessed";
                 stuck: "stuck";
@@ -1472,16 +1472,16 @@ declare const schemas: {
         mistakes: z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
-            objectiveId: z.ZodOptional<z.ZodString>;
             materialId: z.ZodOptional<z.ZodString>;
             confirmedAt: z.ZodOptional<z.ZodNumber>;
             topic: z.ZodString;
             prompt: z.ZodString;
             answerEvidence: z.ZodString;
+            objectiveId: z.ZodOptional<z.ZodString>;
             learnerAnswer: z.ZodString;
             correction: z.ZodString;
             explanation: z.ZodString;
@@ -1523,8 +1523,8 @@ declare const schemas: {
         exercises: z.ZodDefault<z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
             objectiveId: z.ZodString;
@@ -1852,8 +1852,8 @@ declare const schemas: {
         concepts: z.ZodDefault<z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
             name: z.ZodString;
@@ -1868,8 +1868,8 @@ declare const schemas: {
         objectives: z.ZodDefault<z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
             title: z.ZodString;
@@ -1915,10 +1915,10 @@ declare const schemas: {
             }>>>;
             questionPoints: z.ZodOptional<z.ZodArray<z.ZodString>>;
             variationAxes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
+                reverse: "reverse";
                 context: "context";
                 numbers: "numbers";
                 representation: "representation";
-                reverse: "reverse";
                 explain: "explain";
             }>>>;
         }, z.core.$strict>>>;
@@ -1939,8 +1939,8 @@ declare const schemas: {
         teachingQueue: z.ZodDefault<z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             subject: z.ZodEnum<{
-                chinese: "chinese";
                 math: "math";
+                chinese: "chinese";
                 english: "english";
             }>;
             prompt: z.ZodString;

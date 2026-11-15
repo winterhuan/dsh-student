@@ -89,9 +89,13 @@ let StudentRemote = (() => {
             this.wire(request);
             const { read, native, backupIssues } = await readStudentWorkspace({ agent, signal });
             const now = Date.now();
-            const query = request.kind === 'dashboard'
-                ? queryWorkspaceDashboard(read, now, request.options, read.workspace ? await readInteractiveLessons(agent, signal, read.workspace.settings.openmaic?.baseUrl) : undefined)
-                : queryWorkspace(read, request, now);
+            let query;
+            if (request.kind === 'dashboard') {
+                const page = queryWorkspaceDashboard(read, now, request.options);
+                query = page.data ? { ...page, data: { ...page.data, interactiveLessons: await readInteractiveLessons(agent, signal, page.data.study?.openmaic.savedBaseUrl) } } : page;
+            }
+            else
+                query = queryWorkspace(read, request, now);
             const { observations: _observations, ...view } = native;
             const { data: _data, ...facts } = query;
             const result = { ...facts, data: queryJsonData(query), readAt: now, refreshAfter: query.refreshAfter ?? now + this.config.refreshIntervalMs, token: createHash('sha256').update(JSON.stringify([query, view, backupIssues])).digest('hex'), native: view, backupIssues };

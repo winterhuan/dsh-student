@@ -56,6 +56,7 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
   const showBook = view === 'parent' && (parentTab === 'map')
   const workspace = useStudy(sessionId, visible, t('networkError'), { tab, offset: mistakeOffset, subject, status: mistakeStatus, ...(showBook && mapGrade !== undefined ? { mapGrade } : {}), ...(showBook && mapTerm !== undefined ? { mapTerm } : {}), ...(activeScope.grade !== undefined ? { diagGrade: activeScope.grade } : {}), ...(activeScope.term !== undefined ? { diagTerm: activeScope.term } : {}), ...(activeScope.unit ? { diagUnit: activeScope.unit } : {}) }, useResource)
   const { data } = workspace
+  const readOnly = workspace.value?.status === 'legacy'
   const [activity, setActivity] = useState<Activity>({ subject: storedSubject(), mode: 'foundation' })
   const [selectedObjectiveId, setSelectedObjectiveId] = useState('')
   const [epoch, setEpoch] = useState(0)
@@ -94,6 +95,7 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
     return { termId: workspace.termId, blockId: ownerId, questionId: task?.id, responseId: task?.responseId ?? responseIds.current.get(key) }
   }
   async function tutor(text = continuePrompt, photo?: StudyPhoto, command?: Command, currentBlock = false) {
+    if (readOnly) throw new Error(t('legacyFilesHelp'))
     const ids = identity(command)
     if (command?.action === 'answer' && submissions.some(item => item.response?.responseId === ids.responseId && item.admission === 'unknown' && !item.inspection)) { setSendError(t('messageUnknown')); throw new Error(t('messageUnknown')) }
     setSending(true); setSendError('')
@@ -126,11 +128,15 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
   const now = Math.max(localNow + workspace.offset.current, data?.serverNow ?? 0)
   const study = data?.study
   const subjectLoading = !!study && study.confirmedSubject !== subject
-  const disabled = sending || workspace.stale
+  const disabled = sending || workspace.stale || readOnly
   const active = study?.active
+  const followedActive = useRef<{ sessionId: StudentSessionId; blockId: string }>()
   useEffect(() => {
-    if (active) { selectSubject(active.subject); setActivity({ subject: active.subject, mode: active.mode }) }
-  }, [active?.id])
+    if (active && (followedActive.current?.sessionId !== sessionId || followedActive.current.blockId !== active.id)) {
+      followedActive.current = { sessionId, blockId: active.id }
+      selectSubject(active.subject); setActivity({ subject: active.subject, mode: active.mode })
+    }
+  }, [active?.id, sessionId])
   const curriculum = study?.curriculum ?? null
   const scopeGrade = curriculum?.scope.grade ?? mapGrade ?? study?.profile.grade ?? 1
   const scopeTerm = curriculum?.scope.term ?? mapTerm ?? study?.profile.term ?? 'first'
@@ -230,6 +236,7 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
         <button type="button" className="student-quiet" disabled={sending} onClick={() => { setEpoch(value => value + 1) }}>{t('reload')}</button>
       </div>
     </header>
+    {readOnly && data && <p role="status">{t('legacyFilesHelp')}</p>}
     {workspace.error && <p role="alert">{t('staleData')}</p>}
     {sendError && <p role="alert">{sendError}</p>}
     {study && pendingFacts.length > 0 && <section aria-label={t('pendingFacts')}><h3>{t('pendingFacts')}</h3>{pendingFacts.map(item => {
@@ -251,7 +258,7 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
       {study && view === 'parent' && parentTab === 'mistakes' && <PracticeView {...draft} study={study} now={now} subject={subject} goals={goals} mistakeStatus={mistakeStatus} setMistakeStatus={setMistakeStatus} setMistakeOffset={setMistakeOffset} revision={data.revision} disabled={disabled} running={running} change={change} ask={tutor} onReview={item => { selectSubject(item); setActivity({ subject: item, mode: 'review' }); setSelectedObjectiveId(''); setView('student') }} epoch={epoch} t={nativeT} />}
       {study && view === 'parent' && parentTab === 'mistakes' && workspace.termId && <WorksheetCorrections {...draft} key={draftScope} sessionId={sessionId} termId={workspace.termId} draftScope={draftScope} useResource={useResource} save={saveWorksheet} disabled={disabled} t={t} />}
       {parentSettings && <section><button type="button" disabled={disabled} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('profileConversation')}</button><button type="button" disabled={disabled} onClick={() => { void tutor(t('courseConversation')).catch(() => {}) }}>{t('courseConversation')}</button><button type="button" disabled={disabled} onClick={() => { void tutor(t('archiveConversation')).catch(() => {}) }}>{t('archiveConversation')}</button></section>}
-      {parentSettings && study && <details className="student-fold"><summary>{t('manualForms')}</summary><p>{t('manualSummary')}</p><ParentSettings {...draft} key={draftScope + subject} draftScope={draftScope} observation={workspace.value?.versions.find(file => file.path === '.study/settings.json')?.version} data={data} change={manual} t={t} curriculum={curriculum} subject={subject} onSubject={item => { selectSubject(item); setActivity({ subject: item, mode: 'foundation' }) }} /></details>}
+      {parentSettings && study && <details className="student-fold"><summary>{t('manualForms')}</summary><p>{t('manualSummary')}</p><fieldset disabled={readOnly}><ParentSettings {...draft} key={draftScope + subject} draftScope={draftScope} observation={workspace.value?.versions.find(file => file.path === '.study/settings.json')?.version} data={data} change={manual} t={t} curriculum={curriculum} subject={subject} onSubject={item => { selectSubject(item); setActivity({ subject: item, mode: 'foundation' }) }} /></fieldset></details>}
       {study && parentSettings && <Growth study={study} curriculum={curriculum} subject={subject} goals={goals} t={t} />}
     </>}
   </main>

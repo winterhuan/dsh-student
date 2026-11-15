@@ -33,7 +33,9 @@ dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.g
 
 Replace `market` with the name of your existing DSH profile.
 
-In a new or blank conversation, select **智能学习** (Smart learning) from the native mode menu, then open its workbench in the right sidebar. The workbench and domain Skills/tools are available only in this mode. Existing conversations retain their selected mode; start a new conversation in this mode to continue existing project files. Session state and project files are not migrated. Global settings remain available.
+Open **Learning desk** from the left sidebar, choose the learner's workspace, then select an existing learning conversation or create one. The workbench shows today's learning, knowledge maps, mistakes and parent settings alongside the native DSH tutor; you can hide the tutor or open the same conversation in full. New conversations use **智能学习** (Smart learning). The workbench lists only unarchived main conversations in that mode and remembers the selected workspace, conversation and tutor visibility in this browser. Each workspace retains one learner's term records; a new conversation in the same workspace shares those records.
+
+You can also select **智能学习** (Smart learning) in a new or blank native conversation and open the learning desk in its right sidebar. Domain Skills/tools remain scoped to this mode. Existing conversations keep their mode; Session state and project files are not migrated.
 
 Install the built package into a DSH `0.2.2-rc.1` profile, open a dedicated learning workspace and invoke `/study`.
 

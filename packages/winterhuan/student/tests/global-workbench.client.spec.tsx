@@ -1,0 +1,110 @@
+// @vitest-environment jsdom
+import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import { useSyncExternalStore, type ComponentProps } from 'react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, expect, it, vi } from 'vitest'
+import type { SessionListState, SessionReference } from '@deepseek-ai/dsh-api-session-controller/client'
+import type { WorkspaceSnapshot } from '@deepseek-ai/dsh-api-workspace-controller/client'
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type { WorkspaceId } from '@deepseek-ai/dsh-workspace/types'
+import { Workbench, createWorkbenchStore } from '../src/client/workbench.tsx'
+import { en } from '../src/client/locales.ts'
+
+afterEach(() => { cleanup(); window.localStorage.clear() })
+const id = (value: string) => value as SessionId
+const workspaceId = (value: string) => value as WorkspaceId
+
+function fixture() {
+  const store = createWorkbenchStore().create()
+  const catalog: SessionListState = { ids: [], byId: {}, phase: 'ready', projectionsBySession: {} }
+  function add(value: string, preset = 'student', parentId?: SessionId) {
+    const sessionId = id(value)
+    catalog.ids.push(sessionId)
+    catalog.byId[sessionId] = { id: sessionId, displayTitle: value, cwd: '/learner', running: false, retainedBy: {}, blank: false, updatedAt: 0, projectionValues: { agentPreset: preset }, ...(parentId ? { parentId } : {}) }
+  }
+  for (const value of ['first', 'second', 'archived']) add(value)
+  add('standard', 'standard'); add('child', 'student', id('first'))
+  const workspaces: WorkspaceSnapshot = {
+    items: [{ workspaceId: workspaceId('learner'), path: '/learner', title: 'Learner', sessionIds: [...catalog.ids], createdAt: '', updatedAt: '' }, { workspaceId: workspaceId('other'), path: '/other', title: 'Other learner', sessionIds: [], createdAt: '', updatedAt: '' }],
+    archivedSessionIds: [id('archived')], pinnedSessionIds: [], state: 'idle', phase: 'ready', error: null,
+  }
+  const references: Array<{ sessionId: SessionId; release: ReturnType<typeof vi.fn>; settle: () => void }> = []
+  const retainSession = vi.fn((sessionId: SessionId) => {
+    let settle!: () => void
+    const ready = new Promise<SessionReference['binding']>(resolve => { settle = () => resolve({} as SessionReference['binding']) })
+    const reference = { sessionId, ready, release: vi.fn(), settle }
+    references.push(reference)
+    return reference as SessionReference
+  })
+  const createSession = vi.fn(async () => id('new'))
+  const openSession = vi.fn()
+  const reportCreate = vi.fn()
+  const renderSlot = vi.fn(() => <p>Learning and native chat</p>)
+  const props = {
+    useSessions: (selector: (state: SessionListState) => unknown) => selector(catalog),
+    useWorkspaces: (selector: (state: WorkspaceSnapshot) => unknown) => selector(workspaces),
+    useStore: (selector: (state: ReturnType<typeof store.store.getSnapshot>) => unknown) => selector(useSyncExternalStore(store.store.subscribe, store.store.getSnapshot)),
+    actions: store.actions, retainSession, createSession, openSession, reportCreate, renderSlot,
+    SessionProvider: ({ session, children }: { session: SessionReference; children: React.ReactNode }) => <div data-testid="session-area" data-session={session.sessionId}>{children}</div>,
+    t: (key: keyof typeof en) => en[key],
+  } as ComponentProps<typeof Workbench>
+  return { store, catalog, workspaces, references, props, retainSession, createSession, openSession, reportCreate, renderSlot }
+}
+
+it('filters unrelated and archived conversations and releases the selected reference on switch and close', async () => {
+  const f = fixture()
+  const view = render(<Workbench {...f.props} />)
+  expect(screen.getAllByRole('option').map(option => option.textContent)).toEqual(['Learner', 'Other learner', 'first', 'second'])
+  await act(async () => f.references[0]!.settle())
+  expect(screen.getByTestId('session-area').getAttribute('data-session')).toBe('first')
+  fireEvent.click(screen.getByRole('button', { name: en.openConversation }))
+  expect(f.openSession).toHaveBeenCalledWith('first')
+  fireEvent.change(screen.getByLabelText(en.learningConversation), { target: { value: 'second' } })
+  expect(f.references[0]!.release).toHaveBeenCalledOnce()
+  expect(screen.queryByTestId('session-area')).toBeNull()
+  await act(async () => f.references[1]!.settle())
+  expect(screen.getByTestId('session-area').getAttribute('data-session')).toBe('second')
+  fireEvent.click(screen.getByRole('button', { name: en.hideTutor }))
+  expect(f.renderSlot).toHaveBeenLastCalledWith('student.workbench.session', { chatVisible: false })
+  view.unmount()
+  expect(f.references[1]!.release).toHaveBeenCalledOnce()
+})
+
+it('ignores the open result of a conversation that was replaced while pending', async () => {
+  const f = fixture()
+  render(<Workbench {...f.props} />)
+  fireEvent.change(screen.getByLabelText(en.learningConversation), { target: { value: 'second' } })
+  await act(async () => f.references[0]!.settle())
+  expect(screen.queryByTestId('session-area')).toBeNull()
+  await act(async () => f.references[1]!.settle())
+  expect(screen.getByTestId('session-area').getAttribute('data-session')).toBe('second')
+})
+
+it('creates a Student conversation in the explicitly selected workspace and keeps failures retryable', async () => {
+  const f = fixture()
+  render(<Workbench {...f.props} />)
+  fireEvent.change(screen.getByLabelText(en.learnerWorkspace), { target: { value: 'other' } })
+  f.createSession.mockRejectedValueOnce(new Error('unavailable'))
+  fireEvent.click(screen.getByRole('button', { name: en.newLearningConversation }))
+  await waitFor(() => expect(f.reportCreate).toHaveBeenLastCalledWith(false))
+  expect(f.createSession).toHaveBeenCalledWith('other')
+  expect(f.store.store.getSnapshot().sessionId).toBe('')
+  fireEvent.click(screen.getByRole('button', { name: en.newLearningConversation }))
+  await waitFor(() => expect(f.store.store.getSnapshot().sessionId).toBe('new'))
+  expect(f.reportCreate).toHaveBeenLastCalledWith(true)
+})
+
+it('shows the first-use workspace instruction without creating a default conversation', () => {
+  const f = fixture()
+  const props = { ...f.props, useWorkspaces: (selector: (state: WorkspaceSnapshot) => unknown) => selector({ ...f.workspaces, items: [] }) } as ComponentProps<typeof Workbench>
+  render(<Workbench {...props} />)
+  expect(screen.getByText(en.noLearnerWorkspace)).toBeTruthy()
+  expect((screen.getByRole('button', { name: en.newLearningConversation }) as HTMLButtonElement).disabled).toBe(true)
+  expect(f.createSession).not.toHaveBeenCalled()
+})
+
+it('keeps macOS titlebar clearance scoped to the workbench header', async () => {
+  const css = await readFile(resolve(import.meta.dirname, '../src/client/workbench.module.css'), 'utf8')
+  expect(css).toContain(":global([data-platform='darwin']) .header { padding-top: calc(28px + var(--dsh-frame-top-clearance, 0px)); }")
+})

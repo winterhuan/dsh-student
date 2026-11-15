@@ -1,5 +1,20 @@
 export declare const NS = "studentDesk";
 export declare const zh: {
+    workbenchHelp: string;
+    learnerWorkspace: string;
+    learningConversation: string;
+    noLearningConversation: string;
+    newLearningConversation: string;
+    openConversation: string;
+    hideTutor: string;
+    showTutor: string;
+    tutorConversation: string;
+    createConversationError: string;
+    createdLearningConversation: string;
+    openConversationError: string;
+    noLearnerWorkspace: string;
+    welcomeWorkbench: string;
+    createLearningHelp: string;
     chooseSchoolYear: string;
     schoolYearHelp: string;
     schoolAliasHelp: string;

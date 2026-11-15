@@ -10,15 +10,17 @@ import { useEffect, useMemo } from 'react'
 import { NS, zh, en } from './locales.ts'
 import { tutorBridge } from './bridge.ts'
 import { StudyDesk } from './desk.tsx'
+import { registerWorkbench } from './workbench.tsx'
 
 export const name = 'student'
-export const inject = ['slots', 'sessions', 'uiSession', 'locale', 'sidebarRightTabs']
+export const inject = ['slots', 'sessions', 'uiSession', 'locale', 'sidebarRightTabs', 'workspaces', 'uiWorkspace', 'conversation']
 type Props = PropsRuntime<'sidebar.right.pane.tab'> & PropsLocale<typeof NS>
 
 /** Register the learning desk inside DSH's existing session sidebar. */
 export function apply(context: Context): void {
   context.effect(() => context.locale.register(NS, { zh, en }), 'student: dictionaries')
   const t = context.locale.bind(NS)
+  registerWorkbench(context)
   context.effect(() => registerModeTab(context, {
     id: '@winterhuan/dsh-student', kind: 'student', title: () => t('title'),
     guide: [{ id: 'student', order: 24, title: () => t('title'), description: () => t('description'), icon: IconPlayOutlineRegular }],

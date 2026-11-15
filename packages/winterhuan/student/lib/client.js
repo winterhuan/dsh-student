@@ -8,14 +8,15 @@ window.__ModuleLoader__.load({
 		let _deepseek_ai_dsh_client_ui_primitives = require("@deepseek-ai/dsh-client-ui-primitives");
 		let react = require("react");
 		let react_dom = require("react-dom");
-		//#region \0dsh-global-css:/Users/winter/dsh-plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
-		const css = ".student-desk{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font:13px/1.5 var(--dsw-font-family);flex-direction:column;gap:12px;padding:0 12px 20px;display:flex;overflow:auto}.student-top{z-index:2;background:var(--dsw-alias-bg-base);border-bottom:1px solid var(--dsw-alias-border-l2);flex-direction:column;gap:8px;margin:0 -12px;padding:10px 12px 8px;display:flex;position:sticky;top:0}.student-toolbar{align-items:center;gap:8px;display:flex}.student-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;display:grid}.student-subjects{background:var(--dsw-alias-bg-layer-1);border-radius:8px;flex:1;gap:2px;padding:2px;display:flex}.student-subjects button{background:0 0;border:0;flex:1}.student-quiet{background:0 0;border:0;flex:none;padding:6px 8px}.student-desk section{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);border-radius:10px;flex-direction:column;gap:8px;padding:12px;display:flex}.student-desk details{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:10px;padding:10px 12px}.student-desk h3{margin:0;font-size:13px;font-weight:500}.student-desk p{overflow-wrap:anywhere;white-space:pre-wrap;margin:0}.student-desk form,.student-desk fieldset,.student-desk label{flex-direction:column;gap:8px;min-width:0;display:flex}.student-desk fieldset{border:0;margin:0;padding:0}.student-desk button,.student-desk input,.student-desk select,.student-desk textarea{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);box-sizing:border-box;border-radius:8px;min-width:0;max-width:100%;padding:8px}.student-desk button{cursor:pointer}.student-desk .student-subjects button,.student-desk .student-quiet{background:0 0;border:0}.student-desk button:hover:enabled:not([aria-pressed=true]):not(.student-primary){background:var(--dsw-alias-button-ghost-active-fill)}.student-desk .student-tabs button[aria-pressed=true],.student-desk .student-views button[aria-pressed=true],.student-desk .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-desk .student-tabs button[aria-pressed=true]:hover:enabled,.student-desk .student-views button[aria-pressed=true]:hover:enabled,.student-desk .student-primary:hover:enabled{background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-foreground)}.student-desk .student-subjects button[aria-pressed=true],.student-desk .student-segments button[aria-pressed=true],.student-desk .student-segments button[aria-checked=true]{background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);box-shadow:inset 0 0 0 1px var(--dsw-alias-state-business-primary)}.student-desk :disabled{opacity:.6;cursor:default}.student-desk :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.student-desk textarea{resize:vertical;min-height:72px}.student-desk .student-check{flex-direction:row;align-items:flex-start}.student-desk .student-check input{flex:none}.student-desk img{object-fit:contain;background:var(--dsw-alias-bg-base);border-radius:8px;width:100%;max-height:240px}.student-status{gap:6px}.student-desk .student-question{background:var(--dsw-alias-bg-base);border-radius:8px;padding:12px;font-size:16px;line-height:1.45}.student-desk summary{cursor:pointer;overflow-wrap:anywhere;font-weight:500}.student-desk .student-pages{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-plan{border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-1))}.student-desk details>details,.student-desk details>div,.student-desk details>p{margin-top:8px}.student-muted{color:var(--dsw-alias-label-secondary)}.student-unit{border-top:1px solid var(--dsw-alias-border-l2);padding-top:8px}.student-choices{flex-direction:column;gap:8px;display:flex}.student-choices button{text-align:left;width:100%;padding:12px 14px;font-size:15px}.student-result{font-size:15px;font-weight:500}.student-scope{flex-wrap:wrap;align-items:flex-end;gap:8px;display:flex}.student-scope label{flex:120px}.student-segments{flex-wrap:wrap;gap:6px;display:flex}.student-desk .student-grade{border-top:1px solid var(--dsw-alias-border-l2);padding:8px 0}.student-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px;height:8px;display:flex;overflow:hidden}.student-bar span{height:100%;display:block}.student-level-mastered,.student-fill-mastered{background:var(--dsw-alias-state-success-primary)}.student-level-practising,.student-fill-practising{background:var(--dsw-alias-state-business-primary)}.student-level-stalled,.student-fill-stalled{background:var(--dsw-alias-state-warn-primary)}.student-level-weak,.student-fill-weak{background:var(--dsw-alias-state-error-primary)}.student-level-due,.student-fill-due{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, var(--dsw-alias-state-warn-primary))}.student-level-untouched,.student-fill-untouched{background:var(--dsw-alias-label-tertiary)}.student-legend{flex-wrap:wrap;gap:8px 12px;display:flex}.student-dot{vertical-align:middle;border-radius:50%;width:8px;height:8px;margin-right:4px;display:inline-block}.student-chips{flex-direction:column;gap:6px;display:flex}.student-chip{text-align:left;border-radius:8px;align-items:center;gap:6px;width:100%;padding:8px 10px;display:flex}.student-views{grid-template-columns:1fr 1fr;gap:6px;display:grid}.student-pair{grid-template-columns:1fr 1fr;gap:8px;display:grid}.student-mastery{align-items:center;gap:6px;display:flex}.student-mastery span{border-radius:50%;width:10px;height:10px}.student-simon{flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-simon li{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 8px}.student-simon-done{opacity:.7}.student-simon-current{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, var(--dsw-alias-bg-base));font-weight:500}.student-steps{flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-map-inline{border:1px solid var(--dsw-alias-border-l2);border-left:3px solid var(--dsw-alias-state-business-primary);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base));border-radius:8px;margin:4px 0 8px;padding:8px 10px}.student-map-links{margin-top:8px}.student-mindmap-unit{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:8px;margin:8px 0;padding:10px}.student-mindmap-unit>summary{cursor:pointer;font-weight:500}.student-mindmap-branch{border-left:2px solid var(--dsw-alias-border-l2);flex-direction:column;gap:6px;margin:8px 0 0;padding:0 0 0 12px;list-style:none;display:flex}.student-mindmap-node{flex-direction:column;gap:4px;display:flex}.student-mindmap-concept{text-align:left;align-items:center;gap:6px;width:100%;display:flex}.student-mindmap-concept[aria-pressed=true]{background:var(--dsw-alias-bg-layer-2,transparent)}.student-mindmap-concept.student-level-mastered{box-shadow:inset 3px 0 0 var(--dsw-alias-state-success-primary)}.student-mindmap-concept.student-level-practising{box-shadow:inset 3px 0 0 var(--dsw-alias-state-business-primary)}.student-mindmap-concept.student-level-stalled{box-shadow:inset 3px 0 0 var(--dsw-alias-state-warn-primary)}.student-mindmap-concept.student-level-weak,.student-mindmap-concept.student-level-due{box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}.student-figure svg{width:100%;height:auto;max-height:220px;color:var(--dsw-alias-label-primary)}.student-figure circle,.student-figure rect,.student-figure line,.student-figure path,.student-figure polyline,.student-figure polygon{fill:none;stroke:currentColor;stroke-width:1.4px}.student-figure text{fill:currentColor;stroke:none}.student-figure .student-fill{fill:currentColor}.student-desk progress{width:100%;height:8px}.student-desk progress::-webkit-progress-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px}.student-desk progress::-webkit-progress-value{background:var(--dsw-alias-state-business-primary);border-radius:999px}.student-sheet-portal{font:13px/1.5 var(--dsw-font-family)}.student-sheet-portal button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);cursor:pointer;border-radius:8px;padding:8px}.student-sheet-portal .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-sheet-portal .student-quiet{background:0 0;border:0}.student-sheet-backdrop{z-index:1000;box-sizing:border-box;background:color-mix(in srgb, var(--dsw-alias-label-primary) 32%, transparent);justify-content:center;align-items:flex-start;padding:32px 16px;display:flex;position:fixed;inset:0;overflow:auto}.student-sheet-dialog{box-sizing:border-box;background:var(--dsw-alias-bg-base);border-radius:10px;flex-direction:column;gap:8px;width:min(720px,100%);padding:12px;display:flex}.student-sheet-toolbar{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.student-sheet-toolbar .student-muted{flex:200px;margin:0}.student-sheet-scroll{overflow:auto}.student-sheet{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);color:#333;font:14px/1.6 var(--dsw-font-family);background:#fff;border-radius:8px;flex-direction:column;gap:12px;padding:24px;display:flex}.student-url{user-select:text;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.student-sheet h2{text-align:center;margin:0;font-size:18px;font-weight:500}.student-sheet-meta{text-align:center;margin:0;font-size:12px}.student-sheet-item{break-inside:avoid;flex-direction:column;gap:8px;display:flex}.student-sheet-item>p{white-space:pre-wrap;margin:0}.student-sheet .student-figure svg{color:#333;width:100%;height:auto;max-height:260px}.student-sheet-lines{flex-direction:column;display:flex}.student-sheet-rule{border-bottom:1px solid #b9c0c7;height:22px}.student-sheet-box{border:1px dashed #b9c0c7;border-radius:4px;height:84px}@page{size:A4;margin:12mm 14mm}@media print{body>:not(.student-sheet-portal){display:none!important}.student-sheet-backdrop{background:0 0;padding:0;display:block;position:static;overflow:visible}.student-sheet-dialog{display:contents}.student-sheet-toolbar{display:none}.student-sheet-scroll{overflow:visible}.student-sheet{border:0;border-radius:0;width:100%;padding:0}.student-sheet-item{page-break-inside:avoid}}";
-		const tagId = "@winterhuan/dsh-student/plugin.css";
-		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
+		let _deepseek_ai_dsh_client_store = require("@deepseek-ai/dsh-client-store");
+		//#region \0dsh-global-css:/Users/winter/dsh-creative/plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
+		const css$1 = ".student-desk{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font:13px/1.5 var(--dsw-font-family);flex-direction:column;gap:12px;padding:0 12px 20px;display:flex;overflow:auto}.student-top{z-index:2;background:var(--dsw-alias-bg-base);border-bottom:1px solid var(--dsw-alias-border-l2);flex-direction:column;gap:8px;margin:0 -12px;padding:10px 12px 8px;display:flex;position:sticky;top:0}.student-toolbar{align-items:center;gap:8px;display:flex}.student-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;display:grid}.student-subjects{background:var(--dsw-alias-bg-layer-1);border-radius:8px;flex:1;gap:2px;padding:2px;display:flex}.student-subjects button{background:0 0;border:0;flex:1}.student-quiet{background:0 0;border:0;flex:none;padding:6px 8px}.student-desk section{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);border-radius:10px;flex-direction:column;gap:8px;padding:12px;display:flex}.student-desk details{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:10px;padding:10px 12px}.student-desk h3{margin:0;font-size:13px;font-weight:500}.student-desk p{overflow-wrap:anywhere;white-space:pre-wrap;margin:0}.student-desk form,.student-desk fieldset,.student-desk label{flex-direction:column;gap:8px;min-width:0;display:flex}.student-desk fieldset{border:0;margin:0;padding:0}.student-desk button,.student-desk input,.student-desk select,.student-desk textarea{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);box-sizing:border-box;border-radius:8px;min-width:0;max-width:100%;padding:8px}.student-desk button{cursor:pointer}.student-desk .student-subjects button,.student-desk .student-quiet{background:0 0;border:0}.student-desk button:hover:enabled:not([aria-pressed=true]):not(.student-primary){background:var(--dsw-alias-button-ghost-active-fill)}.student-desk .student-tabs button[aria-pressed=true],.student-desk .student-views button[aria-pressed=true],.student-desk .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-desk .student-tabs button[aria-pressed=true]:hover:enabled,.student-desk .student-views button[aria-pressed=true]:hover:enabled,.student-desk .student-primary:hover:enabled{background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-foreground)}.student-desk .student-subjects button[aria-pressed=true],.student-desk .student-segments button[aria-pressed=true],.student-desk .student-segments button[aria-checked=true]{background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);box-shadow:inset 0 0 0 1px var(--dsw-alias-state-business-primary)}.student-desk :disabled{opacity:.6;cursor:default}.student-desk :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.student-desk textarea{resize:vertical;min-height:72px}.student-desk .student-check{flex-direction:row;align-items:flex-start}.student-desk .student-check input{flex:none}.student-desk img{object-fit:contain;background:var(--dsw-alias-bg-base);border-radius:8px;width:100%;max-height:240px}.student-status{gap:6px}.student-desk .student-question{background:var(--dsw-alias-bg-base);border-radius:8px;padding:12px;font-size:16px;line-height:1.45}.student-desk summary{cursor:pointer;overflow-wrap:anywhere;font-weight:500}.student-desk .student-pages{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-plan{border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-1))}.student-desk details>details,.student-desk details>div,.student-desk details>p{margin-top:8px}.student-muted{color:var(--dsw-alias-label-secondary)}.student-unit{border-top:1px solid var(--dsw-alias-border-l2);padding-top:8px}.student-choices{flex-direction:column;gap:8px;display:flex}.student-choices button{text-align:left;width:100%;padding:12px 14px;font-size:15px}.student-result{font-size:15px;font-weight:500}.student-scope{flex-wrap:wrap;align-items:flex-end;gap:8px;display:flex}.student-scope label{flex:120px}.student-segments{flex-wrap:wrap;gap:6px;display:flex}.student-desk .student-grade{border-top:1px solid var(--dsw-alias-border-l2);padding:8px 0}.student-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px;height:8px;display:flex;overflow:hidden}.student-bar span{height:100%;display:block}.student-level-mastered,.student-fill-mastered{background:var(--dsw-alias-state-success-primary)}.student-level-practising,.student-fill-practising{background:var(--dsw-alias-state-business-primary)}.student-level-stalled,.student-fill-stalled{background:var(--dsw-alias-state-warn-primary)}.student-level-weak,.student-fill-weak{background:var(--dsw-alias-state-error-primary)}.student-level-due,.student-fill-due{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, var(--dsw-alias-state-warn-primary))}.student-level-untouched,.student-fill-untouched{background:var(--dsw-alias-label-tertiary)}.student-legend{flex-wrap:wrap;gap:8px 12px;display:flex}.student-dot{vertical-align:middle;border-radius:50%;width:8px;height:8px;margin-right:4px;display:inline-block}.student-chips{flex-direction:column;gap:6px;display:flex}.student-chip{text-align:left;border-radius:8px;align-items:center;gap:6px;width:100%;padding:8px 10px;display:flex}.student-views{grid-template-columns:1fr 1fr;gap:6px;display:grid}.student-pair{grid-template-columns:1fr 1fr;gap:8px;display:grid}.student-mastery{align-items:center;gap:6px;display:flex}.student-mastery span{border-radius:50%;width:10px;height:10px}.student-simon{flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-simon li{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 8px}.student-simon-done{opacity:.7}.student-simon-current{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, var(--dsw-alias-bg-base));font-weight:500}.student-steps{flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-map-inline{border:1px solid var(--dsw-alias-border-l2);border-left:3px solid var(--dsw-alias-state-business-primary);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base));border-radius:8px;margin:4px 0 8px;padding:8px 10px}.student-map-links{margin-top:8px}.student-mindmap-unit{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:8px;margin:8px 0;padding:10px}.student-mindmap-unit>summary{cursor:pointer;font-weight:500}.student-mindmap-branch{border-left:2px solid var(--dsw-alias-border-l2);flex-direction:column;gap:6px;margin:8px 0 0;padding:0 0 0 12px;list-style:none;display:flex}.student-mindmap-node{flex-direction:column;gap:4px;display:flex}.student-mindmap-concept{text-align:left;align-items:center;gap:6px;width:100%;display:flex}.student-mindmap-concept[aria-pressed=true]{background:var(--dsw-alias-bg-layer-2,transparent)}.student-mindmap-concept.student-level-mastered{box-shadow:inset 3px 0 0 var(--dsw-alias-state-success-primary)}.student-mindmap-concept.student-level-practising{box-shadow:inset 3px 0 0 var(--dsw-alias-state-business-primary)}.student-mindmap-concept.student-level-stalled{box-shadow:inset 3px 0 0 var(--dsw-alias-state-warn-primary)}.student-mindmap-concept.student-level-weak,.student-mindmap-concept.student-level-due{box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}.student-figure svg{width:100%;height:auto;max-height:220px;color:var(--dsw-alias-label-primary)}.student-figure circle,.student-figure rect,.student-figure line,.student-figure path,.student-figure polyline,.student-figure polygon{fill:none;stroke:currentColor;stroke-width:1.4px}.student-figure text{fill:currentColor;stroke:none}.student-figure .student-fill{fill:currentColor}.student-desk progress{width:100%;height:8px}.student-desk progress::-webkit-progress-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px}.student-desk progress::-webkit-progress-value{background:var(--dsw-alias-state-business-primary);border-radius:999px}.student-sheet-portal{font:13px/1.5 var(--dsw-font-family)}.student-sheet-portal button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);cursor:pointer;border-radius:8px;padding:8px}.student-sheet-portal .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-sheet-portal .student-quiet{background:0 0;border:0}.student-sheet-backdrop{z-index:1000;box-sizing:border-box;background:color-mix(in srgb, var(--dsw-alias-label-primary) 32%, transparent);justify-content:center;align-items:flex-start;padding:32px 16px;display:flex;position:fixed;inset:0;overflow:auto}.student-sheet-dialog{box-sizing:border-box;background:var(--dsw-alias-bg-base);border-radius:10px;flex-direction:column;gap:8px;width:min(720px,100%);padding:12px;display:flex}.student-sheet-toolbar{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.student-sheet-toolbar .student-muted{flex:200px;margin:0}.student-sheet-scroll{overflow:auto}.student-sheet{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);color:#333;font:14px/1.6 var(--dsw-font-family);background:#fff;border-radius:8px;flex-direction:column;gap:12px;padding:24px;display:flex}.student-url{user-select:text;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.student-sheet h2{text-align:center;margin:0;font-size:18px;font-weight:500}.student-sheet-meta{text-align:center;margin:0;font-size:12px}.student-sheet-item{break-inside:avoid;flex-direction:column;gap:8px;display:flex}.student-sheet-item>p{white-space:pre-wrap;margin:0}.student-sheet .student-figure svg{color:#333;width:100%;height:auto;max-height:260px}.student-sheet-lines{flex-direction:column;display:flex}.student-sheet-rule{border-bottom:1px solid #b9c0c7;height:22px}.student-sheet-box{border:1px dashed #b9c0c7;border-radius:4px;height:84px}@page{size:A4;margin:12mm 14mm}@media print{body>:not(.student-sheet-portal){display:none!important}.student-sheet-backdrop{background:0 0;padding:0;display:block;position:static;overflow:visible}.student-sheet-dialog{display:contents}.student-sheet-toolbar{display:none}.student-sheet-scroll{overflow:visible}.student-sheet{border:0;border-radius:0;width:100%;padding:0}.student-sheet-item{page-break-inside:avoid}}";
+		const tagId$1 = "@winterhuan/dsh-student/plugin.css";
+		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId$1) + "]") === null) {
 			const tag = document.createElement("style");
 			tag.dataset.plugin = "@winterhuan/dsh-student";
-			tag.dataset.pluginCss = tagId;
-			tag.textContent = css;
+			tag.dataset.pluginCss = tagId$1;
+			tag.textContent = css$1;
 			document.head.appendChild(tag);
 		}
 		//#endregion
@@ -61,6 +62,21 @@ window.__ModuleLoader__.load({
 		//#region lib/types/client/locales.js
 		const NS = "studentDesk";
 		const zh = {
+			"workbenchHelp": "选择孩子的工作区，学习记录和辅导对话一起打开",
+			"learnerWorkspace": "学习工作区",
+			"learningConversation": "学习对话",
+			"noLearningConversation": "还没有学习对话",
+			"newLearningConversation": "新建学习对话",
+			"openConversation": "打开完整对话",
+			"hideTutor": "收起辅导助手",
+			"showTutor": "显示辅导助手",
+			"tutorConversation": "辅导助手",
+			"createConversationError": "学习对话创建失败，请重试",
+			"createdLearningConversation": "学习对话已创建",
+			"openConversationError": "学习对话暂时无法打开，请重试",
+			"noLearnerWorkspace": "请先在左侧创建孩子的学习工作区，再回来开始学习",
+			"welcomeWorkbench": "从这里开始今天的学习",
+			"createLearningHelp": "新建学习对话后，家长先确认学生资料，再选择科目开始学习",
 			"chooseSchoolYear": "请选择学年",
 			"schoolYearHelp": "学年跨两个年份，例如 2026–2027；请按孩子实际就读学年选择",
 			"schoolAliasHelp": "可填写“二年级课程”等备注，无需官方代码或真实校名",
@@ -543,6 +559,21 @@ window.__ModuleLoader__.load({
 			"openmaicEffective": "当前使用"
 		};
 		const en = {
+			"workbenchHelp": "Choose the learner’s workspace to open study records and tutoring together",
+			"learnerWorkspace": "Learning workspace",
+			"learningConversation": "Learning conversation",
+			"noLearningConversation": "No learning conversations yet",
+			"newLearningConversation": "New learning conversation",
+			"openConversation": "Open full conversation",
+			"hideTutor": "Hide tutor",
+			"showTutor": "Show tutor",
+			"tutorConversation": "Tutor",
+			"createConversationError": "Cannot create the learning conversation. Try again",
+			"createdLearningConversation": "Learning conversation created",
+			"openConversationError": "Cannot open the learning conversation. Try again",
+			"noLearnerWorkspace": "Create the learner’s workspace in the sidebar, then return to start learning",
+			"welcomeWorkbench": "Start today’s learning here",
+			"createLearningHelp": "Create a learning conversation, confirm the learner’s profile, then choose a subject to begin",
 			"chooseSchoolYear": "Select a school year",
 			"schoolYearHelp": "A school year spans two years, for example 2026–2027. Choose the learner’s actual school year",
 			"schoolAliasHelp": "An optional label such as “Grade two course”; no official code or real school name is needed",
@@ -6346,6 +6377,305 @@ window.__ModuleLoader__.load({
 			] });
 		}
 		//#endregion
+		//#region \0dsh-css:/Users/winter/dsh-creative/plugins/dsh-student/packages/winterhuan/student/src/client/workbench.module.css.mjs
+		const css = "._6WiDoW_workbench{height:100%;min-height:0;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font:13px/1.5 var(--dsw-font-family);flex-direction:column;display:flex;container-type:inline-size}._6WiDoW_header{border-bottom:1px solid var(--dsw-alias-border-l2);flex-direction:column;gap:16px;padding:28px 24px 16px;display:flex}[data-platform=darwin] ._6WiDoW_header{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}._6WiDoW_heading h1{margin:0;font-size:20px;font-weight:500}._6WiDoW_heading p{color:var(--dsw-alias-label-secondary);margin:4px 0 0}._6WiDoW_controls{flex-wrap:wrap;align-items:flex-end;gap:12px;display:flex}._6WiDoW_controls label{flex-direction:column;gap:4px;min-width:0;max-width:240px;display:flex}._6WiDoW_controls select,._6WiDoW_controls button,._6WiDoW_empty button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);border-radius:8px;min-width:0;max-width:100%;padding:8px 12px}._6WiDoW_controls button,._6WiDoW_empty button{cursor:pointer}._6WiDoW_controls button:hover:enabled,._6WiDoW_empty button:hover:enabled{background:var(--dsw-alias-button-ghost-active-fill)}._6WiDoW_controls button[aria-pressed=true]{background:var(--dsw-alias-bg-layer-1)}._6WiDoW_controls :disabled{opacity:.5;cursor:default}._6WiDoW_body{flex:1;min-width:0;min-height:0;display:grid}._6WiDoW_withChat{grid-template-columns:minmax(0,1fr) minmax(320px,40%)}._6WiDoW_study{min-width:0;min-height:0;padding:0 12px}._6WiDoW_study .student-tabs{flex-wrap:wrap;display:flex}._6WiDoW_study .student-tabs button{flex:1}._6WiDoW_chat{border-left:1px solid var(--dsw-alias-border-l2);flex-direction:column;min-width:0;min-height:0;display:flex}._6WiDoW_chat h2{border-bottom:1px solid var(--dsw-alias-border-l2);margin:0;padding:12px 16px;font-size:13px;font-weight:500}._6WiDoW_empty{text-align:center;flex-direction:column;flex:1;justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}._6WiDoW_empty h2{margin:0;font-size:16px;font-weight:500}._6WiDoW_empty p{margin:0}._6WiDoW_spinner{border:2px solid var(--dsw-alias-border-l2);border-top-color:var(--dsw-alias-label-primary);border-radius:50%;width:24px;height:24px;animation:.8s linear infinite _6WiDoW_spin}@keyframes _6WiDoW_spin{to{transform:rotate(360deg)}}@container (width<=760px){._6WiDoW_header{padding-left:16px;padding-right:16px}._6WiDoW_withChat{grid-template-rows:minmax(360px,1fr) minmax(360px,1fr);grid-template-columns:minmax(0,1fr);overflow:auto}._6WiDoW_chat{border-left:0;border-top:1px solid var(--dsw-alias-border-l2)}}";
+		const tagId = "@winterhuan/dsh-student/workbench.module.css";
+		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
+			const tag = document.createElement("style");
+			tag.dataset.plugin = "@winterhuan/dsh-student";
+			tag.dataset.pluginCss = tagId;
+			tag.textContent = css;
+			document.head.appendChild(tag);
+		}
+		var workbench_module_css_default = {
+			"body": "_6WiDoW_body",
+			"chat": "_6WiDoW_chat",
+			"controls": "_6WiDoW_controls",
+			"empty": "_6WiDoW_empty",
+			"header": "_6WiDoW_header",
+			"heading": "_6WiDoW_heading",
+			"spin": "_6WiDoW_spin",
+			"spinner": "_6WiDoW_spinner",
+			"study": "_6WiDoW_study",
+			"withChat": "_6WiDoW_withChat",
+			"workbench": "_6WiDoW_workbench"
+		};
+		//#endregion
+		//#region lib/types/client/workbench.js
+		const sessionSlot = "student.workbench.session";
+		/** Create browser preferences independent of learning records.
+		* @returns a registration-owned store persisting workspace, conversation and assistant visibility.
+		*/
+		function createWorkbenchStore() {
+			return (0, _deepseek_ai_dsh_client_store.defineStore)({
+				init: () => ({
+					workspaceId: "",
+					sessionId: "",
+					chatVisible: true
+				}),
+				persist: "dsh.student.workbench.v1",
+				actions: {
+					selectWorkspace: (draft, id) => {
+						draft.workspaceId = id;
+						draft.sessionId = "";
+					},
+					selectSession: (draft, id) => {
+						draft.sessionId = id;
+					},
+					toggleChat: (draft) => {
+						draft.chatVisible = !draft.chatVisible;
+					}
+				}
+			});
+		}
+		/** Select live main Student conversations within one learner workspace.
+		* @param props - framework catalogs, preferences and native Session callbacks.
+		* @returns the global workbench with the selected Session's learning and chat panels.
+		*/
+		function Workbench({ useSessions, useWorkspaces, useStore, actions, retainSession, createSession, openSession, reportCreate, SessionProvider, renderSlot, t }) {
+			const catalog = useSessions((state) => state);
+			const workspaces = useWorkspaces((state) => state);
+			const preferences = useStore((state) => state);
+			const [creating, setCreating] = (0, react.useState)(false);
+			const remembered = workspaces.items.find((item) => item.sessionIds.some((id) => id === preferences.sessionId));
+			const workspace = workspaces.items.find((item) => item.workspaceId === preferences.workspaceId) ?? remembered ?? workspaces.items.find((item) => item.sessionIds.some((id) => catalog.byId[id]?.projectionValues?.agentPreset === "student")) ?? workspaces.items[0];
+			const sessions = (workspace?.sessionIds ?? []).flatMap((id) => {
+				const row = catalog.byId[id];
+				return row && catalog.ids.includes(id) && row.projectionValues?.agentPreset === "student" && !row.parentId && row.origin !== "subagent" && !workspaces.archivedSessionIds.includes(id) ? [row] : [];
+			}).sort((a, b) => b.updatedAt - a.updatedAt);
+			const sessionId = (sessions.find((item) => item.id === preferences.sessionId) ?? sessions[0])?.id;
+			const pending = catalog.phase !== "ready" || workspaces.phase !== "ready";
+			async function create() {
+				if (!workspace || creating) return;
+				setCreating(true);
+				try {
+					const id = await createSession(workspace.workspaceId);
+					actions.selectWorkspace(workspace.workspaceId);
+					actions.selectSession(id);
+					reportCreate(true);
+				} catch {
+					reportCreate(false);
+				} finally {
+					setCreating(false);
+				}
+			}
+			return (0, react_jsx_runtime.jsxs)("div", {
+				className: workbench_module_css_default.workbench,
+				children: [(0, react_jsx_runtime.jsxs)("header", {
+					className: workbench_module_css_default.header,
+					children: [(0, react_jsx_runtime.jsxs)("div", {
+						className: workbench_module_css_default.heading,
+						children: [(0, react_jsx_runtime.jsx)("h1", { children: t("title") }), (0, react_jsx_runtime.jsx)("p", { children: t("workbenchHelp") })]
+					}), (0, react_jsx_runtime.jsxs)("div", {
+						className: workbench_module_css_default.controls,
+						children: [
+							(0, react_jsx_runtime.jsxs)("label", { children: [t("learnerWorkspace"), (0, react_jsx_runtime.jsx)("select", {
+								value: workspace?.workspaceId ?? "",
+								disabled: pending || creating,
+								onChange: (event) => {
+									const next = workspaces.items.find((item) => item.workspaceId === event.target.value);
+									if (next) actions.selectWorkspace(next.workspaceId);
+								},
+								children: workspaces.items.map((item) => (0, react_jsx_runtime.jsx)("option", {
+									value: item.workspaceId,
+									children: item.title
+								}, item.workspaceId))
+							})] }),
+							(0, react_jsx_runtime.jsxs)("label", { children: [t("learningConversation"), (0, react_jsx_runtime.jsxs)("select", {
+								value: sessionId ?? "",
+								disabled: pending || creating || !sessions.length,
+								onChange: (event) => {
+									const next = sessions.find((item) => item.id === event.target.value);
+									if (next) actions.selectSession(next.id);
+								},
+								children: [!sessions.length && (0, react_jsx_runtime.jsx)("option", {
+									value: "",
+									children: t("noLearningConversation")
+								}), sessions.map((item) => (0, react_jsx_runtime.jsx)("option", {
+									value: item.id,
+									children: item.displayTitle
+								}, item.id))]
+							})] }),
+							(0, react_jsx_runtime.jsx)("button", {
+								type: "button",
+								disabled: pending || creating || !workspace,
+								onClick: () => {
+									create();
+								},
+								children: t("newLearningConversation")
+							}),
+							sessionId && (0, react_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => openSession(sessionId),
+								children: t("openConversation")
+							}),
+							sessionId && (0, react_jsx_runtime.jsx)("button", {
+								type: "button",
+								"aria-pressed": preferences.chatVisible,
+								onClick: actions.toggleChat,
+								children: t(preferences.chatVisible ? "hideTutor" : "showTutor")
+							})
+						]
+					})]
+				}), pending ? (0, react_jsx_runtime.jsx)(Loading, {}) : !workspace ? (0, react_jsx_runtime.jsx)("div", {
+					className: workbench_module_css_default.empty,
+					children: (0, react_jsx_runtime.jsx)("p", { children: t("noLearnerWorkspace") })
+				}) : !sessionId ? (0, react_jsx_runtime.jsxs)("div", {
+					className: workbench_module_css_default.empty,
+					children: [(0, react_jsx_runtime.jsx)("h2", { children: t("welcomeWorkbench") }), (0, react_jsx_runtime.jsx)("p", { children: t("createLearningHelp") })]
+				}) : (0, react_jsx_runtime.jsx)(SelectedSession, {
+					sessionId,
+					chatVisible: preferences.chatVisible,
+					retainSession,
+					SessionProvider,
+					renderSlot,
+					t
+				}, sessionId)]
+			});
+		}
+		function Loading() {
+			return (0, react_jsx_runtime.jsx)("div", {
+				className: workbench_module_css_default.empty,
+				"aria-busy": "true",
+				children: (0, react_jsx_runtime.jsx)("span", { className: workbench_module_css_default.spinner })
+			});
+		}
+		function SelectedSession({ sessionId, chatVisible, retainSession, SessionProvider, renderSlot, t }) {
+			const [binding, setBinding] = (0, react.useState)(null);
+			const [failed, setFailed] = (0, react.useState)(false);
+			const [retry, setRetry] = (0, react.useState)(0);
+			(0, react.useEffect)(() => {
+				let alive = true;
+				const reference = retainSession(sessionId);
+				reference.ready.then(() => {
+					if (alive) setBinding(reference);
+				}).catch(() => {
+					if (alive) setFailed(true);
+				});
+				return () => {
+					alive = false;
+					reference.release();
+				};
+			}, [
+				sessionId,
+				retainSession,
+				retry
+			]);
+			if (failed) return (0, react_jsx_runtime.jsxs)("div", {
+				className: workbench_module_css_default.empty,
+				children: [(0, react_jsx_runtime.jsx)("p", {
+					role: "alert",
+					children: t("openConversationError")
+				}), (0, react_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => {
+						setFailed(false);
+						setBinding(null);
+						setRetry((value) => value + 1);
+					},
+					children: t("reload")
+				})]
+			});
+			return binding ? (0, react_jsx_runtime.jsx)(SessionProvider, {
+				session: binding,
+				children: renderSlot(sessionSlot, { chatVisible })
+			}) : (0, react_jsx_runtime.jsx)(Loading, {});
+		}
+		function LearningSession({ sessionId, chatVisible, ask, useSession, useConversation, renderFactorySlot, t }) {
+			const session = useSession((state) => state);
+			const conversation = useConversation((state) => state);
+			const settling = session.openState === "loading" && !conversation.activeTargets.size;
+			return (0, react_jsx_runtime.jsxs)("div", {
+				className: `${workbench_module_css_default.body} ${chatVisible ? workbench_module_css_default.withChat : ""}`,
+				children: [(0, react_jsx_runtime.jsx)("div", {
+					className: workbench_module_css_default.study,
+					children: (0, react_jsx_runtime.jsx)(StudyDesk, {
+						sessionId,
+						visible: true,
+						running: !!session.running,
+						ask,
+						t
+					})
+				}), chatVisible && (0, react_jsx_runtime.jsxs)("aside", {
+					className: workbench_module_css_default.chat,
+					"aria-label": t("tutorConversation"),
+					children: [(0, react_jsx_runtime.jsx)("h2", { children: t("tutorConversation") }), renderFactorySlot("conversation.content", {
+						variant: "embedded",
+						phase: settling ? "settling" : "active",
+						hero: false
+					})]
+				})]
+			});
+		}
+		function PanelIcon({ size }) {
+			return (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.IconPlayOutlineRegular, { size });
+		}
+		function WorkbenchNotice({ useNotice, dismissNotice, t }) {
+			const notice = useNotice((value) => value);
+			return notice ? (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Toast, {
+				text: t(notice.success ? "createdLearningConversation" : "createConversationError"),
+				...notice.success ? { tone: "success" } : {},
+				onDone: dismissNotice
+			}, notice.sequence) : null;
+		}
+		/** Register the global entry and its strict Session child through native services.
+		* @param context - mounted Student client services.
+		*/
+		function registerWorkbench(context) {
+			const t = context.locale.bind(NS);
+			const notice = (0, _deepseek_ai_dsh_client_store.createSnapshotStore)(null);
+			let sequence = 0;
+			context.slots.inject("main", () => context.slots.register({
+				name: "main",
+				key: "student",
+				locale: NS,
+				store: createWorkbenchStore(),
+				children: { [sessionSlot]: {
+					kind: "single",
+					scope: "session"
+				} },
+				inject: () => ({
+					retainSession: (id) => context.sessions.retain(id, { source: "studentWorkbench" }),
+					createSession: (workspaceId) => context.sessions.create({
+						workspaceId,
+						agentPreset: "student"
+					}),
+					openSession: (id) => {
+						context.uiWorkspace.openSession(id);
+					},
+					reportCreate: (success) => {
+						notice.set({
+							success,
+							sequence: ++sequence
+						});
+					}
+				})
+			}, Workbench));
+			context.slots.inject(sessionSlot, () => context.slots.register({
+				name: sessionSlot,
+				locale: NS,
+				inject: (sessionId) => ({ ask: tutorBridge(context, sessionId, t("sessionError"), t("sendError")) })
+			}, LearningSession));
+			context.slots.inject("sidebar.panellist", () => context.slots.register({
+				name: "sidebar.panellist",
+				id: "student",
+				order: 6,
+				locale: NS,
+				label: () => t("title")
+			}, PanelIcon));
+			context.slots.inject("shell.overlay", () => context.slots.register({
+				name: "shell.overlay",
+				id: "student.workbench.notice",
+				locale: NS,
+				inject: () => ({
+					hooks: { notice },
+					dismissNotice: () => {
+						notice.set(null);
+					}
+				})
+			}, WorkbenchNotice));
+		}
+		//#endregion
 		//#region lib/types/client/sidebar.js
 		const name = "student";
 		const inject = [
@@ -6353,7 +6683,10 @@ window.__ModuleLoader__.load({
 			"sessions",
 			"uiSession",
 			"locale",
-			"sidebarRightTabs"
+			"sidebarRightTabs",
+			"workspaces",
+			"uiWorkspace",
+			"conversation"
 		];
 		/** Register the learning desk inside DSH's existing session sidebar. */
 		function apply(context) {
@@ -6362,6 +6695,7 @@ window.__ModuleLoader__.load({
 				en
 			}), "student: dictionaries");
 			const t = context.locale.bind(NS);
+			registerWorkbench(context);
 			context.effect(() => registerModeTab(context, {
 				id: "@winterhuan/dsh-student",
 				kind: "student",

@@ -22,7 +22,7 @@ const sessionSlot = 'student.workbench.session'
 declare module '@deepseek-ai/dsh-api-session-controller/client' {
   interface SessionReferenceSourceMap { studentWorkbench: true }
 }
-type WorkbenchState = { workspaceId: string; sessionId: string; chatVisible: boolean }
+type WorkbenchState = { workspaceId: string; sessionId: string; chatVisible: boolean; pane?: 'study' | 'chat' }
 
 /** Create browser preferences independent of learning records.
  * @returns a registration-owned store persisting workspace, conversation and assistant visibility.
@@ -34,7 +34,9 @@ export function createWorkbenchStore() {
     actions: {
       selectWorkspace: (draft, id: WorkspaceId) => { draft.workspaceId = id; draft.sessionId = '' },
       selectSession: (draft, id: SessionId) => { draft.sessionId = id },
-      toggleChat: draft => { draft.chatVisible = !draft.chatVisible },
+      toggleChat: draft => { draft.chatVisible = !draft.chatVisible; draft.pane = draft.chatVisible ? 'chat' : 'study' },
+      showTutor: draft => { draft.chatVisible = true; draft.pane = 'chat' },
+      selectPane: (draft, pane: 'study' | 'chat') => { draft.pane = pane; if (pane === 'chat') draft.chatVisible = true },
     },
   })
 }
@@ -48,7 +50,7 @@ type WorkbenchInjected = {
 type Notice = { success: boolean; sequence: number }
 type NoticeInjected = { hooks: { notice: ObservableSnapshot<Notice | null> }; dismissNotice: () => void }
 type SessionInjected = { ask: AskTutor } & StudentManualActions
-type SessionOwner = { chatVisible: boolean }
+type SessionOwner = { chatVisible: boolean; pane: 'study' | 'chat'; showTutor: () => void; selectPane: (pane: 'study' | 'chat') => void }
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface SlotMap {
     'student.workbench.session': { kind: 'single'; scope: 'session'; owner: SessionOwner }
@@ -94,20 +96,22 @@ export function Workbench({ useSessions, useWorkspaces, useStore, actions, retai
           const next = workspaces.items.find(item => item.workspaceId === event.target.value)
           if (next) actions.selectWorkspace(next.workspaceId)
         }}>{workspaces.items.map(item => <option key={item.workspaceId} value={item.workspaceId}>{item.title}</option>)}</select></label>
+        {sessionId && <button type="button" aria-pressed={preferences.chatVisible} onClick={actions.toggleChat}>{t(preferences.chatVisible ? 'hideTutor' : 'showTutor')}</button>}
+        <details className={css.conversationControls} open={!sessionId}><summary>{t('learningConversation')}{selected ? ` · ${selected.displayTitle}` : ''}</summary><div className={css.controls}>
         <label>{t('learningConversation')}<select value={sessionId ?? ''} disabled={pending || creating || !sessions.length} onChange={event => {
           const next = sessions.find(item => item.id === event.target.value)
           if (next) actions.selectSession(next.id)
         }}>{!sessions.length && <option value="">{t('noLearningConversation')}</option>}{sessions.map(item => <option key={item.id} value={item.id}>{item.displayTitle}</option>)}</select></label>
         <button type="button" disabled={pending || creating || !workspace} onClick={() => { void create() }}>{t('newLearningConversation')}</button>
         {sessionId && <button type="button" onClick={() => openSession(sessionId)}>{t('openConversation')}</button>}
-        {sessionId && <button type="button" aria-pressed={preferences.chatVisible} onClick={actions.toggleChat}>{t(preferences.chatVisible ? 'hideTutor' : 'showTutor')}</button>}
+        </div></details>
       </div>
     </header>
-    {pending ? <Loading /> : !workspace ? <div className={css.empty}><p>{t('noLearnerWorkspace')}</p></div> : !sessionId ? <div className={css.empty}><h2>{t('welcomeWorkbench')}</h2><p>{t('createLearningHelp')}</p></div> : <SelectedSession key={sessionId} sessionId={sessionId} chatVisible={preferences.chatVisible} retainSession={retainSession} SessionProvider={SessionProvider} renderSlot={renderSlot} t={t} />}
+    {pending ? <Loading /> : !workspace ? <div className={css.empty}><p>{t('noLearnerWorkspace')}</p></div> : !sessionId ? <div className={css.empty}><h2>{t('welcomeWorkbench')}</h2><p>{t('createLearningHelp')}</p></div> : <SelectedSession key={sessionId} sessionId={sessionId} chatVisible={preferences.chatVisible} pane={preferences.pane ?? 'study'} showTutor={actions.showTutor} selectPane={actions.selectPane} retainSession={retainSession} SessionProvider={SessionProvider} renderSlot={renderSlot} t={t} />}
   </div>
 }
 function Loading() { return <div className={css.empty} aria-busy="true"><span className={css.spinner} /></div> }
-function SelectedSession({ sessionId, chatVisible, retainSession, SessionProvider, renderSlot, t }: Pick<WorkbenchProps, 'retainSession' | 'SessionProvider' | 'renderSlot' | 't'> & { sessionId: SessionId; chatVisible: boolean }) {
+function SelectedSession({ sessionId, chatVisible, pane, showTutor, selectPane, retainSession, SessionProvider, renderSlot, t }: Pick<WorkbenchProps, 'retainSession' | 'SessionProvider' | 'renderSlot' | 't'> & SessionOwner & { sessionId: SessionId }) {
   const [binding, setBinding] = useState<SessionReference | null>(null)
   const [failed, setFailed] = useState(false)
   const [retry, setRetry] = useState(0)
@@ -118,14 +122,18 @@ function SelectedSession({ sessionId, chatVisible, retainSession, SessionProvide
     return () => { alive = false; reference.release() }
   }, [sessionId, retainSession, retry])
   if (failed) return <div className={css.empty}><p role="alert">{t('openConversationError')}</p><button type="button" onClick={() => { setFailed(false); setBinding(null); setRetry(value => value + 1) }}>{t('reload')}</button></div>
-  return binding ? <SessionProvider session={binding}>{renderSlot(sessionSlot, { chatVisible })}</SessionProvider> : <Loading />
+  return binding ? <SessionProvider session={binding}>{renderSlot(sessionSlot, { chatVisible, pane, showTutor, selectPane })}</SessionProvider> : <Loading />
 }
-function LearningSession({ sessionId, chatVisible, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, t }: SessionProps) {
+function LearningSession({ sessionId, chatVisible, pane, showTutor, selectPane, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, t }: SessionProps) {
   const session = useSession(state => state)
   const conversation = useConversation(state => state)
   const settling = session.openState === 'loading' && !conversation.activeTargets.size
-  return <div className={`${css.body} ${chatVisible ? css.withChat : ''}`}>
-    <div className={css.study}><StudyDesk sessionId={sessionId} visible={true} running={!!session.running} ask={ask} t={t} useResource={useResource} {...{ useStore, actions, saveSettings, saveWorksheet, inspectSubmission }} /></div>
+  return <div className={`${css.body} ${chatVisible ? css.withChat : ''}`} data-pane={pane}>
+    <nav className={css.panes} aria-label={t('workbenchPanels')}>
+      <button type="button" aria-pressed={pane === 'study'} onClick={() => selectPane('study')}>{t('learningContent')}</button>
+      <button type="button" aria-pressed={pane === 'chat'} onClick={() => selectPane('chat')}>{t('tutorConversation')}{session.running ? ` · ${t('busy')}` : ''}</button>
+    </nav>
+    <div className={css.study}><StudyDesk sessionId={sessionId} visible={true} running={!!session.running} ask={(text, photo) => { showTutor(); return ask(text, photo) }} t={t} useResource={useResource} {...{ useStore, actions, saveSettings, saveWorksheet, inspectSubmission }} /></div>
     {chatVisible && <aside className={css.chat} aria-label={t('tutorConversation')}><h2>{t('tutorConversation')}</h2>{renderFactorySlot('conversation.content', { variant: 'embedded', phase: settling ? 'settling' : 'active', hero: false })}</aside>}
   </div>
 }

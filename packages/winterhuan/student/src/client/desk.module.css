@@ -1,0 +1,20 @@
+.desk { container-type: inline-size; }
+.taskLayout { display: grid; gap: 20px; min-width: 0; }
+.taskPrompt { min-width: 0; }
+.answerArea { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 16px; border-radius: var(--dsw-radius-lg); background: var(--dsw-alias-interactive-bg-hover); }
+.answerArea form fieldset { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.answerArea form label, .answerArea form button[type='submit'] { grid-column: 1 / -1; }
+.taskLayout.withFigure { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.taskPrompt :global(.student-figure) { max-width: 320px; margin: 16px auto 0; }
+.desk .taskDetails { margin-top: 12px; padding: 12px 0 0; border-top: 0.5px solid var(--dsw-alias-border-l2); border-radius: 0; background: transparent; }
+.taskDetails > p { margin-top: 8px; }
+.statusHeading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.practiceActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.practiceActions button { flex: 1 1 160px; }
+@container (max-width: 460px) {
+  .desk .navigation { display: grid; width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); box-sizing: border-box; }
+}
+@container (max-width: 620px) {
+  .taskLayout.withFigure { grid-template-columns: minmax(0, 1fr); }
+  .taskPrompt :global(.student-figure svg) { max-height: 160px; }
+}

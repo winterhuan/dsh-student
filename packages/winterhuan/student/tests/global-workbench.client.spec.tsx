@@ -45,7 +45,7 @@ function fixture() {
   const createSession = vi.fn(async () => id('new'))
   const openSession = vi.fn()
   const reportCreate = vi.fn()
-  const renderSlot = vi.fn(() => <p>Learning and native chat</p>)
+  const renderSlot = vi.fn((_name: string, _owner: { chatVisible: boolean; pane: 'study' | 'chat'; showTutor: () => void; selectPane: (pane: 'study' | 'chat') => void }) => <p>Learning and native chat</p>)
   const props = {
     useSessions: (selector: (state: SessionListState) => unknown) => selector(catalog),
     useWorkspaces: (selector: (state: WorkspaceSnapshot) => unknown) => selector(workspaces),
@@ -60,6 +60,7 @@ function fixture() {
 it('filters unrelated and archived conversations and releases the selected reference on switch and close', async () => {
   const f = fixture()
   const view = render(<Workbench {...f.props} />)
+  fireEvent.click(screen.getByText('Learning conversation · first'))
   expect(screen.getAllByRole('option').map(option => option.textContent)).toEqual(['Learner', 'Other learner', 'first', 'second'])
   await act(async () => f.references[0]!.settle())
   expect(screen.getByTestId('session-area').getAttribute('data-session')).toBe('first')
@@ -71,7 +72,7 @@ it('filters unrelated and archived conversations and releases the selected refer
   await act(async () => f.references[1]!.settle())
   expect(screen.getByTestId('session-area').getAttribute('data-session')).toBe('second')
   fireEvent.click(screen.getByRole('button', { name: en.hideTutor }))
-  expect(f.renderSlot).toHaveBeenLastCalledWith('student.workbench.session', { chatVisible: false })
+  expect(f.renderSlot).toHaveBeenLastCalledWith('student.workbench.session', expect.objectContaining({ chatVisible: false, pane: 'study' }))
   view.unmount()
   expect(f.references[1]!.release).toHaveBeenCalledOnce()
 })
@@ -79,11 +80,26 @@ it('filters unrelated and archived conversations and releases the selected refer
 it('ignores the open result of a conversation that was replaced while pending', async () => {
   const f = fixture()
   render(<Workbench {...f.props} />)
+  fireEvent.click(screen.getByText('Learning conversation · first'))
   fireEvent.change(screen.getByLabelText(en.learningConversation), { target: { value: 'second' } })
   await act(async () => f.references[0]!.settle())
   expect(screen.queryByTestId('session-area')).toBeNull()
   await act(async () => f.references[1]!.settle())
   expect(screen.getByTestId('session-area').getAttribute('data-session')).toBe('second')
+})
+
+it('opens native tutoring from a quick action and switches panes without replacing the selected conversation', async () => {
+  const f = fixture()
+  render(<Workbench {...f.props} />)
+  await act(async () => f.references[0]!.settle())
+  fireEvent.click(screen.getByRole('button', { name: en.hideTutor }))
+  const owner = f.renderSlot.mock.calls.at(-1)![1]
+  await act(async () => owner.showTutor())
+  expect(f.renderSlot).toHaveBeenLastCalledWith('student.workbench.session', expect.objectContaining({ chatVisible: true, pane: 'chat' }))
+  await act(async () => owner.selectPane('study'))
+  expect(f.renderSlot).toHaveBeenLastCalledWith('student.workbench.session', expect.objectContaining({ chatVisible: true, pane: 'study' }))
+  expect(f.retainSession).toHaveBeenCalledOnce()
+  expect(f.references[0]!.release).not.toHaveBeenCalled()
 })
 
 it('creates a Student conversation in the explicitly selected workspace and keeps failures retryable', async () => {
@@ -142,8 +158,7 @@ it('displays a legacy learning profile with browsing controls and guards saves u
   expect(screen.getByText(en.legacyFilesHelp)).toBeTruthy()
   expect(screen.getByText(setup.profile.nickname, { exact: false })).toBeTruthy()
   expect((screen.getByRole('button', { name: en.startNow }) as HTMLButtonElement).disabled).toBe(true)
-  fireEvent.click(screen.getByRole('button', { name: en.parentView }))
-  fireEvent.click(screen.getByRole('button', { name: en.mistakes }))
+  fireEvent.click(screen.getByRole('button', { name: en.parentPractice, exact: false }))
   expect(screen.getByRole('button', { name: en.addMistake }).matches(':disabled')).toBe(true)
   fireEvent.click(screen.getByRole('button', { name: en.parentProfile }))
   expect((screen.getByRole('button', { name: en.profileConversation }) as HTMLButtonElement).disabled).toBe(true)
@@ -156,7 +171,7 @@ it('keeps the browsed subject when an unchanged active legacy block reloads', ()
   let current: StudentQueryResult | undefined = value
   function Desk() { return <StudyDesk {...useDraftFixture()} sessionId={id('first')} visible running={false} t={key => en[key]} ask={vi.fn()} useResource={() => ({ status: 'live', value: current, failure: undefined })} saveSettings={vi.fn()} saveWorksheet={vi.fn()} inspectSubmission={vi.fn()} /> }
   const rendered = render(<Desk />)
-  fireEvent.click(screen.getByRole('button', { name: en.parentView }))
+  fireEvent.click(screen.getByRole('button', { name: en.parentProgress }))
   fireEvent.click(screen.getByRole('button', { name: en.math }))
   current = undefined
   rendered.rerender(<Desk />)

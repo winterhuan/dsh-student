@@ -65,7 +65,7 @@ describe('worksheet HTML view', () => {
     expect(within(dialog).getAllByText((_, element) => element?.textContent === en.sheetNameDate)).toHaveLength(1)
     fireEvent.click(within(dialog).getByRole('button', { name: en.printSheet }))
     expect(print).toHaveBeenCalledTimes(1)
-    fireEvent.keyDown(window, { key: 'Escape' })
+    fireEvent.keyDown(within(dialog).getByRole('button', { name: en.printSheet }), { key: 'Escape' })
     expect(screen.queryByRole('dialog')).toBeNull()
     view.unmount()
     const again = render(<Probe />)

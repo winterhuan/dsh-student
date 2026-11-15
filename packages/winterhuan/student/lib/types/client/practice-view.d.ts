@@ -10,7 +10,7 @@ type Goal = {
     title: string;
 };
 /** Parent practice page: the mistake notebook, printed sheets, and due review. */
-export declare function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, epoch, t, useStore, actions }: DraftProps & {
+export declare function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, t, useStore, actions }: DraftProps & {
     study: Study;
     now: number;
     subject: Subject;
@@ -24,7 +24,6 @@ export declare function PracticeView({ study, now, subject, goals, mistakeStatus
     change: ChangeStudy;
     ask: AskTutor;
     onReview: (subject: Subject) => void;
-    epoch: number;
     t: Translate;
 }): import("react/jsx-runtime").JSX.Element;
 export {};

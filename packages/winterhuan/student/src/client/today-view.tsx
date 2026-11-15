@@ -9,6 +9,7 @@ import { MasteryDots } from './mastery-dots.tsx'
 import { feynmanPrompt, hintPromptFor, stuckPrompt } from './prompts.ts'
 import { assistKeys, day, focusKeys, intensityHelpKeys, intensityKeys, planKeys, reasonText, reminderKeys, type Activity, type Mode, type ScopeChoice, type Subject } from './display.ts'
 import type { Dashboard } from '../dashboard.ts'
+import css from './desk.module.css'
 
 type Study = NonNullable<Dashboard['study']>
 type Curriculum = NonNullable<Study['curriculum']>
@@ -74,20 +75,22 @@ export function TodayView({ study, subject, activity, setActivity, goal, clearGo
       {readyUrl && <div className="student-segments"><button type="button" className="student-primary" onClick={() => onOpenClassroom(readyUrl)}>{t('goToClass')}</button></div>}
       {ready && <p className="student-muted">{ready.title}</p>}
     </section>}
-    <section className="student-status"><p>{study.profile.nickname} · {t('todayStars')}: {study.todayStars}</p>
+    <section className="student-status"><div className={css.statusHeading}><p>{study.profile.nickname}{active ? ` · ${t(active.subject)} · ${t(active.mode)}` : ''}</p><p>{t('todayStars')}: {study.todayStars}</p></div>
+      <details open={!ownSession}><summary>{t('studyDetails')}</summary>
       <p>{t('due')}: {study.dueCount} · {t('weakPoints')}: {study.weakPoints.length}</p>
       {schoolUnit && <p>{t('schoolFrontier')}: {schoolUnit.name} · {t(progress?.posture === 'catch-up' ? 'catchUp' : 'keepUp')}{progress?.pace === 'review' ? ` · ${t('reviewWeek')}` : ''} · {t('homeProgress')}: {homeUnit?.name ?? t('homeNotStarted')}</p>}
       <p className="student-muted">{t(subject === 'chinese' ? 'chineseMethod' : subject === 'math' ? 'mathMethod' : 'englishMethod')}</p>
-      {active && <p>{t(active.subject)} · {t(active.mode)}</p>}
+      </details>
     </section>
     {ownSession && <>
-      <section className="student-focus"><p className="student-muted">{t('chatHelp')}</p>{task ? <Task useStore={useStore} actions={actions} draftScope={draftScope} key={`${task.sessionId}:${task.id}`} study={study} goalTitle={goalTitle(study, task.objectiveId)} goalText={objectiveMeta?.goal} days={objectiveMeta?.independentDays} disabled={disabled || running} t={t} act={act} tutor={tutor} /> : <p>{t('waiting')}</p>}
+      <section className="student-focus">{task ? <Task useStore={useStore} actions={actions} draftScope={draftScope} key={`${task.sessionId}:${task.id}`} study={study} goalTitle={goalTitle(study, task.objectiveId)} goalText={objectiveMeta?.goal} days={objectiveMeta?.independentDays} disabled={disabled || running} t={t} act={act} tutor={tutor} /> : <p>{t('waiting')}</p>}
+        <p className="student-muted">{t('chatHelp')}</p>
         {available && (running ? <p role="status">{t('tutorWorking')}</p>
-          : (!task || study.feedback || task.response !== undefined || task.hintLevel > 0) && <button disabled={disabled} onClick={() => { void tutor(study.feedback ? '明确请求下一题。先保留上一题的原回答和有效反馈，再准备下一题。' : '检查当前题的未完成答案或提示，不换题，不自动重发原回答。', true).catch(() => {}) }}>{t(!task ? 'prepareTask' : study.feedback ? 'nextTask' : task.response !== undefined ? 'retryFeedback' : 'retryHint')}</button>)}
+          : (!task || study.feedback || task.response !== undefined || task.hintLevel > 0) && <button className="student-primary" disabled={disabled} onClick={() => { void tutor(study.feedback ? '明确请求下一题。先保留上一题的原回答和有效反馈，再准备下一题。' : '检查当前题的未完成答案或提示，不换题，不自动重发原回答。', true).catch(() => {}) }}>{t(!task ? 'prepareTask' : study.feedback ? 'nextTask' : task.response !== undefined ? 'retryFeedback' : 'retryHint')}</button>)}
       </section>
       <form onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); void act({ action: 'stop', sessionId: active.id, reflection: String(form.get('reflection') ?? '') }) }}>
         <div className="student-segments">
-          <button disabled={disabled} type="submit" className="student-primary">{t('stop')}</button>
+          <button disabled={disabled} type="submit">{t('stop')}</button>
           {(explain || task?.objectiveId) && <button type="button" disabled={disabled || running} onClick={() => { void tutor(feynmanPrompt(explain?.title ?? goalTitle(study, task?.objectiveId)), true).catch(() => {}) }}>{t('feynmanTeach')}</button>}
         </div>
         <details className="student-fold">
@@ -248,16 +251,13 @@ function Task({ study, goalTitle: title, goalText, days, disabled, t, act, tutor
   const [checked, setChecked] = useState<Record<number, boolean>>({})
   const key = formDraftKey(`answer:${task.sessionId}:${task.id}`, draftScope)
   const answer = useStore(state => state.drafts[key]) ?? ''
-  return <><h3>{task.topic}</h3>{title && <p className="student-muted">{t('learningGoal')}: {title}</p>}
-    {goalText && <p>{t('objectiveGoal')}: {goalText}</p>}
-    {task.phase && <SimonSteps phase={task.phase} t={t} />}
+  return <><h3>{task.topic}</h3>
     <MasteryDots days={days} t={t} />
     {days === 3 && study.feedback?.id === task.id && <p className="student-result">{t('goalMastered')}</p>}
-    <p className="student-question">{task.prompt}</p>
-    {task.figure && <FigureView figure={task.figure} t={t} />}
-    {task.steps && task.steps.length > 0 && <ul className="student-steps" aria-label={t('microSteps')}>
-      {task.steps.map((step, index) => <li key={`${index}-${step}`}><label className="student-check"><input type="checkbox" checked={!!checked[index]} onChange={event => setChecked(previous => ({ ...previous, [index]: event.target.checked }))} />{step}</label></li>)}
-    </ul>}
+    <div className={`${css.taskLayout} ${task.figure ? css.withFigure : ''}`}>
+    <div className={css.taskPrompt}><p className="student-question">{task.prompt}</p>
+      {task.figure && <FigureView figure={task.figure} t={t} />}
+    </div><div className={css.answerArea}>
     {task.response !== undefined && <p>{t('answer')}: {task.response}</p>}
     {study.feedback ? <><p className="student-result">{t(study.feedback.result)}</p><p>{study.feedback.result === 'unassessed' ? t('assessmentPending') : study.feedback.feedback}</p>
       {study.feedback.result === 'correct' && <button type="button" disabled={disabled} onClick={() => { void tutor(feynmanPrompt(title), true).catch(() => {}) }}>{t('feynmanTeach')}</button>}
@@ -267,11 +267,20 @@ function Task({ study, goalTitle: title, goalText, days, disabled, t, act, tutor
       <button type="button" onClick={() => { void act({ action: 'hint', taskId: task.id }, true, hintPromptFor(task)) }}>{hintLabel}</button>
       <button type="button" onClick={() => { void act({ action: 'stuck', taskId: task.id }, true, stuckPrompt) }}>{t('wont')}</button>
     </fieldset> : <form onSubmit={event => { event.preventDefault(); void act({ action: 'answer', taskId: task.id, response: String(new FormData(event.currentTarget).get('answer') ?? '') }, true) }}>
-      <fieldset disabled={disabled}><label>{t('answer')}<input name="answer" aria-label={t('answer')} value={answer} onChange={event => { actions.setDraft(key, event.target.value) }} required maxLength={2000} /></label><button type="submit">{t('submit')}</button>
+      <fieldset disabled={disabled}><label>{t('answer')}<input name="answer" aria-label={t('answer')} value={answer} onChange={event => { actions.setDraft(key, event.target.value) }} required maxLength={2000} /></label><button className="student-primary" type="submit">{t('submit')}</button>
         <button type="button" onClick={() => { void act({ action: 'hint', taskId: task.id }, true, hintPromptFor(task)) }}>{hintLabel}</button>
         <button type="button" onClick={() => { void act({ action: 'stuck', taskId: task.id }, true, stuckPrompt) }}>{t('wont')}</button>
       </fieldset>
     </form>}
     {task.hintLevel > 0 && <p>{t('hinted')} · {t('hintLevel')} {task.hintLevel}</p>}
+    </div></div>
+    {(title || goalText || task.phase || task.steps?.length) && <details className={css.taskDetails} open={task.phase === 'demo' || task.phase === 'guide' || !!task.steps?.length}><summary>{t('taskDetails')}</summary>
+      {title && <p className="student-muted">{t('learningGoal')}: {title}</p>}
+      {goalText && <p>{t('objectiveGoal')}: {goalText}</p>}
+      {task.phase && <SimonSteps phase={task.phase} t={t} />}
+      {task.steps && task.steps.length > 0 && <ul className="student-steps" aria-label={t('microSteps')}>
+        {task.steps.map((step, index) => <li key={`${index}-${step}`}><label className="student-check"><input type="checkbox" checked={!!checked[index]} onChange={event => setChecked(previous => ({ ...previous, [index]: event.target.checked }))} />{step}</label></li>)}
+      </ul>}
+    </details>}
   </>
 }

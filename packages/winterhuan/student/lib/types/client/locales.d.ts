@@ -3,6 +3,14 @@ export declare const zh: {
     legacyFilesHelp: string;
     unavailableFilesHelp: string;
     workbenchHelp: string;
+    workbenchPanels: string;
+    learningContent: string;
+    liveUpdates: string;
+    updatePaused: string;
+    studyDetails: string;
+    taskDetails: string;
+    uploadHomework: string;
+    exerciseBankDetails: string;
     learnerWorkspace: string;
     learningConversation: string;
     noLearningConversation: string;
@@ -49,6 +57,8 @@ export declare const zh: {
     answerDateUnknown: string;
     pendingFacts: string;
     pendingFactsHelp: string;
+    organizeSavedResponses: string;
+    pendingFactsDetails: string;
     pendingFactsMore: string;
     verifySavedResponse: string;
     answerSourceUnknown: string;
@@ -479,7 +489,6 @@ export declare const zh: {
     focusListen: string;
     focusProject: string;
     focusReview: string;
-    parentView: string;
     otherWays: string;
     sync: string;
     syncHelp: string;

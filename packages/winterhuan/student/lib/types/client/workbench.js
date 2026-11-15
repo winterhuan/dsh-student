@@ -18,7 +18,10 @@ export function createWorkbenchStore() {
         actions: {
             selectWorkspace: (draft, id) => { draft.workspaceId = id; draft.sessionId = ''; },
             selectSession: (draft, id) => { draft.sessionId = id; },
-            toggleChat: draft => { draft.chatVisible = !draft.chatVisible; },
+            toggleChat: draft => { draft.chatVisible = !draft.chatVisible; draft.pane = draft.chatVisible ? 'chat' : 'study'; },
+            showTutor: draft => { draft.chatVisible = true; draft.pane = 'chat'; },
+            selectPane: (draft, pane) => { draft.pane = pane; if (pane === 'chat')
+                draft.chatVisible = true; },
         },
     });
 }
@@ -61,14 +64,14 @@ export function Workbench({ useSessions, useWorkspaces, useStore, actions, retai
                                             const next = workspaces.items.find(item => item.workspaceId === event.target.value);
                                             if (next)
                                                 actions.selectWorkspace(next.workspaceId);
-                                        }, children: workspaces.items.map(item => _jsx("option", { value: item.workspaceId, children: item.title }, item.workspaceId)) })] }), _jsxs("label", { children: [t('learningConversation'), _jsxs("select", { value: sessionId ?? '', disabled: pending || creating || !sessions.length, onChange: event => {
-                                            const next = sessions.find(item => item.id === event.target.value);
-                                            if (next)
-                                                actions.selectSession(next.id);
-                                        }, children: [!sessions.length && _jsx("option", { value: "", children: t('noLearningConversation') }), sessions.map(item => _jsx("option", { value: item.id, children: item.displayTitle }, item.id))] })] }), _jsx("button", { type: "button", disabled: pending || creating || !workspace, onClick: () => { void create(); }, children: t('newLearningConversation') }), sessionId && _jsx("button", { type: "button", onClick: () => openSession(sessionId), children: t('openConversation') }), sessionId && _jsx("button", { type: "button", "aria-pressed": preferences.chatVisible, onClick: actions.toggleChat, children: t(preferences.chatVisible ? 'hideTutor' : 'showTutor') })] })] }), pending ? _jsx(Loading, {}) : !workspace ? _jsx("div", { className: css.empty, children: _jsx("p", { children: t('noLearnerWorkspace') }) }) : !sessionId ? _jsxs("div", { className: css.empty, children: [_jsx("h2", { children: t('welcomeWorkbench') }), _jsx("p", { children: t('createLearningHelp') })] }) : _jsx(SelectedSession, { sessionId: sessionId, chatVisible: preferences.chatVisible, retainSession: retainSession, SessionProvider: SessionProvider, renderSlot: renderSlot, t: t }, sessionId)] });
+                                        }, children: workspaces.items.map(item => _jsx("option", { value: item.workspaceId, children: item.title }, item.workspaceId)) })] }), sessionId && _jsx("button", { type: "button", "aria-pressed": preferences.chatVisible, onClick: actions.toggleChat, children: t(preferences.chatVisible ? 'hideTutor' : 'showTutor') }), _jsxs("details", { className: css.conversationControls, open: !sessionId, children: [_jsxs("summary", { children: [t('learningConversation'), selected ? ` · ${selected.displayTitle}` : ''] }), _jsxs("div", { className: css.controls, children: [_jsxs("label", { children: [t('learningConversation'), _jsxs("select", { value: sessionId ?? '', disabled: pending || creating || !sessions.length, onChange: event => {
+                                                            const next = sessions.find(item => item.id === event.target.value);
+                                                            if (next)
+                                                                actions.selectSession(next.id);
+                                                        }, children: [!sessions.length && _jsx("option", { value: "", children: t('noLearningConversation') }), sessions.map(item => _jsx("option", { value: item.id, children: item.displayTitle }, item.id))] })] }), _jsx("button", { type: "button", disabled: pending || creating || !workspace, onClick: () => { void create(); }, children: t('newLearningConversation') }), sessionId && _jsx("button", { type: "button", onClick: () => openSession(sessionId), children: t('openConversation') })] })] })] })] }), pending ? _jsx(Loading, {}) : !workspace ? _jsx("div", { className: css.empty, children: _jsx("p", { children: t('noLearnerWorkspace') }) }) : !sessionId ? _jsxs("div", { className: css.empty, children: [_jsx("h2", { children: t('welcomeWorkbench') }), _jsx("p", { children: t('createLearningHelp') })] }) : _jsx(SelectedSession, { sessionId: sessionId, chatVisible: preferences.chatVisible, pane: preferences.pane ?? 'study', showTutor: actions.showTutor, selectPane: actions.selectPane, retainSession: retainSession, SessionProvider: SessionProvider, renderSlot: renderSlot, t: t }, sessionId)] });
 }
 function Loading() { return _jsx("div", { className: css.empty, "aria-busy": "true", children: _jsx("span", { className: css.spinner }) }); }
-function SelectedSession({ sessionId, chatVisible, retainSession, SessionProvider, renderSlot, t }) {
+function SelectedSession({ sessionId, chatVisible, pane, showTutor, selectPane, retainSession, SessionProvider, renderSlot, t }) {
     const [binding, setBinding] = useState(null);
     const [failed, setFailed] = useState(false);
     const [retry, setRetry] = useState(0);
@@ -82,13 +85,13 @@ function SelectedSession({ sessionId, chatVisible, retainSession, SessionProvide
     }, [sessionId, retainSession, retry]);
     if (failed)
         return _jsxs("div", { className: css.empty, children: [_jsx("p", { role: "alert", children: t('openConversationError') }), _jsx("button", { type: "button", onClick: () => { setFailed(false); setBinding(null); setRetry(value => value + 1); }, children: t('reload') })] });
-    return binding ? _jsx(SessionProvider, { session: binding, children: renderSlot(sessionSlot, { chatVisible }) }) : _jsx(Loading, {});
+    return binding ? _jsx(SessionProvider, { session: binding, children: renderSlot(sessionSlot, { chatVisible, pane, showTutor, selectPane }) }) : _jsx(Loading, {});
 }
-function LearningSession({ sessionId, chatVisible, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, t }) {
+function LearningSession({ sessionId, chatVisible, pane, showTutor, selectPane, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, t }) {
     const session = useSession(state => state);
     const conversation = useConversation(state => state);
     const settling = session.openState === 'loading' && !conversation.activeTargets.size;
-    return _jsxs("div", { className: `${css.body} ${chatVisible ? css.withChat : ''}`, children: [_jsx("div", { className: css.study, children: _jsx(StudyDesk, { sessionId: sessionId, visible: true, running: !!session.running, ask: ask, t: t, useResource: useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission }) }), chatVisible && _jsxs("aside", { className: css.chat, "aria-label": t('tutorConversation'), children: [_jsx("h2", { children: t('tutorConversation') }), renderFactorySlot('conversation.content', { variant: 'embedded', phase: settling ? 'settling' : 'active', hero: false })] })] });
+    return _jsxs("div", { className: `${css.body} ${chatVisible ? css.withChat : ''}`, "data-pane": pane, children: [_jsxs("nav", { className: css.panes, "aria-label": t('workbenchPanels'), children: [_jsx("button", { type: "button", "aria-pressed": pane === 'study', onClick: () => selectPane('study'), children: t('learningContent') }), _jsxs("button", { type: "button", "aria-pressed": pane === 'chat', onClick: () => selectPane('chat'), children: [t('tutorConversation'), session.running ? ` · ${t('busy')}` : ''] })] }), _jsx("div", { className: css.study, children: _jsx(StudyDesk, { sessionId: sessionId, visible: true, running: !!session.running, ask: (text, photo) => { showTutor(); return ask(text, photo); }, t: t, useResource: useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission }) }), chatVisible && _jsxs("aside", { className: css.chat, "aria-label": t('tutorConversation'), children: [_jsx("h2", { children: t('tutorConversation') }), renderFactorySlot('conversation.content', { variant: 'embedded', phase: settling ? 'settling' : 'active', hero: false })] })] });
 }
 function PanelIcon({ size }) { return _jsx(IconPlayOutlineRegular, { size: size }); }
 function WorkbenchNotice({ useNotice, dismissNotice, t }) {

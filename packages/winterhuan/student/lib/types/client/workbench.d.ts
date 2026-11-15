@@ -16,6 +16,7 @@ type WorkbenchState = {
     workspaceId: string;
     sessionId: string;
     chatVisible: boolean;
+    pane?: 'study' | 'chat';
 };
 /** Create browser preferences independent of learning records.
  * @returns a registration-owned store persisting workspace, conversation and assistant visibility.
@@ -24,6 +25,8 @@ export declare function createWorkbenchStore(): import("@deepseek-ai/dsh-client-
     selectWorkspace: (draft: WorkbenchState, id: WorkspaceId) => void;
     selectSession: (draft: WorkbenchState, id: SessionId) => void;
     toggleChat: (draft: WorkbenchState) => void;
+    showTutor: (draft: WorkbenchState) => void;
+    selectPane: (draft: WorkbenchState, pane: "study" | "chat") => void;
 }>;
 type WorkbenchInjected = {
     retainSession: (id: SessionId) => SessionReference;
@@ -33,6 +36,9 @@ type WorkbenchInjected = {
 };
 type SessionOwner = {
     chatVisible: boolean;
+    pane: 'study' | 'chat';
+    showTutor: () => void;
+    selectPane: (pane: 'study' | 'chat') => void;
 };
 declare module '@deepseek-ai/dsh-client-ui-slots' {
     interface SlotMap {

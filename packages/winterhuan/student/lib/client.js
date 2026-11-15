@@ -13,13 +13,13 @@ window.__ModuleLoader__.load({
 		require("@deepseek-ai/cordis");
 		let react_dom = require("react-dom");
 		//#region \0dsh-global-css:/Users/winter/dsh-creative/plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
-		const css$1 = ".student-desk{box-sizing:border-box;height:100%;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font:13px/1.5 var(--dsw-font-family);flex-direction:column;gap:12px;padding:0 12px 20px;display:flex;overflow:auto}.student-top{z-index:2;background:var(--dsw-alias-bg-base);border-bottom:1px solid var(--dsw-alias-border-l2);flex-direction:column;gap:8px;margin:0 -12px;padding:10px 12px 8px;display:flex;position:sticky;top:0}.student-toolbar{align-items:center;gap:8px;display:flex}.student-tabs{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;display:grid}.student-subjects{background:var(--dsw-alias-bg-layer-1);border-radius:8px;flex:1;gap:2px;padding:2px;display:flex}.student-subjects button{background:0 0;border:0;flex:1}.student-quiet{background:0 0;border:0;flex:none;padding:6px 8px}.student-desk section{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);border-radius:10px;flex-direction:column;gap:8px;padding:12px;display:flex}.student-desk details{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:10px;padding:10px 12px}.student-desk h3{margin:0;font-size:13px;font-weight:500}.student-desk p{overflow-wrap:anywhere;white-space:pre-wrap;margin:0}.student-desk form,.student-desk fieldset,.student-desk label{flex-direction:column;gap:8px;min-width:0;display:flex}.student-desk fieldset{border:0;margin:0;padding:0}.student-desk button,.student-desk input,.student-desk select,.student-desk textarea{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);box-sizing:border-box;border-radius:8px;min-width:0;max-width:100%;padding:8px}.student-desk button{cursor:pointer}.student-desk .student-subjects button,.student-desk .student-quiet{background:0 0;border:0}.student-desk button:hover:enabled:not([aria-pressed=true]):not(.student-primary){background:var(--dsw-alias-button-ghost-active-fill)}.student-desk .student-tabs button[aria-pressed=true],.student-desk .student-views button[aria-pressed=true],.student-desk .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-desk .student-tabs button[aria-pressed=true]:hover:enabled,.student-desk .student-views button[aria-pressed=true]:hover:enabled,.student-desk .student-primary:hover:enabled{background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-foreground)}.student-desk .student-subjects button[aria-pressed=true],.student-desk .student-segments button[aria-pressed=true],.student-desk .student-segments button[aria-checked=true]{background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);box-shadow:inset 0 0 0 1px var(--dsw-alias-state-business-primary)}.student-desk :disabled{opacity:.6;cursor:default}.student-desk :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.student-desk textarea{resize:vertical;min-height:72px}.student-desk .student-check{flex-direction:row;align-items:flex-start}.student-desk .student-check input{flex:none}.student-desk img{object-fit:contain;background:var(--dsw-alias-bg-base);border-radius:8px;width:100%;max-height:240px}.student-status{gap:6px}.student-desk .student-question{background:var(--dsw-alias-bg-base);border-radius:8px;padding:12px;font-size:16px;line-height:1.45}.student-desk summary{cursor:pointer;overflow-wrap:anywhere;font-weight:500}.student-desk .student-pages{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-plan{border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-1))}.student-desk details>details,.student-desk details>div,.student-desk details>p{margin-top:8px}.student-muted{color:var(--dsw-alias-label-secondary)}.student-unit{border-top:1px solid var(--dsw-alias-border-l2);padding-top:8px}.student-choices{flex-direction:column;gap:8px;display:flex}.student-choices button{text-align:left;width:100%;padding:12px 14px;font-size:15px}.student-result{font-size:15px;font-weight:500}.student-scope{flex-wrap:wrap;align-items:flex-end;gap:8px;display:flex}.student-scope label{flex:120px}.student-segments{flex-wrap:wrap;gap:6px;display:flex}.student-desk .student-grade{border-top:1px solid var(--dsw-alias-border-l2);padding:8px 0}.student-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px;height:8px;display:flex;overflow:hidden}.student-bar span{height:100%;display:block}.student-level-mastered,.student-fill-mastered{background:var(--dsw-alias-state-success-primary)}.student-level-practising,.student-fill-practising{background:var(--dsw-alias-state-business-primary)}.student-level-stalled,.student-fill-stalled{background:var(--dsw-alias-state-warn-primary)}.student-level-weak,.student-fill-weak{background:var(--dsw-alias-state-error-primary)}.student-level-due,.student-fill-due{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, var(--dsw-alias-state-warn-primary))}.student-level-untouched,.student-fill-untouched{background:var(--dsw-alias-label-tertiary)}.student-legend{flex-wrap:wrap;gap:8px 12px;display:flex}.student-dot{vertical-align:middle;border-radius:50%;width:8px;height:8px;margin-right:4px;display:inline-block}.student-chips{flex-direction:column;gap:6px;display:flex}.student-chip{text-align:left;border-radius:8px;align-items:center;gap:6px;width:100%;padding:8px 10px;display:flex}.student-views{grid-template-columns:1fr 1fr;gap:6px;display:grid}.student-pair{grid-template-columns:1fr 1fr;gap:8px;display:grid}.student-mastery{align-items:center;gap:6px;display:flex}.student-mastery span{border-radius:50%;width:10px;height:10px}.student-simon{flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-simon li{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 8px}.student-simon-done{opacity:.7}.student-simon-current{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, var(--dsw-alias-bg-base));font-weight:500}.student-steps{flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-map-inline{border:1px solid var(--dsw-alias-border-l2);border-left:3px solid var(--dsw-alias-state-business-primary);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base));border-radius:8px;margin:4px 0 8px;padding:8px 10px}.student-map-links{margin-top:8px}.student-mindmap-unit{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:8px;margin:8px 0;padding:10px}.student-mindmap-unit>summary{cursor:pointer;font-weight:500}.student-mindmap-branch{border-left:2px solid var(--dsw-alias-border-l2);flex-direction:column;gap:6px;margin:8px 0 0;padding:0 0 0 12px;list-style:none;display:flex}.student-mindmap-node{flex-direction:column;gap:4px;display:flex}.student-mindmap-concept{text-align:left;align-items:center;gap:6px;width:100%;display:flex}.student-mindmap-concept[aria-pressed=true]{background:var(--dsw-alias-bg-layer-2,transparent)}.student-mindmap-concept.student-level-mastered{box-shadow:inset 3px 0 0 var(--dsw-alias-state-success-primary)}.student-mindmap-concept.student-level-practising{box-shadow:inset 3px 0 0 var(--dsw-alias-state-business-primary)}.student-mindmap-concept.student-level-stalled{box-shadow:inset 3px 0 0 var(--dsw-alias-state-warn-primary)}.student-mindmap-concept.student-level-weak,.student-mindmap-concept.student-level-due{box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}.student-figure svg{width:100%;height:auto;max-height:220px;color:var(--dsw-alias-label-primary)}.student-figure circle,.student-figure rect,.student-figure line,.student-figure path,.student-figure polyline,.student-figure polygon{fill:none;stroke:currentColor;stroke-width:1.4px}.student-figure text{fill:currentColor;stroke:none}.student-figure .student-fill{fill:currentColor}.student-desk progress{width:100%;height:8px}.student-desk progress::-webkit-progress-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px}.student-desk progress::-webkit-progress-value{background:var(--dsw-alias-state-business-primary);border-radius:999px}.student-sheet-portal{font:13px/1.5 var(--dsw-font-family)}.student-sheet-portal button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);cursor:pointer;border-radius:8px;padding:8px}.student-sheet-portal .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-foreground);border-color:#0000}.student-sheet-portal .student-quiet{background:0 0;border:0}.student-sheet-backdrop{z-index:1000;box-sizing:border-box;background:color-mix(in srgb, var(--dsw-alias-label-primary) 32%, transparent);justify-content:center;align-items:flex-start;padding:32px 16px;display:flex;position:fixed;inset:0;overflow:auto}.student-sheet-dialog{box-sizing:border-box;background:var(--dsw-alias-bg-base);border-radius:10px;flex-direction:column;gap:8px;width:min(720px,100%);padding:12px;display:flex}.student-sheet-toolbar{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.student-sheet-toolbar .student-muted{flex:200px;margin:0}.student-sheet-scroll{overflow:auto}.student-sheet{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);color:#333;font:14px/1.6 var(--dsw-font-family);background:#fff;border-radius:8px;flex-direction:column;gap:12px;padding:24px;display:flex}.student-url{user-select:text;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.student-sheet h2{text-align:center;margin:0;font-size:18px;font-weight:500}.student-sheet-meta{text-align:center;margin:0;font-size:12px}.student-sheet-item{break-inside:avoid;flex-direction:column;gap:8px;display:flex}.student-sheet-item>p{white-space:pre-wrap;margin:0}.student-sheet .student-figure svg{color:#333;width:100%;height:auto;max-height:260px}.student-sheet-lines{flex-direction:column;display:flex}.student-sheet-rule{border-bottom:1px solid #b9c0c7;height:22px}.student-sheet-box{border:1px dashed #b9c0c7;border-radius:4px;height:84px}@page{size:A4;margin:12mm 14mm}@media print{body>:not(.student-sheet-portal){display:none!important}.student-sheet-backdrop{background:0 0;padding:0;display:block;position:static;overflow:visible}.student-sheet-dialog{display:contents}.student-sheet-toolbar{display:none}.student-sheet-scroll{overflow:visible}.student-sheet{border:0;border-radius:0;width:100%;padding:0}.student-sheet-item{page-break-inside:avoid}}";
-		const tagId$1 = "@winterhuan/dsh-student/plugin.css";
-		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId$1) + "]") === null) {
+		const css$2 = ".student-desk{box-sizing:border-box;min-width:0;height:100%;min-height:0;color:var(--dsw-alias-label-primary);background:color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));font:14px/22px var(--dsw-font-family);flex-direction:column;gap:14px;padding:12px 12px 28px;display:flex;overflow:auto}.student-top{z-index:2;background:color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));flex-direction:column;gap:8px;padding:0 0 12px;display:flex;position:sticky;top:-12px}.student-toolbar{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-toolbar>.student-muted{border-radius:var(--dsw-radius-sm);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);margin-left:auto;padding:2px 8px;font-size:12px;line-height:20px}.student-tabs{border-radius:var(--dsw-radius-lg);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);max-width:100%;box-shadow:var(--dsw-elevation-soft);backdrop-filter:blur(24px)saturate(160%);flex-wrap:wrap;align-self:flex-start;gap:2px;padding:4px;display:inline-flex}.student-subjects{border-radius:var(--dsw-radius-md);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);box-shadow:var(--dsw-elevation-soft);backdrop-filter:blur(24px)saturate(160%);gap:2px;padding:4px;display:inline-flex}.student-subjects button{background:0 0;border:0}.student-quiet{background:0 0;border:0;flex:none;padding:6px 8px}.student-desk section{border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-bg-layer-2);box-shadow:var(--dsw-elevation-soft);flex-direction:column;gap:8px;padding:18px 20px;display:flex}.student-desk details{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);padding:12px 14px}.student-desk>details{border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-bg-layer-2);box-shadow:var(--dsw-elevation-soft);padding:14px 18px}.student-desk section section{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);box-shadow:none;padding:12px 14px}.student-desk h3{margin:0;font-size:14px;font-weight:500;line-height:22px}.student-desk p{overflow-wrap:anywhere;white-space:pre-wrap;margin:0}.student-desk form,.student-desk fieldset,.student-desk label{flex-direction:column;gap:8px;min-width:0;display:flex}.student-desk fieldset{border:0;margin:0;padding:0}.student-desk button,.student-desk input,.student-desk select,.student-desk textarea{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);box-sizing:border-box;min-width:0;max-width:100%;padding:8px 12px}.student-desk button{cursor:pointer;justify-content:center;align-items:center;gap:6px;min-height:36px;font-size:13px;line-height:20px;transition:background .15s,border-color .15s;display:inline-flex}.student-desk input,.student-desk select,.student-desk textarea{background:var(--dsw-alias-interactive-bg-hover);border-color:#0000}.student-desk .student-tabs button{min-height:32px;color:var(--dsw-alias-label-secondary);white-space:nowrap;background:0 0;border:0;padding:6px 13px}.student-desk .student-subjects button{border-radius:var(--dsw-radius-sm);min-height:28px;color:var(--dsw-alias-label-secondary);padding:4px 12px;font-size:12px}.student-desk .student-subjects button,.student-desk .student-quiet{background:0 0;border:0}.student-desk button:hover:enabled:not([aria-pressed=true]):not(.student-primary){background:var(--dsw-alias-interactive-bg-hover)}.student-desk .student-tabs button[aria-pressed=true],.student-desk .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-inverted);border-color:#0000}.student-desk .student-tabs button[aria-pressed=true]:hover:enabled,.student-desk .student-primary:hover:enabled{background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-inverted)}.student-desk .student-subjects button[aria-pressed=true],.student-desk .student-segments button[aria-pressed=true],.student-desk .student-segments button[aria-checked=true]{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);box-shadow:var(--dsw-elevation-soft)}.student-desk :disabled{opacity:.6;cursor:default}.student-desk :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.student-desk textarea{resize:vertical;min-height:72px}.student-desk .student-check{flex-direction:row;align-items:flex-start}.student-desk .student-check input{flex:none}.student-desk img{object-fit:contain;background:var(--dsw-alias-bg-base);border-radius:8px;width:100%;max-height:240px}.student-desk .student-status{padding:12px 16px;font-size:13px;line-height:20px}.student-desk .student-status details{border-top:.5px solid var(--dsw-alias-border-l2);background:0 0;border-radius:0;padding:8px 0 0}.student-desk .student-focus>h3{font-size:20px;font-weight:400;line-height:28px}.student-desk .student-question{font-size:16px;line-height:1.65}.student-desk summary{cursor:pointer;overflow-wrap:anywhere;font-weight:500}.student-desk .student-pages{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-plan{border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-1))}.student-desk details>details,.student-desk details>div,.student-desk details>p{margin-top:8px}.student-muted{color:var(--dsw-alias-label-secondary)}.student-unit{border-top:1px solid var(--dsw-alias-border-l2);padding-top:8px}.student-choices{flex-direction:column;gap:8px;display:flex}.student-choices button{text-align:left;width:100%;padding:12px 14px;font-size:15px}.student-result{font-size:15px;font-weight:500}.student-scope{flex-wrap:wrap;align-items:flex-end;gap:8px;display:flex}.student-scope label{flex:120px}.student-segments{flex-wrap:wrap;gap:6px;display:flex}.student-desk .student-grade{border-top:1px solid var(--dsw-alias-border-l2);padding:8px 0}.student-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px;height:8px;display:flex;overflow:hidden}.student-bar span{height:100%;display:block}.student-level-mastered,.student-fill-mastered{background:var(--dsw-alias-state-success-primary)}.student-level-practising,.student-fill-practising{background:var(--dsw-alias-state-business-primary)}.student-level-stalled,.student-fill-stalled{background:var(--dsw-alias-state-warn-primary)}.student-level-weak,.student-fill-weak{background:var(--dsw-alias-state-error-primary)}.student-level-due,.student-fill-due{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, var(--dsw-alias-state-warn-primary))}.student-level-untouched,.student-fill-untouched{background:var(--dsw-alias-label-tertiary)}.student-legend{flex-wrap:wrap;gap:8px 12px;display:flex}.student-dot{vertical-align:middle;border-radius:50%;width:8px;height:8px;margin-right:4px;display:inline-block}.student-chips{flex-direction:column;gap:6px;display:flex}.student-chip{text-align:left;border-radius:8px;align-items:center;gap:6px;width:100%;padding:8px 10px;display:flex}.student-pair{grid-template-columns:1fr 1fr;gap:8px;display:grid}.student-mastery{align-items:center;gap:6px;display:flex}.student-mastery span{border-radius:50%;width:10px;height:10px}.student-simon{flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-simon li{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 8px}.student-simon-done{opacity:.7}.student-simon-current{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, var(--dsw-alias-bg-base));font-weight:500}.student-steps{flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-map-inline{border:1px solid var(--dsw-alias-border-l2);border-left:3px solid var(--dsw-alias-state-business-primary);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base));border-radius:8px;margin:4px 0 8px;padding:8px 10px}.student-map-links{margin-top:8px}.student-mindmap-unit{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:8px;margin:8px 0;padding:10px}.student-mindmap-unit>summary{cursor:pointer;font-weight:500}.student-mindmap-branch{border-left:2px solid var(--dsw-alias-border-l2);flex-direction:column;gap:6px;margin:8px 0 0;padding:0 0 0 12px;list-style:none;display:flex}.student-mindmap-node{flex-direction:column;gap:4px;display:flex}.student-mindmap-concept{text-align:left;align-items:center;gap:6px;width:100%;display:flex}.student-mindmap-concept[aria-pressed=true]{background:var(--dsw-alias-bg-layer-2,transparent)}.student-mindmap-concept.student-level-mastered{box-shadow:inset 3px 0 0 var(--dsw-alias-state-success-primary)}.student-mindmap-concept.student-level-practising{box-shadow:inset 3px 0 0 var(--dsw-alias-state-business-primary)}.student-mindmap-concept.student-level-stalled{box-shadow:inset 3px 0 0 var(--dsw-alias-state-warn-primary)}.student-mindmap-concept.student-level-weak,.student-mindmap-concept.student-level-due{box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}.student-figure svg{width:100%;height:auto;max-height:220px;color:var(--dsw-alias-label-primary)}.student-figure circle,.student-figure rect,.student-figure line,.student-figure path,.student-figure polyline,.student-figure polygon{fill:none;stroke:currentColor;stroke-width:1.4px}.student-figure text{fill:currentColor;stroke:none}.student-figure .student-fill{fill:currentColor}.student-desk progress{width:100%;height:8px}.student-desk progress::-webkit-progress-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px}.student-desk progress::-webkit-progress-value{background:var(--dsw-alias-state-business-primary);border-radius:999px}.student-sheet-portal{font:13px/20px var(--dsw-font-family)}.student-sheet-portal button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);cursor:pointer;padding:8px 14px}.student-sheet-portal .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-inverted);border-color:#0000}.student-sheet-portal .student-quiet{background:0 0;border:0}.student-sheet-backdrop{z-index:1000;box-sizing:border-box;background:color-mix(in srgb, var(--dsw-alias-label-primary) 32%, transparent);justify-content:center;align-items:flex-start;padding:32px 16px;display:flex;position:fixed;inset:0;overflow:auto}.student-sheet-dialog{box-sizing:border-box;border-radius:var(--dsw-radius-panel);background:var(--dsw-alias-bg-layer-2);width:min(720px,100%);box-shadow:var(--dsw-elevation-prominent);flex-direction:column;gap:8px;padding:16px;display:flex}.student-sheet-toolbar{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.student-sheet-toolbar .student-muted{flex:200px;margin:0}.student-sheet-scroll{overflow:auto}.student-sheet{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);color:#333;font:14px/1.6 var(--dsw-font-family);background:#fff;border-radius:8px;flex-direction:column;gap:12px;padding:24px;display:flex}.student-url{user-select:text;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.student-sheet h2{text-align:center;margin:0;font-size:18px;font-weight:500}.student-sheet-meta{text-align:center;margin:0;font-size:12px}.student-sheet-item{break-inside:avoid;flex-direction:column;gap:8px;display:flex}.student-sheet-item>p{white-space:pre-wrap;margin:0}.student-sheet .student-figure svg{color:#333;width:100%;height:auto;max-height:260px}.student-sheet-lines{flex-direction:column;display:flex}.student-sheet-rule{border-bottom:1px solid #b9c0c7;height:22px}.student-sheet-box{border:1px dashed #b9c0c7;border-radius:4px;height:84px}@page{size:A4;margin:12mm 14mm}@media print{body>:not(.student-sheet-portal){display:none!important}.student-sheet-backdrop{background:0 0;padding:0;display:block;position:static;overflow:visible}.student-sheet-dialog{display:contents}.student-sheet-toolbar{display:none}.student-sheet-scroll{overflow:visible}.student-sheet{border:0;border-radius:0;width:100%;padding:0}.student-sheet-item{page-break-inside:avoid}}";
+		const tagId$2 = "@winterhuan/dsh-student/plugin.css";
+		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId$2) + "]") === null) {
 			const tag = document.createElement("style");
 			tag.dataset.plugin = "@winterhuan/dsh-student";
-			tag.dataset.pluginCss = tagId$1;
-			tag.textContent = css$1;
+			tag.dataset.pluginCss = tagId$2;
+			tag.textContent = css$2;
 			document.head.appendChild(tag);
 		}
 		//#endregion
@@ -68,6 +68,14 @@ window.__ModuleLoader__.load({
 			"legacyFilesHelp": "正在查看旧版学习档案，原记录保持不变；继续保存前，请在辅导对话中让助手检查迁移方案，再由家长确认",
 			"unavailableFilesHelp": "当前学期档案尚无法完整读取，请在辅导对话中检查档案状态并修复",
 			"workbenchHelp": "选择孩子的工作区，学习记录和辅导对话一起打开",
+			"workbenchPanels": "学习与辅导",
+			"learningContent": "学习内容",
+			"liveUpdates": "自动更新",
+			"updatePaused": "更新已暂停",
+			"studyDetails": "学习情况与方法",
+			"taskDetails": "本题目标与学习步骤",
+			"uploadHomework": "上传作业或错题",
+			"exerciseBankDetails": "查看习题库",
 			"learnerWorkspace": "学习工作区",
 			"learningConversation": "学习对话",
 			"noLearningConversation": "还没有学习对话",
@@ -104,7 +112,7 @@ window.__ModuleLoader__.load({
 			"switchLearning": "切换学习",
 			"setupConversation": "通过对话设置学习档案",
 			"setupIntent": "请和家长核对昵称、地区、年级、学期、学年与学制，确认后保存新的学期学习档案。基础学习不必等待校内课程配置。",
-			"parentPractice": "待处理与练习记录",
+			"parentPractice": "练习与批改",
 			"parentProgress": "知识与进度",
 			"parentProfile": "档案与总结",
 			"manualForms": "可选：手动填写并保存",
@@ -112,8 +120,10 @@ window.__ModuleLoader__.load({
 			"intentAdmitted": "请求已交给对话；档案保存以核验结果为准",
 			"switchBlock": "切换学习，保留未完成回答",
 			"answerDateUnknown": "作答日期待核对",
-			"pendingFacts": "作答信息待核对",
-			"pendingFactsHelp": "这些记录的回答和批改已保留，但日期、帮助或题目依据等信息不完整。可以先保留未知，不影响继续学习；需要时让助手核对原记录，或在「待处理与练习记录」中修订纸上记录",
+			"pendingFacts": "作答记录资料（可选）",
+			"pendingFactsHelp": "部分记录缺少日期、帮助或题目依据等信息。保留未知即可继续学习，无需逐条补齐；需要时可让助手按学习段或练习卷检查已有证据",
+			"organizeSavedResponses": "让助手整理记录",
+			"pendingFactsDetails": "按题查看缺失信息",
 			"pendingFactsMore": "这里显示前 20 条，其余记录可让助手在对话中查看",
 			"verifySavedResponse": "让助手核对",
 			"answerSourceUnknown": "作答来源待核对",
@@ -544,7 +554,6 @@ window.__ModuleLoader__.load({
 			"focusListen": "听读一小段",
 			"focusProject": "做一个小情景任务",
 			"focusReview": "复习本单元已错内容",
-			"parentView": "家长",
 			"otherWays": "换一种方式",
 			"sync": "同步学习",
 			"syncHelp": "按已确认的学校进度练习；还没确认教材时，作为通用基础练习并说明来源",
@@ -615,6 +624,14 @@ window.__ModuleLoader__.load({
 			"legacyFilesHelp": "Viewing previous-format learning records with the originals preserved. Before saving, ask the tutor to inspect a migration plan and let a parent confirm it",
 			"unavailableFilesHelp": "The current term records cannot be read in full. Ask the tutor to check the record status and repair it",
 			"workbenchHelp": "Choose the learner’s workspace to open study records and tutoring together",
+			"workbenchPanels": "Study and tutoring",
+			"learningContent": "Study content",
+			"liveUpdates": "Updates automatically",
+			"updatePaused": "Updates paused",
+			"studyDetails": "Study progress and methods",
+			"taskDetails": "Question goal and learning steps",
+			"uploadHomework": "Upload homework or a mistake",
+			"exerciseBankDetails": "View exercise bank",
 			"learnerWorkspace": "Learning workspace",
 			"learningConversation": "Learning conversation",
 			"noLearningConversation": "No learning conversations yet",
@@ -651,7 +668,7 @@ window.__ModuleLoader__.load({
 			"switchLearning": "Switch learning",
 			"setupConversation": "Set up learning through chat",
 			"setupIntent": "Confirm nickname, region, grade, term, school year and school system with the parent, then save a new learning term. Foundation learning can begin before school alignment.",
-			"parentPractice": "Pending work and practice",
+			"parentPractice": "Practice and marking",
 			"parentProgress": "Knowledge and progress",
 			"parentProfile": "Profile and summary",
 			"manualForms": "Optional: edit and save manually",
@@ -659,8 +676,10 @@ window.__ModuleLoader__.load({
 			"intentAdmitted": "Request sent to chat; saved records require independent verification",
 			"switchBlock": "Switch learning and keep unfinished answers",
 			"answerDateUnknown": "Answer date awaiting verification",
-			"pendingFacts": "Answer details to verify",
-			"pendingFactsHelp": "Saved answers and assessments are retained, but dates, assistance or question evidence may be incomplete. You can leave them unknown and keep learning; ask the assistant to check the originals, or correct paper records in Pending and practice records",
+			"pendingFacts": "Saved answer details (optional)",
+			"pendingFactsHelp": "Some records lack dates, assistance or question evidence. You can leave these unknown and keep learning without completing every record. If needed, ask the assistant to check existing evidence by learning block or worksheet",
+			"organizeSavedResponses": "Ask assistant to organize records",
+			"pendingFactsDetails": "View missing details by question",
 			"pendingFactsMore": "Shows the first 20 records; ask the assistant in chat for the rest",
 			"verifySavedResponse": "Ask assistant to verify",
 			"answerSourceUnknown": "Answer source awaiting verification",
@@ -1091,7 +1110,6 @@ window.__ModuleLoader__.load({
 			"focusListen": "Listen and read a short passage",
 			"focusProject": "A small situational task",
 			"focusReview": "Review this unit’s past mistakes",
-			"parentView": "Parent",
 			"otherWays": "Another way",
 			"sync": "Sync",
 			"syncHelp": "Practise the confirmed school unit, or labelled foundations when that course is not confirmed yet",
@@ -8344,65 +8362,76 @@ window.__ModuleLoader__.load({
 		}
 		/** Preview dialog doubling as the print source: the browser print dialog prints only the sheet. */
 		function WorksheetPrint({ worksheet, onClose, t }) {
-			const [container] = (0, react.useState)(() => {
-				const element = document.createElement("div");
-				element.className = "student-sheet-portal";
-				return element;
-			});
-			(0, react.useEffect)(() => {
-				document.body.appendChild(container);
-				return () => {
-					container.remove();
-				};
-			}, [container]);
-			(0, react.useEffect)(() => {
-				const onKey = (event) => {
-					if (event.key === "Escape") onClose();
-				};
-				window.addEventListener("keydown", onKey);
-				return () => window.removeEventListener("keydown", onKey);
-			}, [onClose]);
+			const dialog = (0, react.useRef)(null);
+			(0, _deepseek_ai_dsh_client_ui_primitives.useModalLayer)(dialog, true, onClose);
 			return (0, react_dom.createPortal)((0, react_jsx_runtime.jsx)("div", {
-				className: "student-sheet-backdrop",
-				onClick: onClose,
-				children: (0, react_jsx_runtime.jsxs)("div", {
-					className: "student-sheet-dialog",
-					role: "dialog",
-					"aria-modal": "true",
-					"aria-label": sheetTitle(worksheet, t),
-					onClick: (event) => event.stopPropagation(),
-					children: [(0, react_jsx_runtime.jsxs)("div", {
-						className: "student-sheet-toolbar",
-						children: [
-							(0, react_jsx_runtime.jsx)("p", {
-								className: "student-muted",
-								children: t("printSheetHelp")
-							}),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								className: "student-primary",
-								onClick: () => {
-									window.print();
-								},
-								children: t("printSheet")
-							}),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								className: "student-quiet",
-								onClick: onClose,
-								children: t("close")
+				className: "student-sheet-portal",
+				children: (0, react_jsx_runtime.jsx)("div", {
+					className: "student-sheet-backdrop",
+					onClick: onClose,
+					children: (0, react_jsx_runtime.jsxs)("div", {
+						ref: dialog,
+						tabIndex: -1,
+						className: "student-sheet-dialog",
+						role: "dialog",
+						"aria-modal": "true",
+						"aria-label": sheetTitle(worksheet, t),
+						onClick: (event) => event.stopPropagation(),
+						children: [(0, react_jsx_runtime.jsxs)("div", {
+							className: "student-sheet-toolbar",
+							children: [
+								(0, react_jsx_runtime.jsx)("p", {
+									className: "student-muted",
+									children: t("printSheetHelp")
+								}),
+								(0, react_jsx_runtime.jsx)("button", {
+									type: "button",
+									className: "student-primary",
+									onClick: () => {
+										window.print();
+									},
+									children: t("printSheet")
+								}),
+								(0, react_jsx_runtime.jsx)("button", {
+									type: "button",
+									className: "student-quiet",
+									onClick: onClose,
+									children: t("close")
+								})
+							]
+						}), (0, react_jsx_runtime.jsx)("div", {
+							className: "student-sheet-scroll",
+							children: (0, react_jsx_runtime.jsx)(WorksheetSheet, {
+								worksheet,
+								t
 							})
-						]
-					}), (0, react_jsx_runtime.jsx)("div", {
-						className: "student-sheet-scroll",
-						children: (0, react_jsx_runtime.jsx)(WorksheetSheet, {
-							worksheet,
-							t
-						})
-					})]
+						})]
+					})
 				})
-			}), container);
+			}), document.body);
 		}
+		//#endregion
+		//#region \0dsh-css:/Users/winter/dsh-creative/plugins/dsh-student/packages/winterhuan/student/src/client/desk.module.css.mjs
+		const css$1 = "._hwI2a_desk{container-type:inline-size}._hwI2a_taskLayout{gap:20px;min-width:0;display:grid}._hwI2a_taskPrompt{min-width:0}._hwI2a_answerArea{border-radius:var(--dsw-radius-lg);background:var(--dsw-alias-interactive-bg-hover);flex-direction:column;gap:8px;min-width:0;padding:16px;display:flex}._hwI2a_answerArea form fieldset{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;display:grid}._hwI2a_answerArea form label,._hwI2a_answerArea form button[type=submit]{grid-column:1/-1}._hwI2a_taskLayout._hwI2a_withFigure{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}._hwI2a_taskPrompt .student-figure{max-width:320px;margin:16px auto 0}._hwI2a_desk ._hwI2a_taskDetails{border-top:.5px solid var(--dsw-alias-border-l2);background:0 0;border-radius:0;margin-top:12px;padding:12px 0 0}._hwI2a_taskDetails>p{margin-top:8px}._hwI2a_statusHeading{flex-wrap:wrap;justify-content:space-between;gap:8px;display:flex}._hwI2a_practiceActions{flex-wrap:wrap;gap:8px;display:flex}._hwI2a_practiceActions button{flex:160px}@container (width<=460px){._hwI2a_desk ._hwI2a_navigation{box-sizing:border-box;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;display:grid}}@container (width<=620px){._hwI2a_taskLayout._hwI2a_withFigure{grid-template-columns:minmax(0,1fr)}._hwI2a_taskPrompt .student-figure svg{max-height:160px}}";
+		const tagId$1 = "@winterhuan/dsh-student/desk.module.css";
+		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId$1) + "]") === null) {
+			const tag = document.createElement("style");
+			tag.dataset.plugin = "@winterhuan/dsh-student";
+			tag.dataset.pluginCss = tagId$1;
+			tag.textContent = css$1;
+			document.head.appendChild(tag);
+		}
+		var desk_module_css_default = {
+			"answerArea": "_hwI2a_answerArea",
+			"desk": "_hwI2a_desk",
+			"navigation": "_hwI2a_navigation",
+			"practiceActions": "_hwI2a_practiceActions",
+			"statusHeading": "_hwI2a_statusHeading",
+			"taskDetails": "_hwI2a_taskDetails",
+			"taskLayout": "_hwI2a_taskLayout",
+			"taskPrompt": "_hwI2a_taskPrompt",
+			"withFigure": "_hwI2a_withFigure"
+		};
 		//#endregion
 		//#region lib/types/client/practice-view.js
 		const markKeys = {
@@ -8411,21 +8440,74 @@ window.__ModuleLoader__.load({
 			incorrect: "markWrong"
 		};
 		/** Parent practice page: the mistake notebook, printed sheets, and due review. */
-		function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, epoch, t, useStore, actions }) {
+		function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, t, useStore, actions }) {
 			return (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
-				(0, react_jsx_runtime.jsx)(PhotoIntake, {
-					ask,
-					disabled: disabled || running,
-					t
-				}),
-				(0, react_jsx_runtime.jsx)(WorkbookIntake, {
-					study,
-					goals,
-					revision,
-					disabled: disabled || running,
-					change,
-					ask,
-					t
+				(0, react_jsx_runtime.jsxs)("section", { children: [
+					(0, react_jsx_runtime.jsxs)("h3", { children: [
+						t("worksheets"),
+						" · ",
+						study.worksheets.length
+					] }),
+					(0, react_jsx_runtime.jsx)("p", {
+						className: "student-muted",
+						children: t("reviewSheetHelp")
+					}),
+					(0, react_jsx_runtime.jsxs)("p", { children: [
+						t("reviewReady"),
+						": ",
+						study.reviewPlan.picks,
+						study.reviewPlan.remaining > 0 ? ` · ${t("reviewLater")}: ${study.reviewPlan.remaining}` : "",
+						study.reviewPlan.unlinkedDue > 0 ? ` · ${t("reviewUnlinked")}: ${study.reviewPlan.unlinkedDue}` : "",
+						study.reviewPlan.openSheets > 0 ? ` · ${t("reviewOpenSheets")}: ${study.reviewPlan.openSheets}` : ""
+					] }),
+					(0, react_jsx_runtime.jsxs)("div", {
+						className: desk_module_css_default.practiceActions,
+						children: [(0, react_jsx_runtime.jsx)("button", {
+							type: "button",
+							className: "student-primary",
+							disabled: disabled || running || goals.length === 0,
+							onClick: () => {
+								ask(practiceSheetPrompt(subject)).catch(() => {});
+							},
+							children: t("createWorksheet")
+						}), (0, react_jsx_runtime.jsx)("button", {
+							type: "button",
+							disabled: disabled || running || study.reviewPlan.picks === 0,
+							onClick: () => {
+								ask(reviewSheetPrompt(subject)).catch(() => {});
+							},
+							children: t("printConsolidation")
+						})]
+					}),
+					study.worksheets.length === 0 && (0, react_jsx_runtime.jsx)("p", { children: t("empty") }),
+					study.worksheets.map((sheet) => (0, react_jsx_runtime.jsx)(WorksheetActions, {
+						worksheet: sheet,
+						revision,
+						change,
+						ask,
+						disabled: disabled || running,
+						t
+					}, sheet.id))
+				] }),
+				(0, react_jsx_runtime.jsxs)("details", {
+					open: study.workbookDrafts.length > 0 || study.teachingQueue.length > 0,
+					children: [
+						(0, react_jsx_runtime.jsx)("summary", { children: t("uploadHomework") }),
+						(0, react_jsx_runtime.jsx)(PhotoIntake, {
+							ask,
+							disabled: disabled || running,
+							t
+						}),
+						(0, react_jsx_runtime.jsx)(WorkbookIntake, {
+							study,
+							goals,
+							revision,
+							disabled: disabled || running,
+							change,
+							ask,
+							t
+						})
+					]
 				}),
 				(0, react_jsx_runtime.jsx)("fieldset", {
 					disabled,
@@ -8602,9 +8684,9 @@ window.__ModuleLoader__.load({
 						]
 					})
 				] }),
-				(0, react_jsx_runtime.jsxs)("section", { children: [
-					(0, react_jsx_runtime.jsxs)("h3", { children: [
-						t("workspaceExercises"),
+				(0, react_jsx_runtime.jsxs)("details", { children: [
+					(0, react_jsx_runtime.jsxs)("summary", { children: [
+						t("exerciseBankDetails"),
 						" · ",
 						(study.exercises ?? []).length
 					] }),
@@ -8638,46 +8720,6 @@ window.__ModuleLoader__.load({
 							children: t("deleteExercise")
 						})
 					] }, item.id))
-				] }),
-				(0, react_jsx_runtime.jsxs)("section", { children: [
-					(0, react_jsx_runtime.jsx)("h3", { children: t("worksheets") }),
-					(0, react_jsx_runtime.jsx)("p", {
-						className: "student-muted",
-						children: t("reviewSheetHelp")
-					}),
-					(0, react_jsx_runtime.jsxs)("p", { children: [
-						t("reviewReady"),
-						": ",
-						study.reviewPlan.picks,
-						study.reviewPlan.remaining > 0 ? ` · ${t("reviewLater")}: ${study.reviewPlan.remaining}` : "",
-						study.reviewPlan.unlinkedDue > 0 ? ` · ${t("reviewUnlinked")}: ${study.reviewPlan.unlinkedDue}` : "",
-						study.reviewPlan.openSheets > 0 ? ` · ${t("reviewOpenSheets")}: ${study.reviewPlan.openSheets}` : ""
-					] }),
-					(0, react_jsx_runtime.jsx)("button", {
-						type: "button",
-						disabled: disabled || running || goals.length === 0,
-						onClick: () => {
-							ask(practiceSheetPrompt(subject)).catch(() => {});
-						},
-						children: t("createWorksheet")
-					}),
-					(0, react_jsx_runtime.jsx)("button", {
-						type: "button",
-						disabled: disabled || running || study.reviewPlan.picks === 0,
-						onClick: () => {
-							ask(reviewSheetPrompt(subject)).catch(() => {});
-						},
-						children: t("printConsolidation")
-					}),
-					study.worksheets.length === 0 && (0, react_jsx_runtime.jsx)("p", { children: t("empty") }),
-					study.worksheets.map((sheet) => (0, react_jsx_runtime.jsx)(WorksheetActions, {
-						worksheet: sheet,
-						revision,
-						change,
-						ask,
-						disabled: disabled || running,
-						t
-					}, sheet.id))
 				] }),
 				(0, react_jsx_runtime.jsxs)("section", { children: [
 					(0, react_jsx_runtime.jsxs)("h3", { children: [
@@ -8718,7 +8760,7 @@ window.__ModuleLoader__.load({
 							change,
 							t
 						})
-					}, `${epoch}-${item.id}`))
+					}, item.id))
 				] }),
 				(0, react_jsx_runtime.jsx)("p", { children: t("mistakeBounded") })
 			] });
@@ -9717,53 +9759,48 @@ window.__ModuleLoader__.load({
 				] }),
 				(0, react_jsx_runtime.jsxs)("section", {
 					className: "student-status",
-					children: [
-						(0, react_jsx_runtime.jsxs)("p", { children: [
-							study.profile.nickname,
-							" · ",
+					children: [(0, react_jsx_runtime.jsxs)("div", {
+						className: desk_module_css_default.statusHeading,
+						children: [(0, react_jsx_runtime.jsxs)("p", { children: [study.profile.nickname, active ? ` · ${t(active.subject)} · ${t(active.mode)}` : ""] }), (0, react_jsx_runtime.jsxs)("p", { children: [
 							t("todayStars"),
 							": ",
 							study.todayStars
-						] }),
-						(0, react_jsx_runtime.jsxs)("p", { children: [
-							t("due"),
-							": ",
-							study.dueCount,
-							" · ",
-							t("weakPoints"),
-							": ",
-							study.weakPoints.length
-						] }),
-						schoolUnit && (0, react_jsx_runtime.jsxs)("p", { children: [
-							t("schoolFrontier"),
-							": ",
-							schoolUnit.name,
-							" · ",
-							t(progress?.posture === "catch-up" ? "catchUp" : "keepUp"),
-							progress?.pace === "review" ? ` · ${t("reviewWeek")}` : "",
-							" · ",
-							t("homeProgress"),
-							": ",
-							homeUnit?.name ?? t("homeNotStarted")
-						] }),
-						(0, react_jsx_runtime.jsx)("p", {
-							className: "student-muted",
-							children: t(subject === "chinese" ? "chineseMethod" : subject === "math" ? "mathMethod" : "englishMethod")
-						}),
-						active && (0, react_jsx_runtime.jsxs)("p", { children: [
-							t(active.subject),
-							" · ",
-							t(active.mode)
-						] })
-					]
+						] })]
+					}), (0, react_jsx_runtime.jsxs)("details", {
+						open: !ownSession,
+						children: [
+							(0, react_jsx_runtime.jsx)("summary", { children: t("studyDetails") }),
+							(0, react_jsx_runtime.jsxs)("p", { children: [
+								t("due"),
+								": ",
+								study.dueCount,
+								" · ",
+								t("weakPoints"),
+								": ",
+								study.weakPoints.length
+							] }),
+							schoolUnit && (0, react_jsx_runtime.jsxs)("p", { children: [
+								t("schoolFrontier"),
+								": ",
+								schoolUnit.name,
+								" · ",
+								t(progress?.posture === "catch-up" ? "catchUp" : "keepUp"),
+								progress?.pace === "review" ? ` · ${t("reviewWeek")}` : "",
+								" · ",
+								t("homeProgress"),
+								": ",
+								homeUnit?.name ?? t("homeNotStarted")
+							] }),
+							(0, react_jsx_runtime.jsx)("p", {
+								className: "student-muted",
+								children: t(subject === "chinese" ? "chineseMethod" : subject === "math" ? "mathMethod" : "englishMethod")
+							})
+						]
+					})]
 				}),
 				ownSession && (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [(0, react_jsx_runtime.jsxs)("section", {
 					className: "student-focus",
 					children: [
-						(0, react_jsx_runtime.jsx)("p", {
-							className: "student-muted",
-							children: t("chatHelp")
-						}),
 						task ? (0, react_jsx_runtime.jsx)(Task, {
 							useStore,
 							actions,
@@ -9777,10 +9814,15 @@ window.__ModuleLoader__.load({
 							act,
 							tutor
 						}, `${task.sessionId}:${task.id}`) : (0, react_jsx_runtime.jsx)("p", { children: t("waiting") }),
+						(0, react_jsx_runtime.jsx)("p", {
+							className: "student-muted",
+							children: t("chatHelp")
+						}),
 						available && (running ? (0, react_jsx_runtime.jsx)("p", {
 							role: "status",
 							children: t("tutorWorking")
 						}) : (!task || study.feedback || task.response !== void 0 || task.hintLevel > 0) && (0, react_jsx_runtime.jsx)("button", {
+							className: "student-primary",
 							disabled,
 							onClick: () => {
 								tutor(study.feedback ? "明确请求下一题。先保留上一题的原回答和有效反馈，再准备下一题。" : "检查当前题的未完成答案或提示，不换题，不自动重发原回答。", true).catch(() => {});
@@ -9803,7 +9845,6 @@ window.__ModuleLoader__.load({
 						children: [(0, react_jsx_runtime.jsx)("button", {
 							disabled,
 							type: "submit",
-							className: "student-primary",
 							children: t("stop")
 						}), (explain || task?.objectiveId) && (0, react_jsx_runtime.jsx)("button", {
 							type: "button",
@@ -10325,23 +10366,6 @@ window.__ModuleLoader__.load({
 			const answer = useStore((state) => state.drafts[key]) ?? "";
 			return (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
 				(0, react_jsx_runtime.jsx)("h3", { children: task.topic }),
-				title && (0, react_jsx_runtime.jsxs)("p", {
-					className: "student-muted",
-					children: [
-						t("learningGoal"),
-						": ",
-						title
-					]
-				}),
-				goalText && (0, react_jsx_runtime.jsxs)("p", { children: [
-					t("objectiveGoal"),
-					": ",
-					goalText
-				] }),
-				task.phase && (0, react_jsx_runtime.jsx)(SimonSteps, {
-					phase: task.phase,
-					t
-				}),
 				(0, react_jsx_runtime.jsx)(MasteryDots, {
 					days,
 					t
@@ -10350,146 +10374,180 @@ window.__ModuleLoader__.load({
 					className: "student-result",
 					children: t("goalMastered")
 				}),
-				(0, react_jsx_runtime.jsx)("p", {
-					className: "student-question",
-					children: task.prompt
-				}),
-				task.figure && (0, react_jsx_runtime.jsx)(FigureView, {
-					figure: task.figure,
-					t
-				}),
-				task.steps && task.steps.length > 0 && (0, react_jsx_runtime.jsx)("ul", {
-					className: "student-steps",
-					"aria-label": t("microSteps"),
-					children: task.steps.map((step, index) => (0, react_jsx_runtime.jsx)("li", { children: (0, react_jsx_runtime.jsxs)("label", {
-						className: "student-check",
-						children: [(0, react_jsx_runtime.jsx)("input", {
-							type: "checkbox",
-							checked: !!checked[index],
-							onChange: (event) => setChecked((previous) => ({
-								...previous,
-								[index]: event.target.checked
-							}))
-						}), step]
-					}) }, `${index}-${step}`))
-				}),
-				task.response !== void 0 && (0, react_jsx_runtime.jsxs)("p", { children: [
-					t("answer"),
-					": ",
-					task.response
-				] }),
-				study.feedback ? (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
-					(0, react_jsx_runtime.jsx)("p", {
-						className: "student-result",
-						children: t(study.feedback.result)
-					}),
-					(0, react_jsx_runtime.jsx)("p", { children: study.feedback.result === "unassessed" ? t("assessmentPending") : study.feedback.feedback }),
-					study.feedback.result === "correct" && (0, react_jsx_runtime.jsx)("button", {
-						type: "button",
-						disabled,
-						onClick: () => {
-							tutor(feynmanPrompt(title), true).catch(() => {});
-						},
-						children: t("feynmanTeach")
-					})
-				] }) : task.response !== void 0 ? (0, react_jsx_runtime.jsx)("p", {
-					role: "status",
-					children: t("submitted")
-				}) : task.choices ? (0, react_jsx_runtime.jsxs)("fieldset", {
-					disabled,
-					children: [
-						(0, react_jsx_runtime.jsx)("p", { children: t("chooseAnswer") }),
-						(0, react_jsx_runtime.jsx)("div", {
-							className: "student-choices",
-							children: task.choices.map((choice) => (0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								onClick: () => {
+				(0, react_jsx_runtime.jsxs)("div", {
+					className: `${desk_module_css_default.taskLayout} ${task.figure ? desk_module_css_default.withFigure : ""}`,
+					children: [(0, react_jsx_runtime.jsxs)("div", {
+						className: desk_module_css_default.taskPrompt,
+						children: [(0, react_jsx_runtime.jsx)("p", {
+							className: "student-question",
+							children: task.prompt
+						}), task.figure && (0, react_jsx_runtime.jsx)(FigureView, {
+							figure: task.figure,
+							t
+						})]
+					}), (0, react_jsx_runtime.jsxs)("div", {
+						className: desk_module_css_default.answerArea,
+						children: [
+							task.response !== void 0 && (0, react_jsx_runtime.jsxs)("p", { children: [
+								t("answer"),
+								": ",
+								task.response
+							] }),
+							study.feedback ? (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
+								(0, react_jsx_runtime.jsx)("p", {
+									className: "student-result",
+									children: t(study.feedback.result)
+								}),
+								(0, react_jsx_runtime.jsx)("p", { children: study.feedback.result === "unassessed" ? t("assessmentPending") : study.feedback.feedback }),
+								study.feedback.result === "correct" && (0, react_jsx_runtime.jsx)("button", {
+									type: "button",
+									disabled,
+									onClick: () => {
+										tutor(feynmanPrompt(title), true).catch(() => {});
+									},
+									children: t("feynmanTeach")
+								})
+							] }) : task.response !== void 0 ? (0, react_jsx_runtime.jsx)("p", {
+								role: "status",
+								children: t("submitted")
+							}) : task.choices ? (0, react_jsx_runtime.jsxs)("fieldset", {
+								disabled,
+								children: [
+									(0, react_jsx_runtime.jsx)("p", { children: t("chooseAnswer") }),
+									(0, react_jsx_runtime.jsx)("div", {
+										className: "student-choices",
+										children: task.choices.map((choice) => (0, react_jsx_runtime.jsx)("button", {
+											type: "button",
+											onClick: () => {
+												act({
+													action: "answer",
+													taskId: task.id,
+													response: choice
+												}, true);
+											},
+											children: choice
+										}, choice))
+									}),
+									(0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										onClick: () => {
+											act({
+												action: "hint",
+												taskId: task.id
+											}, true, hintPromptFor(task));
+										},
+										children: hintLabel
+									}),
+									(0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										onClick: () => {
+											act({
+												action: "stuck",
+												taskId: task.id
+											}, true, stuckPrompt);
+										},
+										children: t("wont")
+									})
+								]
+							}) : (0, react_jsx_runtime.jsx)("form", {
+								onSubmit: (event) => {
+									event.preventDefault();
 									act({
 										action: "answer",
 										taskId: task.id,
-										response: choice
+										response: String(new FormData(event.currentTarget).get("answer") ?? "")
 									}, true);
 								},
-								children: choice
-							}, choice))
+								children: (0, react_jsx_runtime.jsxs)("fieldset", {
+									disabled,
+									children: [
+										(0, react_jsx_runtime.jsxs)("label", { children: [t("answer"), (0, react_jsx_runtime.jsx)("input", {
+											name: "answer",
+											"aria-label": t("answer"),
+											value: answer,
+											onChange: (event) => {
+												actions.setDraft(key, event.target.value);
+											},
+											required: true,
+											maxLength: 2e3
+										})] }),
+										(0, react_jsx_runtime.jsx)("button", {
+											className: "student-primary",
+											type: "submit",
+											children: t("submit")
+										}),
+										(0, react_jsx_runtime.jsx)("button", {
+											type: "button",
+											onClick: () => {
+												act({
+													action: "hint",
+													taskId: task.id
+												}, true, hintPromptFor(task));
+											},
+											children: hintLabel
+										}),
+										(0, react_jsx_runtime.jsx)("button", {
+											type: "button",
+											onClick: () => {
+												act({
+													action: "stuck",
+													taskId: task.id
+												}, true, stuckPrompt);
+											},
+											children: t("wont")
+										})
+									]
+								})
+							}),
+							task.hintLevel > 0 && (0, react_jsx_runtime.jsxs)("p", { children: [
+								t("hinted"),
+								" · ",
+								t("hintLevel"),
+								" ",
+								task.hintLevel
+							] })
+						]
+					})]
+				}),
+				(title || goalText || task.phase || task.steps?.length) && (0, react_jsx_runtime.jsxs)("details", {
+					className: desk_module_css_default.taskDetails,
+					open: task.phase === "demo" || task.phase === "guide" || !!task.steps?.length,
+					children: [
+						(0, react_jsx_runtime.jsx)("summary", { children: t("taskDetails") }),
+						title && (0, react_jsx_runtime.jsxs)("p", {
+							className: "student-muted",
+							children: [
+								t("learningGoal"),
+								": ",
+								title
+							]
 						}),
-						(0, react_jsx_runtime.jsx)("button", {
-							type: "button",
-							onClick: () => {
-								act({
-									action: "hint",
-									taskId: task.id
-								}, true, hintPromptFor(task));
-							},
-							children: hintLabel
+						goalText && (0, react_jsx_runtime.jsxs)("p", { children: [
+							t("objectiveGoal"),
+							": ",
+							goalText
+						] }),
+						task.phase && (0, react_jsx_runtime.jsx)(SimonSteps, {
+							phase: task.phase,
+							t
 						}),
-						(0, react_jsx_runtime.jsx)("button", {
-							type: "button",
-							onClick: () => {
-								act({
-									action: "stuck",
-									taskId: task.id
-								}, true, stuckPrompt);
-							},
-							children: t("wont")
+						task.steps && task.steps.length > 0 && (0, react_jsx_runtime.jsx)("ul", {
+							className: "student-steps",
+							"aria-label": t("microSteps"),
+							children: task.steps.map((step, index) => (0, react_jsx_runtime.jsx)("li", { children: (0, react_jsx_runtime.jsxs)("label", {
+								className: "student-check",
+								children: [(0, react_jsx_runtime.jsx)("input", {
+									type: "checkbox",
+									checked: !!checked[index],
+									onChange: (event) => setChecked((previous) => ({
+										...previous,
+										[index]: event.target.checked
+									}))
+								}), step]
+							}) }, `${index}-${step}`))
 						})
 					]
-				}) : (0, react_jsx_runtime.jsx)("form", {
-					onSubmit: (event) => {
-						event.preventDefault();
-						act({
-							action: "answer",
-							taskId: task.id,
-							response: String(new FormData(event.currentTarget).get("answer") ?? "")
-						}, true);
-					},
-					children: (0, react_jsx_runtime.jsxs)("fieldset", {
-						disabled,
-						children: [
-							(0, react_jsx_runtime.jsxs)("label", { children: [t("answer"), (0, react_jsx_runtime.jsx)("input", {
-								name: "answer",
-								"aria-label": t("answer"),
-								value: answer,
-								onChange: (event) => {
-									actions.setDraft(key, event.target.value);
-								},
-								required: true,
-								maxLength: 2e3
-							})] }),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "submit",
-								children: t("submit")
-							}),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								onClick: () => {
-									act({
-										action: "hint",
-										taskId: task.id
-									}, true, hintPromptFor(task));
-								},
-								children: hintLabel
-							}),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								onClick: () => {
-									act({
-										action: "stuck",
-										taskId: task.id
-									}, true, stuckPrompt);
-								},
-								children: t("wont")
-							})
-						]
-					})
-				}),
-				task.hintLevel > 0 && (0, react_jsx_runtime.jsxs)("p", { children: [
-					t("hinted"),
-					" · ",
-					t("hintLevel"),
-					" ",
-					task.hintLevel
-				] })
+				})
 			] });
 		}
 		//#endregion
@@ -10518,14 +10576,12 @@ window.__ModuleLoader__.load({
 			const [selectedConceptId, setSelectedConceptId] = (0, react.useState)("");
 			const [intensities, setIntensities] = (0, react.useState)({});
 			const [scopeChoice, setScopeChoice] = (0, react.useState)({});
-			const [view, setView] = (0, react.useState)("student");
-			const [parentTab, setParentTab] = (0, react.useState)("map");
+			const [tab, setTab] = (0, react.useState)("today");
 			const [knowledgeView, setKnowledgeView] = (0, react.useState)("map");
 			const scopeOf = (target) => scopeChoice[target] ?? {};
 			const activeScope = scopeOf(subject);
-			const showMap = view === "parent" && parentTab === "map" && knowledgeView === "map";
-			const tab = view === "student" ? "today" : parentTab === "map" ? "map" : parentTab === "mistakes" ? "mistakes" : "parent";
-			const showBook = view === "parent" && parentTab === "map";
+			const showMap = tab === "map" && knowledgeView === "map";
+			const showBook = tab === "map";
 			const workspace = useStudy(sessionId, visible, t("networkError"), {
 				tab,
 				offset: mistakeOffset,
@@ -10544,7 +10600,6 @@ window.__ModuleLoader__.load({
 				mode: "foundation"
 			});
 			const [selectedObjectiveId, setSelectedObjectiveId] = (0, react.useState)("");
-			const [epoch, setEpoch] = (0, react.useState)(0);
 			const [localNow, setLocalNow] = (0, react.useState)(Date.now());
 			const [sending, setSending] = (0, react.useState)(false);
 			const [sendError, setSendError] = (0, react.useState)("");
@@ -10718,7 +10773,7 @@ window.__ModuleLoader__.load({
 				});
 				setSelectedObjectiveId(goal.id);
 				setMistakeOffset(0);
-				setView("student");
+				setTab("today");
 			}
 			function scopeCommand(target) {
 				const scope = scopeOf(target);
@@ -10741,7 +10796,7 @@ window.__ModuleLoader__.load({
 				});
 				setSelectedObjectiveId("");
 				setMistakeOffset(0);
-				setView("student");
+				setTab("today");
 				return act({
 					action: "start",
 					id: crypto.randomUUID(),
@@ -10851,7 +10906,7 @@ window.__ModuleLoader__.load({
 				"teachQueued",
 				"workbookSaved"
 			].includes(key) ? t("intentAdmitted") : t(key);
-			const parentSettings = view === "parent" && parentTab === "parent";
+			const parentSettings = tab === "parent";
 			const draft = {
 				useStore,
 				actions
@@ -10868,83 +10923,66 @@ window.__ModuleLoader__.load({
 				objectiveId: "answerGoalUnknown"
 			};
 			return (0, react_jsx_runtime.jsxs)("main", {
-				className: "student-desk",
+				className: `student-desk ${desk_module_css_default.desk}`,
 				"aria-label": t("title"),
 				children: [
 					(0, react_jsx_runtime.jsxs)("header", {
 						className: "student-top",
-						children: [
-							(0, react_jsx_runtime.jsxs)("nav", {
-								className: "student-views",
-								"aria-label": t("title"),
-								children: [(0, react_jsx_runtime.jsx)("button", {
+						children: [(0, react_jsx_runtime.jsxs)("nav", {
+							className: `student-tabs ${desk_module_css_default.navigation}`,
+							"aria-label": t("title"),
+							children: [
+								(0, react_jsx_runtime.jsx)("button", {
 									type: "button",
-									"aria-pressed": view === "student",
-									onClick: () => setView("student"),
+									"aria-pressed": tab === "today",
+									onClick: () => setTab("today"),
 									children: t("today")
-								}), (0, react_jsx_runtime.jsx)("button", {
+								}),
+								(0, react_jsx_runtime.jsx)("button", {
 									type: "button",
-									"aria-pressed": view === "parent",
-									onClick: () => setView("parent"),
-									children: t("parentView")
-								})]
-							}),
-							view === "parent" && (0, react_jsx_runtime.jsxs)("nav", {
-								className: "student-tabs",
-								"aria-label": t("parentView"),
-								children: [
-									(0, react_jsx_runtime.jsx)("button", {
-										type: "button",
-										"aria-pressed": parentTab === "map",
-										onClick: () => setParentTab("map"),
-										children: t("parentProgress")
-									}),
-									(0, react_jsx_runtime.jsxs)("button", {
-										type: "button",
-										"aria-label": t("mistakes"),
-										"aria-pressed": parentTab === "mistakes",
-										onClick: () => setParentTab("mistakes"),
-										children: [t("parentPractice"), study && study.dueTotal > 0 ? ` · ${study.dueTotal}` : ""]
-									}),
-									(0, react_jsx_runtime.jsx)("button", {
-										type: "button",
-										"aria-pressed": parentTab === "parent",
-										onClick: () => setParentTab("parent"),
-										children: t("parentProfile")
-									})
-								]
-							}),
-							(0, react_jsx_runtime.jsxs)("div", {
-								className: "student-toolbar",
-								children: [study && !parentSettings && (0, react_jsx_runtime.jsx)("nav", {
-									className: "student-subjects",
-									"aria-label": t("subject"),
-									children: subjects.map((item) => (0, react_jsx_runtime.jsx)("button", {
-										type: "button",
-										"aria-pressed": subject === item,
-										onClick: () => {
-											selectSubject(item);
-											setActivity({
-												subject: item,
-												mode: "foundation"
-											});
-											setSelectedObjectiveId("");
-											setMistakeOffset(0);
-											setMistakeStatus("all");
-										},
-										children: t(item)
-									}, item))
-								}), (0, react_jsx_runtime.jsx)("button", {
+									"aria-pressed": tab === "map",
+									onClick: () => setTab("map"),
+									children: t("parentProgress")
+								}),
+								(0, react_jsx_runtime.jsxs)("button", {
 									type: "button",
-									className: "student-quiet",
-									disabled: sending,
+									"aria-label": t("parentPractice"),
+									"aria-pressed": tab === "mistakes",
+									onClick: () => setTab("mistakes"),
+									children: [t("parentPractice"), study && study.dueTotal > 0 ? ` · ${study.dueTotal}` : ""]
+								}),
+								(0, react_jsx_runtime.jsx)("button", {
+									type: "button",
+									"aria-pressed": tab === "parent",
+									onClick: () => setTab("parent"),
+									children: t("parentProfile")
+								})
+							]
+						}), (0, react_jsx_runtime.jsxs)("div", {
+							className: "student-toolbar",
+							children: [study && !parentSettings && (0, react_jsx_runtime.jsx)("nav", {
+								className: "student-subjects",
+								"aria-label": t("subject"),
+								children: subjects.map((item) => (0, react_jsx_runtime.jsx)("button", {
+									type: "button",
+									"aria-pressed": subject === item,
 									onClick: () => {
-										setEpoch((value) => value + 1);
+										selectSubject(item);
+										setActivity({
+											subject: item,
+											mode: "foundation"
+										});
+										setSelectedObjectiveId("");
+										setMistakeOffset(0);
+										setMistakeStatus("all");
 									},
-									children: t("reload")
-								})]
-							})
-						]
+									children: t(item)
+								}, item))
+							}), (0, react_jsx_runtime.jsx)("span", {
+								className: "student-muted",
+								children: t(workspace.stale ? "updatePaused" : "liveUpdates")
+							})]
+						})]
 					}),
 					readOnly && data && (0, react_jsx_runtime.jsx)("p", {
 						role: "status",
@@ -10957,42 +10995,6 @@ window.__ModuleLoader__.load({
 					sendError && (0, react_jsx_runtime.jsx)("p", {
 						role: "alert",
 						children: sendError
-					}),
-					study && view === "parent" && pendingFacts.length > 0 && (0, react_jsx_runtime.jsxs)("details", {
-						className: "student-fold",
-						children: [
-							(0, react_jsx_runtime.jsxs)("summary", { children: [
-								t("pendingFacts"),
-								" · ",
-								pendingCount
-							] }),
-							(0, react_jsx_runtime.jsx)("p", { children: t("pendingFactsHelp") }),
-							pendingFacts.map((item) => {
-								if (!item || typeof item !== "object" || !("responseId" in item) || typeof item.responseId !== "string" || !("fields" in item) || !Array.isArray(item.fields)) return null;
-								const responseId = item.responseId;
-								const labels = item.fields.flatMap((field) => typeof field === "string" && field in pendingLabels ? [t(pendingLabels[field])] : []);
-								const kind = item.ownerKind === "block" || item.ownerKind === "worksheet" ? item.ownerKind : void 0;
-								const ownerId = typeof item.ownerId === "string" ? item.ownerId : void 0;
-								const recordSubject = item.subject === "math" || item.subject === "chinese" || item.subject === "english" ? item.subject : void 0;
-								return (0, react_jsx_runtime.jsxs)("section", { children: [
-									(0, react_jsx_runtime.jsxs)("p", { children: [recordSubject && `${t(recordSubject)} · `, typeof item.topic === "string" ? item.topic : t("learnerAnswer")] }),
-									(0, react_jsx_runtime.jsx)("p", { children: labels.join(" · ") }),
-									kind && ownerId && (0, react_jsx_runtime.jsx)("button", {
-										type: "button",
-										disabled: disabled || running,
-										onClick: () => {
-											tutor(pendingRecordPrompt(kind, ownerId, responseId)).catch(() => {});
-										},
-										children: t("verifySavedResponse")
-									})
-								] }, JSON.stringify([
-									kind,
-									ownerId,
-									responseId
-								]));
-							}),
-							pendingCount > pendingFacts.length && (0, react_jsx_runtime.jsx)("p", { children: t("pendingFactsMore") })
-						]
 					}),
 					submissions.length > 0 && (0, react_jsx_runtime.jsxs)("details", {
 						className: "student-fold",
@@ -11028,14 +11030,14 @@ window.__ModuleLoader__.load({
 							tutor(t("setupIntent")).catch(() => {});
 						},
 						children: t("setupConversation")
-					})] }) : workspace.value ? (0, react_jsx_runtime.jsx)("section", { children: (0, react_jsx_runtime.jsx)("p", { children: t(workspace.value.status === "legacy" ? "legacyFilesHelp" : "unavailableFilesHelp") }) }) : !workspace.error && (0, react_jsx_runtime.jsx)("progress", { "aria-label": t("busy") }) : !study && view !== "parent" ? (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsx)("p", { children: t("setupFirst") }), (0, react_jsx_runtime.jsx)("button", {
+					})] }) : workspace.value ? (0, react_jsx_runtime.jsx)("section", { children: (0, react_jsx_runtime.jsx)("p", { children: t(workspace.value.status === "legacy" ? "legacyFilesHelp" : "unavailableFilesHelp") }) }) : !workspace.error && (0, react_jsx_runtime.jsx)("progress", { "aria-label": t("busy") }) : !study && tab === "today" ? (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsx)("p", { children: t("setupFirst") }), (0, react_jsx_runtime.jsx)("button", {
 						disabled: sending,
 						onClick: () => {
 							tutor(t("setupIntent")).catch(() => {});
 						},
 						children: t("setupConversation")
 					})] }) : subjectLoading && !parentSettings ? (0, react_jsx_runtime.jsx)("progress", { "aria-label": t("busy") }) : (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
-						study && view === "student" && (0, react_jsx_runtime.jsx)(TodayView, {
+						study && tab === "today" && (0, react_jsx_runtime.jsx)(TodayView, {
 							...draft,
 							draftScope,
 							study,
@@ -11048,14 +11050,8 @@ window.__ModuleLoader__.load({
 							selectedObjectiveId,
 							chooseGoal,
 							intensityLabel: `${t(intensityKeys[chosenIntensity(subject)])} · ${planOf(subject)?.samples[chosenIntensity(subject)].length ?? 0}`,
-							openParent: () => {
-								setView("parent");
-								setParentTab("parent");
-							},
-							openCheckins: () => {
-								setView("parent");
-								setParentTab("map");
-							},
+							openParent: () => setTab("parent"),
+							openCheckins: () => setTab("map"),
 							scope: activeScope,
 							setScope: (next) => setScopeChoice((previous) => ({
 								...previous,
@@ -11084,7 +11080,7 @@ window.__ModuleLoader__.load({
 							onClearDue: startDue,
 							onOpenClassroom: openClassroom
 						}),
-						study && view === "student" && data.interactiveLessons && (0, react_jsx_runtime.jsx)(LessonsPanel, {
+						study && tab === "today" && data.interactiveLessons && (0, react_jsx_runtime.jsx)(LessonsPanel, {
 							lessons: lessonsForSubject(data.interactiveLessons.lessons, subject),
 							...data.interactiveLessons.error !== void 0 ? { error: data.interactiveLessons.error } : {},
 							disabled,
@@ -11097,7 +11093,7 @@ window.__ModuleLoader__.load({
 								tutor(openmaicReviewPrompt(classroomId)).catch(() => {});
 							}
 						}),
-						study && view === "parent" && parentTab === "map" && (0, react_jsx_runtime.jsxs)("nav", {
+						study && tab === "map" && (0, react_jsx_runtime.jsxs)("nav", {
 							className: "student-segments",
 							"aria-label": t("parentProgress"),
 							children: [(0, react_jsx_runtime.jsx)("button", {
@@ -11150,7 +11146,7 @@ window.__ModuleLoader__.load({
 							change: (command) => change(command).then(() => void 0),
 							t
 						}),
-						study && view === "parent" && parentTab === "map" && knowledgeView === "ideas" && (0, react_jsx_runtime.jsx)(IdeasView, {
+						study && tab === "map" && knowledgeView === "ideas" && (0, react_jsx_runtime.jsx)(IdeasView, {
 							study,
 							curriculum,
 							t,
@@ -11159,7 +11155,7 @@ window.__ModuleLoader__.load({
 								setKnowledgeView("map");
 							}
 						}),
-						study && view === "parent" && parentTab === "mistakes" && (0, react_jsx_runtime.jsx)(PracticeView, {
+						study && tab === "mistakes" && (0, react_jsx_runtime.jsx)(PracticeView, {
 							...draft,
 							study,
 							now,
@@ -11180,12 +11176,11 @@ window.__ModuleLoader__.load({
 									mode: "review"
 								});
 								setSelectedObjectiveId("");
-								setView("student");
+								setTab("today");
 							},
-							epoch,
 							t: nativeT
 						}),
-						study && view === "parent" && parentTab === "mistakes" && workspace.termId && (0, react.createElement)(WorksheetCorrections, {
+						study && tab === "mistakes" && workspace.termId && (0, react.createElement)(WorksheetCorrections, {
 							...draft,
 							key: draftScope,
 							sessionId,
@@ -11196,32 +11191,50 @@ window.__ModuleLoader__.load({
 							disabled,
 							t
 						}),
-						parentSettings && (0, react_jsx_runtime.jsxs)("section", { children: [
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								disabled,
-								onClick: () => {
-									tutor(t("setupIntent")).catch(() => {});
-								},
-								children: t("profileConversation")
-							}),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								disabled,
-								onClick: () => {
-									tutor(t("courseConversation")).catch(() => {});
-								},
-								children: t("courseConversation")
-							}),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								disabled,
-								onClick: () => {
-									tutor(t("archiveConversation")).catch(() => {});
-								},
-								children: t("archiveConversation")
-							})
-						] }),
+						parentSettings && (0, react_jsx_runtime.jsxs)("section", { children: [study && (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [(0, react_jsx_runtime.jsxs)("h3", { children: [
+							study.profile.nickname,
+							" · ",
+							t("grade"),
+							": ",
+							study.profile.grade,
+							" · ",
+							t(study.profile.term)
+						] }), (0, react_jsx_runtime.jsxs)("p", {
+							className: "student-muted",
+							children: [
+								study.profile.region,
+								" · ",
+								study.profile.schoolYear
+							]
+						})] }), (0, react_jsx_runtime.jsxs)("div", {
+							className: desk_module_css_default.practiceActions,
+							children: [
+								(0, react_jsx_runtime.jsx)("button", {
+									type: "button",
+									disabled,
+									onClick: () => {
+										tutor(t("setupIntent")).catch(() => {});
+									},
+									children: t("profileConversation")
+								}),
+								(0, react_jsx_runtime.jsx)("button", {
+									type: "button",
+									disabled,
+									onClick: () => {
+										tutor(t("courseConversation")).catch(() => {});
+									},
+									children: t("courseConversation")
+								}),
+								(0, react_jsx_runtime.jsx)("button", {
+									type: "button",
+									disabled,
+									onClick: () => {
+										tutor(t("archiveConversation")).catch(() => {});
+									},
+									children: t("archiveConversation")
+								})
+							]
+						})] }),
 						parentSettings && study && (0, react_jsx_runtime.jsxs)("details", {
 							className: "student-fold",
 							children: [
@@ -11256,6 +11269,53 @@ window.__ModuleLoader__.load({
 							subject,
 							goals,
 							t
+						}),
+						study && parentSettings && pendingFacts.length > 0 && (0, react_jsx_runtime.jsxs)("details", {
+							className: "student-fold",
+							children: [
+								(0, react_jsx_runtime.jsx)("summary", { children: t("pendingFacts") }),
+								(0, react_jsx_runtime.jsx)("p", { children: t("pendingFactsHelp") }),
+								(0, react_jsx_runtime.jsx)("button", {
+									type: "button",
+									disabled: disabled || running,
+									onClick: () => {
+										tutor("请加载 study 技能，阅读 references/files.md，批量整理当前学期已保存的作答资料。先读取 .study/settings.json，再按学习段或练习卷分批检查 .study/blocks/ 和 .study/worksheets/ 中的正式记录，排除已作废练习单；不要只处理界面显示的前 20 条。只依据可核实的原始证据补充信息，修改后运行只读校验。无法核实的日期、帮助、来源或题目依据保留未知，无需家长逐条补齐，也不要求孩子重做。多条记录确实共享同一项待确认事实时，合并询问；不能把不同作答的日期或帮助一概填成相同值。不能把评分或接收时间当作答日期，不能把旧默认值当独立作答证明。保留原题、原回答和已有批改，不新增作答，不更换当前学习题。最后简要汇总已补充和仍未知的信息，只提出影响当前学习安排且家长能够确认的问题。").catch(() => {});
+									},
+									children: t("organizeSavedResponses")
+								}),
+								(0, react_jsx_runtime.jsxs)("details", { children: [
+									(0, react_jsx_runtime.jsxs)("summary", { children: [
+										t("pendingFactsDetails"),
+										" · ",
+										pendingCount
+									] }),
+									pendingFacts.map((item) => {
+										if (!item || typeof item !== "object" || !("responseId" in item) || typeof item.responseId !== "string" || !("fields" in item) || !Array.isArray(item.fields)) return null;
+										const responseId = item.responseId;
+										const labels = item.fields.flatMap((field) => typeof field === "string" && field in pendingLabels ? [t(pendingLabels[field])] : []);
+										const kind = item.ownerKind === "block" || item.ownerKind === "worksheet" ? item.ownerKind : void 0;
+										const ownerId = typeof item.ownerId === "string" ? item.ownerId : void 0;
+										const recordSubject = item.subject === "math" || item.subject === "chinese" || item.subject === "english" ? item.subject : void 0;
+										return (0, react_jsx_runtime.jsxs)("section", { children: [
+											(0, react_jsx_runtime.jsxs)("p", { children: [recordSubject && `${t(recordSubject)} · `, typeof item.topic === "string" ? item.topic : t("learnerAnswer")] }),
+											(0, react_jsx_runtime.jsx)("p", { children: labels.join(" · ") }),
+											kind && ownerId && (0, react_jsx_runtime.jsx)("button", {
+												type: "button",
+												disabled: disabled || running,
+												onClick: () => {
+													tutor(pendingRecordPrompt(kind, ownerId, responseId)).catch(() => {});
+												},
+												children: t("verifySavedResponse")
+											})
+										] }, JSON.stringify([
+											kind,
+											ownerId,
+											responseId
+										]));
+									}),
+									pendingCount > pendingFacts.length && (0, react_jsx_runtime.jsx)("p", { children: t("pendingFactsMore") })
+								] })
+							]
 						})
 					] })
 				]
@@ -11465,7 +11525,7 @@ window.__ModuleLoader__.load({
 		}
 		//#endregion
 		//#region \0dsh-css:/Users/winter/dsh-creative/plugins/dsh-student/packages/winterhuan/student/src/client/workbench.module.css.mjs
-		const css = "._6WiDoW_workbench{height:100%;min-height:0;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font:13px/1.5 var(--dsw-font-family);flex-direction:column;display:flex;container-type:inline-size}._6WiDoW_header{border-bottom:1px solid var(--dsw-alias-border-l2);flex-direction:column;gap:16px;padding:28px 24px 16px;display:flex}[data-platform=darwin] ._6WiDoW_header{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}._6WiDoW_heading h1{margin:0;font-size:20px;font-weight:500}._6WiDoW_heading p{color:var(--dsw-alias-label-secondary);margin:4px 0 0}._6WiDoW_controls{flex-wrap:wrap;align-items:flex-end;gap:12px;display:flex}._6WiDoW_controls label{flex-direction:column;gap:4px;min-width:0;max-width:240px;display:flex}._6WiDoW_controls select,._6WiDoW_controls button,._6WiDoW_empty button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l2);border-radius:8px;min-width:0;max-width:100%;padding:8px 12px}._6WiDoW_controls button,._6WiDoW_empty button{cursor:pointer}._6WiDoW_controls button:hover:enabled,._6WiDoW_empty button:hover:enabled{background:var(--dsw-alias-button-ghost-active-fill)}._6WiDoW_controls button[aria-pressed=true]{background:var(--dsw-alias-bg-layer-1)}._6WiDoW_controls :disabled{opacity:.5;cursor:default}._6WiDoW_body{flex:1;min-width:0;min-height:0;display:grid}._6WiDoW_withChat{grid-template-columns:minmax(0,1fr) minmax(320px,40%)}._6WiDoW_study{min-width:0;min-height:0;padding:0 12px}._6WiDoW_study .student-tabs{flex-wrap:wrap;display:flex}._6WiDoW_study .student-tabs button{flex:1}._6WiDoW_chat{border-left:1px solid var(--dsw-alias-border-l2);flex-direction:column;min-width:0;min-height:0;display:flex}._6WiDoW_chat h2{border-bottom:1px solid var(--dsw-alias-border-l2);margin:0;padding:12px 16px;font-size:13px;font-weight:500}._6WiDoW_empty{text-align:center;flex-direction:column;flex:1;justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}._6WiDoW_empty h2{margin:0;font-size:16px;font-weight:500}._6WiDoW_empty p{margin:0}._6WiDoW_spinner{border:2px solid var(--dsw-alias-border-l2);border-top-color:var(--dsw-alias-label-primary);border-radius:50%;width:24px;height:24px;animation:.8s linear infinite _6WiDoW_spin}@keyframes _6WiDoW_spin{to{transform:rotate(360deg)}}@container (width<=760px){._6WiDoW_header{padding-left:16px;padding-right:16px}._6WiDoW_withChat{grid-template-rows:minmax(360px,1fr) minmax(360px,1fr);grid-template-columns:minmax(0,1fr);overflow:auto}._6WiDoW_chat{border-left:0;border-top:1px solid var(--dsw-alias-border-l2)}}";
+		const css = "._6WiDoW_workbench{height:100%;min-height:0;color:var(--dsw-alias-label-primary);background:radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, transparent), transparent 55%), radial-gradient(ellipse at 100% 90%, color-mix(in srgb, var(--dsw-alias-state-success-primary) 5%, transparent), transparent 50%), color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));font:14px/22px var(--dsw-font-family);flex-direction:column;display:flex;container-type:inline-size}._6WiDoW_header{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;padding:28px 28px 12px;display:flex}[data-platform=darwin] ._6WiDoW_header{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}._6WiDoW_heading h1{letter-spacing:-.015em;margin:0;font-size:34px;font-weight:300;line-height:44px}._6WiDoW_heading p{color:var(--dsw-alias-label-secondary);margin:4px 0 0;font-size:13px;line-height:20px}._6WiDoW_controls{flex-wrap:wrap;align-items:center;gap:8px;min-width:0;max-width:100%;display:flex}._6WiDoW_controls label{min-width:0;max-width:300px;color:var(--dsw-alias-label-secondary);align-items:center;gap:8px;font-size:12px;display:flex}._6WiDoW_controls select,._6WiDoW_controls button,._6WiDoW_empty button{font:13px/20px var(--dsw-font-family);color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);min-width:0;max-width:100%;padding:8px 12px}._6WiDoW_controls button,._6WiDoW_empty button{cursor:pointer}._6WiDoW_controls button:hover:enabled,._6WiDoW_empty button:hover:enabled{background:var(--dsw-alias-interactive-bg-hover)}._6WiDoW_controls button[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-active)}._6WiDoW_controls :disabled{opacity:.5;cursor:default}._6WiDoW_conversationControls{min-width:0;max-width:240px}._6WiDoW_conversationControls summary{cursor:pointer;color:var(--dsw-alias-label-secondary);border-radius:var(--dsw-radius-md);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);box-shadow:var(--dsw-elevation-soft);text-overflow:ellipsis;white-space:nowrap;padding:8px 12px;font-size:13px;line-height:20px;overflow:hidden}._6WiDoW_conversationControls[open]{flex-basis:100%;max-width:100%}._6WiDoW_conversationControls[open]>._6WiDoW_controls{padding-top:12px}._6WiDoW_body{flex:1;gap:12px;min-width:0;min-height:0;padding:0 16px 16px;display:grid}._6WiDoW_withChat{grid-template-columns:minmax(0,1fr) 336px}._6WiDoW_panes{display:none}._6WiDoW_study{min-width:0;min-height:0}._6WiDoW_study .student-desk{background:0 0}._6WiDoW_chat{border-radius:var(--dsw-radius-panel);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 92%, transparent);min-width:0;min-height:0;box-shadow:var(--dsw-elevation-soft);flex-direction:column;margin-top:12px;display:flex;overflow:hidden}._6WiDoW_chat h2{border-bottom:.5px solid var(--dsw-alias-border-l2);margin:0;padding:16px 18px 12px;font-size:15px;font-weight:500;line-height:22px}._6WiDoW_empty{text-align:center;flex-direction:column;flex:1;justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}._6WiDoW_empty h2{margin:0;font-size:16px;font-weight:500}._6WiDoW_empty p{margin:0}._6WiDoW_spinner{border:2px solid var(--dsw-alias-border-l2);border-top-color:var(--dsw-alias-label-primary);border-radius:50%;width:24px;height:24px;animation:.8s linear infinite _6WiDoW_spin}._6WiDoW_controls :focus-visible,._6WiDoW_panes button:focus-visible,._6WiDoW_conversationControls summary:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}@keyframes _6WiDoW_spin{to{transform:rotate(360deg)}}@container (width<=900px){._6WiDoW_header{padding-left:24px;padding-right:24px}._6WiDoW_heading p{display:none}._6WiDoW_heading{flex:180px}._6WiDoW_header>._6WiDoW_controls{flex:360px}._6WiDoW_controls{align-items:center}._6WiDoW_controls label{flex-direction:row;align-items:center}._6WiDoW_body,._6WiDoW_withChat{grid-template-rows:auto minmax(0,1fr);grid-template-columns:minmax(0,1fr);gap:0;padding:0 12px 12px}._6WiDoW_panes{border-radius:var(--dsw-radius-lg);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);box-shadow:var(--dsw-elevation-soft);gap:2px;margin:4px 12px 8px;padding:4px;display:flex}._6WiDoW_panes button{font:13px/20px var(--dsw-font-family);border-radius:var(--dsw-radius-md);color:var(--dsw-alias-label-secondary);cursor:pointer;background:0 0;border:0;flex:1;padding:6px 12px}._6WiDoW_panes button[aria-pressed=true]{color:var(--dsw-alias-label-primary-inverted);background:var(--dsw-alias-button-primary-fill)}._6WiDoW_body[data-pane=chat] ._6WiDoW_study,._6WiDoW_body[data-pane=study] ._6WiDoW_chat{display:none}._6WiDoW_chat{margin-top:0}}@container (width<=460px){._6WiDoW_heading h1{font-size:25px;line-height:35px}._6WiDoW_controls label,._6WiDoW_conversationControls{max-width:100%}}";
 		const tagId = "@winterhuan/dsh-student/workbench.module.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
 			const tag = document.createElement("style");
@@ -11478,9 +11538,11 @@ window.__ModuleLoader__.load({
 			"body": "_6WiDoW_body",
 			"chat": "_6WiDoW_chat",
 			"controls": "_6WiDoW_controls",
+			"conversationControls": "_6WiDoW_conversationControls",
 			"empty": "_6WiDoW_empty",
 			"header": "_6WiDoW_header",
 			"heading": "_6WiDoW_heading",
+			"panes": "_6WiDoW_panes",
 			"spin": "_6WiDoW_spin",
 			"spinner": "_6WiDoW_spinner",
 			"study": "_6WiDoW_study",
@@ -11511,6 +11573,15 @@ window.__ModuleLoader__.load({
 					},
 					toggleChat: (draft) => {
 						draft.chatVisible = !draft.chatVisible;
+						draft.pane = draft.chatVisible ? "chat" : "study";
+					},
+					showTutor: (draft) => {
+						draft.chatVisible = true;
+						draft.pane = "chat";
+					},
+					selectPane: (draft, pane) => {
+						draft.pane = pane;
+						if (pane === "chat") draft.chatVisible = true;
 					}
 				}
 			});
@@ -11530,7 +11601,8 @@ window.__ModuleLoader__.load({
 				const row = catalog.byId[id];
 				return row && catalog.ids.includes(id) && row.projectionValues?.agentPreset === "student" && !row.parentId && row.origin !== "subagent" && !workspaces.archivedSessionIds.includes(id) ? [row] : [];
 			}).sort((a, b) => b.updatedAt - a.updatedAt);
-			const sessionId = (sessions.find((item) => item.id === preferences.sessionId) ?? sessions[0])?.id;
+			const selected = sessions.find((item) => item.id === preferences.sessionId) ?? sessions[0];
+			const sessionId = selected?.id;
 			const pending = catalog.phase !== "ready" || workspaces.phase !== "ready";
 			async function create() {
 				if (!workspace || creating) return;
@@ -11568,39 +11640,48 @@ window.__ModuleLoader__.load({
 									children: item.title
 								}, item.workspaceId))
 							})] }),
-							(0, react_jsx_runtime.jsxs)("label", { children: [t("learningConversation"), (0, react_jsx_runtime.jsxs)("select", {
-								value: sessionId ?? "",
-								disabled: pending || creating || !sessions.length,
-								onChange: (event) => {
-									const next = sessions.find((item) => item.id === event.target.value);
-									if (next) actions.selectSession(next.id);
-								},
-								children: [!sessions.length && (0, react_jsx_runtime.jsx)("option", {
-									value: "",
-									children: t("noLearningConversation")
-								}), sessions.map((item) => (0, react_jsx_runtime.jsx)("option", {
-									value: item.id,
-									children: item.displayTitle
-								}, item.id))]
-							})] }),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								disabled: pending || creating || !workspace,
-								onClick: () => {
-									create();
-								},
-								children: t("newLearningConversation")
-							}),
-							sessionId && (0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								onClick: () => openSession(sessionId),
-								children: t("openConversation")
-							}),
 							sessionId && (0, react_jsx_runtime.jsx)("button", {
 								type: "button",
 								"aria-pressed": preferences.chatVisible,
 								onClick: actions.toggleChat,
 								children: t(preferences.chatVisible ? "hideTutor" : "showTutor")
+							}),
+							(0, react_jsx_runtime.jsxs)("details", {
+								className: workbench_module_css_default.conversationControls,
+								open: !sessionId,
+								children: [(0, react_jsx_runtime.jsxs)("summary", { children: [t("learningConversation"), selected ? ` · ${selected.displayTitle}` : ""] }), (0, react_jsx_runtime.jsxs)("div", {
+									className: workbench_module_css_default.controls,
+									children: [
+										(0, react_jsx_runtime.jsxs)("label", { children: [t("learningConversation"), (0, react_jsx_runtime.jsxs)("select", {
+											value: sessionId ?? "",
+											disabled: pending || creating || !sessions.length,
+											onChange: (event) => {
+												const next = sessions.find((item) => item.id === event.target.value);
+												if (next) actions.selectSession(next.id);
+											},
+											children: [!sessions.length && (0, react_jsx_runtime.jsx)("option", {
+												value: "",
+												children: t("noLearningConversation")
+											}), sessions.map((item) => (0, react_jsx_runtime.jsx)("option", {
+												value: item.id,
+												children: item.displayTitle
+											}, item.id))]
+										})] }),
+										(0, react_jsx_runtime.jsx)("button", {
+											type: "button",
+											disabled: pending || creating || !workspace,
+											onClick: () => {
+												create();
+											},
+											children: t("newLearningConversation")
+										}),
+										sessionId && (0, react_jsx_runtime.jsx)("button", {
+											type: "button",
+											onClick: () => openSession(sessionId),
+											children: t("openConversation")
+										})
+									]
+								})]
 							})
 						]
 					})]
@@ -11613,6 +11694,9 @@ window.__ModuleLoader__.load({
 				}) : (0, react_jsx_runtime.jsx)(SelectedSession, {
 					sessionId,
 					chatVisible: preferences.chatVisible,
+					pane: preferences.pane ?? "study",
+					showTutor: actions.showTutor,
+					selectPane: actions.selectPane,
 					retainSession,
 					SessionProvider,
 					renderSlot,
@@ -11627,7 +11711,7 @@ window.__ModuleLoader__.load({
 				children: (0, react_jsx_runtime.jsx)("span", { className: workbench_module_css_default.spinner })
 			});
 		}
-		function SelectedSession({ sessionId, chatVisible, retainSession, SessionProvider, renderSlot, t }) {
+		function SelectedSession({ sessionId, chatVisible, pane, showTutor, selectPane, retainSession, SessionProvider, renderSlot, t }) {
 			const [binding, setBinding] = (0, react.useState)(null);
 			const [failed, setFailed] = (0, react.useState)(false);
 			const [retry, setRetry] = (0, react.useState)(0);
@@ -11665,39 +11749,66 @@ window.__ModuleLoader__.load({
 			});
 			return binding ? (0, react_jsx_runtime.jsx)(SessionProvider, {
 				session: binding,
-				children: renderSlot(sessionSlot, { chatVisible })
+				children: renderSlot(sessionSlot, {
+					chatVisible,
+					pane,
+					showTutor,
+					selectPane
+				})
 			}) : (0, react_jsx_runtime.jsx)(Loading, {});
 		}
-		function LearningSession({ sessionId, chatVisible, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, t }) {
+		function LearningSession({ sessionId, chatVisible, pane, showTutor, selectPane, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, t }) {
 			const session = useSession((state) => state);
 			const conversation = useConversation((state) => state);
 			const settling = session.openState === "loading" && !conversation.activeTargets.size;
 			return (0, react_jsx_runtime.jsxs)("div", {
 				className: `${workbench_module_css_default.body} ${chatVisible ? workbench_module_css_default.withChat : ""}`,
-				children: [(0, react_jsx_runtime.jsx)("div", {
-					className: workbench_module_css_default.study,
-					children: (0, react_jsx_runtime.jsx)(StudyDesk, {
-						sessionId,
-						visible: true,
-						running: !!session.running,
-						ask,
-						t,
-						useResource,
-						useStore,
-						actions,
-						saveSettings,
-						saveWorksheet,
-						inspectSubmission
+				"data-pane": pane,
+				children: [
+					(0, react_jsx_runtime.jsxs)("nav", {
+						className: workbench_module_css_default.panes,
+						"aria-label": t("workbenchPanels"),
+						children: [(0, react_jsx_runtime.jsx)("button", {
+							type: "button",
+							"aria-pressed": pane === "study",
+							onClick: () => selectPane("study"),
+							children: t("learningContent")
+						}), (0, react_jsx_runtime.jsxs)("button", {
+							type: "button",
+							"aria-pressed": pane === "chat",
+							onClick: () => selectPane("chat"),
+							children: [t("tutorConversation"), session.running ? ` · ${t("busy")}` : ""]
+						})]
+					}),
+					(0, react_jsx_runtime.jsx)("div", {
+						className: workbench_module_css_default.study,
+						children: (0, react_jsx_runtime.jsx)(StudyDesk, {
+							sessionId,
+							visible: true,
+							running: !!session.running,
+							ask: (text, photo) => {
+								showTutor();
+								return ask(text, photo);
+							},
+							t,
+							useResource,
+							useStore,
+							actions,
+							saveSettings,
+							saveWorksheet,
+							inspectSubmission
+						})
+					}),
+					chatVisible && (0, react_jsx_runtime.jsxs)("aside", {
+						className: workbench_module_css_default.chat,
+						"aria-label": t("tutorConversation"),
+						children: [(0, react_jsx_runtime.jsx)("h2", { children: t("tutorConversation") }), renderFactorySlot("conversation.content", {
+							variant: "embedded",
+							phase: settling ? "settling" : "active",
+							hero: false
+						})]
 					})
-				}), chatVisible && (0, react_jsx_runtime.jsxs)("aside", {
-					className: workbench_module_css_default.chat,
-					"aria-label": t("tutorConversation"),
-					children: [(0, react_jsx_runtime.jsx)("h2", { children: t("tutorConversation") }), renderFactorySlot("conversation.content", {
-						variant: "embedded",
-						phase: settling ? "settling" : "active",
-						hero: false
-					})]
-				})]
+				]
 			});
 		}
 		function PanelIcon({ size }) {

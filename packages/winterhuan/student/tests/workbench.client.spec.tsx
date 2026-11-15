@@ -24,8 +24,7 @@ function StudyDesk(props: Omit<ComponentProps<typeof RealStudyDesk>, 'useResourc
 }
 
 async function openDesk(tab: 'Knowledge map' | 'Mistakes' | 'Parent setup') {
-  fireEvent.click(await screen.findByRole('button', { name: 'Parent' }))
-  fireEvent.click(screen.getByRole('button', { name: tab === 'Knowledge map' ? en.parentProgress : tab === 'Parent setup' ? en.parentProfile : en.mistakes }))
+  fireEvent.click(await screen.findByRole('button', { name: tab === 'Knowledge map' ? en.parentProgress : tab === 'Parent setup' ? en.parentProfile : en.parentPractice, exact: false }))
 }
 
 function worksheetState() {
@@ -40,6 +39,22 @@ function worksheetState() {
 }
 
 describe('learning workbench', () => {
+  it('puts answer controls before optional question goals and opens marking directly', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(NOW)
+    const state = updateStudy(updateStudy(worksheetState(), start, NOW), { action: 'task', task: { ...answerTask, objectiveId: 'add', phase: 'try' } }, NOW)
+    installResource(state)
+    render(<StudyDesk sessionId="focused-question" visible running={false} ask={vi.fn()} t={t} />)
+    const answer = await screen.findByRole('textbox', { name: en.answer })
+    const details = screen.getByText(en.taskDetails).closest('details')!
+    expect(details.open).toBe(false)
+    expect(answer.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByText(en.studyDetails).closest('details')!.open).toBe(false)
+    expect(screen.getByRole('main').innerHTML).toMatchSnapshot()
+    fireEvent.click(screen.getByRole('button', { name: en.parentPractice }))
+    expect(await screen.findByRole('heading', { name: `${en.worksheets} · 1` })).toBeTruthy()
+    expect(screen.getByText(en.uploadHomework).closest('details')!.open).toBe(false)
+  })
+
   it('clears a selected unit when the learner returns to the whole book', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(NOW)
     const backend = installResource(updateStudy(undefined, setup, NOW))
@@ -267,15 +282,18 @@ it('previews the sheet as HTML and prints through the browser dialog', async () 
   render(<StudyDesk sessionId="paper" visible running={false} ask={vi.fn()} t={t} />)
   await openDesk('Mistakes')
   fireEvent.click(screen.getByText('凑十加法 · 1 questions · Not checked yet 1'))
-  fireEvent.click(screen.getByRole('button', { name: en.previewPrintSheet }))
+  const preview = screen.getByRole('button', { name: en.previewPrintSheet })
+  preview.focus()
+  fireEvent.click(preview)
   const dialog = await screen.findByRole('dialog', { name: 'Math review sheet' })
   expect(within(dialog).getByText('1. 请计算 9+6。')).toBeTruthy()
   expect(within(dialog).getAllByText((_, element) => element?.textContent === en.sheetNameDate)).toHaveLength(1)
   expect(backend.addresses.mock.calls.some(([url]) => String(url).startsWith('/student/print?'))).toBe(false)
   fireEvent.click(within(dialog).getByRole('button', { name: en.printSheet }))
   expect(print).toHaveBeenCalledTimes(1)
-  fireEvent.keyDown(window, { key: 'Escape' })
+  expect(fireEvent.keyDown(dialog, { key: 'Escape' })).toBe(false)
   expect(screen.queryByRole('dialog')).toBeNull()
+  expect(document.activeElement).toBe(preview)
 })
 
 it('confirms high-confidence transcriptions in one batch and leaves the rest for review', async () => {

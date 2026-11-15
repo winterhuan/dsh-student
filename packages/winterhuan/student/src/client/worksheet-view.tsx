@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { useModalLayer } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { Dashboard } from '../dashboard.ts'
 import { FigureView } from './figure-view.tsx'
 import type { Translate } from './locales.ts'
@@ -46,22 +47,10 @@ export function WorksheetSheet({ worksheet, t }: { worksheet: Worksheet; t: Tran
 
 /** Preview dialog doubling as the print source: the browser print dialog prints only the sheet. */
 export function WorksheetPrint({ worksheet, onClose, t }: { worksheet: Worksheet; onClose: () => void; t: Translate }) {
-  const [container] = useState(() => {
-    const element = document.createElement('div')
-    element.className = 'student-sheet-portal'
-    return element
-  })
-  useEffect(() => {
-    document.body.appendChild(container)
-    return () => { container.remove() }
-  }, [container])
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-  return createPortal(<div className="student-sheet-backdrop" onClick={onClose}>
-    <div className="student-sheet-dialog" role="dialog" aria-modal="true" aria-label={sheetTitle(worksheet, t)} onClick={event => event.stopPropagation()}>
+  const dialog = useRef<HTMLDivElement>(null)
+  useModalLayer(dialog, true, onClose)
+  return createPortal(<div className="student-sheet-portal"><div className="student-sheet-backdrop" onClick={onClose}>
+    <div ref={dialog} tabIndex={-1} className="student-sheet-dialog" role="dialog" aria-modal="true" aria-label={sheetTitle(worksheet, t)} onClick={event => event.stopPropagation()}>
       <div className="student-sheet-toolbar">
         <p className="student-muted">{t('printSheetHelp')}</p>
         <button type="button" className="student-primary" onClick={() => { window.print() }}>{t('printSheet')}</button>
@@ -69,5 +58,5 @@ export function WorksheetPrint({ worksheet, onClose, t }: { worksheet: Worksheet
       </div>
       <div className="student-sheet-scroll"><WorksheetSheet worksheet={worksheet} t={t} /></div>
     </div>
-  </div>, container)
+  </div></div>, document.body)
 }

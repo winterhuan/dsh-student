@@ -1,6 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useEffect, useState } from 'react';
+import { useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useModalLayer } from '@deepseek-ai/dsh-client-ui-primitives';
 import { FigureView } from "./figure-view.js";
 const roleNames = { daily: 'sheetDaily', practice: 'sheetPractice', review: 'sheetReview' };
 /** A sheet's printed role: its saved kind, or the legacy all-sourced-mistakes heuristic. */
@@ -28,21 +29,8 @@ export function WorksheetSheet({ worksheet, t }) {
 }
 /** Preview dialog doubling as the print source: the browser print dialog prints only the sheet. */
 export function WorksheetPrint({ worksheet, onClose, t }) {
-    const [container] = useState(() => {
-        const element = document.createElement('div');
-        element.className = 'student-sheet-portal';
-        return element;
-    });
-    useEffect(() => {
-        document.body.appendChild(container);
-        return () => { container.remove(); };
-    }, [container]);
-    useEffect(() => {
-        const onKey = (event) => { if (event.key === 'Escape')
-            onClose(); };
-        window.addEventListener('keydown', onKey);
-        return () => window.removeEventListener('keydown', onKey);
-    }, [onClose]);
-    return createPortal(_jsx("div", { className: "student-sheet-backdrop", onClick: onClose, children: _jsxs("div", { className: "student-sheet-dialog", role: "dialog", "aria-modal": "true", "aria-label": sheetTitle(worksheet, t), onClick: event => event.stopPropagation(), children: [_jsxs("div", { className: "student-sheet-toolbar", children: [_jsx("p", { className: "student-muted", children: t('printSheetHelp') }), _jsx("button", { type: "button", className: "student-primary", onClick: () => { window.print(); }, children: t('printSheet') }), _jsx("button", { type: "button", className: "student-quiet", onClick: onClose, children: t('close') })] }), _jsx("div", { className: "student-sheet-scroll", children: _jsx(WorksheetSheet, { worksheet: worksheet, t: t }) })] }) }), container);
+    const dialog = useRef(null);
+    useModalLayer(dialog, true, onClose);
+    return createPortal(_jsx("div", { className: "student-sheet-portal", children: _jsx("div", { className: "student-sheet-backdrop", onClick: onClose, children: _jsxs("div", { ref: dialog, tabIndex: -1, className: "student-sheet-dialog", role: "dialog", "aria-modal": "true", "aria-label": sheetTitle(worksheet, t), onClick: event => event.stopPropagation(), children: [_jsxs("div", { className: "student-sheet-toolbar", children: [_jsx("p", { className: "student-muted", children: t('printSheetHelp') }), _jsx("button", { type: "button", className: "student-primary", onClick: () => { window.print(); }, children: t('printSheet') }), _jsx("button", { type: "button", className: "student-quiet", onClick: onClose, children: t('close') })] }), _jsx("div", { className: "student-sheet-scroll", children: _jsx(WorksheetSheet, { worksheet: worksheet, t: t }) })] }) }) }), document.body);
 }
 //# sourceMappingURL=worksheet-view.js.map

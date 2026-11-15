@@ -6,6 +6,8 @@ export function pendingRecordPrompt(kind, ownerId, responseId) {
     const path = `.study/${kind === 'block' ? 'blocks' : 'worksheets'}/${ownerId}.json`;
     return `请加载 study 技能，阅读 references/files.md，核对 ${path} 中 responseId=${responseId} 的作答记录。先解释题目、原回答、已有批改和缺少的信息，再依据原始证据或家长明确确认修正。无法核实的信息保留未知；不能把评分或接收时间当作答日期，不能把旧默认值当独立作答证明。保留原题和原回答，不新增一次作答，不更换当前学习题。`;
 }
+/** Check saved response details in groups while preserving unknown facts and original answers. */
+export const pendingRecordsPrompt = '请加载 study 技能，阅读 references/files.md，批量整理当前学期已保存的作答资料。先读取 .study/settings.json，再按学习段或练习卷分批检查 .study/blocks/ 和 .study/worksheets/ 中的正式记录，排除已作废练习单；不要只处理界面显示的前 20 条。只依据可核实的原始证据补充信息，修改后运行只读校验。无法核实的日期、帮助、来源或题目依据保留未知，无需家长逐条补齐，也不要求孩子重做。多条记录确实共享同一项待确认事实时，合并询问；不能把不同作答的日期或帮助一概填成相同值。不能把评分或接收时间当作答日期，不能把旧默认值当独立作答证明。保留原题、原回答和已有批改，不新增作答，不更换当前学习题。最后简要汇总已补充和仍未知的信息，只提出影响当前学习安排且家长能够确认的问题。';
 /** Ask the child to teach the idea back like a little teacher (Feynman). */
 export function feynmanPrompt(topic) {
     const focus = topic ? `围绕「${topic}」` : '围绕刚才学的内容';

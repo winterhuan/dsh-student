@@ -8,6 +8,7 @@ import { mistakePhotoPrompt, paperPhotoPrompt, practiceSheetPrompt, reviewSheetP
 import { errorTypesBySubject, type ErrorTypeValue } from '../vocabulary.ts'
 import { WorksheetPrint } from './worksheet-view.tsx'
 import type { Subject } from './display.ts'
+import css from './desk.module.css'
 
 type Study = NonNullable<Dashboard['study']>
 type Goal = { id: string; title: string }
@@ -15,7 +16,7 @@ type Mark = 'correct' | 'partial' | 'incorrect'
 const markKeys = { correct: 'markCorrect', partial: 'markPartial', incorrect: 'markWrong' } as const
 
 /** Parent practice page: the mistake notebook, printed sheets, and due review. */
-export function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, epoch, t, useStore, actions }: DraftProps & {
+export function PracticeView({ study, now, subject, goals, mistakeStatus, setMistakeStatus, setMistakeOffset, revision, disabled, running, change, ask, onReview, t, useStore, actions }: DraftProps & {
   study: Study
   now: number
   subject: Subject
@@ -29,12 +30,21 @@ export function PracticeView({ study, now, subject, goals, mistakeStatus, setMis
   change: ChangeStudy
   ask: AskTutor
   onReview: (subject: Subject) => void
-  epoch: number
   t: Translate
 }) {
   return <>
+    <section><h3>{t('worksheets')} · {study.worksheets.length}</h3>
+      <p className="student-muted">{t('reviewSheetHelp')}</p>
+      <p>{t('reviewReady')}: {study.reviewPlan.picks}{study.reviewPlan.remaining > 0 ? ` · ${t('reviewLater')}: ${study.reviewPlan.remaining}` : ''}{study.reviewPlan.unlinkedDue > 0 ? ` · ${t('reviewUnlinked')}: ${study.reviewPlan.unlinkedDue}` : ''}{study.reviewPlan.openSheets > 0 ? ` · ${t('reviewOpenSheets')}: ${study.reviewPlan.openSheets}` : ''}</p>
+      <div className={css.practiceActions}><button type="button" className="student-primary" disabled={disabled || running || goals.length === 0} onClick={() => { void ask(practiceSheetPrompt(subject)).catch(() => {}) }}>{t('createWorksheet')}</button>
+      <button type="button" disabled={disabled || running || study.reviewPlan.picks === 0} onClick={() => { void ask(reviewSheetPrompt(subject)).catch(() => {}) }}>{t('printConsolidation')}</button></div>
+      {study.worksheets.length === 0 && <p>{t('empty')}</p>}
+      {study.worksheets.map(sheet => <WorksheetActions key={sheet.id} worksheet={sheet} revision={revision} change={change} ask={ask} disabled={disabled || running} t={t} />)}
+    </section>
+    <details open={study.workbookDrafts.length > 0 || study.teachingQueue.length > 0}><summary>{t('uploadHomework')}</summary>
     <PhotoIntake ask={ask} disabled={disabled || running} t={t} />
     <WorkbookIntake study={study} goals={goals} revision={revision} disabled={disabled || running} change={change} ask={ask} t={t} />
+    </details>
     <fieldset disabled={disabled}><MistakeEditor subject={subject} goals={goals} revision={revision} change={change} t={t} /></fieldset>
     <section><h3>{t('notebook')} · {t(subject)} · {study.confirmedCount}</h3>
       <nav className="student-segments" aria-label={t('mistakeStatus')}>{(['all', 'due', 'reviewing', 'mastered'] as const).map(name => <button key={name} type="button" aria-pressed={mistakeStatus === name} onClick={() => { setMistakeStatus(name); setMistakeOffset(0) }}>{t(name === 'all' ? 'all' : name === 'due' ? 'bookDue' : name === 'reviewing' ? 'bookReviewing' : 'bookMastered')}{name === 'all' ? '' : ` · ${study.mistakeBook[name]}`}</button>)}</nav>
@@ -82,7 +92,7 @@ export function PracticeView({ study, now, subject, goals, mistakeStatus, setMis
         <button type="button" disabled={study.confirmedOffset + 20 >= study.confirmedCount} onClick={() => setMistakeOffset(study.confirmedOffset + 20)}>{t('nextPage')}</button>
       </div>}
     </section>
-    <section><h3>{t('workspaceExercises')} · {(study.exercises ?? []).length}</h3>
+    <details><summary>{t('exerciseBankDetails')} · {(study.exercises ?? []).length}</summary>
       {(study.exercises ?? []).length === 0 && <p>{t('empty')}</p>}
       {(study.exercises ?? []).map(item => <details key={item.id}><summary>{item.prompt.slice(0, 40)}</summary>
         <p>{t('learningGoal')}: {goals.find(goal => goal.id === item.objectiveId)?.title ?? item.objectiveId}</p>
@@ -90,21 +100,13 @@ export function PracticeView({ study, now, subject, goals, mistakeStatus, setMis
         <p>{t('explanation')}: {item.explanation}</p>
         <button type="button" disabled={disabled} onClick={() => { void change({ action: 'delete-exercise', id: item.id }, revision).catch(() => {}) }}>{t('deleteExercise')}</button>
       </details>)}
-    </section>
-    <section><h3>{t('worksheets')}</h3>
-      <p className="student-muted">{t('reviewSheetHelp')}</p>
-      <p>{t('reviewReady')}: {study.reviewPlan.picks}{study.reviewPlan.remaining > 0 ? ` · ${t('reviewLater')}: ${study.reviewPlan.remaining}` : ''}{study.reviewPlan.unlinkedDue > 0 ? ` · ${t('reviewUnlinked')}: ${study.reviewPlan.unlinkedDue}` : ''}{study.reviewPlan.openSheets > 0 ? ` · ${t('reviewOpenSheets')}: ${study.reviewPlan.openSheets}` : ''}</p>
-      <button type="button" disabled={disabled || running || goals.length === 0} onClick={() => { void ask(practiceSheetPrompt(subject)).catch(() => {}) }}>{t('createWorksheet')}</button>
-      <button type="button" disabled={disabled || running || study.reviewPlan.picks === 0} onClick={() => { void ask(reviewSheetPrompt(subject)).catch(() => {}) }}>{t('printConsolidation')}</button>
-      {study.worksheets.length === 0 && <p>{t('empty')}</p>}
-      {study.worksheets.map(sheet => <WorksheetActions key={sheet.id} worksheet={sheet} revision={revision} change={change} ask={ask} disabled={disabled || running} t={t} />)}
-    </section>
+    </details>
     <section><h3>{t('due')} · {study.dueCount}</h3>{study.dueMistakes.length === 0 && <p>{t('empty')}</p>}
       {study.dueMistakes.map(item => <p key={item.id}>{t(item.subject)} · {item.topic}</p>)}
       {study.dueSubjects.map(item => <button key={item} disabled={disabled || running} onClick={() => onReview(item)}>{t('review')} · {t(item)}</button>)}
     </section>
     <section><h3>{t('pending')} · {study.pendingCount}</h3>{study.pendingMistakes.length === 0 && <p>{t('empty')}</p>}
-      {study.pendingMistakes.map(item => <fieldset disabled={disabled} key={`${epoch}-${item.id}`}><MistakeConfirmation useStore={useStore} actions={actions} mistake={item} revision={revision} change={change} t={t} /></fieldset>)}
+      {study.pendingMistakes.map(item => <fieldset disabled={disabled} key={item.id}><MistakeConfirmation useStore={useStore} actions={actions} mistake={item} revision={revision} change={change} t={t} /></fieldset>)}
     </section><p>{t('mistakeBounded')}</p>
   </>
 }

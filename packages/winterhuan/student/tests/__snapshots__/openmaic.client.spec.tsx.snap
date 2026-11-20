@@ -1,0 +1,21 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`interactive lesson desk > pins go to class when a lesson is ready and shows generating 1`] = `
+[
+  "请加载 study 技能。在当前原生会话处理下面的意图，先核对学期和实体身份。通过原生文件工具读写正式业务文件，再运行安装包中的只读校验 CLI；保留学生原话、回答身份和附件关联。未完成的回答先保存再评估；结束或切换时保留待评估回答，迟到的反馈仍属于原题。不要自动换题或重发不确定的回答。
+Student intention:
+{"nativeSessionId":"ready-lesson","termId":"term-one","selection":{"subject":"math"},"request":"请加载 study 技能，阅读 references/openmaic.md。读取 .study/openmaic-lessons.json 中 id 为 om-gen 的记录，用该记录的 base、pollUrl 和同一 cookie jar 继续查询生成状态，按实际响应更新同一条记录并校验。查询超时保留最后已确认状态，不要重新提交 requirement。成功后把课堂 URL 单独一行原文发给我。"}
+请加载 study 技能，阅读 references/openmaic.md。读取 .study/openmaic-lessons.json 中 id 为 om-gen 的记录，用该记录的 base、pollUrl 和同一 cookie jar 继续查询生成状态，按实际响应更新同一条记录并校验。查询超时保留最后已确认状态，不要重新提交 requirement。成功后把课堂 URL 单独一行原文发给我。",
+  undefined,
+]
+`;
+
+exports[`interactive lesson desk > rechecks a failed lesson before retrying from the workbench 1`] = `
+[
+  "请加载 study 技能。在当前原生会话处理下面的意图，先核对学期和实体身份。通过原生文件工具读写正式业务文件，再运行安装包中的只读校验 CLI；保留学生原话、回答身份和附件关联。未完成的回答先保存再评估；结束或切换时保留待评估回答，迟到的反馈仍属于原题。不要自动换题或重发不确定的回答。
+Student intention:
+{"nativeSessionId":"retry-lesson","termId":"term-one","selection":{"subject":"math"},"request":"请加载 study 技能，阅读 references/openmaic.md。读取 .study/openmaic-lessons.json 中 runId 为 run-paused 的记录，先用原 base、pollUrl 和同一 cookie jar 查询最新状态。仅在服务确认失败且 retryable 为 true 时，用新 commandId 请求 retry；先保存该 id，同一次请求因网络问题重发时复用。仍在生成就继续查询，同一幕反复失败先检查原因。不要重新提交 requirement。把实际结果写回同一条记录并校验，成功后把课堂 URL 单独一行原文发给我。"}
+请加载 study 技能，阅读 references/openmaic.md。读取 .study/openmaic-lessons.json 中 runId 为 run-paused 的记录，先用原 base、pollUrl 和同一 cookie jar 查询最新状态。仅在服务确认失败且 retryable 为 true 时，用新 commandId 请求 retry；先保存该 id，同一次请求因网络问题重发时复用。仍在生成就继续查询，同一幕反复失败先检查原因。不要重新提交 requirement。把实际结果写回同一条记录并校验，成功后把课堂 URL 单独一行原文发给我。",
+  undefined,
+]
+`;

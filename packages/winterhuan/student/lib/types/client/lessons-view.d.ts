@@ -14,13 +14,14 @@ export declare function lessonsForSubject<T extends {
     subject?: 'chinese' | 'math' | 'english' | undefined;
 }>(lessons: readonly T[], subject: 'chinese' | 'math' | 'english'): T[];
 /** Recent OpenMAIC lessons: open or copy the URL, and ask the tutor to generate, retry or review. */
-export declare function LessonsPanel({ lessons, error, disabled, running, t, onGenerate, onRetry, onReview }: {
+export declare function LessonsPanel({ lessons, error, disabled, running, t, onGenerate, onQuery, onRetry, onReview }: {
     lessons: Lesson[];
     error?: string;
     disabled: boolean;
     running: boolean;
     t: Translate;
     onGenerate?: () => void;
+    onQuery: (lessonId: string) => void;
     onRetry: (runId: string) => void;
     onReview: (classroomId: string) => void;
 }): import("react/jsx-runtime").JSX.Element;

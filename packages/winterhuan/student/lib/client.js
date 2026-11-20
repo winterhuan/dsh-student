@@ -608,6 +608,7 @@ window.__ModuleLoader__.load({
 			"openmaicCopy": "复制链接",
 			"openmaicCopied": "已复制",
 			"openmaicRetry": "请助手重试",
+			"openmaicQuery": "继续查询",
 			"openmaicReview": "课后巩固",
 			"openmaicGenerating": "生成中",
 			"openmaicReady": "可以上课",
@@ -1164,6 +1165,7 @@ window.__ModuleLoader__.load({
 			"openmaicCopy": "Copy link",
 			"openmaicCopied": "Copied",
 			"openmaicRetry": "Ask the tutor to retry",
+			"openmaicQuery": "Check progress",
 			"openmaicReview": "Review after class",
 			"openmaicGenerating": "Generating",
 			"openmaicReady": "Ready",
@@ -7343,9 +7345,13 @@ window.__ModuleLoader__.load({
 			const scene = tags.length > 0 ? `requirement 必须写入兴趣标签（${tags.join("、")}），本题优先套「${focus}」。` : "requirement 必须写入 study_status 的 interests。";
 			return `请加载 study 技能，阅读 references/openmaic.md 和 references/interest-hooks.md。为${subjectLabel}生成一节 OpenMAIC 互动课。${goal}${unitName ? `校内单元「${unitName}」。` : ""}${scene}事实只核知识地图。用 shell 和 curl 调用本机服务，不要用 web_fetch 访问 localhost。成功后把课堂 URL 单独一行原文发给我，并写入 .study/openmaic-lessons.json。`;
 		}
-		/** Ask the tutor to retry a failed generation without resubmitting the requirement. */
+		/** Ask the tutor to refresh one saved lesson using its original service and poll URL. */
+		function openmaicQueryPrompt(lessonId) {
+			return `请加载 study 技能，阅读 references/openmaic.md。读取 .study/openmaic-lessons.json 中 id 为 ${lessonId} 的记录，用该记录的 base、pollUrl 和同一 cookie jar 继续查询生成状态，按实际响应更新同一条记录并校验。查询超时保留最后已确认状态，不要重新提交 requirement。成功后把课堂 URL 单独一行原文发给我。`;
+		}
+		/** Ask the tutor to verify the failed run before requesting an idempotent retry. */
 		function openmaicRetryPrompt(runId) {
-			return `请加载 study 技能，阅读 references/openmaic.md。互动课生成失败且可以重试。用同一 cookie jar 对 runId ${runId} 调用 retry，不要重新提交 requirement。把结果写回 .study/openmaic-lessons.json。成功后把课堂 URL 单独一行原文发给我。`;
+			return `请加载 study 技能，阅读 references/openmaic.md。读取 .study/openmaic-lessons.json 中 runId 为 ${runId} 的记录，先用原 base、pollUrl 和同一 cookie jar 查询最新状态。仅在服务确认失败且 retryable 为 true 时，用新 commandId 请求 retry；先保存该 id，同一次请求因网络问题重发时复用。仍在生成就继续查询，同一幕反复失败先检查原因。不要重新提交 requirement。把实际结果写回同一条记录并校验，成功后把课堂 URL 单独一行原文发给我。`;
 		}
 		/** Ask the tutor to pull the stage outline and write a few consolidation questions. */
 		function openmaicReviewPrompt(classroomId) {
@@ -9627,7 +9633,7 @@ window.__ModuleLoader__.load({
 			return lessons.filter((lesson) => lesson.subject === void 0 || lesson.subject === subject);
 		}
 		/** Recent OpenMAIC lessons: open or copy the URL, and ask the tutor to generate, retry or review. */
-		function LessonsPanel({ lessons, error, disabled, running, t, onGenerate, onRetry, onReview }) {
+		function LessonsPanel({ lessons, error, disabled, running, t, onGenerate, onQuery, onRetry, onReview }) {
 			const [copiedId, setCopiedId] = (0, react.useState)("");
 			const busy = disabled || running;
 			return (0, react_jsx_runtime.jsxs)("section", {
@@ -9688,6 +9694,12 @@ window.__ModuleLoader__.load({
 									children: copiedId === lesson.id ? t("openmaicCopied") : t("openmaicCopy")
 								})]
 							})] }),
+							lesson.status !== "ready" && lesson.pollUrl && (0, react_jsx_runtime.jsx)("button", {
+								type: "button",
+								disabled: busy,
+								onClick: () => onQuery(lesson.id),
+								children: t("openmaicQuery")
+							}),
 							lesson.status === "failed" && lesson.retryable === true && lesson.runId && (0, react_jsx_runtime.jsx)("button", {
 								type: "button",
 								disabled: busy,
@@ -11086,6 +11098,9 @@ window.__ModuleLoader__.load({
 							disabled,
 							running,
 							t,
+							onQuery: (lessonId) => {
+								tutor(openmaicQueryPrompt(lessonId)).catch(() => {});
+							},
 							onRetry: (runId) => {
 								tutor(openmaicRetryPrompt(runId)).catch(() => {});
 							},

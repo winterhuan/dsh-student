@@ -543,6 +543,7 @@ export declare const zh: {
     openmaicCopy: string;
     openmaicCopied: string;
     openmaicRetry: string;
+    openmaicQuery: string;
     openmaicReview: string;
     openmaicGenerating: string;
     openmaicReady: string;

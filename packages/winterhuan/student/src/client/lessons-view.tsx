@@ -32,13 +32,14 @@ export function lessonsForSubject<T extends { subject?: 'chinese' | 'math' | 'en
 }
 
 /** Recent OpenMAIC lessons: open or copy the URL, and ask the tutor to generate, retry or review. */
-export function LessonsPanel({ lessons, error, disabled, running, t, onGenerate, onRetry, onReview }: {
+export function LessonsPanel({ lessons, error, disabled, running, t, onGenerate, onQuery, onRetry, onReview }: {
   lessons: Lesson[]
   error?: string
   disabled: boolean
   running: boolean
   t: Translate
   onGenerate?: () => void
+  onQuery: (lessonId: string) => void
   onRetry: (runId: string) => void
   onReview: (classroomId: string) => void
 }) {
@@ -65,6 +66,7 @@ export function LessonsPanel({ lessons, error, disabled, running, t, onGenerate,
           }}>{copiedId === lesson.id ? t('openmaicCopied') : t('openmaicCopy')}</button>
         </div>
       </>}
+      {lesson.status !== 'ready' && lesson.pollUrl && <button type="button" disabled={busy} onClick={() => onQuery(lesson.id)}>{t('openmaicQuery')}</button>}
       {lesson.status === 'failed' && lesson.retryable === true && lesson.runId && <button type="button" disabled={busy} onClick={() => onRetry(lesson.runId ?? '')}>{t('openmaicRetry')}</button>}
       {lesson.status === 'ready' && lesson.classroomId && <button type="button" disabled={busy} onClick={() => onReview(lesson.classroomId ?? '')}>{t('openmaicReview')}</button>}
       {lesson.summary && <div>

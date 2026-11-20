@@ -49,7 +49,9 @@ export declare function organizePrompt(subject: string): string;
 export declare function paperPhotoPrompt(worksheetId: string): string;
 /** Ask the tutor to generate one local OpenMAIC lesson for the current goal, with interest tags and the school unit. */
 export declare function openmaicGeneratePrompt(subjectLabel: string, objectiveId: string | undefined, tags: string[], focus: string, unitName?: string): string;
-/** Ask the tutor to retry a failed generation without resubmitting the requirement. */
+/** Ask the tutor to refresh one saved lesson using its original service and poll URL. */
+export declare function openmaicQueryPrompt(lessonId: string): string;
+/** Ask the tutor to verify the failed run before requesting an idempotent retry. */
 export declare function openmaicRetryPrompt(runId: string): string;
 /** Ask the tutor to pull the stage outline and write a few consolidation questions. */
 export declare function openmaicReviewPrompt(classroomId: string): string;

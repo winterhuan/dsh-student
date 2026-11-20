@@ -37,7 +37,7 @@ describe('interactive lesson desk', () => {
       ready,
       { ...ready, id: 'om-bad', title: '坏链接', url: 'javascript:alert(1)', classroomId: undefined, summary: undefined },
       { ...ready, id: 'om-fail', status: 'failed', title: '失败的课', url: undefined, classroomId: undefined, summary: undefined, retryable: true, runId: 'run-9', error: '生成中断' },
-    ]} disabled={false} running={false} t={t} onGenerate={vi.fn()} onRetry={onRetry} onReview={onReview} />)
+    ]} disabled={false} running={false} t={t} onGenerate={vi.fn()} onQuery={vi.fn()} onRetry={onRetry} onReview={onReview} />)
     expect(screen.getByText('http://localhost:3000/classroom/room-1')).toBeTruthy()
     expect(screen.queryByText('javascript:alert(1)')).toBeNull()
     expect(screen.getByText('先凑十再加')).toBeTruthy()
@@ -78,14 +78,18 @@ describe('interactive lesson desk', () => {
   it('pins go to class when a lesson is ready and shows generating', async () => {
     const open = vi.spyOn(window, 'open').mockReturnValue(null)
     const base = dashboard(updateStudy(undefined, setup, Date.now()), Date.now())
-    const generating = { ...ready, id: 'om-gen', status: 'generating' as const, title: '正在生成', url: undefined, classroomId: undefined, summary: undefined }
+    const generating = { ...ready, id: 'om-gen', status: 'generating' as const, title: '正在生成', pollUrl: '/api/generate-classroom/run-1', url: undefined, classroomId: undefined, summary: undefined }
     const body = { ...base, interactiveLessons: { ...base.interactiveLessons, lessons: [ready, generating] } }
     backend = studentClientFixture(updateStudy(undefined, setup, Date.now()), body.interactiveLessons)
-    render(<StudyDesk sessionId="ready-lesson" visible running={false} ask={vi.fn()} t={t} />)
+    const ask = vi.fn().mockResolvedValue(undefined)
+    render(<StudyDesk sessionId="ready-lesson" visible running={false} ask={ask} t={t} />)
     expect(await screen.findByText(/Generating · 正在生成/)).toBeTruthy()
     expect((screen.getByRole('button', { name: en.openLesson }) as HTMLButtonElement).disabled).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: en.goToClass }))
     expect(open).toHaveBeenCalledWith(ready.url, '_blank', 'noopener,noreferrer')
+    fireEvent.click(screen.getByRole('button', { name: en.openmaicQuery }))
+    await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+    expect(ask.mock.calls[0]).toMatchSnapshot()
   })
 
   it('saves interest tags from parent setup', async () => {
@@ -98,6 +102,41 @@ describe('interactive lesson desk', () => {
     fireEvent.click(within(form).getByRole('button', { name: 'Save' }))
     await screen.findAllByText('Saved')
     expect(change).toHaveBeenCalledWith({ action: 'interests', tags: ['购物超市钱', '运动球类', '动物宠物', '故事角色动画', '积木拼搭手工', '天文观测'], parentConfirmation: en.interestConfirm }, 1, expect.any(String))
+  })
+
+  it('rechecks a failed lesson before retrying from the workbench', async () => {
+    const ask = vi.fn().mockResolvedValue(undefined)
+    const state = updateStudy(undefined, setup, Date.now())
+    const { interactiveLessons } = dashboard(state, Date.now())
+    backend = studentClientFixture(state, { ...interactiveLessons, lessons: [{
+      ...ready, id: 'om-paused', status: 'failed', url: undefined, classroomId: undefined,
+      summary: undefined, runId: 'run-paused', pollUrl: '/api/generate-classroom/run-paused', retryable: true,
+    }] })
+    render(<StudyDesk sessionId="retry-lesson" visible running={false} ask={ask} t={t} />)
+    fireEvent.click(await screen.findByRole('button', { name: en.openmaicRetry }))
+    await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+    expect(ask.mock.calls[0]).toMatchSnapshot()
+  })
+
+  it('can check an older failed record without a retryable run and disables requests while busy', () => {
+    const onQuery = vi.fn()
+    const lesson = {
+      ...ready, id: 'om-old-timeout', status: 'failed' as const,
+      pollUrl: '/api/generate-classroom/old-job', url: undefined, classroomId: undefined, summary: undefined,
+    }
+    const props = { lessons: [lesson], disabled: false, running: false, t, onQuery, onRetry: vi.fn(), onReview: vi.fn() }
+    const view = render(<LessonsPanel {...props} />)
+    expect(screen.queryByRole('button', { name: en.openmaicRetry })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: en.openmaicQuery }))
+    expect(onQuery).toHaveBeenCalledWith('om-old-timeout')
+    view.rerender(<LessonsPanel {...props} running />)
+    fireEvent.click(screen.getByRole('button', { name: en.openmaicQuery }))
+    expect(onQuery).toHaveBeenCalledOnce()
+    view.rerender(<LessonsPanel {...props} disabled />)
+    fireEvent.click(screen.getByRole('button', { name: en.openmaicQuery }))
+    expect(onQuery).toHaveBeenCalledOnce()
+    view.rerender(<LessonsPanel {...props} lessons={[ready]} />)
+    expect(screen.queryByRole('button', { name: en.openmaicQuery })).toBeNull()
   })
 })
 

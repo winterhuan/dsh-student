@@ -23,8 +23,8 @@ export declare function timeStatus(state: StudyState, now: number): TimeStatus;
 export declare function studyStatus(state: StudyState, now: number): {
     active: {
         id: string;
-        subject: "math" | "chinese" | "english";
-        mode: "diagnose" | "review" | "foundation" | "school" | "explore";
+        subject: "chinese" | "math" | "english";
+        mode: "review" | "diagnose" | "foundation" | "school" | "explore";
         startedAt: number;
         intensity?: "light" | "standard" | "deep" | undefined;
         endedAt?: number | undefined;
@@ -46,7 +46,7 @@ export declare function studyStatus(state: StudyState, now: number): {
         cookiePath: string;
     };
     courses: {
-        subject: "math" | "chinese" | "english";
+        subject: "chinese" | "math" | "english";
         materialId: string;
         unit: string;
         parentConfirmation: string;
@@ -55,7 +55,7 @@ export declare function studyStatus(state: StudyState, now: number): {
             confirmedAt: number;
             posture: "keep-up" | "catch-up";
             preview: boolean;
-            pace: "teaching" | "review";
+            pace: "review" | "teaching";
         } | undefined;
     }[];
     unconfirmedSubjects: string[];
@@ -63,7 +63,7 @@ export declare function studyStatus(state: StudyState, now: number): {
     todayStars: number;
     dueMistakes: {
         id: string;
-        subject: "math" | "chinese" | "english";
+        subject: "chinese" | "math" | "english";
         topic: string;
     }[];
     pendingMistakes: string[];
@@ -85,7 +85,7 @@ export declare function studyStatus(state: StudyState, now: number): {
     task: {
         id: string;
         sessionId: string;
-        subject: "math" | "chinese" | "english";
+        subject: "chinese" | "math" | "english";
         topic: string;
         prompt: string;
         hintLevel: number;
@@ -275,7 +275,7 @@ export declare function studyStatus(state: StudyState, now: number): {
                 x: number;
                 y: number;
                 label: string;
-                align?: "center" | "left" | undefined;
+                align?: "left" | "center" | undefined;
             } | {
                 draw: "arrow";
                 from: {
@@ -295,11 +295,11 @@ export declare function studyStatus(state: StudyState, now: number): {
         stuck?: boolean | undefined;
     } | null;
     feedback: {
-        result: "partial" | "correct" | "incorrect" | "unassessed" | "stuck";
+        result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
         assistance: "unknown" | "independent" | "hint" | "worked-example";
         id: string;
         sessionId: string;
-        subject: "math" | "chinese" | "english";
+        subject: "chinese" | "math" | "english";
         topic: string;
         prompt: string;
         response: string;
@@ -489,7 +489,7 @@ export declare function studyStatus(state: StudyState, now: number): {
                 x: number;
                 y: number;
                 label: string;
-                align?: "center" | "left" | undefined;
+                align?: "left" | "center" | undefined;
             } | {
                 draw: "arrow";
                 from: {

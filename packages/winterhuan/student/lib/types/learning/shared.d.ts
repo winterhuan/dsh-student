@@ -36,7 +36,7 @@ export declare function todaySpent(state: StudyState, now: number): number;
 export declare function activeSession(state: StudyState): {
     id: string;
     subject: "chinese" | "math" | "english";
-    mode: "review" | "foundation" | "school" | "explore" | "diagnose";
+    mode: "review" | "diagnose" | "foundation" | "school" | "explore";
     startedAt: number;
     intensity?: "light" | "standard" | "deep" | undefined;
     endedAt?: number | undefined;
@@ -54,7 +54,7 @@ export declare function activeSession(state: StudyState): {
 /** Parent-confirmed class frontier; the default suggestion range, not a hard gate. Absent progress leaves the whole map in scope. */
 export declare function schoolGate(state: StudyState, subject: CurriculumSubject): {
     posture: "keep-up" | "catch-up";
-    pace: "teaching" | "review";
+    pace: "review" | "teaching";
     previewUnit?: string;
     taught: Set<string>;
     current: string;

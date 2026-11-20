@@ -36,7 +36,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         diagnostics: import("./learning/mastery.ts").DiagnosticPlan[];
         materials: {
             id: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             scope: {
                 region: string;
                 grade: number;
@@ -54,9 +54,9 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         exercises: {
             id: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             objectiveId: string;
-            role: "diagnose" | "demo" | "try" | "vary" | "daily";
+            role: "daily" | "diagnose" | "demo" | "try" | "vary";
             variant: "numeric" | "context" | "reasoning";
             prompt: string;
             steps: string[];
@@ -244,7 +244,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                     x: number;
                     y: number;
                     label: string;
-                    align?: "center" | "left" | undefined;
+                    align?: "left" | "center" | undefined;
                 } | {
                     draw: "arrow";
                     from: {
@@ -257,12 +257,12 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                     };
                 })[];
             } | undefined;
-            errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+            errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
             savedAt?: number | undefined;
         }[];
         workbookDrafts: {
             id: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             prompt: string;
             outcome: "stuck" | "hinted" | "independent-wrong" | "independent-correct";
             uncertainties: string;
@@ -273,7 +273,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         workbookResults: {
             id: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             prompt: string;
             outcome: "stuck" | "hinted" | "independent-wrong" | "independent-correct";
             uncertainties: string;
@@ -289,18 +289,18 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         teachingQueue: {
             id: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             prompt: string;
             confirmedAt: number;
             objectiveId?: string | undefined;
             sourceDraftId?: string | undefined;
         }[];
         recentAttempts: {
-            result: "partial" | "correct" | "incorrect" | "unassessed" | "stuck";
+            result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
             assistance: "unknown" | "independent" | "hint" | "worked-example";
             id: string;
             sessionId: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             topic: string;
             prompt: string;
             response: string;
@@ -490,7 +490,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                     x: number;
                     y: number;
                     label: string;
-                    align?: "center" | "left" | undefined;
+                    align?: "left" | "center" | undefined;
                 } | {
                     draw: "arrow";
                     from: {
@@ -524,9 +524,9 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         dueBacklog: number;
         weakPoints: {
             id: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             title: string;
-            level: "weak" | "due" | "practising" | "stalled" | "mastered" | "untouched";
+            level: "due" | "weak" | "stalled" | "mastered" | "practising" | "untouched";
             priority: number;
             reasons: import("./learning/mastery.ts").InsightReason[];
         }[];
@@ -548,7 +548,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         concepts: {
             id: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             name: string;
             definition: string;
             example: string;
@@ -560,12 +560,12 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         objectives: {
             id: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             title: string;
             goal: string;
             conceptIds: string[];
-            method: "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "listen" | "speak";
-            errorTypes?: ("pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
+            method: "listen" | "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "speak";
+            errorTypes?: ("carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
             questionPoints?: string[] | undefined;
             variationAxes?: ("reverse" | "context" | "numbers" | "representation" | "explain")[] | undefined;
         }[];
@@ -581,18 +581,18 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             objectiveTitle: string;
             open: boolean;
             results: {
-                errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
+                errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                 itemId: string;
-                result: "partial" | "correct" | "incorrect" | "unassessed";
+                result: "correct" | "partial" | "incorrect" | "unassessed";
                 response: string;
                 assistance: "unknown" | "independent" | "hint" | "worked-example";
             }[];
             drafts: {
                 confidence?: "high" | "low";
-                errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
+                errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                 itemId: string;
                 response: string;
-                result: "partial" | "correct" | "incorrect" | "unassessed";
+                result: "correct" | "partial" | "incorrect" | "unassessed";
                 assistance: "unknown" | "independent" | "hint" | "worked-example";
                 uncertainties: string;
             }[];
@@ -603,7 +603,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                 itemId: string;
             }[];
             id: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             items: {
                 id: string;
                 prompt: string;
@@ -793,7 +793,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                         x: number;
                         y: number;
                         label: string;
-                        align?: "center" | "left" | undefined;
+                        align?: "left" | "center" | undefined;
                     } | {
                         draw: "arrow";
                         from: {
@@ -822,15 +822,15 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         };
         dueMistakes: {
             id: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             topic: string;
         }[];
         dueCount: number;
         dueTotal: number;
-        dueSubjects: ("math" | "chinese" | "english")[];
+        dueSubjects: ("chinese" | "math" | "english")[];
         pendingMistakes: {
             id: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             topic: string;
             prompt: string;
             learnerAnswer: string;
@@ -843,7 +843,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             imagePath?: string | undefined;
             materialId?: string | undefined;
             objectiveId?: string | undefined;
-            errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+            errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
             confirmedAt?: number | undefined;
             userConfirmation?: string | undefined;
             dueAt?: number | undefined;
@@ -855,7 +855,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         pendingCount: number;
         confirmedMistakes: {
             id: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             topic: string;
             prompt: string;
             learnerAnswer: string;
@@ -868,7 +868,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             imagePath?: string | undefined;
             materialId?: string | undefined;
             objectiveId?: string | undefined;
-            errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+            errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
             confirmedAt?: number | undefined;
             userConfirmation?: string | undefined;
             dueAt?: number | undefined;
@@ -879,7 +879,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         }[];
         confirmedCount: number;
         confirmedOffset: number;
-        confirmedSubject: "math" | "chinese" | "english";
+        confirmedSubject: "chinese" | "math" | "english";
         mistakeBook: {
             due: number;
             reviewing: number;
@@ -896,8 +896,8 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         checkIns: import("./learning/mastery.ts").CheckInRecord[];
         active: {
             id: string;
-            subject: "math" | "chinese" | "english";
-            mode: "diagnose" | "review" | "foundation" | "school" | "explore";
+            subject: "chinese" | "math" | "english";
+            mode: "review" | "diagnose" | "foundation" | "school" | "explore";
             startedAt: number;
             intensity?: "light" | "standard" | "deep" | undefined;
             endedAt?: number | undefined;
@@ -919,7 +919,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             cookiePath: string;
         };
         courses: {
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             materialId: string;
             unit: string;
             parentConfirmation: string;
@@ -928,7 +928,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                 confirmedAt: number;
                 posture: "keep-up" | "catch-up";
                 preview: boolean;
-                pace: "teaching" | "review";
+                pace: "review" | "teaching";
             } | undefined;
         }[];
         unconfirmedSubjects: string[];
@@ -943,7 +943,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
         task: {
             id: string;
             sessionId: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             topic: string;
             prompt: string;
             hintLevel: number;
@@ -1133,7 +1133,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                     x: number;
                     y: number;
                     label: string;
-                    align?: "center" | "left" | undefined;
+                    align?: "left" | "center" | undefined;
                 } | {
                     draw: "arrow";
                     from: {
@@ -1153,11 +1153,11 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             stuck?: boolean | undefined;
         } | null;
         feedback: {
-            result: "partial" | "correct" | "incorrect" | "unassessed" | "stuck";
+            result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
             assistance: "unknown" | "independent" | "hint" | "worked-example";
             id: string;
             sessionId: string;
-            subject: "math" | "chinese" | "english";
+            subject: "chinese" | "math" | "english";
             topic: string;
             prompt: string;
             response: string;
@@ -1347,7 +1347,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                     x: number;
                     y: number;
                     label: string;
-                    align?: "center" | "left" | undefined;
+                    align?: "left" | "center" | undefined;
                 } | {
                     draw: "arrow";
                     from: {

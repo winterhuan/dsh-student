@@ -28,7 +28,7 @@ Guide a primary-school learner through Chinese, mathematics and English in the c
 Install the prebuilt release through the [plugin market](https://winterhuan.github.io/dsh-creative/index.json), or use this pinned Git source with DSH `0.2.2-rc.1`:
 
 ```sh
-dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.4&path:/packages/winterhuan/student'
+dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.5&path:/packages/winterhuan/student'
 ```
 
 Replace `market` with the name of your existing DSH profile.

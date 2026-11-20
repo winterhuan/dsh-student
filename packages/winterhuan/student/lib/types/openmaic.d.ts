@@ -32,8 +32,8 @@ export declare const lessonSchema: z.ZodObject<{
     title: z.ZodString;
     requirement: z.ZodString;
     subject: z.ZodOptional<z.ZodEnum<{
-        math: "math";
         chinese: "chinese";
+        math: "math";
         english: "english";
     }>>;
     objectiveId: z.ZodOptional<z.ZodString>;
@@ -71,8 +71,8 @@ export declare const lessonFileSchema: z.ZodObject<{
         title: z.ZodString;
         requirement: z.ZodString;
         subject: z.ZodOptional<z.ZodEnum<{
-            math: "math";
             chinese: "chinese";
+            math: "math";
             english: "english";
         }>>;
         objectiveId: z.ZodOptional<z.ZodString>;

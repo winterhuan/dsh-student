@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { knowledgeIdSchema } from './capabilities.ts'
 import { INTEREST_TAG } from './interests.ts'
 import { chineseErrorTypes, chineseFocus, englishErrorTypes, englishFocus, mathErrorTypes, mathFocus } from './vocabulary.ts'
 
@@ -59,7 +60,7 @@ const course = courseInput.extend({ progress: schoolProgress.optional() }).stric
 const mistake = z.object({
   id, subject, topic: text, prompt: text, learnerAnswer: text, correction: text,
   explanation: text, answerEvidence: text, imagePath: text.optional(),
-  uncertainties: z.string().max(2000), materialId: id.optional(), objectiveId: id.optional(),
+  uncertainties: z.string().max(2000), materialId: id.optional(), objectiveId: knowledgeIdSchema.optional(),
   errorType: errorTypeSchema.optional(),
 }).strict()
 const concept = z.object({ id, subject, name: text, definition: text, example: text, source: text, facts: z.array(stepText).min(2).max(8).optional(), misconceptions: z.array(text).max(3).optional() }).strict()
@@ -154,7 +155,7 @@ const figure = figureSchema
 export type Figure = z.infer<typeof figure>
 /** One structured exercise item shared by the shipped exercise bank and the workspace collection. */
 export const exerciseItemSchema = z.object({
-  id, subject, objectiveId: id,
+  id, subject, objectiveId: knowledgeIdSchema,
   role: exerciseRoleSchema,
   variant: variantSchema,
   prompt: text,
@@ -169,7 +170,7 @@ export const exerciseItemSchema = z.object({
 /** One validated exercise item from the shipped bank or the workspace collection. */
 export type ExerciseItem = z.infer<typeof exerciseItemSchema>
 const workspaceExerciseInput = z.object({
-  id, subject, objectiveId: id,
+  id, subject, objectiveId: knowledgeIdSchema,
   role: exerciseRoleSchema.default('try'),
   variant: variantSchema.default('numeric'),
   prompt: text,
@@ -189,17 +190,17 @@ const attemptResult = z.enum(['correct', 'partial', 'incorrect', 'unassessed', '
 const assistance = z.enum(['independent', 'hint', 'worked-example', 'unknown'])
 const attemptBody = {
   id, sessionId: id, subject, topic: text, prompt: text, response: text,
-  feedback: text, answerEvidence: text, mistakeId: id.optional(), objectiveId: id.optional(),
+  feedback: text, answerEvidence: text, mistakeId: id.optional(), objectiveId: knowledgeIdSchema.optional(),
   variant: variantSchema.optional(),
   figure: figure.optional(),
 }
 const attempt = z.object({ ...attemptBody, result: attemptResult, assistance }).strict()
 /** A record may omit assistance; the saved attempt always stores the resolved value. */
 const recordAttempt = z.object({ ...attemptBody, result: attemptResult, assistance: assistance.optional() }).strict()
-const task = z.object({ id, sessionId: id, subject, topic: text, prompt: text, choices: z.array(text).min(2).max(4).optional(), steps: z.array(stepText).min(2).max(5).optional(), phase: phaseSchema.optional(), variant: variantSchema.optional(), mistakeId: id.optional(), objectiveId: id.optional(), figure: figure.optional() }).strict()
+const task = z.object({ id, sessionId: id, subject, topic: text, prompt: text, choices: z.array(text).min(2).max(4).optional(), steps: z.array(stepText).min(2).max(5).optional(), phase: phaseSchema.optional(), variant: variantSchema.optional(), mistakeId: id.optional(), objectiveId: knowledgeIdSchema.optional(), figure: figure.optional() }).strict()
 const answerSpace = z.enum(['none', 'line', 'lines', 'box'])
-const worksheetItem = z.object({ id, objectiveId: id.optional(), mistakeId: id.optional(), variant: variantSchema.optional(), prompt: text, figure: figure.optional(), space: answerSpace.optional(), answer: text, explanation: text, answerEvidence: text }).strict()
-const worksheet = z.object({ id, subject, kind: sheetKindSchema.optional(), objectiveId: id.optional(), items: z.array(worksheetItem).min(1).max(8) }).strict()
+const worksheetItem = z.object({ id, objectiveId: knowledgeIdSchema.optional(), mistakeId: id.optional(), variant: variantSchema.optional(), prompt: text, figure: figure.optional(), space: answerSpace.optional(), answer: text, explanation: text, answerEvidence: text }).strict()
+const worksheet = z.object({ id, subject, kind: sheetKindSchema.optional(), objectiveId: knowledgeIdSchema.optional(), items: z.array(worksheetItem).min(1).max(8) }).strict()
 const result = z.enum(['correct', 'partial', 'incorrect', 'unassessed'])
 const paperResult = z.object({ worksheetId: id, itemId: id, response: text, result, assistance, feedback: text, answerEvidence: text, userConfirmation: text.default('家长在面板批改') }).strict()
 const paperDraft = z.object({ worksheetId: id, itemId: id, response: text, result, assistance, uncertainties: z.string().max(2000), errorType: errorTypeSchema.optional(), confidence: z.enum(['high', 'low']).optional() }).strict()
@@ -207,9 +208,9 @@ const gradeSheet = z.object({ worksheetId: id, results: z.array(z.object({ itemI
 const workbookOutcome = z.enum(['stuck', 'hinted', 'independent-wrong', 'independent-correct'])
 const workbookDraft = z.object({
   id, subject, prompt: text, response: text.optional(), outcome: workbookOutcome,
-  objectiveId: id.optional(), uncertainties: z.string().max(2000), imagePath: text.optional(),
+  objectiveId: knowledgeIdSchema.optional(), uncertainties: z.string().max(2000), imagePath: text.optional(),
 }).strict()
-const teachingItem = z.object({ id, subject, prompt: text, objectiveId: id.optional(), confirmedAt: time, sourceDraftId: id.optional() }).strict()
+const teachingItem = z.object({ id, subject, prompt: text, objectiveId: knowledgeIdSchema.optional(), confirmedAt: time, sourceDraftId: id.optional() }).strict()
 const schoolProgressInput = z.object({ unitId: id, posture: z.enum(['keep-up', 'catch-up']), preview: z.enum(['on', 'off']), pace: z.enum(['teaching', 'review']), parentConfirmation: text.default('家长确认学校进度') }).strict()
 
 /** Validated mutations; confirmation fields record user statements, not authenticated identities. */
@@ -218,7 +219,7 @@ export const commandSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('material'), material }).strict(),
   z.object({ action: z.literal('course'), course: courseInput }).strict(),
   z.object({ action: z.literal('start'), id, subject, mode: z.enum(['foundation', 'school', 'review', 'explore', 'diagnose']), intensity: z.enum(['light', 'standard', 'deep']).optional(),
-    scope: z.object({ grade: z.number().int().min(1).max(6), term: z.enum(['first', 'second']), units: z.array(id).max(20).optional(), objectiveIds: z.array(id).max(60).optional() }).strict().optional() }).strict(),
+    scope: z.object({ grade: z.number().int().min(1).max(6), term: z.enum(['first', 'second']), units: z.array(id).max(20).optional(), objectiveIds: z.array(knowledgeIdSchema).max(60).optional() }).strict().optional() }).strict(),
   z.object({ action: z.literal('task'), task }).strict(),
   z.object({ action: z.literal('answer'), taskId: id, response: text }).strict(),
   z.object({ action: z.literal('hint'), taskId: id }).strict(),
@@ -236,7 +237,7 @@ export const commandSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('confirm-concept'), id, definition: text.optional(), example: text.optional(), source: text.optional(), userConfirmation: text.default('家长已核对概念') }).strict(),
   z.object({ action: z.literal('objective'), objective }).strict(),
   z.object({ action: z.literal('relation'), relation }).strict(),
-  z.object({ action: z.literal('link-mistake'), mistakeId: id, objectiveId: id }).strict(),
+  z.object({ action: z.literal('link-mistake'), mistakeId: id, objectiveId: knowledgeIdSchema }).strict(),
   z.object({ action: z.literal('classify-mistake'), mistakeId: id, errorType: z.union([errorTypeSchema, z.literal('')]).optional() }).strict(),
   z.object({ action: z.literal('worksheet'), worksheet }).strict(),
   z.object({ action: z.literal('paper-draft'), paperDraft }).strict(),
@@ -262,7 +263,7 @@ export const stateSchema = z.object({
     id, subject, mode: z.enum(['foundation', 'school', 'review', 'explore', 'diagnose']), intensity: z.enum(['light', 'standard', 'deep']).optional(),
     startedAt: time, endedAt: time.optional(), spentMs: time.optional(),
     materialId: id.optional(), unit: text.optional(), reflection: z.string().max(2000).optional(),
-    scope: z.object({ grade: z.number().int().min(1).max(6), term: z.enum(['first', 'second']), units: z.array(id).max(20).optional(), objectiveIds: z.array(id).max(60).optional() }).strict().optional(),
+    scope: z.object({ grade: z.number().int().min(1).max(6), term: z.enum(['first', 'second']), units: z.array(id).max(20).optional(), objectiveIds: z.array(knowledgeIdSchema).max(60).optional() }).strict().optional(),
   }).strict()).max(5000),
   attempts: z.array(attempt.extend({ feedback: z.string().max(2000), at: time, materialId: id.optional(), rawResponse: text.optional(), questionId: id.optional(), responseId: id.optional() }).strict()).max(20000),
   mistakes: z.array(mistake.extend({

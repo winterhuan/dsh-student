@@ -1,4 +1,4 @@
-"""Check the review catalog against its referenced capabilities and untouched legacy banks."""
+"""Validate capability sources and generate the packaged runtime copy without touching learner records."""
 
 import copy
 import hashlib
@@ -191,6 +191,19 @@ if __name__ == '__main__':
     documents = [json.loads((HERE / name).read_text()) for name in ['catalog.json', 'legacy-map.json', 'sources.json']]
     print(json.dumps(verify(*documents), ensure_ascii=False, indent=2))
     check_preview(documents[0], '--write-preview' in sys.argv)
+    runtime = ROOT / 'packages/winterhuan/student/knowledge/curriculum/capabilities'
+    for name, original in zip(['catalog.json', 'legacy-map.json', 'sources.json'], documents):
+        published = copy.deepcopy(original)
+        if name == 'catalog.json':
+            published['status'] = 'source-backed-runtime-content; activate-within-parent-confirmed-scope'
+        elif name == 'legacy-map.json':
+            published['status'] = 'reference-routing; never-automatic-mastery-credit'
+        path = runtime / name
+        if '--write-runtime' in sys.argv:
+            runtime.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(published, ensure_ascii=False, indent=2) + '\n')
+        else:
+            require(path.exists() and json.loads(path.read_text()) == published, f'stale runtime content: {name}; run --write-runtime')
     if '--self-test' in sys.argv:
         mutations = [
             lambda c, m: c['goals'][0]['prerequisites'].append(c['goals'][0]['id']),

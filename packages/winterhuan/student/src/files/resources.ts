@@ -1,10 +1,11 @@
 /** Authoring resources derive structural constraints from the shared input schemas. */
 import { z } from 'zod'
+import { capabilityGoalSchema, questionFamilySchema, knowledgeExtensionSchema } from '../capabilities.ts'
 import { officialFileSchemas } from './schema.ts'
 import { figureSchema, stateSchema } from '../schema.ts'
 import { lessonFileSchema } from '../openmaic.ts'
 
-const schemas = { ...officialFileSchemas, 'openmaic-lessons': lessonFileSchema, figure: figureSchema }
+const schemas = { ...officialFileSchemas, 'capability-goal': capabilityGoalSchema, 'question-family': questionFamilySchema, 'knowledge-extension': knowledgeExtensionSchema, 'openmaic-lessons': lessonFileSchema, figure: figureSchema }
 /** Names accepted by the packaged schema and example commands. */
 export type AuthoringKind = keyof typeof schemas
 

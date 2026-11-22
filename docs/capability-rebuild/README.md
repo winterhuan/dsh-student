@@ -4,7 +4,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-This draft converts the three subjects' grade-one and grade-two course indexes into assessable capabilities while retaining destinations for old goals and questions. Each capability has scope, criteria, prerequisites, and question-family links. It supports review before implementation; the running curriculum and daily learner records retain their existing format.
+This catalog converts the three subjects' grade-one and grade-two course indexes into assessable capabilities while retaining destinations for old goals and questions. Each capability has scope, criteria, prerequisites, and question-family links. Student reads its packaged runtime copy through capability and family queries. Existing course maps remain available for material locations and historical references; learner records retain format 2.
 
 The reconstruction starts from the Ministry of Education's three original standards and then checks each shipped course and question entry. The resulting draft contains 32 Chinese, 42 math, and 17 English capabilities and 123 question families. These are observed decomposition counts, including curriculum extensions enabled only after confirmation, rather than a timetable requiring each child to complete 91 sequential tasks.
 
@@ -274,7 +274,7 @@ Thirteen capabilities have no course association in the old goal index, includin
 
 ## Phased changes and validation
 
-The first step delivers the reviewable catalog, criteria, prerequisites, source exercises, and built-in legacy mappings. Further work follows the dependencies below; the [learning-loop proposal](../../../../.agents/notes/proposed/feature/2026-11-22-student-openmaic-learning-loop.md) owns the complete integration design.
+The packaged catalog provides criteria, prerequisites, source exercises, and gated old-ID routes. Shared validation checks learner identity, family links and tested scope; read-only migration descriptions preserve original answers and unresolved facts. Further work follows the dependencies below; the [learning-loop proposal](https://github.com/winterhuan/dsh-creative/issues/58) owns the complete integration design.
 
 1. Align textbooks and school scope, resolve the course-association gaps above, and enumerate custom goals, banks, and actual historical responses in an isolated copy.
 2. Rehearse evidence-level migration, checking old ID aliases, cross-term references, family consolidation, unknown facts, repeatability, and preservation of original history.
@@ -287,12 +287,12 @@ Run the following command from the Student submodule to check structure, recipro
 python3 docs/capability-rebuild/verify.py --self-test
 ```
 
-After changing capability data, run the following command to update both language tables, then re-record the documentation pair. The validator replaces only the generated region.
+After changing capability data, regenerate the packaged runtime copy and both language tables, then re-record the documentation pair. The validator replaces only the generated region in these pages.
 
 ```sh
-python3 docs/capability-rebuild/verify.py --write-preview
+python3 docs/capability-rebuild/verify.py --write-preview --write-runtime
 ```
 
 ## Dev Note
 
-This is reviewable design data without runtime integration or daily migration. New question media still need generation and validation from the mother blueprints; blueprint text cannot replace actual audiovisual or performed evidence. Formal checks cannot prove that the educational decomposition is complete or that all historical responses can be inherited.
+The catalog and formal-file validation are available at runtime. Daily learner records require an explicitly authored and verified migration; this document does not establish official-service or complete learning-loop acceptance. New question media still need generation and validation from the mother blueprints; blueprint text cannot replace actual audiovisual or performed evidence. Formal checks cannot prove that the educational decomposition is complete or that all historical responses can be inherited.

@@ -1,5 +1,6 @@
 /** Strict official Student files. Entity identity is independent of file observation and business revision. */
 import { z } from 'zod'
+import { knowledgeIdSchema, capabilityScopeSchema, knowledgeExtensionSchema } from '../capabilities.ts'
 import type { Branded } from '@deepseek-ai/dsh-brand'
 import { stateSchema, figureSchema, phaseSchema, variantSchema, errorTypeSchema, sheetKindSchema } from '../schema.ts'
 
@@ -7,6 +8,8 @@ const id = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u)
 const text = z.string().min(1).max(2000)
 const time = z.number().int().nonnegative().max(8_640_000_000_000_000)
 const subject = z.enum(['chinese', 'math', 'english'])
+/** Stable child identity, retained across terms and independent of service accounts. */
+export type LearnerId = Branded<'StudentLearnerId'>
 /** Stable learning-term identity. */
 export type TermId = Branded<'StudentTermId'>
 /** Stable learning-block identity; distinct from a native DSH Session. */
@@ -15,11 +18,12 @@ export type BlockId = Branded<'StudentBlockId'>
 export type WorksheetId = Branded<'StudentWorksheetId'>
 /** Stable response identity within one owning entity. */
 export type ResponseId = Branded<'StudentResponseId'>
+const learnerId = id.transform(value => value as LearnerId)
 const termId = id.transform(value => value as TermId)
 const blockId = id.transform(value => value as BlockId)
 const worksheetId = id.transform(value => value as WorksheetId)
 const responseId = id.transform(value => value as ResponseId)
-const base = { format: z.literal(2), termId }
+const base = { format: z.literal(2), termId, learnerId: learnerId.optional() }
 const scope = stateSchema.shape.sessions.element.shape.scope.unwrap()
 /** Known assistance and unknown assistance remain separate from correctness. */
 export const assistanceSchema = z.enum(['independent', 'hint', 'worked-example', 'unknown'])
@@ -41,7 +45,7 @@ export const responseSourceSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('manual'), entry: z.enum(['current', 'historical']), parentConfirmation: text }).strict(),
   z.object({ kind: z.literal('legacy'), sourcePath: text, row: text }).strict(),
 ])
-const target = z.union([id, z.object({ kind: z.literal('pending'), reason: text }).strict()])
+const target = z.union([knowledgeIdSchema, z.object({ kind: z.literal('pending'), reason: text }).strict()])
 /** Published question source, including unresolved legacy material. */
 export const questionSourceSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('authored'), description: text }).strict(),
@@ -49,15 +53,23 @@ export const questionSourceSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('mistake'), mistakeId: id, description: text }).strict(),
   z.object({ kind: z.literal('legacy'), sourcePath: text, row: text }).strict(),
 ])
+/** Exact capability, family and tested scope of this frozen question instance. */
+export const capabilityBindingSchema = z.object({ goalId: knowledgeIdSchema, familyId: knowledgeIdSchema, scope: capabilityScopeSchema }).strict()
+/** References reuse original archived responses without copying or changing their dates. */
+export const archiveEvidenceReferenceSchema = z.object({ learnerId, termId, ownerKind: z.enum(['block', 'worksheet']), ownerId: id, responseId, goalId: knowledgeIdSchema, scope: capabilityScopeSchema,
+  review: z.object({ mistakeId: id, stage: z.number().int().min(0).max(4), dueAt: time, independentDays: z.array(day).max(1000) }).strict().optional(),
+}).strict()
+/** A stable reference into the same learner’s original archived term. */
+export type ArchiveEvidenceReference = z.infer<typeof archiveEvidenceReferenceSchema>
 /** Published question content reused by blocks and worksheets, including every supported figure. */
-export const questionSchema = z.object({ id, objectiveId: target, mistakeId: id.optional(), source: questionSourceSchema,
+export const questionSchema = z.object({ id, objectiveId: target, capability: capabilityBindingSchema.optional(), mistakeId: id.optional(), source: questionSourceSchema,
   topic: text, prompt: text, answer: text, explanation: text, answerEvidence: text,
-  basisStatus: z.literal('legacy-pending').optional(),
+  basisStatus: z.literal('legacy-pending').optional(), legacyRecord: z.json().optional(),
   choices: z.array(text).min(2).max(4).optional(), steps: z.array(text.max(240)).min(2).max(5).optional(),
   figure: figureSchema.optional(), phase: phaseSchema.optional(), variant: variantSchema.optional(), space: z.enum(['none', 'line', 'lines', 'box']).optional(),
 }).strict()
 /** Original learner wording and its actual date; assessments cannot replace these fields. */
-export const responseSchema = z.object({ id: responseId, questionId: id, rawResponse: text, response: text.optional(), assistance: assistanceSchema,
+export const responseSchema = z.object({ id: responseId, questionId: id, rawResponse: text, response: text.optional(), legacyRecord: z.json().optional(), assistance: assistanceSchema,
   assistanceConfirmation: text.optional(),
   answerDateConfirmation: text.optional(),
   answerDate: answerDateSchema.optional(), source: responseSourceSchema }).strict()
@@ -71,6 +83,7 @@ export const termSettingsSchema = z.object({ ...base, kind: z.literal('term-sett
   profile: stateSchema.shape.profile.extend({ parentConfirmation: text }), materials: stateSchema.shape.materials,
   courses: z.array(stateSchema.shape.courses.element.extend({ parentConfirmation: text })).max(3),
   interests: stateSchema.shape.interests, openmaic: stateSchema.shape.openmaic, archivedAt: time.optional(),
+  evidenceReferences: z.array(archiveEvidenceReferenceSchema).max(20000).optional(),
   migration: z.object({ sourcePath: text, sourceSha256: z.string().regex(/^[a-f0-9]{64}$/u), backupPath: text }).strict().optional(),
 }).strict()
 /** One block owns its historical course context, questions, responses, hints and assessments. */
@@ -95,6 +108,10 @@ export const worksheetSchema = z.object({ ...base, kind: z.literal('worksheet'),
 }).strict()
 /** Bounded non-block collections with explicit ownership; rewards have one calendar day/reason identity. */
 export const collectionsSchema = z.object({ ...base, kind: z.literal('collections'),
+  knowledge: knowledgeExtensionSchema.optional(),
+  legacyHistory: z.array(z.object({ sourcePath: text, row: text, record: z.json() }).strict()).max(20000).optional(),
+  legacyReferences: z.array(z.object({ kind: z.enum(['objective', 'exercise']), oldId: knowledgeIdSchema, status: z.enum(['pending', 'review-required']), candidateGoalIds: z.array(knowledgeIdSchema).max(100),
+    routes: z.array(z.object({ goalId: knowledgeIdSchema, familyId: knowledgeIdSchema }).strict()).max(100), reason: text }).strict()).max(5000).optional(),
   mistakes: z.array(stateSchema.shape.mistakes.element.omit({ stage: true, independentDays: true, dueAt: true })).max(5000),
   exercises: stateSchema.shape.exercises, concepts: stateSchema.shape.concepts, objectives: stateSchema.shape.objectives,
   relations: stateSchema.shape.relations, teachingQueue: stateSchema.shape.teachingQueue, rewards: z.array(stateSchema.shape.rewards.element.extend({ day })).max(1000),
@@ -118,3 +135,13 @@ export type AnswerDate = z.infer<typeof answerDateSchema>
 export type LearnerResponse = z.infer<typeof responseSchema>
 /** One current response assessment. */
 export type Assessment = z.infer<typeof assessmentSchema>
+
+/**
+ * Locate an original archived entity using validated identities; response selection remains explicit.
+ * @param reference - same-learner earlier-term reference.
+ * @returns controlled workspace-relative original owner path, without copying evidence.
+ */
+export function archiveEvidencePath(reference: ArchiveEvidenceReference): string {
+  const valid = archiveEvidenceReferenceSchema.parse(reference)
+  return `.study/archives/${valid.termId}/${valid.ownerKind === 'block' ? 'blocks' : 'worksheets'}/${valid.ownerId}.json`
+}

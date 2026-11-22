@@ -4,6 +4,7 @@ import { canonical, sameScope, scopeSelects, studyDay } from '../learning/shared
 import { builtinObjectiveAnywhere, builtinObjectiveIn, curriculumFor, subjectExercises } from '../curriculum.ts'
 import { officialFileSchemas, type OfficialFile, type TermSettings, type LearningBlock, type WorksheetFile, type CollectionsFile } from './schema.ts'
 import { customObjectiveMethods } from '../schema.ts'
+import { effectiveKnowledge, resolveLegacyReference } from '../capabilities.ts'
 import { errorTypesBySubject } from '../vocabulary.ts'
 
 /** Bounded, actionable durable-file failure. */
@@ -63,6 +64,18 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
     const seen = new Set<string>()
     rows.forEach((row, index) => { if (seen.has(row.id)) fail(path, `${field}.${index}.id`, 'duplicate-identity', 'Keep one entry per stable identity; use a new identity for a new attempt.'); seen.add(row.id) })
   }
+  let knowledge = effectiveKnowledge()
+  try { knowledge = effectiveKnowledge(workspace.collections?.knowledge) }
+  catch (error) { fail('.study/collections.json', 'knowledge', 'knowledge-index', error instanceof Error ? error.message : 'Repair the capability catalog.') }
+  const evidenceIds = new Set<string>()
+  for (const [i, reference] of (settings.evidenceReferences ?? []).entries()) {
+    const identity = JSON.stringify([reference.termId, reference.ownerKind, reference.ownerId, reference.responseId, reference.goalId, reference.scope.id])
+    if (!settings.learnerId || reference.learnerId !== settings.learnerId || reference.termId === settings.termId) fail('.study/settings.json', `evidenceReferences.${i}`, 'archive-reference', 'Reference an earlier term of the same stable learner; never copy a response into the current term.')
+    if (evidenceIds.has(identity)) fail('.study/settings.json', `evidenceReferences.${i}`, 'duplicate-reference', 'Keep one reference per original response, capability and tested scope.')
+    evidenceIds.add(identity)
+    if (!knowledge.goals.some(goal => goal.id === reference.goalId)) fail('.study/settings.json', `evidenceReferences.${i}.goalId`, 'capability-reference', 'Reference an existing capability; scope compatibility and original facts must be verified before reuse.')
+  }
+  for (const previous of prior) if (previous.file.kind === 'term-settings' && previous.file.termId === settings.termId && previous.file.learnerId && previous.file.learnerId !== settings.learnerId) fail('.study/settings.json', 'learnerId', 'learner-identity', 'Retain the stable learner identity for this term.')
   unique('.study/settings.json', 'materials', settings.materials)
   if (new Set(settings.courses.map(course => course.subject)).size !== settings.courses.length) fail('.study/settings.json', 'courses', 'duplicate-subject', 'Keep one course per subject.')
   for (const course of settings.courses) {
@@ -72,9 +85,17 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
   }
   if (blocks.filter(block => block.endedAt === undefined).length > 1) fail('.study/blocks', '', 'active-block', 'End the previous block before starting another; retain its pending responses.')
   for (const { path, file } of files) {
+    if (file.learnerId !== undefined && file.learnerId !== settings.learnerId) fail(path, 'learnerId', 'learner-identity', 'Use the stable learner identity owning this term.')
     if (file.termId !== settings.termId) fail(path, 'termId', 'term-identity', 'Use the current term identity or preserve this entity in its original archive.')
     if (file.kind === 'collections') {
       for (const field of ['mistakes', 'exercises', 'concepts', 'objectives', 'relations', 'teachingQueue'] as const) unique(path, field, file[field])
+      const legacyIds = new Set<string>()
+      for (const [i, reference] of (file.legacyReferences ?? []).entries()) {
+        const identity = `${reference.kind}:${reference.oldId}`
+        if (legacyIds.has(identity)) fail(path, `legacyReferences.${i}`, 'duplicate-reference', 'Keep one routing record per preserved old ID.')
+        legacyIds.add(identity)
+        if (reference.candidateGoalIds.some(id => !knowledge.goals.some(goal => goal.id === id)) || reference.routes.some(route => !knowledge.families.some(family => family.id === (knowledge.familyAliases[route.familyId] ?? route.familyId) && family.goalIds.includes(route.goalId)))) fail(path, `legacyReferences.${i}`, 'legacy-reference', 'Use existing compatible capability/family routes; unknown material remains pending.')
+      }
       const rewards = new Set<string>()
       file.rewards.forEach((reward, index) => {
         const identity = JSON.stringify([reward.day, reward.reason])
@@ -134,14 +155,29 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
       }
       const builtin = builtinObjectiveAnywhere(question.objectiveId)
       const custom = workspace.collections?.objectives.find(item => item.id === question.objectiveId)
-      const goal = builtin ?? custom
+      const capabilityGoal = knowledge.goals.find(goal => goal.id === question.objectiveId)
+      const goal = builtin ?? custom ?? capabilityGoal
+      if (capabilityGoal && !question.capability) fail(path, `questions.${i}.capability`, 'tested-scope', 'Save the question family and actual tested capability scope.')
+      if (question.capability) {
+        const binding = question.capability
+        const target = knowledge.goals.find(item => item.id === binding.goalId)
+        const familyId = knowledge.familyAliases[binding.familyId] ?? binding.familyId
+        const family = knowledge.families.find(item => item.id === familyId)
+        if (!target || target.subject !== file.subject || !family?.goalIds.includes(binding.goalId) || family.subject !== file.subject) fail(path, `questions.${i}.capability`, 'capability-family', 'Bind a family and capability of the same subject with a compatible core method and structure.')
+        if (capabilityGoal && question.objectiveId !== binding.goalId) fail(path, `questions.${i}.capability.goalId`, 'capability-target', 'Use the same stable capability for the question target and tested scope.')
+        if (!capabilityGoal && question.source.kind === 'legacy' && !resolveLegacyReference('objective', question.objectiveId).candidateGoalIds.includes(binding.goalId)) fail(path, `questions.${i}.capability.goalId`, 'legacy-capability-route', 'Review the original question and route only its demonstrated capability; an unknown legacy goal needs explicit source review.')
+        const oral = binding.goalId.startsWith('e.speak') || ['c.read-aloud', 'c.recite', 'c.retell', 'c.describe', 'c.interact'].includes(binding.goalId)
+        const listening = binding.goalId.startsWith('e.listen') || binding.goalId === 'c.listen'
+        if (listening && binding.scope.modality !== 'listening' || oral && binding.scope.modality !== 'oral' || binding.goalId === 'e.sound' && !['listening', 'oral'].includes(binding.scope.modality) || binding.goalId === 'e.view-listen' && binding.scope.modality !== 'audiovisual') fail(path, `questions.${i}.capability.scope.modality`, 'evidence-modality', 'Listening, speech and audiovisual capabilities require their own actual evidence, rather than written answers.')
+      }
       if (!goal || goal.subject !== file.subject) fail(path, `questions.${i}.objectiveId`, 'subject-target', 'Reference a saved or shipped learning goal of this subject.')
       const effective = file.context.scope ?? file.context.profile
       if (builtin && !frozen && question.source.kind !== 'legacy' && (!effective || !builtinObjectiveIn(effective, file.subject, question.objectiveId))) fail(path, `questions.${i}.objectiveId`, 'effective-curriculum', 'Publish a goal in the historical profile book, or save an explicit scope selecting the goal’s book.')
-      if (file.context.scope && (!goal || !scopeSelects(file.context.scope, file.subject, builtin?.unit ?? '', question.objectiveId))) fail(path, `questions.${i}.objectiveId`, 'effective-scope', 'Publish a question inside the explicitly selected scope.')
+      if (file.context.scope && !capabilityGoal && (!goal || !scopeSelects(file.context.scope, file.subject, builtin?.unit ?? '', question.objectiveId))) fail(path, `questions.${i}.objectiveId`, 'effective-scope', 'Publish a question inside the explicitly selected scope.')
       if (question.source.kind === 'exercise') {
         const sourceId = question.source.exerciseId
-        if (![...(workspace.collections?.exercises ?? []), ...subjectExercises(file.subject)].some(item => item.id === sourceId && item.objectiveId === question.objectiveId)) fail(path, `questions.${i}.source`, 'exercise-source', 'Reference a saved or shipped exercise for this goal.')
+        const objectiveId = question.objectiveId
+        if (!knowledge.families.some(family => family.representative.id === sourceId && family.goalIds.includes(question.capability?.goalId ?? objectiveId)) && ![...(workspace.collections?.exercises ?? []), ...subjectExercises(file.subject)].some(item => item.id === sourceId && item.objectiveId === question.objectiveId)) fail(path, `questions.${i}.source`, 'exercise-source', 'Reference a saved or shipped exercise for this goal.')
       }
       if (question.source.kind === 'mistake' && question.source.mistakeId !== question.mistakeId) fail(path, `questions.${i}.source`, 'mistake-source', 'Use the same mistake identity for the source and frozen review binding.')
       if (question.mistakeId) {
@@ -197,7 +233,7 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
   const affected = (path: string) => issues.some(issue => issue.path === path || path.startsWith(`${issue.path}/`))
   if (affected('.study/collections.json')) for (const file of [...blocks, ...worksheets]) {
     const questions = file.kind === 'block' ? file.questions : file.items
-    if (questions.some(question => typeof question.objectiveId === 'string' && !builtinObjectiveAnywhere(question.objectiveId))) fail(`.study/${file.kind === 'block' ? 'blocks' : 'worksheets'}/${file.id}.json`, 'objectiveId', 'invalid-target-source', 'Repair the referenced custom-goal collection before using this entity.')
+    if (questions.some(question => typeof question.objectiveId === 'string' && !builtinObjectiveAnywhere(question.objectiveId) && !knowledge.goals.some(goal => goal.id === question.objectiveId))) fail(`.study/${file.kind === 'block' ? 'blocks' : 'worksheets'}/${file.id}.json`, 'objectiveId', 'invalid-target-source', 'Repair the referenced custom-goal collection before using this entity.')
   }
   const partial = affected('.study/settings.json') ? undefined : {
     settings, nativeSources, blocks: blocks.filter(block => !affected(`.study/blocks/${block.id}.json`)),

@@ -1,4 +1,5 @@
 /** Exact consumed native input versions from one immutable Session observation. */
+import { z } from 'zod'
 import { createHash } from 'node:crypto'
 import type { UserMessage } from '@deepseek-ai/dsh-llm'
 import { KNOWN_SESSION_EVENT_TYPES } from '@deepseek-ai/dsh-session'
@@ -18,6 +19,13 @@ export interface NativeConsumedInput { status: 'consumed'; messageId: string; re
 export interface NativeAdmission { messageId: string; requestId?: string; status: 'pending' | 'claimed' | 'consumed' | 'removed' }
 /** Source reconstruction failure stops all independently trusted receipt observations. */
 export interface NativeSourceContext { status: 'available' | 'unavailable'; cut?: NativeSourceCut; inputs: NativeConsumedInput[]; admissions: NativeAdmission[]; observations: NativeInputObservation[]; omitted: number; omittedAdmissions: number; reason?: string }
+const learningScopeSchema = z.object({ learnerId: z.string().min(1), termId: z.string().min(1), blockId: z.string().min(1), questionId: z.string().min(1), responseId: z.string().min(1).optional() })
+function learningScope(text: string): NativeInputObservation['learningScope'] {
+  const intention = /(?:^|\n)Student intention:\n([^\n]+)(?:\n|$)/u.exec(text)?.[1]
+  if (!intention) return undefined
+  try { const scope = learningScopeSchema.safeParse(JSON.parse(intention)); return scope.success ? { learnerId: scope.data.learnerId, termId: scope.data.termId, blockId: scope.data.blockId, questionId: scope.data.questionId, ...(scope.data.responseId ? { responseId: scope.data.responseId } : {}) } : undefined }
+  catch { return undefined }
+}
 type Slot = { message: UserMessage; receipt: NativeReceipt; admission?: NativeAdmission }
 
 /**
@@ -94,7 +102,8 @@ export function resolveNativeSources(observation: Pick<SessionObservation, 'head
         const attachments = message.content.flatMap(block => block.type === 'image' || block.type === 'file' ? [{ kind: block.type, attachmentId: block.attachment.attachmentId }] : [])
         const input: NativeConsumedInput = { status: 'consumed', messageId: message.id, inputVersion, consumedSeq: event.seq, ...(rawResponse === undefined ? { textUnavailable: 'Exact native text is empty or exceeds 2000 characters.' } : { rawResponse }), receipt, ...('rpcId' in message.source ? { requestId: message.source.rpcId } : {}), attachments: attachments.slice(0, 8), omittedAttachments: Math.max(0, attachments.length - 8) }
         inputs.push(input)
-        if (receipt.kind === 'known' && rawResponse !== undefined) observations.push({ sessionId: cut.sessionId, messageId: message.id, inputVersion, rawResponse, receiptAt: receipt.at })
+        const originalScope = rawResponse === undefined ? undefined : learningScope(rawResponse)
+        if (receipt.kind === 'known' && rawResponse !== undefined) observations.push({ sessionId: cut.sessionId, messageId: message.id, inputVersion, rawResponse, receiptAt: receipt.at, ...(originalScope ? { learningScope: originalScope } : {}) })
         break
       }
       case 'step/end': claims = []; sealed = []; entered = false; claimWindow = true; claimTargets.clear(); break

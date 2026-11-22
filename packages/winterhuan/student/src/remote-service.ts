@@ -48,7 +48,7 @@ export class StudentRemote extends TypertRemoteService {
   async query(sessionId: StudentSessionId, request: StudentQueryRequest, signal: AbortSignal): Promise<StudentQueryResult> {
     const agent = await this.mainAgent(sessionId, signal)
     this.wire(request)
-    const { read, native, backupIssues } = await readStudentWorkspace({ agent, signal })
+    const { read, native, backupIssues } = await readStudentWorkspace({ agent, signal }, this.ctx)
     const now = Date.now()
     let query: WorkspaceQueryResult
     if (request.kind === 'dashboard') {
@@ -99,7 +99,7 @@ export class StudentRemote extends TypertRemoteService {
   async manualContext(sessionId: StudentSessionId, intent: ManualSaveRequest['intent'], signal: AbortSignal): Promise<StudentManualContext> {
     const agent = await this.mainAgent(sessionId, signal)
     this.wire(intent)
-    const { read } = await readStudentWorkspace({ agent, signal })
+    const { read } = await readStudentWorkspace({ agent, signal }, this.ctx)
     return this.wire({ ...this.readFacts(read), baseline: manualFields(read, intent) })
   }
 
@@ -129,7 +129,7 @@ export class StudentRemote extends TypertRemoteService {
   async inspectSubmission(sessionId: StudentSessionId, request: StudentSubmissionRequest, signal: AbortSignal): Promise<StudentSubmissionInspection> {
     const agent = await this.mainAgent(sessionId, signal)
     this.wire(request)
-    const { read, native } = await readStudentWorkspace({ agent, signal })
+    const { read, native } = await readStudentWorkspace({ agent, signal }, this.ctx)
     const nativeStates = native.admissions.filter(row => row.requestId === request.requestId).map(row => row.status)
     const result: StudentSubmissionInspection = { requestId: request.requestId, admission: nativeStates.length ? 'accepted' : 'unknown', nativeStates, nativeSourceStatus: native.status, ...(native.cut ? { cut: native.cut } : {}), answer: 'not-requested', assessment: 'not-requested', ...this.readFacts(read) }
     if (request.response) {

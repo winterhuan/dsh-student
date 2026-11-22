@@ -1,5 +1,6 @@
 /** Strict official Student files. Entity identity is independent of file observation and business revision. */
 import { z } from 'zod'
+import { openmaicResponseSourceSchema, openmaicQuestionSchema, officialReviewSchema } from '../openmaic/feedback-schema.ts'
 import { knowledgeIdSchema, capabilityScopeSchema, knowledgeExtensionSchema } from '../capabilities.ts'
 import type { Branded } from '@deepseek-ai/dsh-brand'
 import { stateSchema, figureSchema, phaseSchema, variantSchema, errorTypeSchema, sheetKindSchema } from '../schema.ts'
@@ -39,6 +40,7 @@ export const answerDateSchema = z.discriminatedUnion('kind', [
 ])
 /** Native input version or preserved source; missing receipt matching is explicitly unknown. */
 export const responseSourceSchema = z.discriminatedUnion('kind', [
+  openmaicResponseSourceSchema,
   z.object({ kind: z.literal('unknown') }).strict(),
   z.object({ kind: z.literal('native'), sessionId: text, messageId: text, inputVersion: text, receiptAt: time.optional(), attachments: z.array(text).max(8).optional() }).strict(),
   z.object({ kind: z.literal('paper'), imagePaths: z.array(text).max(8), parentConfirmation: text }).strict(),
@@ -63,7 +65,7 @@ export const archiveEvidenceReferenceSchema = z.object({ learnerId, termId, owne
 export type ArchiveEvidenceReference = z.infer<typeof archiveEvidenceReferenceSchema>
 /** Published question content reused by blocks and worksheets, including every supported figure. */
 export const questionSchema = z.object({ id, objectiveId: target, capability: capabilityBindingSchema.optional(), mistakeId: id.optional(), source: questionSourceSchema,
-  topic: text, prompt: text, answer: text, explanation: text, answerEvidence: text,
+  topic: text, prompt: text, answer: text, explanation: text, answerEvidence: text, openmaic: openmaicQuestionSchema.optional(),
   basisStatus: z.literal('legacy-pending').optional(), legacyRecord: z.json().optional(),
   choices: z.array(text).min(2).max(4).optional(), steps: z.array(text.max(240)).min(2).max(5).optional(),
   figure: figureSchema.optional(), phase: phaseSchema.optional(), variant: variantSchema.optional(), space: z.enum(['none', 'line', 'lines', 'box']).optional(),
@@ -76,7 +78,7 @@ export const responseSchema = z.object({ id: responseId, questionId: id, rawResp
 /** The current assessment of one response. A correction replaces this entry under the same response identity. */
 export const assessmentSchema = z.object({ id, responseId, result: z.enum(['correct', 'partial', 'incorrect', 'unassessed', 'stuck']),
   assistance: assistanceSchema, feedback: text, answerEvidence: text, assessedAt: time, correctedAt: time.optional(),
-  userConfirmation: text.optional(), errorType: errorTypeSchema.optional() }).strict()
+  userConfirmation: text.optional(), errorType: errorTypeSchema.optional(), official: officialReviewSchema.optional(), officialHistory: z.array(officialReviewSchema).max(2000).optional(), grading: z.enum(['aligned', 'equivalent', 'conflict', 'pending']).optional() }).strict()
 const pending = z.object({ sourcePath: text, row: text, fields: z.array(text).min(1).max(20), reason: text }).strict()
 /** One term owns profile, material, course and compound school-progress settings. */
 export const termSettingsSchema = z.object({ ...base, kind: z.literal('term-settings'), revision: time, updatedAt: time,

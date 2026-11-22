@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto'
 import { stateSchema } from '../schema.ts'
 import { migrateStudyFile } from './legacy.ts'
 import { validateStudyFiles, type FileIssue, type ParsedFile, type ValidationResult, type ValidatedWorkspace, type NativeInputObservation } from './validation.ts'
+import type { NativeHistoryVerification } from '../native-history.ts'
+import type { OpenmaicSourceVerification, OpenmaicInputObservation } from '../openmaic/feedback-schema.ts'
 import type { OfficialFile } from './schema.ts'
 import type { BackupRetentionQueue } from './backup-retention.ts'
 import { StudyReadCache } from './cache.ts'
@@ -33,6 +35,8 @@ export interface WorkspaceRead {
   files: ObservedFile[]
   membership: { path: string; names: string[] }[]
   issues: FileIssue[]
+  /** Independently authorized original sources remain separate from agent-authored file validity. */
+  sourceVerification?: { native: NativeHistoryVerification[]; openmaic: OpenmaicSourceVerification[] }
   /** Backup inspection failures remain independent from official-file validity. */
   backupIssues?: FileIssue[]
   workspace?: ValidatedWorkspace
@@ -47,15 +51,16 @@ const MAX_TOTAL_BYTES = 33_554_432
  * @param signal - cancels discovery, bounded rereads and byte reads.
  * @param prior - supplied preserved versions; omitted reads use verified observed-version backups for cold frozen-content checks.
  * @param nativeSources - independently resolved consumed input observations, empty for the read-only CLI.
+ * @param openmaicSources - independently authorized original official submissions and grading.
  * @returns validated facts or an explicit incomplete, invalid or changing result.
  */
-export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?: readonly { path: string; file: OfficialFile }[], nativeSources: readonly NativeInputObservation[] = []): Promise<WorkspaceRead> {
+export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?: readonly { path: string; file: OfficialFile }[], nativeSources: readonly NativeInputObservation[] = [], openmaicSources: readonly OpenmaicInputObservation[] = []): Promise<WorkspaceRead> {
   const owner = fs.cache ??= new StudyReadCache()
   const backups = prior === undefined ? await readBackups(fs, signal) : undefined
-  return { ...await readWorkspaceFiles(fs, signal, prior ?? backupVersions(backups!.backups), nativeSources, owner), cache: owner, ...(backups ? { backupIssues: backups.issues } : {}) }
+  return { ...await readWorkspaceFiles(fs, signal, prior ?? backupVersions(backups!.backups), nativeSources, openmaicSources, owner), cache: owner, ...(backups ? { backupIssues: backups.issues } : {}) }
 }
 
-async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: readonly { path: string; file: OfficialFile }[], nativeSources: readonly NativeInputObservation[], owner: StudyReadCache): Promise<WorkspaceRead> {
+async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: readonly { path: string; file: OfficialFile }[], nativeSources: readonly NativeInputObservation[], openmaicSources: readonly OpenmaicInputObservation[], owner: StudyReadCache): Promise<WorkspaceRead> {
   const cache = owner.files
   for (let attempt = 0; attempt < 3; attempt += 1) {
     signal.throwIfAborted()
@@ -116,7 +121,7 @@ async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: re
         input.push({ path, value })
       } catch (error) { discoveryIssues.push({ path, field: '', rule: 'json', correction: error instanceof Error ? error.message : 'Save valid UTF-8 JSON.' }) }
     }
-    const validation: ValidationResult = validateStudyFiles(input, available, nativeSources)
+    const validation: ValidationResult = validateStudyFiles(input, available, nativeSources, openmaicSources)
     const migration = validation.workspace?.settings.migration
     if (migration) {
       const backup = await fs.stat(migration.backupPath, signal)

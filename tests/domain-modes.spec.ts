@@ -15,7 +15,7 @@ import { StudentOpenmaic } from '../packages/winterhuan/student/src/openmaic/ser
 import * as student from '../packages/winterhuan/student/src/agent.ts'
 
 const domains = [
-  { id: 'student', group: 'winterhuan', agent: student, tools: ['study_status', 'openmaic_generate', 'openmaic_slide', 'openmaic_widget', 'openmaic_render'], skills: 5 },
+  { id: 'student', group: 'winterhuan', agent: student, tools: ['study_status', 'openmaic_feedback', 'openmaic_generate', 'openmaic_slide', 'openmaic_widget', 'openmaic_render'], skills: 5 },
 ]
 
 it('isolates domain capabilities from Standard and sibling modes, including native children', async () => {

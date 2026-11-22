@@ -2,6 +2,7 @@
 import type { StudyState } from '../schema.ts'
 import type { ValidatedWorkspace } from '../files/validation.ts'
 import type { AnswerDate, Assessment, LearnerResponse } from '../files/schema.ts'
+import { matchOpenmaicResponse } from '../openmaic/feedback-consumer.ts'
 import { studyDay } from './shared.ts'
 
 /** Effective assessment of one original response; corrections retain its identity and answer date. */
@@ -10,6 +11,7 @@ export interface EffectiveEvidence {
   subject: StudyState['sessions'][number]['subject']; topic: string; objectiveId?: string; mistakeId?: string
   rawResponse: string; result: Assessment['result']; assistance: LearnerResponse['assistance']; answerDate: AnswerDate
   basisStatus?: 'legacy-pending'
+  official?: Assessment['official']; officialHistory?: Assessment['officialHistory']; grading?: Assessment['grading']
   source: LearnerResponse['source']; sourceStatus: 'known' | 'unknown'; assessedAt?: number
 }
 /** Shared normalized response facts and separately preserved current help signals. */
@@ -34,6 +36,7 @@ export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
       const declaredDate = response.answerDate ?? (file.kind === 'worksheet' ? file.answerDate : undefined) ?? { kind: 'unknown' }
       const source = response.source
       const matchedNative = source.kind === 'native' ? workspace.nativeSources?.find(item => item.sessionId === source.sessionId && item.messageId === source.messageId && item.inputVersion === source.inputVersion && item.rawResponse === response.rawResponse) : undefined
+      const matchedOfficial = source.kind === 'openmaic' ? workspace.openmaicSources?.find(item => matchOpenmaicResponse(item, file, response, question, assessment)) : undefined
       const answerDate: AnswerDate = declaredDate.kind === 'instant' && declaredDate.basis === 'native-input'
         ? matchedNative && matchedNative.receiptAt === declaredDate.at ? declaredDate : { kind: 'unknown' }
         : declaredDate
@@ -41,8 +44,9 @@ export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
         subject: file.subject, topic: question.topic, ...(typeof question.objectiveId === 'string' && !question.basisStatus ? { objectiveId: question.objectiveId } : {}),
         ...(question.basisStatus ? { basisStatus: question.basisStatus } : {}),
         ...(question.mistakeId ? { mistakeId: question.mistakeId } : {}), rawResponse: response.rawResponse,
-        result: question.basisStatus ? 'unassessed' : assessment?.result ?? 'unassessed', assistance: response.assistance, source: response.source,
-        sourceStatus: source.kind === 'unknown' || source.kind === 'native' && (!matchedNative || source.receiptAt !== undefined && source.receiptAt !== matchedNative.receiptAt) ? 'unknown' : 'known',
+        result: question.basisStatus ? 'unassessed' : source.kind === 'openmaic' ? matchedOfficial?.result ?? 'unassessed' : assessment?.result ?? 'unassessed',
+        ...(assessment?.official ? { official: assessment.official } : {}), ...(assessment?.officialHistory ? { officialHistory: assessment.officialHistory } : {}), ...(assessment?.grading ? { grading: assessment.grading } : {}), assistance: source.kind === 'openmaic' && (matchedOfficial?.answerExposure || !response.assistanceConfirmation) ? 'unknown' : response.assistance, source: response.source,
+        sourceStatus: source.kind === 'unknown' || source.kind === 'openmaic' && !matchedOfficial || source.kind === 'native' && (!matchedNative || source.receiptAt !== undefined && source.receiptAt !== matchedNative.receiptAt) ? 'unknown' : 'known',
         answerDate,
         ...(assessment ? { assessedAt: assessment.assessedAt } : {}) })
     }

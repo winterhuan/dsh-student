@@ -136,6 +136,10 @@ DSH_BIN=/absolute/path/to/dsh STUDENT_EVIDENCE_DIR=/path/to/evidence pnpm run te
 
 测试使用隔离临时 Home、Agents 和 Documents 目录，再等待子进程清理。它通过真实原生 write/edit、构建 CLI 和独立消费方覆盖合成 v1 来源保留、中断迁移及来源变化拒绝、有界已观察备份、明确恢复、部分归档、新学期拒绝与重启。它不在独立恢复工作区运行旧插件，也不建立浏览器、固定 Git、真实教学、OCR、课堂或物理打印验收。
 
+[官方反馈读取器](src/openmaic/feedback.ts)在播放前冻结题面，再读取已授权原 learner 的 sessions/records。agent 将返回的归属、题目、不可变提交与官方批改历史写入原学习文件，运行打包只读 CLI；Student 独立消费接受保存内容后，agent 才推进课堂检查点。明确数值等价保留原官方评分与有效评分；未解决的冲突、题面修订、实际日期与帮助保持待核对或未知。模型自写的来源标记不认证证据。详见[反馈流程](knowledge/skills/study/references/openmaic-feedback.md)。
+
+构建后运行 `node packages/winterhuan/student/tests/openmaic-feedback-native.e2e.mjs`，验证确定性 HTTP 来源、原生作者、CLI、独立消费与重启；`DSH_BIN` 指定已安装可执行文件，`STUDENT_EVIDENCE_DIR` 指定仓库外证据目录。可选 `STUDENT_OPENMAIC_ONLINE_DIR` 保存私有原 job/auth/capture 元数据，用于真实线上来源验收；证据目录须保持私有。该模式保留既有生成归属并核验真实来源导入，完整原生建课另行验收。
+
 ### 校验原生文件编辑
 
 构建本仓库后，运行随包发布的同一可执行文件：
@@ -155,7 +159,7 @@ node packages/winterhuan/student/lib/cli.js validate --workspace /path/to/worksp
 
 [Student Remote](src/remote-service.ts)为已注册的 DSH 主会话提供生成的类型化查询、显式手动保存与提交检查。Gateway 在每次调用前检查会话权限；缺失、已关闭和子 Agent 会被拒绝，且不触发激活。提交检查分别报告原生消息接纳、已保存原答与有效的已保存评分，绝不重发输入。手动保存使用已观察的学期、版本和编辑字段基线；设置明确提供 `editedProfileFields`。Host 配置默认 `refreshIntervalMs: 3000`、`maxWireBytes: 1048576`，限制完整请求与响应的 JSON 大小，包含 watch/manual/inspection 包装；超大的手动请求在保存前拒绝。[客户端资源提供者](src/client/resource.ts)通过原生重连跟踪 `dsh-resource://student/session/<encoded-id>?query=<encoded-JSON>`，在失败时报告错误并将之前的值标记为过期状态，等待流关闭后才撤销命名空间。
 
-[原生来源读取器](src/transport.ts)仅观察发起调用的已授权会话。较早会话的原始回答和文件时间戳保持完整，但没有单独授权的来源观察时，投影日期仍为未知，也不计入有实际日期的独立作答证据。完整原始事件重放最多读取 100,000 个事件和 16 MiB；原生传输视图最多 32 KiB，包含 20 条已消费输入、20 条接纳记录，每条输入最多 2,000 个文本字符和八个附件引用，并明确省略的输入、接纳记录和附件数量。历史不完整或存在不支持的事件时，接收来源事实不可用。接收版本匹配已消费输入的完整来源与内容，包括附件；稍后的消费、文件写入和评分不会生成作答接收时间。
+[原生来源读取器](src/transport.ts)观察调用方会话与明确引用的原始主会话。历史读取须核对相同规范工作区、当前调用权限，以及原消费 Student intention 中的 learner/term/block/question 归属；原来源缺失或不匹配时保留未知日期。最多读取八个原会话、32 MiB 物理历史和 32 MiB 总重放；公共 provider 支持正常压缩历史，不要求可选 eventCount。每次完整原始重放上限为 100,000 事件与 16 MiB；原生返回视图上限为 32 KiB、20 个已消费输入、20 个接收状态、每输入 2,000 字符及八个附件引用，明确报告遗漏数量。不完整或不支持的历史不提供可信接收事实。接收版本匹配包含附件的完整来源与内容，后续消费、文件写入与批改不产生作答接收时间。
 
 练习单由[客户端试卷视图](src/client/worksheet-view.tsx)渲染，与屏上题图共用同一套 SVG 图形；打印走浏览器打印对话框（可选择打印机或存储为 PDF），Host 不生成 PDF，也不调用系统打印队列。客户端通过原生会话队列提交辅导请求，不替换输入框草稿。
 
@@ -185,11 +189,11 @@ node packages/winterhuan/student/lib/cli.js validate --workspace /path/to/worksp
 
 #### 模型看到的内容
 
-Student 模式注册 study_status 和四个官方 OpenMAIC 工具，以及 study 和四个官方 DSH skill。[提示词快照](../../../tests/fixtures/student-persona.txt)记录前缀；标准与其他模式不包含这些工具与技能。官方编写契约和选中方法资源按需加载。Host 账号凭据与浏览器授权不进入模型参数、工具回执或学习文件。agent 通过原生文件工具完成学习写入并运行随包只读 CLI，区分消息接收、回答保存和有效评价保存。
+Student 模式注册 study_status、openmaic_feedback 和四个官方 OpenMAIC 工具，以及 study 和四个官方 DSH skill。[提示词快照](../../../tests/fixtures/student-persona.txt)记录前缀；标准与其他模式不包含这些工具与技能。官方编写契约和选中方法资源按需加载。Host 账号凭据与浏览器授权不进入模型参数、工具回执或学习文件。agent 通过原生文件工具完成学习写入并运行随包只读 CLI，区分消息接收、回答保存和有效评价保存。
 
 #### Token 影响
 
-技能正文和参考按需加载，启用时提供一个只读 Student 工具定义；每次请求也包含原生工具的成本。集合查询每页返回 20 条及下一页偏移。不加载整本教材。尚未测量真实模型的 token 或教学质量基准。
+技能正文和参考按需加载，启用时提供两个只读 Student 工具定义；每次请求也包含原生工具的成本。集合查询每页返回 20 条及下一页偏移。不加载整本教材。尚未测量真实模型的 token 或教学质量基准。
 
 #### KV Cache 影响
 

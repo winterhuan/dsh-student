@@ -1,0 +1,672 @@
+{
+  "format": 1,
+  "officialPlugin": {
+    "version": "0.4.0",
+    "revision": "09c1693cfe83224db89fdd4abd245ac9174d3a05",
+    "tools": [
+      "openmaic_generate",
+      "openmaic_slide",
+      "openmaic_widget",
+      "openmaic_render"
+    ],
+    "skills": [
+      "openmaic-teach",
+      "openmaic-slide",
+      "openmaic-widget",
+      "openmaic-render"
+    ],
+    "dsh": "0.2.2-rc.1"
+  },
+  "sourceRevision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+  "sourceLicense": "MIT",
+  "entries": [
+    {
+      "name": "build-personal-skill",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/build-personal-skill/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "workflow-source-only",
+      "scope": "Website workflow requiring separately verified tools",
+      "dependencies": [
+        "create_skill",
+        "search",
+        "web_search"
+      ],
+      "adaptation": "build-personal-skill/student-adaptation.md",
+      "resources": [
+        "build-personal-skill/SKILL.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "curriculum-planner",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/curriculum-planner/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [
+        "create_stage",
+        "generate_scene",
+        "generate_tts",
+        "patch_stage",
+        "read_stage",
+        "web_search"
+      ],
+      "adaptation": "curriculum-planner/student-adaptation.md",
+      "resources": [
+        "curriculum-planner/SKILL.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "deep-interactive",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/deep-interactive/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [],
+      "adaptation": "deep-interactive/student-adaptation.md",
+      "resources": [
+        "deep-interactive/SKILL.md",
+        "deep-interactive/outline-constraints.json"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "deep-research",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/deep-research/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [
+        "create_stage",
+        "generate_scene",
+        "list_materials",
+        "read_material",
+        "search",
+        "web_search"
+      ],
+      "adaptation": "deep-research/student-adaptation.md",
+      "resources": [
+        "deep-research/SKILL.md",
+        "deep-research/outline-constraints.json"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "fact-check",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/fact-check/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [
+        "list_materials",
+        "read_material",
+        "read_stage",
+        "search",
+        "web_search"
+      ],
+      "adaptation": "fact-check/student-adaptation.md",
+      "resources": [
+        "fact-check/SKILL.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "feynman-learning",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/feynman-learning/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [
+        "create_stage",
+        "generate_scene",
+        "generate_tts",
+        "read_stage"
+      ],
+      "adaptation": "feynman-learning/student-adaptation.md",
+      "resources": [
+        "feynman-learning/SKILL.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "k12-core-literacy-planning",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/k12-core-literacy-planning/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [
+        "create_stage",
+        "generate_scene",
+        "generate_tts",
+        "patch_stage",
+        "read_stage"
+      ],
+      "adaptation": "k12-core-literacy-planning/student-adaptation.md",
+      "resources": [
+        "k12-core-literacy-planning/SKILL.md",
+        "k12-core-literacy-planning/references/core-literacy.md",
+        "k12-core-literacy-planning/references/subjects/humanities.md",
+        "k12-core-literacy-planning/references/subjects/languages.md",
+        "k12-core-literacy-planning/references/subjects/mathematics.md",
+        "k12-core-literacy-planning/references/subjects/science.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "learning-to-learn",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/learning-to-learn/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [],
+      "adaptation": "learning-to-learn/student-adaptation.md",
+      "resources": [
+        "learning-to-learn/SKILL.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "lecture-style",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/lecture-style/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [
+        "create_stage",
+        "generate_scene"
+      ],
+      "adaptation": "lecture-style/student-adaptation.md",
+      "resources": [
+        "lecture-style/SKILL.md",
+        "lecture-style/outline-constraints.json"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "page-clone",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/page-clone/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "workflow-source-only",
+      "scope": "Website workflow requiring separately verified tools",
+      "dependencies": [
+        "generate_image",
+        "generate_scene",
+        "generate_tts",
+        "patch_stage",
+        "read_stage"
+      ],
+      "adaptation": "page-clone/student-adaptation.md",
+      "resources": [
+        "page-clone/SKILL.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "pptx-import",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/pptx-import/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "workflow-source-only",
+      "scope": "Website workflow requiring separately verified tools",
+      "dependencies": [
+        "create_stage",
+        "generate_scene",
+        "generate_tts",
+        "import_pptx",
+        "list_materials",
+        "patch_stage",
+        "read_stage"
+      ],
+      "adaptation": "pptx-import/student-adaptation.md",
+      "resources": [
+        "pptx-import/SKILL.md",
+        "pptx-import/outline-constraints.json"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "pro-editing",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/pro-editing/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "workflow-source-only",
+      "scope": "Website workflow requiring separately verified tools",
+      "dependencies": [
+        "generate_scene",
+        "generate_tts",
+        "patch_stage",
+        "read_stage"
+      ],
+      "adaptation": "pro-editing/student-adaptation.md",
+      "resources": [
+        "pro-editing/SKILL.md",
+        "pro-editing/outline-constraints.json"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "slide-craft",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/slide-craft/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "workflow-source-only",
+      "scope": "Website workflow requiring separately verified tools",
+      "dependencies": [],
+      "adaptation": "slide-craft/student-adaptation.md",
+      "resources": [
+        "slide-craft/SKILL.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "slide-dsl",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/slide-dsl/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "workflow-source-only",
+      "scope": "Website workflow requiring separately verified tools",
+      "dependencies": [
+        "patch_stage",
+        "read_stage"
+      ],
+      "adaptation": "slide-dsl/student-adaptation.md",
+      "resources": [
+        "slide-dsl/SKILL.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "social-emotional-learning",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/social-emotional-learning/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [],
+      "adaptation": "social-emotional-learning/student-adaptation.md",
+      "resources": [
+        "social-emotional-learning/SKILL.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "spiral-curriculum",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/spiral-curriculum/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [
+        "create_stage",
+        "generate_scene",
+        "generate_tts",
+        "read_stage"
+      ],
+      "adaptation": "spiral-curriculum/student-adaptation.md",
+      "resources": [
+        "spiral-curriculum/SKILL.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "stage-design",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/stage-design/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "workflow-source-only",
+      "scope": "Website workflow requiring separately verified tools",
+      "dependencies": [
+        "create_stage",
+        "generate_scene",
+        "generate_tts",
+        "patch_stage",
+        "read_stage"
+      ],
+      "adaptation": "stage-design/student-adaptation.md",
+      "resources": [
+        "stage-design/SKILL.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "stage-dsl",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/stage-dsl/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "workflow-source-only",
+      "scope": "Website workflow requiring separately verified tools",
+      "dependencies": [
+        "create_stage",
+        "generate_scene",
+        "patch_stage",
+        "read_stage",
+        "search"
+      ],
+      "adaptation": "stage-dsl/student-adaptation.md",
+      "resources": [
+        "stage-dsl/SKILL.md",
+        "stage-dsl/references/actions.md",
+        "stage-dsl/references/pbl.md",
+        "stage-dsl/references/quiz.md",
+        "stage-dsl/references/widget.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "style-clone",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/style-clone/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "workflow-source-only",
+      "scope": "Website workflow requiring separately verified tools",
+      "dependencies": [
+        "create_stage",
+        "generate_image",
+        "generate_scene",
+        "generate_tts",
+        "import_pptx",
+        "patch_stage",
+        "read_stage"
+      ],
+      "adaptation": "style-clone/student-adaptation.md",
+      "resources": [
+        "style-clone/SKILL.md",
+        "style-clone/outline-constraints.json"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "teacher-style-clone",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/teacher-style-clone/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "workflow-source-only",
+      "scope": "Website workflow requiring separately verified tools",
+      "dependencies": [
+        "create_stage",
+        "generate_scene",
+        "list_materials",
+        "read_material",
+        "search"
+      ],
+      "adaptation": "teacher-style-clone/student-adaptation.md",
+      "resources": [
+        "teacher-style-clone/SKILL.md",
+        "teacher-style-clone/outline-constraints.json"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "understanding-by-design",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/understanding-by-design/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [],
+      "adaptation": "understanding-by-design/student-adaptation.md",
+      "resources": [
+        "understanding-by-design/SKILL.md"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "vocational",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/vocational/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [],
+      "adaptation": "vocational/student-adaptation.md",
+      "resources": [
+        "vocational/SKILL.md",
+        "vocational/outline-constraints.json"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "workshop-style",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/workshop-style/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [
+        "create_stage",
+        "generate_scene"
+      ],
+      "adaptation": "workshop-style/student-adaptation.md",
+      "resources": [
+        "workshop-style/SKILL.md",
+        "workshop-style/outline-constraints.json"
+      ],
+      "constraintsExecutedInDSH": false
+    },
+    {
+      "name": "zone-of-proximal-development",
+      "source": "https://github.com/THU-MAIC/OpenMAIC/blob/ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6/skills/agent-runtime/zone-of-proximal-development/SKILL.md",
+      "revision": "ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6",
+      "status": "method-adaptation",
+      "scope": "Confirmed Student scope; method guidance only",
+      "dependencies": [],
+      "adaptation": "zone-of-proximal-development/student-adaptation.md",
+      "resources": [
+        "zone-of-proximal-development/SKILL.md",
+        "zone-of-proximal-development/references/exercise-lesson.md",
+        "zone-of-proximal-development/references/theory.md"
+      ],
+      "constraintsExecutedInDSH": false
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "build-personal-skill/SKILL.md",
+      "gitBlob": "5dd6ae89db2bacf5a49e0ef3fc82d464c13440df",
+      "sha256": "5c1bef5c9e768cc416b3139df911adc25db089def5f8bb7e6fcb6af8f0aa1091"
+    },
+    {
+      "path": "curriculum-planner/SKILL.md",
+      "gitBlob": "7975dd39712c93e43f4e04eebd3992f54c949032",
+      "sha256": "661a274f60d2a18fcf320715e8390cde178b2deb7a07c77669c4f1ce658ed1fb"
+    },
+    {
+      "path": "deep-interactive/SKILL.md",
+      "gitBlob": "86bc0afd0ffa301a679dbf4e47cd3a304254fdb2",
+      "sha256": "bb26d6b34f34bad37a76fef7f9863e1e67a2d4a5fbdf89d4ef08734c74db97bb"
+    },
+    {
+      "path": "deep-interactive/outline-constraints.json",
+      "gitBlob": "82cc1bf9efceab2cc4271188b7ad8971f3728479",
+      "sha256": "31f9618dac6dd1598a4d679e35f94b3c8b85c003dc7dd0e262570cc866f5ae63"
+    },
+    {
+      "path": "deep-research/SKILL.md",
+      "gitBlob": "5482bd2b12241140d7889dce51a696480dfd9dc9",
+      "sha256": "063ce7f57f178e8e3f4e5cdf52a34a78b9cfbd82c29e45d5ee93325c54f25ca0"
+    },
+    {
+      "path": "deep-research/outline-constraints.json",
+      "gitBlob": "525cd5ca3a1b326e6986b49d8ed6facaf589d902",
+      "sha256": "8acbc55066657da9866d4e28388a1a8642976793cc2dd492d3730f0c475d2bd7"
+    },
+    {
+      "path": "fact-check/SKILL.md",
+      "gitBlob": "dc7fc61322f8cd07239721596773d2a9f05a57a3",
+      "sha256": "44979669a1873ed393f249b06352fa37e01c608ce6a3f611368e1502f9ad4427"
+    },
+    {
+      "path": "feynman-learning/SKILL.md",
+      "gitBlob": "d913bc81e3191371db7c8d6827b9932caa5720ac",
+      "sha256": "af7d9eaca12896a498259cbae3fa09d196d455b4e72af75d63ed1d1575ca944e"
+    },
+    {
+      "path": "k12-core-literacy-planning/SKILL.md",
+      "gitBlob": "abd0c2b8638e22a086a61a259d4b89a64152a5b0",
+      "sha256": "fbc03e9245406bac2d5b312f1a5711de311d17dc98eeb30d8eab298ee397c08f"
+    },
+    {
+      "path": "k12-core-literacy-planning/references/core-literacy.md",
+      "gitBlob": "ae9b9ec65002e1d62edc605700f80834cdb3be2c",
+      "sha256": "47635d06a4a598b28c22a408f5f218e96dd2eca664ca74c1774bb95c848a47ee"
+    },
+    {
+      "path": "k12-core-literacy-planning/references/subjects/humanities.md",
+      "gitBlob": "00c34aa1e18b7497355a035c2e8d0cdbc104536b",
+      "sha256": "616dfe49b3f8c96c917f81a98d04a23b374f1ec509c6d59ee9874d7656353ccc"
+    },
+    {
+      "path": "k12-core-literacy-planning/references/subjects/languages.md",
+      "gitBlob": "1b472f9094a28eebbe2198b363db9bad3aab4b4e",
+      "sha256": "b88c8350e51ffcaf502ef891e0e69f8351295b550c4fe7202efa595de7327b89"
+    },
+    {
+      "path": "k12-core-literacy-planning/references/subjects/mathematics.md",
+      "gitBlob": "672714a9827963257f2afad4b18cb88616852e87",
+      "sha256": "c6a3867f7eb9546928c7ba08243ac3add5e4ec7a963c745191186565632712b1"
+    },
+    {
+      "path": "k12-core-literacy-planning/references/subjects/science.md",
+      "gitBlob": "d15c5300fc356874377de44fb431a55dc1896caa",
+      "sha256": "2e2e7589fe7798771e69f95bd8222fe0a87ef8f189e8785a0dc90880353e5047"
+    },
+    {
+      "path": "learning-to-learn/SKILL.md",
+      "gitBlob": "b49fd865ef04a964195fed23e881e74b918dac4c",
+      "sha256": "fe8be28613d01efe49a858bb89bf97f84273bd20311c805c36e2bfd28519c2ce"
+    },
+    {
+      "path": "lecture-style/SKILL.md",
+      "gitBlob": "8431d894c5f1e1693616f4ad833545b797a2bef8",
+      "sha256": "540e7a4b34cd8d5de66861ebe96c73a14fcd87bc9c020e75edfc92080b23c42a"
+    },
+    {
+      "path": "lecture-style/outline-constraints.json",
+      "gitBlob": "4ff5842aeab58beba73ff860bb0f4607cbc984c9",
+      "sha256": "1b8aef5a81bbc59e9ef6691e7d65bae137301dde6466ea9fef49ff7d72a68de9"
+    },
+    {
+      "path": "page-clone/SKILL.md",
+      "gitBlob": "0aa5f59cd79acbab007abaec1c15c8260f2db0ef",
+      "sha256": "eeb220cf64b6f18c82bb0fe6298603b4626463c401c5170594e80e88ec5561db"
+    },
+    {
+      "path": "pptx-import/SKILL.md",
+      "gitBlob": "a9a9b066828a1131021a4810736f18bc9e4e0591",
+      "sha256": "f62f063784886b75c67b299b458f5e936f931503b464f0db716113c9fface1a3"
+    },
+    {
+      "path": "pptx-import/outline-constraints.json",
+      "gitBlob": "75b4f43564e7767752ee2706e0df23de72143942",
+      "sha256": "9354b1e7ee0d571a576ceac77b2f1df5ca871374ac3e0f3a96d10e7d24a85bf5"
+    },
+    {
+      "path": "pro-editing/SKILL.md",
+      "gitBlob": "ba29fc6d85196c8d3b0fe6cbc811b50ae4c3db2d",
+      "sha256": "e76c732cb8d1236e7525a056a6929c40903562199289c9adae83946a0804ecd0"
+    },
+    {
+      "path": "pro-editing/outline-constraints.json",
+      "gitBlob": "2f5c138516a4026612f5701e9fc67ff18f86e9ef",
+      "sha256": "a1e9a3f34122e56ff3c786df107960c2a80412525b210a288da91f3ca4e20ae3"
+    },
+    {
+      "path": "slide-craft/SKILL.md",
+      "gitBlob": "b0322b1f17adbe15dce9f579d7c08a7edb76baf5",
+      "sha256": "cf35eea56909b1427f171c6798ba55392761edb081603138892368d1bd727081"
+    },
+    {
+      "path": "slide-dsl/SKILL.md",
+      "gitBlob": "f5ca5a5ee2866ddccfb903db83b5b57eadd2534c",
+      "sha256": "3ec06a0b35fe5da831998b75fcafbaa35823406f5988bb915edccadf69e1512a"
+    },
+    {
+      "path": "social-emotional-learning/SKILL.md",
+      "gitBlob": "3e253345cdb66a3795d9f047057c5b1269a248de",
+      "sha256": "4aea1736a8855c2ef32767bf4e5e8428bc573a0d5b1cb9816c84d1ae34e86284"
+    },
+    {
+      "path": "spiral-curriculum/SKILL.md",
+      "gitBlob": "4516090e6e7afc651679e69b3e7548cf6b54a6f2",
+      "sha256": "fe6fe978ab5ac583fcccb9293d410d8da9e3cd7bb393900698095c2387da5b93"
+    },
+    {
+      "path": "stage-design/SKILL.md",
+      "gitBlob": "15b8490c1af8e09c566242ffa2150c28b18d3b85",
+      "sha256": "4cc4ea7572d10f2010906d849f65a1bad0b6d1d12b6b35d373f214d4de719825"
+    },
+    {
+      "path": "stage-dsl/SKILL.md",
+      "gitBlob": "f1c929206aed699edcef622533f74f4b65c6a05f",
+      "sha256": "53a7d94da2b872076c448771d9cc48471ab5aad82dfe13bcc542cd16be7ce713"
+    },
+    {
+      "path": "stage-dsl/references/actions.md",
+      "gitBlob": "0305948c369a1376fd983e95cd438ebe7f3384d9",
+      "sha256": "4e322e5c30140e948b0ab629c79b382c8a9076ff1bff928bbd9f3677a775fd47"
+    },
+    {
+      "path": "stage-dsl/references/pbl.md",
+      "gitBlob": "08e0fd7721ae375c62f9391cecefa475f7ce92cc",
+      "sha256": "fdd430ebde436592ca602fe566a7ef78016a1843541a51d1e10c1a18e08b9c69"
+    },
+    {
+      "path": "stage-dsl/references/quiz.md",
+      "gitBlob": "21a9d581c2e573dc152bf187b65e3749f4f71d0c",
+      "sha256": "99c4e4f19fb427af82faaa2d3be42ea2aaf0386246775c1be33be3bf1fb3e950"
+    },
+    {
+      "path": "stage-dsl/references/widget.md",
+      "gitBlob": "82b46e4277e607f10aa706362cc1ff5dbd50f26c",
+      "sha256": "f707d98280a8aa3eb8fa87376354909d37c31de9093d540a6ad9c798fad9fd93"
+    },
+    {
+      "path": "style-clone/SKILL.md",
+      "gitBlob": "8e2ec8f165ba4a48db5d02761ef6e7b6943f4c5f",
+      "sha256": "a8001f7b4c55ef37de6fd00200a43ab58090d5abe8fb1d9aaa426b4cf74a2df6"
+    },
+    {
+      "path": "style-clone/outline-constraints.json",
+      "gitBlob": "7ab0b4eb631ef0b255554ec38594ff3665bc70a1",
+      "sha256": "4e5c8332ca066b7a06cfd2de2437f0cb10469454b061c03e3f0887b6d5e2cfb4"
+    },
+    {
+      "path": "teacher-style-clone/SKILL.md",
+      "gitBlob": "76364b6d2e0e0261c8425bbe829eb5d287b7be9b",
+      "sha256": "9bf4ae1bb9a484d4d426818821bd0530ca20f6f158390280c10c883b750e427b"
+    },
+    {
+      "path": "teacher-style-clone/outline-constraints.json",
+      "gitBlob": "8d91572a47975c9429f7d9bf54319ebe42ab0b7d",
+      "sha256": "8bb817824d1c150e90cb6a0d2499cd04beae54175a7dae3622ff09f71ba7136d"
+    },
+    {
+      "path": "understanding-by-design/SKILL.md",
+      "gitBlob": "20e414752214bb1c915be856976e33695430524c",
+      "sha256": "75af8be3ec7772b6ae97ac70ceedbb00fcfbb16a6d4addceb5f62ec0b3614808"
+    },
+    {
+      "path": "vocational/SKILL.md",
+      "gitBlob": "b816c368ed3f98f378bc048d33fb72ad78958da7",
+      "sha256": "0544506924e469b49c89295fe414da440cd081adca520ff584049fafff25a43c"
+    },
+    {
+      "path": "vocational/outline-constraints.json",
+      "gitBlob": "485061d4f293a96f168adbbc0e5df6f1313ab46e",
+      "sha256": "4e577a427df5296cb70248143ee60fd473fb2b14429358e84df9795b33e3509a"
+    },
+    {
+      "path": "workshop-style/SKILL.md",
+      "gitBlob": "4ea320cdc62ba09742b5290997f1e8febf84b2c7",
+      "sha256": "002a4c9842069fb6f24da4b2d3ed0b6a65b0cef08298f5ae05d5905e661d884a"
+    },
+    {
+      "path": "workshop-style/outline-constraints.json",
+      "gitBlob": "bca56b9bc87fb22bc2897aa0034b1cb2560fba68",
+      "sha256": "a6c6f348356a6892e198c836b297524f4bf16989212a68d7146a5cb99fcf2711"
+    },
+    {
+      "path": "zone-of-proximal-development/SKILL.md",
+      "gitBlob": "2d12a2718184ffc80d6a52d7b090f1d7d8e3afbd",
+      "sha256": "cac0ff39f207570c3a40410fe2b61536ce4a9a5e54b33779a96015e45aab4049"
+    },
+    {
+      "path": "zone-of-proximal-development/references/exercise-lesson.md",
+      "gitBlob": "e4cad60e649d40640c0986945212d2bed5638c82",
+      "sha256": "69870c3f8ff45d4295fece627a572d430fe444f860cb431795d9de30257ad1e1"
+    },
+    {
+      "path": "zone-of-proximal-development/references/theory.md",
+      "gitBlob": "1da0e3a8dbe389d3608523f0135806321fc4647c",
+      "sha256": "3bdbaa09c3d2e913ae0053eb1adb0d7778f52c56628e3d0e31cb05c2d365c9ec"
+    }
+  ]
+}

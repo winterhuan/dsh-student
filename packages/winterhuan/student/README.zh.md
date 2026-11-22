@@ -55,7 +55,9 @@ dsh plugin --profile student add ./packages/winterhuan/student
 
 ### 打开互动课
 
-本机已经在运行 OpenMAIC 时，今日建议旁可以对当前目标一键生成互动课。requirement 写入已保存的兴趣标签和已确认的校内单元，例如欢乐购物街。生成中显示状态，可用「继续查询」恢复查询；查询超时保留最后已确认状态。重试会先核对服务状态，并为同一次请求复用 commandId。可以上课后，「去上课」放在今日页上方。今日学习也列出最近的互动课，并可在浏览器打开课堂链接。生成、大约一分钟一次的轮询、重试和课后大纲由学习助手用 curl 和同一个 cookie 完成，因为 web_fetch 访问不了 localhost。对话里的课堂 URL 是单独一行的裸地址。课后助手保存一段短大纲，并按现有练习回路出 2 到 5 道巩固题。家长设置可以保存 OpenMAIC 地址。保存过的地址优先；否则使用环境变量 OPENMAIC_BASE，该变量也没有时用 `http://localhost:3000`。服务若要求访问码，从 OPENMAIC_ACCESS_CODE 读取，不写入学习档案。工作台不嵌课堂页面。
+Student 组合固定官方 OpenMAIC 0.4.0：四个工具和四个 DSH skill，可使用完整课堂、独立 simulation/game/code 组件、课件和教学卡片。Host 默认连接官方服务，Token 剩余不足 24 小时自动续登并核对相同 learner，明确 401 最多续登重试一次。生成及时返回结构化 job 身份，重启后继续同一活动只轮询原任务。学习文件均由 agent 编写并运行只读 CLI。[24 项方法来源清单](knowledge/skills/study/openmaic/README.md)区分可复用教学方法与官网专用工作流，正文和引用按需读取。独立的已安装 Chrome 窗口通过官方登录流程核对账号后播放课堂；挑战保留同一窗口供家长登录，普通系统浏览器保持自身登录状态。
+
+Profile 需提供 DSH Credentials。Student 的 `openmaic` Host 配置默认引用 `OPEN_MAIC_USER`、`OPEN_MAIC_PASSWORD` 和 `OPEN_MAIC_ACCESS_CODE`，由受保护的 provider 解析值，不将值写入插件配置。账号授权与 job 恢复使用 provider 的私有 grant 记录。`browserProfileRoot` 可指定私有的持久化 Chrome 目录，默认使用 `DSH_HOME/student-openmaic-browser`（或 `~/.dsh/student-openmaic-browser`）。打开或继续课堂时核对过期时间；Host 释放时关闭所属 Chrome context，重启后复用该 profile。维护的官方包补丁只为顶层 Client renderer 行增加 `hostTools:false`，让 Host 工具和技能保持在 Student 模式内。
 
 ### 选择学习方式
 
@@ -165,8 +167,8 @@ node packages/winterhuan/student/lib/cli.js validate --workspace /path/to/worksp
 ## 延伸阅读
 
 - [学习技能](knowledge/skills/study/SKILL.md)——家长设置与日常辅导。
-- [OpenMAIC 互动课](knowledge/skills/study/references/openmaic.md)——在本机生成互动课、记课，并用几道题巩固。
-- [互动课决策](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-28-student-openmaic-lessons.zh.md)——为什么由助手的 shell 调用 OpenMAIC，工作台只列表和打开。
+- [OpenMAIC 教学与恢复](knowledge/skills/study/references/openmaic.md)——完整课堂、独立内联教学与受限授权。
+
 - [教学参考](knowledge/skills/study/references/teaching.md)——学科方法和答案核验。
 - [知识地图](knowledge/skills/study/references/knowledge-map.md)——内置知识点、掌握状态与巩固回路。
 - [学习系统决策](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/.agents/notes/implemented/feature/2026-10-05-student-learning.zh.md)——证据、来源与奖励边界。
@@ -181,7 +183,7 @@ node packages/winterhuan/student/lib/cli.js validate --workspace /path/to/worksp
 
 #### 模型看到的内容
 
-所选模式加入领域 persona 和一个只读 Student 工具 schema。[提示词快照](../../../tests/fixtures/student-persona.txt)记录前缀；标准与其他领域模式不包含这些能力。非 Web 环境保留 `/study`。`study_status` 读取有效文件和有上限的教学上下文：实际版本、当前学习段/题目、原回答、待评价状态、合法动作、选定范围、目标事实/来源/方法、提示阶梯和至多三道母题。文件目录和版本分页或明确遗漏；过大记录指向原生文件读取。助手用原生文件工具编辑所有业务变化，运行随包 CLI，并区分消息接收、回答保存和有效评价保存。源定义生成的 schema 与示例按需加载，包含全部 23 种图形。技能覆盖设置、教材、教学、照片、练习单、恢复和 OpenMAIC。原生 shell 请求使用独立的同源 cookie jar；认证内容保留在模型可见业务文件之外。原生压缩管理累积历史。参数 JSON 大小是字符数；完整请求/调用记录与单独标明的密度估算不能证明提供商 token、图片成本、教学质量或费用。
+Student 模式注册 study_status 和四个官方 OpenMAIC 工具，以及 study 和四个官方 DSH skill。[提示词快照](../../../tests/fixtures/student-persona.txt)记录前缀；标准与其他模式不包含这些工具与技能。官方编写契约和选中方法资源按需加载。Host 账号凭据与浏览器授权不进入模型参数、工具回执或学习文件。agent 通过原生文件工具完成学习写入并运行随包只读 CLI，区分消息接收、回答保存和有效评价保存。
 
 #### Token 影响
 
@@ -202,7 +204,7 @@ node packages/winterhuan/student/lib/cli.js validate --workspace /path/to/worksp
 - 记录的学习操作没有时长限制；插件仍不能锁定操作系统或任意聊天。应用保存检查已观察版本，原生与 shell 写入不受此检查约束。已观察备份不能恢复未曾读取就被覆盖的历史，迁移与归档逐份写入文件。
 - 状态保存在本地，但辅导用到的片段和图片会传给配置的模型提供方。插件不是离线或加密的学习资料库。原生工具和文件系统测试不能证明真实模型的识图准确率或教学效果。
 
-- 互动课需要本包不安装、也不启动的 OpenMAIC 服务。Host 不调用该服务。学期归档不会清掉课表，文件留在工作区里，直到有人删除。
+- 完整课堂使用外部 OpenMAIC 服务。浏览器播放需要已安装 Google Chrome，登录挑战由家长在同一独立窗口恢复。课程历史跨学期保留；官网专用场景编辑、导入与约束执行只纳入清单，四个 DSH 工具没有提供这些执行能力。
 - 转录、变式题和每日小卷由模型生成；卷面照片先保存为转录草稿，家长通过聊天或可选手动表单确认后才进入记录和复习，纸面练习仍是主要学习形式。
 
 <a id="dev-note"></a>

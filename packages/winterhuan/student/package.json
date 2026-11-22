@@ -45,6 +45,10 @@
     "./types": {
       "types": "./lib/types/types.d.ts",
       "default": "./lib/types/types.js"
+    },
+    "./openmaic": {
+      "types": "./lib/types/openmaic/index.d.ts",
+      "default": "./lib/openmaic.js"
     }
   },
   "files": [
@@ -91,6 +95,7 @@
     "@deepseek-ai/dsh-command-compact": "0.2.2-rc.1",
     "@deepseek-ai/dsh-compaction-basic": "0.2.2-rc.1",
     "@deepseek-ai/dsh-compaction-tool-result-pruner": "0.2.2-rc.1",
+    "@deepseek-ai/dsh-credentials": "0.2.2-rc.1",
     "@deepseek-ai/dsh-persona": "0.2.2-rc.1",
     "@deepseek-ai/dsh-session": "0.2.2-rc.1",
     "@deepseek-ai/dsh-skill-filesystem": "0.2.2-rc.1",
@@ -105,6 +110,8 @@
     "@deepseek-ai/dsh-tool-web": "0.2.2-rc.1",
     "@deepseek-ai/dsh-typert-protocol": "0.2.2-rc.1",
     "@deepseek-ai/schemastery": "3.19.0",
+    "@openmaic/dsh-openmaic": "github:THU-MAIC/dsh-openmaic#09c1693cfe83224db89fdd4abd245ac9174d3a05",
+    "playwright-core": "1.56.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

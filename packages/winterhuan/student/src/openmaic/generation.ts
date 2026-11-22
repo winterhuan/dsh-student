@@ -32,6 +32,18 @@ export class OpenmaicGeneration {
     this.running.set(key, work)
     try { return await work } finally { if (this.running.get(key) === work) this.running.delete(key) }
   }
+  /**
+   * Verify the protected original job without polling or creating another classroom.
+   * @param owner - Explicit original Student learner, term and block.
+   * @param classroomId - Saved official classroom identity.
+   * @param signal - Cancellation for same-account verification.
+   * @returns Whether the protected ready job owns this exact classroom.
+   */
+  async verify(owner: Pick<OpenmaicGenerationRequest, 'learnerId' | 'termId' | 'blockId'>, classroomId: string, signal: AbortSignal): Promise<boolean> {
+    const identity = await this.connection.identity(signal)
+    const job = jobSchema.safeParse(await this.jobs.load(owner))
+    return job.success && job.data.status === 'ready' && job.data.classroomId === classroomId && job.data.baseUrl === identity.baseUrl && job.data.learnerKey === identity.learnerKey && job.data.learnerId === owner.learnerId && job.data.termId === owner.termId && job.data.blockId === owner.blockId
+  }
   private async perform(request: OpenmaicGenerationRequest, signal: AbortSignal): Promise<OpenmaicGenerationResult> {
     const identity = await this.connection.identity(signal)
     const saved = await this.jobs.load(request)

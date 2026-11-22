@@ -17,7 +17,7 @@ import { readWorkspace } from '../src/files/read.ts'
 import { retainObservedBackups, readBackups } from '../src/files/recovery.ts'
 import { StudyBackupRetention } from '../src/files/backup-retention.ts'
 import { resolveNativeSources } from '../src/native-source.ts'
-import { blockSchema, collectionsSchema } from '../src/files/schema.ts'
+import { blockSchema, collectionsSchema, termSettingsSchema } from '../src/files/schema.ts'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import type { SessionRequestId } from '@deepseek-ai/dsh-api-session-controller'
 
@@ -229,4 +229,24 @@ it('preserves visible legacy learning records and separate lessons without rewri
   expect(view).toMatchObject({ status: 'legacy', data: { study: { profile: setup.profile, courses: [course], confirmedCount: 1, confirmedMistakes: [{ id: mistake.id }], worksheets: [{ id: 'old-sheet', items: [{ id: 'old-question' }] }] }, interactiveLessons: { baseUrl: 'http://localhost:3456', lessons: [{ id: 'old-lesson' }] } } })
   expect(await readFile(join(f.cwd, '.study/state.json'), 'utf8')).toBe(bytes)
   await expect(readFile(join(f.cwd, '.study/settings.json'))).rejects.toMatchObject({ code: 'ENOENT' })
+})
+
+it('rereads files changed during the final official source authorization before publishing a projection', async () => {
+  const f = await fixture()
+  const settingsPath = join(f.cwd, '.study/settings.json')
+  const settings = { ...termSettingsSchema.parse(JSON.parse(await readFile(settingsPath, 'utf8'))), learnerId: 'child-1' }
+  await writeFile(settingsPath, JSON.stringify(settings))
+  await mkdir(join(f.cwd, '.study/blocks'))
+  await writeFile(join(f.cwd, '.study/blocks/block-1.json'), JSON.stringify({ format: 2, kind: 'block', learnerId: 'child-1', termId: 'term-1', id: 'block-1', subject: 'math', mode: 'foundation', startedAt: NOW, context: { profile: setup.profile }, questions: [], responses: [], hints: [], assessments: [] }))
+  const binding = { bindingId: 'binding-1', learnerId: 'child-1', termId: 'term-1', blockId: 'block-1', goalId: 'm.sub', familyId: 'math.sub-basic', scope: { id: 'within20', description: 'Written subtraction within20', modality: 'written', numberMax: 20 } }
+  await writeFile(join(f.cwd, '.study/openmaic-lessons.json'), JSON.stringify({ format: 1, lessons: [{ id: 'lesson-1', learnerId: 'child-1', termId: 'term-1', blockId: 'block-1', learnerKey: 'user:fixture-parent', classroomId: 'stage-1', base: 'https://classroom.test', status: 'ready', title: 'Original classroom', requirement: 'Subtraction within20', createdAt: new Date(NOW).toISOString(), updatedAt: new Date(NOW).toISOString(), feedback: binding }] }))
+  let sourceReads = 0
+  const reader = {
+    async read() { sourceReads++; return { revision: 'fixture-cut', observations: [], drafts: 0, omitted: 0, checkpoint: { bindingId: binding.bindingId, attempts: [] } } },
+    async verify() { if (sourceReads === 1) await writeFile(settingsPath, JSON.stringify({ ...settings, profile: { ...settings.profile, nickname: 'Changed during authorization' } })); return true },
+  }
+  f.ctx.provide('studentOpenmaic', { feedback: () => reader } as Context['studentOpenmaic'])
+  const result = await f.ctx.student.query(f.id, { kind: 'settings' }, f.signal)
+  expect(sourceReads).toBe(2)
+  expect(result).toMatchObject({ status: 'valid', data: { profile: { nickname: 'Changed during authorization' } } })
 })

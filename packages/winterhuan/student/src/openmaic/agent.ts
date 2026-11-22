@@ -5,12 +5,14 @@ import { z } from 'zod'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type {} from './service.ts'
 import { readStudentWorkspace } from '../transport.ts'
+import { registerOpenmaicFeedback } from './feedback-agent.ts'
 import { generationRequestSchema } from './generation.ts'
 
 export const name = 'student-openmaic-agent'
 export const inject = ['studentOpenmaic', 'tools', 'skills', 'systemPrompt']
 /** Official render/widget/slide and four bundled skills retain their original implementations. */
 export function apply(ctx: Context): void {
+  registerOpenmaicFeedback(ctx)
   const generate = defineTool({
     name: 'openmaic_generate',
     description: 'Start one official OpenMAIC classroom and return its structured job identity immediately. Continue with the same learner, term, block and jobId to poll after interruption; generating and failed jobs are not learning evidence.',

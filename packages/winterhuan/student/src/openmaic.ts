@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { knowledgeIdSchema } from './capabilities.ts'
+import { feedbackBindingSchema, feedbackCheckpointSchema } from './openmaic/feedback-schema.ts'
 import type { FileSystem } from '@deepseek-ai/dsh-fs'
 import { readLessonFile } from './files/lessons.ts'
 
@@ -66,7 +68,7 @@ export const lessonSchema = z.object({
   title: z.string().trim().min(1).max(120),
   requirement: z.string().trim().min(1).max(4000),
   subject: z.enum(['chinese', 'math', 'english']).optional(),
-  objectiveId: lessonId.optional(),
+  objectiveId: knowledgeIdSchema.optional(),
   base: z.string().trim().min(1).max(200).refine(value => normalizeOpenmaicBase(value) !== undefined && normalizeOpenmaicBase(value) !== '', 'OpenMAIC 地址无效'),
   learnerId: lessonId.optional(),
   termId: lessonId.optional(),
@@ -81,6 +83,8 @@ export const lessonSchema = z.object({
   url: httpLessonUrl.optional(),
   warning: z.string().trim().max(1000).optional(),
   error: z.string().trim().max(1000).optional(),
+  feedback: feedbackBindingSchema.optional(),
+  checkpoint: feedbackCheckpointSchema.optional(),
   summary: z.object({
     fetchedAt: stamp,
     outline: z.string().trim().min(1).max(2000),
@@ -90,15 +94,19 @@ export const lessonSchema = z.object({
     }).strict()).max(12),
   }).strict().optional(),
 }).strict().superRefine((lesson, ctx) => {
+  if (lesson.feedback && (lesson.feedback.learnerId !== lesson.learnerId || lesson.feedback.termId !== lesson.termId || lesson.feedback.blockId !== lesson.blockId || !lesson.classroomId || !lesson.learnerKey)) ctx.addIssue({ code: 'custom', path: ['feedback'], message: 'Retain the original learner, term, block and classroom source binding.' })
+  if (lesson.checkpoint && lesson.checkpoint.bindingId !== lesson.feedback?.bindingId) ctx.addIssue({ code: 'custom', path: ['checkpoint'], message: 'Checkpoint belongs to the original prepared feedback binding.' })
   if (lesson.updatedAt < lesson.createdAt) ctx.addIssue({ code: 'custom', path: ['updatedAt'], message: 'Use lifecycle times with update after creation.' })
 })
 
 /** Complete independent OpenMAIC business file; validation checks all eighty possible rows before pagination. */
 export const lessonFileSchema = z.object({ format: z.literal(1), lessons: z.array(lessonSchema).max(80) }).strict().superRefine((file, ctx) => {
   const seen = new Set<string>()
+  const partitions = new Map<string, string>()
   for (const [index, lesson] of file.lessons.entries()) {
     if (seen.has(lesson.id)) ctx.addIssue({ code: 'custom', path: ['lessons', index, 'id'], message: 'Lesson identities must be unique.' })
     seen.add(lesson.id)
+    if (lesson.feedback && lesson.classroomId && lesson.learnerKey) { const partition = JSON.stringify([lesson.base, lesson.classroomId, lesson.learnerKey]); const owner = JSON.stringify([lesson.learnerId, lesson.termId, lesson.blockId]); if (partitions.has(partition) && partitions.get(partition) !== owner) ctx.addIssue({ code: 'custom', path: ['lessons', index, 'feedback'], message: 'One classroom learner partition retains one original Student learner, term and block.' }); partitions.set(partition, owner) }
   }
 })
 /** Validated complete lesson log; distinct from its twenty-row display projection. */

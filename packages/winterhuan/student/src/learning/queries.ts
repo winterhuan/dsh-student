@@ -29,7 +29,7 @@ function workspaceProjection(read: WorkspaceRead, now: number) {
   const workspaceQueryCache = (read.cache ??= new StudyReadCache()).queries
   const workspace = read.workspace!
   const identity = read.files.find(file => file.path === '.study/settings.json')!.targetKey
-  const signature = JSON.stringify([read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), workspace.nativeSources ?? []])
+  const signature = JSON.stringify([read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), workspace.nativeSources ?? [], workspace.openmaicSources ?? [], read.sourceVerification ?? null])
   let cached = workspaceQueryCache.get(identity)
   if (!cached || cached.signature !== signature || now >= cached.refreshAfter || now < cached.at) {
     const state = projectWorkspace(workspace, now)
@@ -94,7 +94,7 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
     const selected = originals.find(response => response.id === active?.currentResponseId) ?? originals.at(-1)
     const recent = originals.slice(-20)
     if (selected && !recent.some(response => response.id === selected.id)) recent[0] = selected
-    const responses = recent.map(response => ({ ...response, answerDate: index.entries.find(item => item.ownerId === active?.id && item.responseId === response.id)?.answerDate ?? { kind: 'unknown' } }))
+    const responses = recent.map(response => { const effective = index.entries.find(item => item.ownerId === active?.id && item.responseId === response.id); return { ...response, answerDate: effective?.answerDate ?? { kind: 'unknown' }, assistance: effective?.assistance ?? 'unknown', sourceStatus: effective?.sourceStatus ?? 'unknown', effectiveResult: effective?.result ?? 'unassessed' } })
     const knowledge = effectiveKnowledge(workspace.collections?.knowledge)
     const capability = currentQuestion?.capability ? knowledge.goals.find(goal => goal.id === currentQuestion.capability?.goalId) : undefined
     const target = capability ? { ...capability, goal: capability.criterion, method: currentQuestion!.capability!.scope.modality } : currentQuestion && typeof currentQuestion.objectiveId === 'string' ? builtinObjectiveAnywhere(currentQuestion.objectiveId) ?? workspace.collections?.objectives.find(goal => goal.id === currentQuestion.objectiveId) : undefined
@@ -102,7 +102,9 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
     const scopedState = { ...state, profile: selectedProfile }
     const elements = currentQuestion && typeof currentQuestion.objectiveId === 'string' ? objectiveElements(scopedState, currentQuestion.objectiveId) : undefined
     const savedResponse = responses.find(response => response.id === active?.currentResponseId) ?? responses.at(-1) ?? null
-    const savedAssessment = savedResponse ? active?.assessments.find(assessment => assessment.responseId === savedResponse.id) ?? null : null
+    const declaredAssessment = savedResponse ? active?.assessments.find(assessment => assessment.responseId === savedResponse.id) ?? null : null
+    const effectiveAssessment = savedResponse ? index.entries.find(item => item.ownerId === active?.id && item.responseId === savedResponse.id) : undefined
+    const savedAssessment = declaredAssessment && savedResponse?.source.kind === 'openmaic' ? { ...declaredAssessment, declaredResult: declaredAssessment.result, result: effectiveAssessment?.result ?? 'unassessed', assistance: effectiveAssessment?.assistance ?? 'unknown' } : declaredAssessment
     const discardedSheets = new Set<string>(workspace.worksheets.filter(sheet => sheet.discardedAt !== undefined).map(sheet => sheet.id))
     const pendingFacts = index.entries.filter(item => (item.ownerKind !== 'worksheet' || !discardedSheets.has(item.ownerId)) && (item.answerDate.kind === 'unknown' || item.assistance === 'unknown' || item.sourceStatus === 'unknown' || !item.objectiveId))
     return { status: read.status === 'valid' ? 'valid' : 'partial', issues: read.issues, versions, refreshAfter, data: { termId: workspace.settings.termId, learnerId: workspace.settings.learnerId ?? null,
@@ -111,6 +113,8 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
       target: target ? { id: target.id, title: target.title, goal: target.goal, method: target.method, source: currentQuestion?.source, facts: elements?.facts ?? [] } : null,
       pendingFactCount: pendingFacts.length,
       pendingFacts: pendingFacts.slice(0, 20).map(item => ({ ownerId: item.ownerId, ownerKind: item.ownerKind, responseId: item.responseId, subject: item.subject, topic: item.topic, fields: [...(item.answerDate.kind === 'unknown' ? ['answerDate'] : []), ...(item.assistance === 'unknown' ? ['assistance'] : []), ...(item.sourceStatus === 'unknown' ? ['source'] : []), ...(item.basisStatus ? ['answerBasis'] : !item.objectiveId ? ['objectiveId'] : [])] })),
+      sourceVerification: read.sourceVerification ?? { native: [], openmaic: [] },
+      officialFeedback: index.entries.filter(item => item.source.kind === 'openmaic').slice(-20).map(item => ({ termId: item.termId, ownerId: item.ownerId, responseId: item.responseId, questionId: item.questionId, objectiveId: item.objectiveId ?? null, result: item.result, grading: item.grading ?? 'pending', official: item.official ?? null, sourceStatus: item.sourceStatus, assistance: item.assistance, answerDate: item.answerDate })),
       capability: capability ?? null, sourceExercise: currentQuestion?.capability ? knowledge.families.find(family => family.id === (knowledge.familyAliases[currentQuestion.capability!.familyId] ?? currentQuestion.capability!.familyId))?.representative ?? null : null,
       seeds: currentQuestion && typeof currentQuestion.objectiveId === 'string' ? subjectExercises(active!.subject).filter(item => item.objectiveId === currentQuestion.objectiveId).slice(0, 3) : [],
       elements: elements ? { ...elements, exercises: elements.exercises.slice(0, 3) } : null,

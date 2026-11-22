@@ -1,5 +1,7 @@
 /** Pure parsed-file and cross-entity validation, shared by every Student consumer. */
 import { z } from 'zod'
+import { createHash } from 'node:crypto'
+import type { OpenmaicInputObservation } from '../openmaic/feedback-schema.ts'
 import { canonical, sameScope, scopeSelects, studyDay } from '../learning/shared.ts'
 import { builtinObjectiveAnywhere, builtinObjectiveIn, curriculumFor, subjectExercises } from '../curriculum.ts'
 import { officialFileSchemas, type OfficialFile, type TermSettings, type LearningBlock, type WorksheetFile, type CollectionsFile } from './schema.ts'
@@ -12,9 +14,9 @@ export interface FileIssue { path: string; field: string; rule: string; correcti
 /** Parsed bytes supplied by a filesystem reader or a proposed manual edit. */
 export interface ParsedFile { path: string; value: unknown }
 /** The relevant valid business entities; no second persisted evidence authority. */
-export interface ValidatedWorkspace { settings: TermSettings; blocks: LearningBlock[]; worksheets: WorksheetFile[]; collections?: CollectionsFile; nativeSources?: readonly NativeInputObservation[] }
+export interface ValidatedWorkspace { settings: TermSettings; blocks: LearningBlock[]; worksheets: WorksheetFile[]; collections?: CollectionsFile; nativeSources?: readonly NativeInputObservation[]; openmaicSources?: readonly OpenmaicInputObservation[]; archivedEvidence?: { workspace: ValidatedWorkspace; references: NonNullable<TermSettings['evidenceReferences']> }[] }
 /** Host-resolved consumed input version; official-file declarations alone cannot supply this observation. */
-export interface NativeInputObservation { sessionId: string; messageId: string; inputVersion: string; rawResponse: string; receiptAt: number }
+export interface NativeInputObservation { sessionId: string; messageId: string; inputVersion: string; rawResponse: string; receiptAt: number; learningScope?: { learnerId: string; termId: string; blockId: string; questionId: string; responseId?: string } }
 /** Validation outcome retains independently valid parsed files when related data fails. */
 export interface ValidationResult { valid: boolean; issues: FileIssue[]; files: { path: string; file: OfficialFile }[]; workspace?: ValidatedWorkspace }
 
@@ -23,9 +25,10 @@ export interface ValidationResult { valid: boolean; issues: FileIssue[]; files: 
  * @param input - discovered current files with exact workspace-relative paths.
  * @param prior - preserved valid file versions for used-content comparison.
  * @param nativeSources - matching consumed input versions resolved from native Session records.
+ * @param openmaicSources - independently authorized original official submissions and grading.
  * @returns bounded issues and independently valid workspace entities.
  */
-export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly { path: string; file: OfficialFile }[] = [], nativeSources: readonly NativeInputObservation[] = []): ValidationResult {
+export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly { path: string; file: OfficialFile }[] = [], nativeSources: readonly NativeInputObservation[] = [], openmaicSources: readonly OpenmaicInputObservation[] = []): ValidationResult {
   const issues: FileIssue[] = []
   const files: ValidationResult['files'] = []
   const paths = new Set<string>()
@@ -59,7 +62,7 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
   if (blocks.length > 5000) fail('.study/blocks', '', 'collection-limit', 'Keep at most 5,000 block files in this term.')
   if (worksheets.length > 500) fail('.study/worksheets', '', 'collection-limit', 'Keep at most 500 worksheet files in this term.')
   const collections = files.find(entry => entry.file.kind === 'collections')?.file
-  const workspace: ValidatedWorkspace = { settings, blocks, worksheets, nativeSources, ...(collections?.kind === 'collections' ? { collections } : {}) }
+  const workspace: ValidatedWorkspace = { settings, blocks, worksheets, nativeSources, openmaicSources, ...(collections?.kind === 'collections' ? { collections } : {}) }
   const unique = (path: string, field: string, rows: readonly { id: string }[]) => {
     const seen = new Set<string>()
     rows.forEach((row, index) => { if (seen.has(row.id)) fail(path, `${field}.${index}.id`, 'duplicate-identity', 'Keep one entry per stable identity; use a new identity for a new attempt.'); seen.add(row.id) })
@@ -67,6 +70,7 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
   let knowledge = effectiveKnowledge()
   try { knowledge = effectiveKnowledge(workspace.collections?.knowledge) }
   catch (error) { fail('.study/collections.json', 'knowledge', 'knowledge-index', error instanceof Error ? error.message : 'Repair the capability catalog.') }
+  const officialSources = new Set<string>()
   const evidenceIds = new Set<string>()
   for (const [i, reference] of (settings.evidenceReferences ?? []).entries()) {
     const identity = JSON.stringify([reference.termId, reference.ownerKind, reference.ownerId, reference.responseId, reference.goalId, reference.scope.id])
@@ -139,6 +143,10 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
       for (const [i, signal] of (file.stuckSignals ?? []).entries()) if (!questions.some(question => question.id === signal.questionId)) fail(path, `stuckSignals.${i}.questionId`, 'question-reference', 'Reference a saved question in this block.')
     }
     for (const [i, question] of questions.entries()) {
+      if (question.openmaic) {
+        const source = question.openmaic
+        if (source.snapshotHash !== createHash('sha256').update(canonical(source.snapshot)).digest('hex') || source.snapshot !== null && (typeof source.snapshot !== 'object' || Array.isArray(source.snapshot) || Reflect.get(source.snapshot, 'id') !== source.questionId)) fail(path, `questions.${i}.openmaic`, 'source-snapshot', 'Preserve the exact original source question identity and snapshot hash.')
+      }
       const frozen = prior.some(entry => {
         if (entry.path !== path || entry.file.kind !== file.kind || (entry.file.kind !== 'block' && entry.file.kind !== 'worksheet')) return false
         const oldQuestions = entry.file.kind === 'block' ? entry.file.questions : entry.file.items
@@ -189,6 +197,13 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
     for (const [i, response] of file.responses.entries()) {
       const question = questions.find(item => item.id === response.questionId)
       if (!question) fail(path, `responses.${i}.questionId`, 'question-reference', 'Save the referenced question before its original answer.')
+      if (response.source.kind === 'openmaic') {
+        const source = response.source
+        const tuple = canonical([source.bindingId, source.attemptId, source.sceneId, source.questionId])
+        if (!file.learnerId || file.kind !== 'block' || !question?.openmaic || question.openmaic.bindingId !== source.bindingId || question.openmaic.sceneId !== source.sceneId || question.openmaic.questionId !== source.questionId || response.rawResponse !== JSON.stringify(source.submittedAnswer)) fail(path, `responses.${i}.source`, 'official-source-tuple', 'Retain the explicit learner and original question tuple with the exact submitted answer JSON.')
+        if (officialSources.has(tuple)) fail(path, `responses.${i}.source`, 'duplicate-source-response', 'Keep one response per original binding, attempt, scene and question; correct its assessment separately.')
+        officialSources.add(tuple)
+      }
       if (question?.phase === 'demo' && response.assistance !== 'worked-example') fail(path, `responses.${i}.assistance`, 'demonstration', 'A real response to a demonstration carries worked-example assistance.')
       if (response.answerDate?.kind === 'instant' && response.answerDate.basis === 'native-input' && (response.source.kind !== 'native' || response.source.receiptAt !== response.answerDate.at || response.source.inputVersion !== response.answerDate.sourceVersion)) fail(path, `responses.${i}.answerDate`, 'native-input-version', 'Use the matching consumed native input version and receipt time, or retain an unknown date.')
       if (response.answerDate?.kind === 'instant' && response.answerDate.basis === 'current-manual' && (response.source.kind !== 'manual' || response.source.entry !== 'current')) fail(path, `responses.${i}.answerDate`, 'current-manual-source', 'Use a confirmed current manual response; historical and paper entry retain day precision or an unknown date.')
@@ -203,6 +218,11 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
     for (const [i, assessment] of file.assessments.entries()) {
       const response = file.responses.find(item => item.id === assessment.responseId)
       if (!response) fail(path, `assessments.${i}.responseId`, 'response-reference', 'Save the original learner response before assessment.')
+      if (assessment.official || assessment.officialHistory || assessment.grading) {
+        const source = response?.source
+        const history = assessment.officialHistory
+        if (source?.kind !== 'openmaic' || assessment.official && (assessment.official.seq <= source.submission.seq || assessment.official.result && assessment.official.result.questionId !== source.questionId) || history && (history.some((review, at) => review.seq <= (at ? history[at - 1]!.seq : source?.kind === 'openmaic' ? source.submission.seq : -1) || review.result && source?.kind === 'openmaic' && review.result.questionId !== source.questionId) || new Set(history.map(review => review.recordId)).size !== history.length || canonical(history.at(-1)) !== canonical(assessment.official))) fail(path, `assessments.${i}.official`, 'official-review', 'Retain ordered original reviews of the same submitted question, ending at its current official result.')
+      }
       if (response && assessment.assistance !== response.assistance) fail(path, `assessments.${i}.assistance`, 'assistance-association', 'Keep assessment assistance consistent with the saved response.')
       if (file.kind === 'worksheet' && !assessment.userConfirmation) fail(path, `assessments.${i}.userConfirmation`, 'parent-confirmation', 'Record the parent statement confirming this paper result.')
     }
@@ -236,7 +256,7 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
     if (questions.some(question => typeof question.objectiveId === 'string' && !builtinObjectiveAnywhere(question.objectiveId) && !knowledge.goals.some(goal => goal.id === question.objectiveId))) fail(`.study/${file.kind === 'block' ? 'blocks' : 'worksheets'}/${file.id}.json`, 'objectiveId', 'invalid-target-source', 'Repair the referenced custom-goal collection before using this entity.')
   }
   const partial = affected('.study/settings.json') ? undefined : {
-    settings, nativeSources, blocks: blocks.filter(block => !affected(`.study/blocks/${block.id}.json`)),
+    settings, nativeSources, openmaicSources, blocks: blocks.filter(block => !affected(`.study/blocks/${block.id}.json`)),
     worksheets: worksheets.filter(sheet => !affected(`.study/worksheets/${sheet.id}.json`)),
     ...(workspace.collections && !affected('.study/collections.json') ? { collections: workspace.collections } : {}),
   }

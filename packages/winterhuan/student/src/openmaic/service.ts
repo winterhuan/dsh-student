@@ -7,6 +7,7 @@ import { OpenmaicConnection, type OpenmaicConnectionConfig } from './connection.
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { OpenmaicBrowser } from './browser.ts'
+import { OpenmaicFeedback } from './feedback.ts'
 import { OpenmaicGeneration } from './generation.ts'
 
 declare module '@deepseek-ai/cordis' { interface Context { /** Protected account transport and official job recovery, without learning writes. */ studentOpenmaic: StudentOpenmaic } }
@@ -31,6 +32,7 @@ export class StudentOpenmaic extends Service {
   readonly connection: OpenmaicConnection
   /** Dedicated Chrome profile and process owned by this service. */
   readonly browser: OpenmaicBrowser
+  private readonly feedbackReaders = new Map<string, OpenmaicFeedback>()
   private readonly generations = new Map<string, OpenmaicGeneration>()
   constructor(ctx: Context, config: StudentOpenmaicConfig) {
     super(ctx, 'studentOpenmaic')
@@ -46,6 +48,26 @@ export class StudentOpenmaic extends Service {
       async credentials() { const account = await ctx.credentials.resolve(credentialRef(config.accountRef)); const password = await ctx.credentials.resolve(credentialRef(config.passwordRef)); return account && password ? { account: account.value, password: password.value } : undefined },
     })
     ctx.effect(() => () => this.browser.dispose(), 'student-openmaic: browser')
+  }
+  /**
+   * Read original authorized feedback with protected capture ownership shared across children.
+   * @param workspace - Authorized original workspace used to verify its generation job.
+   * @returns Read-only source transport; academic writes remain native agent operations.
+   */
+  feedback(workspace: string): OpenmaicFeedback {
+    let reader = this.feedbackReaders.get(workspace)
+    if (!reader) {
+      const key = (partition: string) => credentialKey('student-openmaic', `capture-${partition}`)
+      reader = new OpenmaicFeedback(this.connection, {
+        load: async partition => { const record = await this.ctx.credentials.readRecord(key(partition)); return record?.kind === 'grant' ? record.payload : undefined },
+        claim: async (partition, payload) => {
+          const record = await this.ctx.credentials.modifyRecord(key(partition), async current => current ?? { kind: 'grant', payload })
+          return record?.kind === 'grant' ? record.payload : undefined
+        },
+      }, (owner, stage, signal) => this.generation(workspace).verify(owner, stage, signal))
+      this.feedbackReaders.set(workspace, reader)
+    }
+    return reader
   }
   /**
    * Recover jobs within their original workspace, learner, term and learning block.

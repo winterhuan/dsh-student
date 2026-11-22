@@ -1,0 +1,32 @@
+diff --git a/lib/index.d.ts b/lib/index.d.ts
+index 42c1a2ea24ac8ca51152e55ec8043d11ef32e2e7..bff0bab718a279302bb51b094e8132645532eb4f 100644
+--- a/lib/index.d.ts
++++ b/lib/index.d.ts
+@@ -13,6 +13,7 @@ type Context$1 = Context & {
+ declare const name = "dsh-openmaic";
+ declare const inject: string[];
+ interface Config {
++  hostTools?: boolean;
+   baseUrl?: string;
+   accessCode?: string;
+   pollIntervalMs?: number;
+diff --git a/lib/index.js b/lib/index.js
+index 3b5053dd147ca60d616f997622cb38146c49c046..5cf9691becef81c6f95fafdbbf5288acaea9d36c 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -584,6 +584,7 @@ const inject = [
+ ];
+ const DEFAULT_BASE_URL = "https://open.maic.chat";
+ const Config = z.object({
++	hostTools: z.boolean().default(true).description("Register Host tools and skills. Student disables this root instance and mounts the official tools in its preset."),
+ 	baseUrl: z.string().default(DEFAULT_BASE_URL).description("OpenMAIC API base URL. Point it at http://localhost:3000 to develop against a local OpenMAIC instance."),
+ 	accessCode: z.string().role("secret").default("").description("Invite code for open.maic.chat. Access codes are not enforced online yet, so leave it empty; fill it in once they are enabled."),
+ 	pollIntervalMs: z.number().step(1).min(1e3).default(5e3).description("Polling interval in milliseconds. Classroom generation is slow, so 60000 is friendlier than the default."),
+@@ -605,6 +606,7 @@ const TEXT_OUTPUT = {
+ 	}]
+ };
+ function apply(ctx, config) {
++	if (config.hostTools === false) return;
+ 	const resolved = {
+ 		baseUrl: config.baseUrl ?? DEFAULT_BASE_URL,
+ 		accessCode: config.accessCode ?? "",

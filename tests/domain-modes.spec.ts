@@ -10,10 +10,12 @@ import AgentPresets from '@deepseek-ai/dsh-agent-preset-registry'
 import SkillRegistry from '@deepseek-ai/dsh-skill'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { expect, it, onTestFinished } from 'vitest'
+import { CredentialProvider } from '@deepseek-ai/dsh-credentials'
+import { StudentOpenmaic } from '../packages/winterhuan/student/src/openmaic/service.ts'
 import * as student from '../packages/winterhuan/student/src/agent.ts'
 
 const domains = [
-  { id: 'student', group: 'winterhuan', agent: student, tools: ['study_status'], skills: 1 },
+  { id: 'student', group: 'winterhuan', agent: student, tools: ['study_status', 'openmaic_generate', 'openmaic_slide', 'openmaic_widget', 'openmaic_render'], skills: 5 },
 ]
 
 it('isolates domain capabilities from Standard and sibling modes, including native children', async () => {
@@ -23,6 +25,19 @@ it('isolates domain capabilities from Standard and sibling modes, including nati
   await ctx.plugin(Loader)
   await mountAgentLoopTestDependencies(ctx)
   await ctx.plugin(SkillRegistry)
+  class EmptyCredentials extends CredentialProvider {
+    async resolve() { return undefined }
+    async describe() { return { configured: false, writable: false } }
+    async set() {}
+    async unset() {}
+    async readRecord() { return undefined }
+    async describeRecord() { return { configured: false, writable: false } }
+    async listRecords() { return [] }
+    async modifyRecord() { return undefined }
+    async deleteRecord() {}
+  }
+  await ctx.plugin(EmptyCredentials)
+  await ctx.plugin(StudentOpenmaic, { baseUrl: 'https://open.maic.chat', accountBaseUrl: 'https://maic.chat/api', accountRef: 'OPEN_MAIC_USER', passwordRef: 'OPEN_MAIC_PASSWORD', accessCodeRef: 'OPEN_MAIC_ACCESS_CODE', tokenRef: 'OPENMAIC_AUTH_TOKEN', accountId: '', browserProfileRoot: '' })
   await ctx.plugin(AgentLoop, { agents: [] })
   await ctx.plugin(AgentPresets, { default: 'standard' })
   type Internal = NonNullable<typeof ctx.loader.internal>

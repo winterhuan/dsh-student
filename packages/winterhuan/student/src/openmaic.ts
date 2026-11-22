@@ -3,7 +3,7 @@ import type { FileSystem } from '@deepseek-ai/dsh-fs'
 import { readLessonFile } from './files/lessons.ts'
 
 /** Default OpenMAIC origin when the parent has not saved one and OPENMAIC_BASE is unset. */
-export const DEFAULT_OPENMAIC_BASE = 'http://localhost:3000'
+export const DEFAULT_OPENMAIC_BASE = 'https://open.maic.chat'
 /** Lesson log written by the tutor shell. It is not learning evidence and is not inside state.json. */
 export const OPENMAIC_LESSONS_PATH = '.study/openmaic-lessons.json'
 /** Cookie jar shared by generate, poll, retry and stage reads. Never copy it into chat or state. */
@@ -68,6 +68,10 @@ export const lessonSchema = z.object({
   subject: z.enum(['chinese', 'math', 'english']).optional(),
   objectiveId: lessonId.optional(),
   base: z.string().trim().min(1).max(200).refine(value => normalizeOpenmaicBase(value) !== undefined && normalizeOpenmaicBase(value) !== '', 'OpenMAIC 地址无效'),
+  learnerId: lessonId.optional(),
+  termId: lessonId.optional(),
+  blockId: lessonId.optional(),
+  learnerKey: z.string().trim().min(1).max(200).optional(),
   jobId: z.string().trim().min(1).max(200).optional(),
   pollUrl: pollUrl.optional(),
   runId: z.string().trim().min(1).max(200).optional(),

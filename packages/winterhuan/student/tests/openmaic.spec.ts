@@ -23,11 +23,11 @@ describe('OpenMAIC base and lesson log', () => {
     expect(lessonHttpUrl('javascript:alert(1)')).toBeUndefined()
   })
 
-  it('prefers a saved base, then the environment, then localhost', () => {
-    expect(effectiveOpenmaicBase(undefined, undefined)).toBe('http://localhost:3000')
+  it('prefers a saved base, then the environment, then the official service', () => {
+    expect(effectiveOpenmaicBase(undefined, undefined)).toBe('https://open.maic.chat')
     expect(effectiveOpenmaicBase('', 'http://10.0.0.8:3000')).toBe('http://10.0.0.8:3000')
     expect(effectiveOpenmaicBase('http://127.0.0.1:3000', 'http://10.0.0.8:3000')).toBe('http://127.0.0.1:3000')
-    expect(effectiveOpenmaicBase('not a url', 'also bad')).toBe('http://localhost:3000')
+    expect(effectiveOpenmaicBase('not a url', 'also bad')).toBe('https://open.maic.chat')
   })
 
   it('saves and clears the parent base without blocking an active block', () => {

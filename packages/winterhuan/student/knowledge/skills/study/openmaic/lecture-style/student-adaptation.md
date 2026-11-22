@@ -1,0 +1,11 @@
+# lecture-style in Student
+
+Source: OpenMAIC `ce7f05a8ae915df3de2e5dfbbe68cd7f7d79a0e6`, `skills/agent-runtime/lecture-style/SKILL.md`. The adjacent official files are unmodified source references; this page is a Student adaptation.
+
+Status: `method-adaptation`.
+
+Use a concise explanation or full classroom for a coherent sequence, followed by an actual learner answer. Watching the lesson is not mastery.
+
+Official dependencies mentioned: create_stage, generate_scene.
+
+The official outline constraints are retained for inspection. The DSH four-tool interface does not activate the website constraint adapter; placing a skill name in a requirement does not execute it. Student owns goal selection, evidence, learning-file writes, assessment and review. Load only resources needed by the current task.

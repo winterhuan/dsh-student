@@ -4,6 +4,7 @@ settings:
   excludeLinksFromLockfile: false
 patchedDependencies:
   '@deepseek-ai/dsh-typert-generator@0.2.2-rc.1': e055991112e91429db11ef0004bd3c15de9b7659e229218f8d856899ed35057b
+  '@openmaic/dsh-openmaic@0.4.0': 080d2b22d6c1e1b3ff754382d74371508d89b497c3f795699fbf04c8d5d5e247
 importers:
   .:
     devDependencies:
@@ -202,11 +203,11 @@ importers:
       zustand:
         specifier: ~4.4.7
         version: 4.4.7(@types/react@18.3.28)(immer@10.2.0)(react@18.3.1)
-  packages/winterhuan/student:
-    dependencies:
-      '@deepseek-ai/dsh-brand':
+      '@deepseek-ai/dsh-credentials':
         specifier: 0.2.2-rc.1
         version: 0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)
+  packages/winterhuan/student:
+    dependencies:
       '@deepseek-ai/cordis-plugin-group':
         specifier: ~1.1.0
         version: 1.1.0(@deepseek-ai/cordis-plugin-loader@1.1.0)(@deepseek-ai/cordis@4.1.0)
@@ -216,6 +217,9 @@ importers:
       '@deepseek-ai/dsh-agent-preset':
         specifier: 0.2.2-rc.1
         version: 0.2.2-rc.1(@deepseek-ai/cordis-plugin-loader@1.1.0)(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-agent-preset-registry@0.2.2-rc.1(174ca81464126e5b0f9b345f4c15d215))
+      '@deepseek-ai/dsh-brand':
+        specifier: 0.2.2-rc.1
+        version: 0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)
       '@deepseek-ai/dsh-command-compact':
         specifier: 0.2.2-rc.1
         version: 0.2.2-rc.1(b78868ac0f7b7b80ede0f7e061f66c8c)
@@ -225,6 +229,9 @@ importers:
       '@deepseek-ai/dsh-compaction-tool-result-pruner':
         specifier: 0.2.2-rc.1
         version: 0.2.2-rc.1(db8fba33e2d33c2d9c6bfef8c9274727)
+      '@deepseek-ai/dsh-credentials':
+        specifier: 0.2.2-rc.1
+        version: 0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)
       '@deepseek-ai/dsh-persona':
         specifier: 0.2.2-rc.1
         version: 0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-system-prompt@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-llm@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0))(@deepseek-ai/dsh-scope@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)))
@@ -267,6 +274,12 @@ importers:
       '@deepseek-ai/schemastery':
         specifier: 3.19.0
         version: 3.19.0
+      '@openmaic/dsh-openmaic':
+        specifier: github:THU-MAIC/dsh-openmaic#09c1693cfe83224db89fdd4abd245ac9174d3a05
+        version: https://codeload.github.com/THU-MAIC/dsh-openmaic/tar.gz/09c1693cfe83224db89fdd4abd245ac9174d3a05(patch_hash=080d2b22d6c1e1b3ff754382d74371508d89b497c3f795699fbf04c8d5d5e247)(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-llm@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0))(@deepseek-ai/dsh-session@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-scope@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)))(@deepseek-ai/dsh-skill@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-llm@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0))(@deepseek-ai/dsh-scope@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)))(@deepseek-ai/dsh-system-prompt@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-llm@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0))(@deepseek-ai/dsh-scope@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)))(@deepseek-ai/dsh-tools@0.2.2-rc.1(71e9b8099add9aaf7bb42662f07c41a3))(@deepseek-ai/schemastery@3.19.0)(motion@14.14.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.5)
+      playwright-core:
+        specifier: 1.56.1
+        version: 1.56.1
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -4462,23 +4475,174 @@ packages:
     resolution:
       integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==
   '@deepseek-ai/dsh-api-remote-access@0.2.2-rc.1':
-    resolution: {integrity: sha512-UupADKJ/D6yyZKzvN6jyKrCzl8GXWgYxYoHQ00LEIYSmLUVmHXy6ABoeKkm2GIzcMLhWheEj01tvfynT0vhnNA==}
+    resolution:
+      integrity: sha512-UupADKJ/D6yyZKzvN6jyKrCzl8GXWgYxYoHQ00LEIYSmLUVmHXy6ABoeKkm2GIzcMLhWheEj01tvfynT0vhnNA==
     peerDependencies:
       '@deepseek-ai/cordis': ~4.1.0
-
   '@deepseek-ai/dsh-client-resources@0.2.2-rc.1':
-    resolution: {integrity: sha512-kZSHdtyOQdqU1v54eWtOu0ZO2g23WoH1fr8g+1hj4WAu9jgCPndbAqbX050N0XBKYvbNPUKUNOjzjC05/ENNOA==}
+    resolution:
+      integrity: sha512-kZSHdtyOQdqU1v54eWtOu0ZO2g23WoH1fr8g+1hj4WAu9jgCPndbAqbX050N0XBKYvbNPUKUNOjzjC05/ENNOA==
     peerDependencies:
       '@deepseek-ai/cordis': ~4.1.0
-
   '@deepseek-ai/dsh-typert-loader@0.2.2-rc.1':
-    resolution: {integrity: sha512-Ehv+HPFoF+DpaLOrQdDW8WIedpzcZlAKAni87sPovYrn49tiExJ5xz/nt3nHtVVuKgEBMpyfLOknoB0z62h7Sw==}
+    resolution:
+      integrity: sha512-Ehv+HPFoF+DpaLOrQdDW8WIedpzcZlAKAni87sPovYrn49tiExJ5xz/nt3nHtVVuKgEBMpyfLOknoB0z62h7Sw==
     peerDependencies:
       '@deepseek-ai/cordis': ~4.1.0
       '@deepseek-ai/cordis-plugin-loader': ~1.1.0
       '@deepseek-ai/dsh-typert-registry': 0.2.2-rc.1
-
-
+  '@eslint-community/regexpp@4.12.3':
+    resolution:
+      integrity: sha512-R76UKbvsqI68DJJVTVyqFKqU98CN4+B+acxNfEA2IFarSzP0SjtKf/3+fFiXzTyv5Fj3PxLkGHe2wnVWWMxobQ==
+    engines:
+      node: ^12.0.0 || ^14.0.0 || >=16.0.0
+  '@openmaic/dsh-openmaic@https://codeload.github.com/THU-MAIC/dsh-openmaic/tar.gz/09c1693cfe83224db89fdd4abd245ac9174d3a05':
+    resolution:
+      gitHosted: true
+      tarball: https://codeload.github.com/THU-MAIC/dsh-openmaic/tar.gz/09c1693cfe83224db89fdd4abd245ac9174d3a05
+    version: 0.4.0
+    engines:
+      dsh: '>=0.0.1'
+    peerDependencies:
+      '@deepseek-ai/cordis': ^4.0.1-rc.1
+      '@deepseek-ai/dsh-llm': '*'
+      '@deepseek-ai/dsh-session': '*'
+      '@deepseek-ai/dsh-skill': '*'
+      '@deepseek-ai/dsh-system-prompt': '*'
+      '@deepseek-ai/dsh-tools': '*'
+      '@deepseek-ai/schemastery': ^3.18.1-rc.1
+      react: ^18.2.0
+  '@openmaic/dsl@0.12.0':
+    resolution:
+      integrity: sha512-cFkoJiY4X3Qz2C2y+LIfpvbuCEtxIeDcqvyz98TtK/2ALVGgzuIBAIpYiAHXPAAHv+88/I+j4SMaYhQ6pXHI8g==
+  '@openmaic/dsl@0.13.0':
+    resolution:
+      integrity: sha512-DTplyTm9VPovrKVWihDRqzI8VonR5iLX69ppwtNHevkrGLf93TBxvhvInmnG0KKPVKrSD+0su4xpxdyf4i4gIw==
+  '@openmaic/dsl@0.8.0':
+    resolution:
+      integrity: sha512-zPPA1147Pw9Uu2ufTgJiHBNlMF9u0v5e/FvS0a78RzGxyeylbfc/lqHFw8cpVwLhpP798zWRJapdvKrXMpxe4w==
+  '@openmaic/generation@0.3.33':
+    resolution:
+      integrity: sha512-fB6/O0M9xdZa/A0f20TxuuA5uJfamf3yVmd0QP6AmCrKdbuT/mH2kowEStoIbalAtD+qYfcV7fv/x74ttQmMdg==
+  '@openmaic/geometry@0.1.0':
+    resolution:
+      integrity: sha512-CpMjv4h96I8pXz6e2TqUwCR877lVTL81wAuQcWCSD5tcjZorPT/4sIhPQ0LrUHZsXwggwvlgZu3OzSh9iG+gRw==
+  '@openmaic/renderer@0.1.17':
+    resolution:
+      integrity: sha512-szk/1kAcJBbGffkQ8pFxZCwqxfj4QmL8ZZBy3zjDkyd98rl0KpN0p+zQxyt0xOUlc6IsSzIudCq+u7EYRBs5Ug==
+    peerDependencies:
+      echarts: '>=5'
+      motion: '>=11'
+      react: '>=18'
+      react-dom: '>=18'
+      shiki: '>=1.0.0'
+      tailwindcss: '>=4'
+    peerDependenciesMeta:
+      echarts:
+        optional: true
+      shiki:
+        optional: true
+  csstype@3.2.4:
+    resolution:
+      integrity: sha512-PoKaoPzQapnEoqUSnHx1u6W6ku8CVEgKsnpmmzU3m1nwkidpPBQ8V/Zq2+bWNrsOKoKLwTGdbx6xF7BXP1zLVQ==
+  echarts@6.1.0:
+    resolution:
+      integrity: sha512-q0yaFPggC9FUdsWH4blavRWFmxdrIodbkoKNAjJudAI6CA9gNPxHtV2RcZNEepZVlk4yvBYkOkbk6HIVpIyHZA==
+  entities@6.0.1:
+    resolution:
+      integrity: sha512-aN97NXWF6AWBTahfVOIrB/NShkzi5H7F9r1s9mD3cDj4Ko5f2qhhVoYMibXF7GlLveb/D2ioWay8lxI97Ven3g==
+    engines:
+      node: '>=0.12'
+  framer-motion@14.14.0:
+    resolution:
+      integrity: sha512-fidRX0VzkZdA9OovFiBSzJtt9/jLcJpna78Z+KCqQQZIWoIpN3tOhEXAhhAw/FObUUh+o3Y18yx1F4BP0mVJ8Q==
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+      remix: ^3.1.0
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+      remix:
+        optional: true
+  html-to-image@1.11.13:
+    resolution:
+      integrity: sha512-cuOPoI7WApyhBElTTb9oqsawRvZ0rHhaHwghRLlTuffoD1B2aDemlCruLeZrUIIdvG7gs9xeELEPm6PhuASqrg==
+  html2canvas-pro@2.6.4:
+    resolution:
+      integrity: sha512-1SMOfXwMACgQPt1wcKOtuRnBxkcREiJQdOyVpgp6a4/z9Rb/v7QPcvyu5GlxdDDiMznLwKxX5KwvtSlNlZJ7Wg==
+    engines:
+      node: '>=24.0.0'
+  jsonrepair@3.15.0:
+    resolution:
+      integrity: sha512-wy8OTjwsJwQRnQJkKnMJJ9vcytRdBPAgIF/Hy6+s1dAj42BHMKiyL8JzEieIl3JY7idt8eyHwBWTO8mh/+mtwA==
+    hasBin: true
+  katex@0.16.38:
+    resolution:
+      integrity: sha512-cjHooZUmIAUmDsHBN+1n8LaZdpmbj03LtYeYPyuYB7OuloiaeaV6N4LcfjcnHVzGWjVQmKrxxTrpDcmSzEZQwQ==
+    hasBin: true
+  lucide-react@0.562.0:
+    resolution:
+      integrity: sha512-82hOAu7y0dbVuFfmO4bYF1XEwYk/mEbM5E+b1jgci/udUBEE/R7LF5Ip0CCEmXe8AybRM8L+04eP+LGZeDvkiw==
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  motion-dom@14.14.0:
+    resolution:
+      integrity: sha512-IAxcKhYkuQA2W0Tlx1AvVgImfqEoF3/t3IovbPQJlYkefmGsmrXjn967lMII5VmFmLpQEab4+ZkHo/ijJ4Esig==
+  motion-utils@14.7.0:
+    resolution:
+      integrity: sha512-woO0/Nb7ys75f94fjvQi/6leiHGvZUYkeHUPEZ3vxsV+9OpEVhkxp01x8MlRwX0zt31EqgXsKDAoBoJLC148Tw==
+  motion@14.14.0:
+    resolution:
+      integrity: sha512-a306U6sV5VKq1abtzKiinB+UQjiY88jrsvQzWORP3WPv/DFANyoYVlPbdnmJPMEbusyPXB4GyQJVANaq/pSIYQ==
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+      remix: ^3.1.0
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+      remix:
+        optional: true
+  nanoid@5.1.16:
+    resolution:
+      integrity: sha512-kVrnsrJqMR8+oLJnGEmSWw9BivK5mt7H3FZatVRjrc5wGqFYuBxX1yG7+A7Gi5AefkX6t/oCkizcQgpu0cY1dQ==
+    engines:
+      node: ^18 || >=20
+    hasBin: true
+  playwright-core@1.56.1:
+    resolution:
+      integrity: sha512-hutraynyn31F+Bifme+Ps9Vq59hKuUCz7H1kDOcBs+2oGguKkWTU50bBWrtz34OUWmIwpBTWDxaRPXrIXkgvmQ==
+    engines:
+      node: '>=18'
+    hasBin: true
+  postcss-value-parser@4.2.0:
+    resolution:
+      integrity: sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==
+  svg-pathdata@8.0.0:
+    resolution:
+      integrity: sha512-2Zqf5zsrX44Ws9y52EdHYrzGGnzyQG0jgREw+S3nP7zdx7QeH3QJonnGPvjtxPmYzU5mJMJ2YM+q2hUWGENWFg==
+    engines:
+      node: '>=22.16.0'
+  tailwind-merge@3.7.1:
+    resolution:
+      integrity: sha512-v7y4BV4FUlO8exj/4M5UXKeoowDiuugVUg3tkMNIyOUCOHy5xp8+5aWQeXCtZ2491sUV1YPsVeM9EveZ6/xuZQ==
+  tailwindcss@4.3.5:
+    resolution:
+      integrity: sha512-FcQk9BuffmEHJP2G0XmB2SplU1aLTI7j07Kunk+U74Ny+XiWOtzXz9aujFZ/avntw1e2cOv/3PkgzflQ7gX2vQ==
+  tinycolor2@1.6.0:
+    resolution:
+      integrity: sha512-XPaBkWQJdsf3pLKJV9p4qN/S+fm2Oj8AIPo1BTUhg5oxkvm9+SVEGFdhyOz7tTdUTfvxMiAs4sp6/eZO2Ew+pw==
+  tslib@2.3.0:
+    resolution:
+      integrity: sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==
+  zrender@6.1.0:
+    resolution:
+      integrity: sha512-oEGMDB6pOP2S6OwRR4PdVv610zrjnA3Bh+JnSG12fYJlBKjtNAoEb5fSUoCOOINlH96I2fU38/A2UpRKs67xYQ==
 snapshots:
   '@anthropic-ai/sdk@0.129.0(zod@4.4.3)':
     dependencies:
@@ -4916,7 +5080,7 @@ snapshots:
       '@deepseek-ai/dsh-launch-environment': 0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)
       '@deepseek-ai/dsh-official-bundles': 0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)
       '@deepseek-ai/dsh-package-manifest': 0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)
-      '@eslint-community/regexpp': 4.12.2
+      '@eslint-community/regexpp': 4.12.3
       ajv: 8.20.0
       js-yaml: 4.3.2
       node-addon-require-builtin: 0.1.9
@@ -6219,7 +6383,7 @@ snapshots:
   '@types/react@18.3.28':
     dependencies:
       '@types/prop-types': 15.7.15
-      csstype: 3.2.3
+      csstype: 3.2.4
   '@types/retry@0.12.0': {}
   '@types/trusted-types@2.0.7': {}
   '@types/unist@3.0.3': {}
@@ -7462,14 +7626,116 @@ snapshots:
       '@deepseek-ai/cordis': 4.1.0(@deepseek-ai/cordis-plugin-include@1.1.0)(@deepseek-ai/cordis-plugin-loader@1.1.0)
       '@deepseek-ai/dsh-typert-protocol': 0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)
       zod: 4.4.3
-
   '@deepseek-ai/dsh-client-resources@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)':
     dependencies:
       '@deepseek-ai/cordis': 4.1.0(@deepseek-ai/cordis-plugin-include@1.1.0)(@deepseek-ai/cordis-plugin-loader@1.1.0)
-
   '@deepseek-ai/dsh-typert-loader@0.2.2-rc.1(@deepseek-ai/cordis-plugin-loader@1.1.0)(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-typert-registry@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0))':
     dependencies:
       '@deepseek-ai/cordis': 4.1.0(@deepseek-ai/cordis-plugin-include@1.1.0)(@deepseek-ai/cordis-plugin-loader@1.1.0)
       '@deepseek-ai/cordis-plugin-loader': 1.1.0(@deepseek-ai/cordis@4.1.0)(node-addon-require-builtin@0.1.9)
       '@deepseek-ai/dsh-typert-registry': 0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)
       '@deepseek-ai/schemastery': 3.19.0
+  '@eslint-community/regexpp@4.12.3': {}
+  '@openmaic/dsh-openmaic@https://codeload.github.com/THU-MAIC/dsh-openmaic/tar.gz/09c1693cfe83224db89fdd4abd245ac9174d3a05(patch_hash=080d2b22d6c1e1b3ff754382d74371508d89b497c3f795699fbf04c8d5d5e247)(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-llm@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0))(@deepseek-ai/dsh-session@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-scope@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)))(@deepseek-ai/dsh-skill@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-llm@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0))(@deepseek-ai/dsh-scope@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)))(@deepseek-ai/dsh-system-prompt@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-llm@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0))(@deepseek-ai/dsh-scope@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)))(@deepseek-ai/dsh-tools@0.2.2-rc.1(71e9b8099add9aaf7bb42662f07c41a3))(@deepseek-ai/schemastery@3.19.0)(motion@14.14.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tailwindcss@4.3.5)':
+    dependencies:
+      '@deepseek-ai/cordis': 4.1.0(@deepseek-ai/cordis-plugin-include@1.1.0)(@deepseek-ai/cordis-plugin-loader@1.1.0)
+      '@deepseek-ai/dsh-llm': 0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)
+      '@deepseek-ai/dsh-session': 0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-scope@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0))
+      '@deepseek-ai/dsh-skill': 0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-llm@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0))(@deepseek-ai/dsh-scope@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0))
+      '@deepseek-ai/dsh-system-prompt': 0.2.2-rc.1(@deepseek-ai/cordis@4.1.0)(@deepseek-ai/dsh-llm@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0))(@deepseek-ai/dsh-scope@0.2.2-rc.1(@deepseek-ai/cordis@4.1.0))
+      '@deepseek-ai/dsh-tools': 0.2.2-rc.1(71e9b8099add9aaf7bb42662f07c41a3)
+      '@deepseek-ai/schemastery': 3.19.0
+      '@openmaic/dsl': 0.8.0
+      '@openmaic/generation': 0.3.33
+      '@openmaic/renderer': 0.1.17(echarts@6.1.0)(motion@14.14.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(shiki@4.4.3)(tailwindcss@4.3.5)
+      echarts: 6.1.0
+      react: 18.3.1
+      shiki: 4.4.3
+    transitivePeerDependencies:
+      - motion
+      - react-dom
+      - tailwindcss
+  '@openmaic/dsl@0.12.0': {}
+  '@openmaic/dsl@0.13.0': {}
+  '@openmaic/dsl@0.8.0': {}
+  '@openmaic/generation@0.3.33':
+    dependencies:
+      '@openmaic/dsl': 0.13.0
+      '@openmaic/geometry': 0.1.0
+      es-module-lexer: 2.3.2
+      jsonrepair: 3.15.0
+      katex: 0.16.38
+      nanoid: 5.1.16
+      parse5: 8.0.1
+      partial-json: 0.1.7
+      postcss: 8.5.28
+      postcss-value-parser: 4.2.0
+  '@openmaic/geometry@0.1.0':
+    dependencies:
+      '@openmaic/dsl': 0.12.0
+      entities: 6.0.1
+      svg-pathdata: 8.0.0
+      tinycolor2: 1.6.0
+  '@openmaic/renderer@0.1.17(echarts@6.1.0)(motion@14.14.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(shiki@4.4.3)(tailwindcss@4.3.5)':
+    dependencies:
+      '@openmaic/dsl': 0.12.0
+      '@openmaic/geometry': 0.1.0
+      clsx: 2.1.1
+      html-to-image: 1.11.13
+      html2canvas-pro: 2.6.4
+      katex: 0.16.47
+      lucide-react: 0.562.0(react@18.3.1)
+      motion: 14.14.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      tailwind-merge: 3.7.1
+      tailwindcss: 4.3.5
+      tinycolor2: 1.6.0
+    optionalDependencies:
+      echarts: 6.1.0
+      shiki: 4.4.3
+  csstype@3.2.4: {}
+  echarts@6.1.0:
+    dependencies:
+      tslib: 2.3.0
+      zrender: 6.1.0
+  entities@6.0.1: {}
+  framer-motion@14.14.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      motion-dom: 14.14.0
+      motion-utils: 14.7.0
+      tslib: 2.9.1
+    optionalDependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+  html-to-image@1.11.13: {}
+  html2canvas-pro@2.6.4: {}
+  jsonrepair@3.15.0: {}
+  katex@0.16.38:
+    dependencies:
+      commander: 8.3.0
+  lucide-react@0.562.0(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+  motion-dom@14.14.0:
+    dependencies:
+      motion-utils: 14.7.0
+  motion-utils@14.7.0: {}
+  motion@14.14.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      framer-motion: 14.14.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      tslib: 2.9.1
+    optionalDependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+  nanoid@5.1.16: {}
+  playwright-core@1.56.1: {}
+  postcss-value-parser@4.2.0: {}
+  svg-pathdata@8.0.0: {}
+  tailwind-merge@3.7.1: {}
+  tailwindcss@4.3.5: {}
+  tinycolor2@1.6.0: {}
+  tslib@2.3.0: {}
+  zrender@6.1.0:
+    dependencies:
+      tslib: 2.3.0

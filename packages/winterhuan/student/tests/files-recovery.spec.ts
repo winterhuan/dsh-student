@@ -166,3 +166,48 @@ it('preserves unsupported legacy reward declarations as pending facts without in
   expect(await readFile(join(cwd, '.study/state.json'), 'utf8')).toBe(original)
   expect(await readFile(join(cwd, '.study/v1-original.json'), 'utf8')).toBe(original)
 })
+
+it('materializes every old answer and original grade once while keeping unknown dates and capability routes pending', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-legacy-history-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study'))
+  const sourceState = stateSchema.parse({ format: 1, revision: 1, updatedAt: NOW, profile: setup.profile, materials: [], courses: [],
+    sessions: [{ id: 'old-block', subject: 'math', mode: 'foundation', startedAt: NOW - 100, endedAt: NOW }],
+    attempts: [{ id: 'old-answer', sessionId: 'old-block', subject: 'math', topic: '加法', prompt: '8+7等于多少？', response: '15', rawResponse: '十五', result: 'correct', assistance: 'independent', feedback: '正确', answerEvidence: '合并两部分', objectiveId: 'm2a-o-sub', at: NOW }],
+    mistakes: [], rewards: [] })
+  const original = JSON.stringify(sourceState)
+  await writeFile(join(cwd, '.study/state.json'), original)
+  await writeFile(join(cwd, '.study/v1-original.json'), original)
+  const fs = nodeStudyFiles(cwd); const signal = new AbortController().signal
+  const read = await readWorkspace(fs, signal)
+  const backup = { ...(await fs.stat('.study/v1-original.json', signal))!, path: '.study/v1-original.json', bytes: new TextEncoder().encode(original) }
+  const plan = describeMigration(read, backup)
+  expect(plan.status).toBe('ready')
+  const block = plan.outputs.find(output => output.file.kind === 'block')!.file
+  expect(block).toMatchObject({ questions: [{ prompt: '8+7等于多少？', objectiveId: 'm2a-o-sub', basisStatus: 'legacy-pending' }], responses: [{ id: 'old-answer', rawResponse: '十五', response: '15', assistance: 'unknown', answerDate: { kind: 'unknown' } }], assessments: [{ result: 'correct', assessedAt: NOW }] })
+  expect(plan.outputs.find(output => output.file.kind === 'term-settings')!.file).toMatchObject({ learnerId: expect.stringMatching(/^learner-/) })
+  expect(plan.outputs.find(output => output.file.kind === 'collections')!.file).toMatchObject({ legacyReferences: expect.arrayContaining([expect.objectContaining({ oldId: 'm2a-o-sub', status: 'pending' })]) })
+  expect(describeMigration(read, backup, plan.outputs).outputs.every(output => output.status === 'already-valid')).toBe(true)
+  for (const output of plan.outputs) { await mkdir(join(cwd, output.path, '..'), { recursive: true }); await writeFile(join(cwd, output.path), JSON.stringify(output.file)) }
+  const independent = await readWorkspace(fs, signal)
+  expect(independent.status).toBe('valid')
+  expect(queryWorkspace(independent, { kind: 'summary' }, NOW)).toMatchObject({ data: { practisedGoals: 0, masteredGoals: 0 } })
+  expect(await readFile(join(cwd, '.study/state.json'), 'utf8')).toBe(original)
+})
+
+it('keeps the unfinished legacy question, choices and reported help without fabricating answer time', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-legacy-slot-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study'))
+  const original = JSON.stringify(stateSchema.parse({ format: 1, revision: 1, updatedAt: NOW, profile: setup.profile, materials: [], courses: [],
+    sessions: [{ id: 'old-block', subject: 'math', mode: 'foundation', startedAt: NOW - 100 }], attempts: [], mistakes: [], rewards: [],
+    task: { id: 'live-q', sessionId: 'old-block', subject: 'math', topic: '加法', prompt: '8+7是多少？', choices: ['15', '14'], objectiveId: 'unknown-old-goal', response: '15', answeredAt: NOW - 10, hintLevel: 1 } }))
+  await writeFile(join(cwd, '.study/state.json'), original); await writeFile(join(cwd, '.study/v1-original.json'), original)
+  const fs = nodeStudyFiles(cwd), signal = new AbortController().signal
+  const read = await readWorkspace(fs, signal)
+  const backup = { ...(await fs.stat('.study/v1-original.json', signal))!, path: '.study/v1-original.json', bytes: new TextEncoder().encode(original) }
+  const plan = describeMigration(read, backup)
+  expect(plan.status).toBe('ready')
+  expect(plan.outputs.find(output => output.file.kind === 'block')!.file).toMatchObject({ currentQuestionId: 'live-q', questions: [{ id: 'live-q', prompt: '8+7是多少？', choices: ['15', '14'], objectiveId: { kind: 'pending' }, basisStatus: 'legacy-pending' }], responses: [{ rawResponse: '15', assistance: 'hint', answerDate: { kind: 'unknown' }, legacyRecord: { answeredAt: NOW - 10, hintLevel: 1 } }] })
+  expect(describeMigration(read, backup, plan.outputs).outputs.every(output => output.status === 'already-valid')).toBe(true)
+})

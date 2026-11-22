@@ -82,6 +82,7 @@
     "typecheck": "pnpm run build:host && tsc -b tsconfig.client.json && tsc -p tsconfig.scripts.json",
     "test": "vitest run",
     "test:recovery": "node packages/winterhuan/student/tests/recovery-native.e2e.mjs",
+    "test:openmaic": "node packages/winterhuan/student/tests/openmaic-native.e2e.mjs",
     "clean": "rm -rf packages/*/*/lib"
   }
 }

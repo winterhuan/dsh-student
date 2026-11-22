@@ -1,3 +1,6 @@
+# Student's protected OpenMAIC records require the shared store in headless too.
+- id: credentials
+  disabled: false
 - insert:
     - id: student-openmaic-client
       name: '@openmaic/dsh-openmaic'

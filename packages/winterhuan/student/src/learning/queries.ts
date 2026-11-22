@@ -12,6 +12,7 @@ import { studyDay, taughtUnit, canonical } from './shared.ts'
 import { projectWorkspace } from '../files/projection.ts'
 import { diagnosticFor, insightSummary, studyInsight } from './mastery.ts'
 import { studyStatus, weeklySummary, timeStatus, summaryMinutes } from './status.ts'
+import { effectiveKnowledge, knowledgeSources } from '../capabilities.ts'
 import { builtinObjectiveAnywhere, curriculumFor, subjectExercises, subjectIdeas } from '../curriculum.ts'
 import { z } from 'zod'
 import type { StudentJsonValue } from '../types.ts'
@@ -19,7 +20,7 @@ import { StudyReadCache } from '../files/cache.ts'
 
 /** Bounded read query; an explicit clock belongs to the caller. */
 export interface WorkspaceQuery {
-  kind: 'learning-context' | 'summary' | 'files' | 'settings' | 'status' | 'curriculum' | 'elements' | 'exercises' | 'review-sheet' | 'diagnose' | 'weak' | 'due' | 'pending' | 'progress' | 'concepts' | 'objectives' | 'relations' | 'worksheets' | 'paper-results' | 'materials' | 'mistakes' | 'sessions' | 'attempts'
+  kind: 'capabilities' | 'families' | 'knowledge-sources' | 'legacy-references' | 'learning-context' | 'summary' | 'files' | 'settings' | 'status' | 'curriculum' | 'elements' | 'exercises' | 'review-sheet' | 'diagnose' | 'weak' | 'due' | 'pending' | 'progress' | 'concepts' | 'objectives' | 'relations' | 'worksheets' | 'paper-results' | 'materials' | 'mistakes' | 'sessions' | 'attempts'
   subject?: 'math' | 'chinese' | 'english'; id?: string; unit?: string; grade?: number; term?: 'first' | 'second'; offset?: number
 }
 /** Dynamic CLI projection; typed page consumers use queryDashboard and the validated file DTOs. */
@@ -75,6 +76,14 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
   const workspace = read.workspace
   if (request.kind === 'files') return { status: read.status === 'valid' ? 'valid' : 'partial', issues: read.issues, versions, data: workspace }
   if (request.kind === 'settings') return { status: read.status === 'valid' ? 'valid' : 'partial', issues: read.issues, versions, data: workspace.settings }
+  if (['capabilities', 'families', 'knowledge-sources', 'legacy-references'].includes(request.kind)) {
+    const knowledge = effectiveKnowledge(workspace.collections?.knowledge)
+    const items = request.kind === 'capabilities' ? knowledge.goals : request.kind === 'families' ? knowledge.families : request.kind === 'legacy-references' ? workspace.collections?.legacyReferences ?? [] : []
+    const selected = items.filter(item => (!request.subject || 'subject' in item && item.subject === request.subject) && (!request.id || ('id' in item ? item.id : item.oldId) === request.id))
+    const offset = Math.max(0, request.offset ?? 0)
+    return { status: read.status === 'valid' ? 'valid' : 'partial', versions, issues: read.issues,
+      data: request.kind === 'knowledge-sources' ? knowledgeSources() : { learnerId: workspace.settings.learnerId ?? null, items: selected.slice(offset, offset + 20), total: selected.length, offset, ...(request.kind === 'families' ? { aliases: knowledge.familyAliases } : {}) } }
+  }
   const cached = workspaceProjection(read, now)
   const { state, refreshAfter } = cached
   const index = evidenceOf(state)
@@ -86,7 +95,9 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
     const recent = originals.slice(-20)
     if (selected && !recent.some(response => response.id === selected.id)) recent[0] = selected
     const responses = recent.map(response => ({ ...response, answerDate: index.entries.find(item => item.ownerId === active?.id && item.responseId === response.id)?.answerDate ?? { kind: 'unknown' } }))
-    const target = currentQuestion && typeof currentQuestion.objectiveId === 'string' ? builtinObjectiveAnywhere(currentQuestion.objectiveId) ?? workspace.collections?.objectives.find(goal => goal.id === currentQuestion.objectiveId) : undefined
+    const knowledge = effectiveKnowledge(workspace.collections?.knowledge)
+    const capability = currentQuestion?.capability ? knowledge.goals.find(goal => goal.id === currentQuestion.capability?.goalId) : undefined
+    const target = capability ? { ...capability, goal: capability.criterion, method: currentQuestion!.capability!.scope.modality } : currentQuestion && typeof currentQuestion.objectiveId === 'string' ? builtinObjectiveAnywhere(currentQuestion.objectiveId) ?? workspace.collections?.objectives.find(goal => goal.id === currentQuestion.objectiveId) : undefined
     const selectedProfile = active?.context.profile ? { ...active.context.profile, ...active.context.scope } : state.profile
     const scopedState = { ...state, profile: selectedProfile }
     const elements = currentQuestion && typeof currentQuestion.objectiveId === 'string' ? objectiveElements(scopedState, currentQuestion.objectiveId) : undefined
@@ -94,12 +105,13 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
     const savedAssessment = savedResponse ? active?.assessments.find(assessment => assessment.responseId === savedResponse.id) ?? null : null
     const discardedSheets = new Set<string>(workspace.worksheets.filter(sheet => sheet.discardedAt !== undefined).map(sheet => sheet.id))
     const pendingFacts = index.entries.filter(item => (item.ownerKind !== 'worksheet' || !discardedSheets.has(item.ownerId)) && (item.answerDate.kind === 'unknown' || item.assistance === 'unknown' || item.sourceStatus === 'unknown' || !item.objectiveId))
-    return { status: read.status === 'valid' ? 'valid' : 'partial', issues: read.issues, versions, refreshAfter, data: { termId: workspace.settings.termId,
+    return { status: read.status === 'valid' ? 'valid' : 'partial', issues: read.issues, versions, refreshAfter, data: { termId: workspace.settings.termId, learnerId: workspace.settings.learnerId ?? null,
       activeBlock: active ? { id: active.id, subject: active.subject, mode: active.mode, context: active.context, currentQuestionId: active.currentQuestionId } : null, currentQuestion: currentQuestion ?? null, responses,
       assessments: active?.assessments.filter(assessment => responses.some(response => response.id === assessment.responseId)) ?? [], savedResponse, savedAssessment, pendingAssessment: savedResponse !== null && savedAssessment === null,
       target: target ? { id: target.id, title: target.title, goal: target.goal, method: target.method, source: currentQuestion?.source, facts: elements?.facts ?? [] } : null,
       pendingFactCount: pendingFacts.length,
       pendingFacts: pendingFacts.slice(0, 20).map(item => ({ ownerId: item.ownerId, ownerKind: item.ownerKind, responseId: item.responseId, subject: item.subject, topic: item.topic, fields: [...(item.answerDate.kind === 'unknown' ? ['answerDate'] : []), ...(item.assistance === 'unknown' ? ['assistance'] : []), ...(item.sourceStatus === 'unknown' ? ['source'] : []), ...(item.basisStatus ? ['answerBasis'] : !item.objectiveId ? ['objectiveId'] : [])] })),
+      capability: capability ?? null, sourceExercise: currentQuestion?.capability ? knowledge.families.find(family => family.id === (knowledge.familyAliases[currentQuestion.capability!.familyId] ?? currentQuestion.capability!.familyId))?.representative ?? null : null,
       seeds: currentQuestion && typeof currentQuestion.objectiveId === 'string' ? subjectExercises(active!.subject).filter(item => item.objectiveId === currentQuestion.objectiveId).slice(0, 3) : [],
       elements: elements ? { ...elements, exercises: elements.exercises.slice(0, 3) } : null,
       legalActions: active ? currentQuestion ? savedResponse ? savedAssessment ? ['next-question', 'end-block', 'switch-block'] : ['request-assessment', 'end-block', 'switch-block'] : ['answer', 'request-hint', 'end-block', 'switch-block'] : ['start-question', 'end-block', 'switch-block'] : ['start-block'],

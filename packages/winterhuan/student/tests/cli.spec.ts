@@ -20,6 +20,7 @@ it('runs the installed CLI without Host peers or development dependencies', asyn
   onTestFinished(() => rm(root, { recursive: true, force: true }))
   const installed = join(root, 'node_modules/@winterhuan/dsh-student')
   await cp(dirname(cli), join(installed, 'lib'), { recursive: true })
+  await cp(new URL('../knowledge', import.meta.url), join(installed, 'knowledge'), { recursive: true })
   const require = createRequire(import.meta.url)
   await symlink(dirname(require.resolve('zod/package.json')), join(root, 'node_modules/zod'), 'junction')
   const cwd = join(root, 'workspace')
@@ -164,4 +165,31 @@ it('provides source-derived strict authoring schemas and valid examples includin
   expect(await readFile(join(cwd, '.study/worksheets/example.json'), 'utf8')).toBe(invalidBytes)
   const figures = JSON.parse((await execute(process.execPath, [cli, 'example', 'figure'])).stdout)
   expect(figures.map((figure: { kind: string }) => figure.kind)).toEqual(['bar-model', 'money', 'place-value', 'hundred-chart', 'number-line', 'clock', 'sticks', 'vertical', 'shapes', 'overlap', 'split', 'sequence', 'wall', 'grid', 'dot-array', 'plane', 'solid', 'counter', 'measure', 'compass', 'balance', 'writing', 'sketch'])
+})
+
+it('rejects cross-learner entities, archive references and invalid capability scopes without changing bytes', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-cli-capabilities-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study/blocks'), { recursive: true })
+  const settings = { format: 2, kind: 'term-settings', termId: 'term-current', learnerId: 'child-1', revision: 1, updatedAt: NOW, profile: setup.profile, materials: [], courses: [] }
+  const scope = { id: 'count10', description: '10以内点数', modality: 'performed', numberMax: 10 }
+  const block = { format: 2, kind: 'block', termId: settings.termId, learnerId: settings.learnerId, id: 'block1', subject: 'math', mode: 'foundation', startedAt: NOW, context: { profile: setup.profile },
+    questions: [{ id: 'q1', objectiveId: 'm.count', capability: { goalId: 'm.count', familyId: 'math.count', scope }, topic: '点数', prompt: '数7枚棋子', answer: '7', explanation: '逐一配对', answerEvidence: '不漏不重', source: { kind: 'authored', description: 'Generated task' } }], responses: [], hints: [], assessments: [] }
+  const settingsPath = join(cwd, '.study/settings.json'); const blockPath = join(cwd, '.study/blocks/block1.json')
+  await writeFile(settingsPath, JSON.stringify(settings)); await writeFile(blockPath, JSON.stringify(block))
+  expect(JSON.parse((await execute(process.execPath, [cli, 'validate', '--workspace', cwd])).stdout).ok).toBe(true)
+  for (const [path, value, rule] of [
+    [blockPath, { ...block, learnerId: 'child-2' }, 'learner-identity'],
+    [settingsPath, { ...settings, evidenceReferences: [{ learnerId: 'child-2', termId: 'old-term', ownerKind: 'block', ownerId: 'original', responseId: 'original-answer', goalId: 'm.count', scope }] }, 'archive-reference'],
+    [blockPath, { ...block, questions: [{ ...block.questions[0], capability: { ...block.questions[0]!.capability, scope: { ...scope, numberMax: 10001 } } }] }, 'schema'],
+  ] as const) {
+    await writeFile(settingsPath, JSON.stringify(settings)); await writeFile(blockPath, JSON.stringify(block))
+    const bytes = JSON.stringify(value); await writeFile(path, bytes)
+    const failed = await execute(process.execPath, [cli, 'validate', '--workspace', cwd]).catch(error => error)
+    expect(failed.code).toBe(1); expect(failed.signal).toBeNull()
+    expect(JSON.parse(failed.stdout)).toMatchObject({ ok: false, issues: expect.arrayContaining([expect.objectContaining({ rule })]) })
+    expect(await readFile(path, 'utf8')).toBe(bytes)
+    const independent = await readWorkspace(nodeStudyFiles(cwd), new AbortController().signal)
+    expect(queryWorkspace(independent, { kind: 'summary' }, NOW)).not.toHaveProperty('data')
+  }
 })

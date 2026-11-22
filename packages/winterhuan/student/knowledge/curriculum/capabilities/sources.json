@@ -1,0 +1,479 @@
+{
+  "retrievedOn": "2026-11-22",
+  "sources": [
+    {
+      "id": "moe-chinese-2022",
+      "label": "义务教育语文课程标准（2022年版）",
+      "url": "https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220420582344386456.pdf",
+      "sha256": "3ef0ec8a30b5a950211202658df07d99f5427f750f8ba0c3cfda12736b7bd71a",
+      "pdfPages": 109,
+      "retrievedOn": "2026-11-22"
+    },
+    {
+      "id": "moe-math-2022",
+      "label": "义务教育数学课程标准（2022年版）",
+      "url": "https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220510531636118932.pdf",
+      "sha256": "1183b95c58a65eaac4c456f2d2b329bbe42f65a6482993edb537e3eaf8baa144",
+      "pdfPages": 189,
+      "retrievedOn": "2026-11-22"
+    },
+    {
+      "id": "moe-english-2022",
+      "label": "义务教育英语课程标准（2022年版）",
+      "url": "https://www.moe.gov.cn/srcsite/A26/s8001/202204/W020220420582349487953.pdf",
+      "sha256": "59ec3971e0dbd6ca487c4e4972cbc80effaf2fd62418d07e5f62c6698fa222fb",
+      "pdfPages": 201,
+      "retrievedOn": "2026-11-22"
+    },
+    {
+      "id": "legacy-materials",
+      "label": "随包课程/题库和已读资料记录",
+      "paths": [
+        "../../packages/winterhuan/student/knowledge/skills/study/references/knowledge-map.md",
+        "../../packages/winterhuan/student/knowledge/skills/study/references/external-sources.md"
+      ],
+      "status": "historical-supporting-material; incomplete-textbook-verification"
+    }
+  ],
+  "coverage": [
+    {
+      "id": "M-N1",
+      "subject": "math",
+      "sourceId": "moe-math-2022",
+      "pdfPages": [
+        25,
+        26
+      ],
+      "requirementSummary": "认、读、写万以内的数；数位含义",
+      "goalIds": [
+        "m.count",
+        "m.zero",
+        "m.place",
+        "m.read-number",
+        "m.write-number"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "M-N2",
+      "subject": "math",
+      "sourceId": "moe-math-2022",
+      "pdfPages": [
+        25,
+        26
+      ],
+      "requirementSummary": "比较万以内数的大小；个数或事物顺序",
+      "goalIds": [
+        "m.compare",
+        "m.ordinal",
+        "m.neighbor"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "M-O1",
+      "subject": "math",
+      "sourceId": "moe-math-2022",
+      "pdfPages": [
+        25,
+        26,
+        27
+      ],
+      "requirementSummary": "四则运算意义、算理算法、运算关系",
+      "goalIds": [
+        "m.compose",
+        "m.add-meaning",
+        "m.sub-meaning",
+        "m.add",
+        "m.sub",
+        "m.chain",
+        "m.check",
+        "m.mul-meaning",
+        "m.mul",
+        "m.div-meaning",
+        "m.div",
+        "m.remainder"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "M-O2",
+      "subject": "math",
+      "sourceId": "moe-math-2022",
+      "pdfPages": [
+        26,
+        27
+      ],
+      "requirementSummary": "简单生活情境用运算解决问题，表达简单变化规律",
+      "goalIds": [
+        "m.problem",
+        "m.pattern",
+        "m.estimate"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "M-G1",
+      "subject": "math",
+      "sourceId": "moe-math-2022",
+      "pdfPages": [
+        35,
+        36
+      ],
+      "requirementSummary": "辨认和描述常见立体平面图形，拼图及组成部分和面",
+      "goalIds": [
+        "m.solid",
+        "m.plane",
+        "m.compose-shape"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "M-G2",
+      "subject": "math",
+      "sourceId": "moe-math-2022",
+      "pdfPages": [
+        35,
+        36
+      ],
+      "requirementSummary": "统一长度单位、米厘米、估测并测量",
+      "goalIds": [
+        "m.length-compare",
+        "m.length",
+        "m.measure-practice"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "M-D1",
+      "subject": "math",
+      "sourceId": "moe-math-2022",
+      "pdfPages": [
+        44,
+        45
+      ],
+      "requirementSummary": "发现特征、选择标准分类，描述记录分类结果",
+      "goalIds": [
+        "m.classify",
+        "m.record-data"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "M-P1",
+      "subject": "math",
+      "sourceId": "moe-math-2022",
+      "pdfPages": [
+        50,
+        51,
+        52
+      ],
+      "requirementSummary": "货币认识换算、购物活动与反思",
+      "goalIds": [
+        "m.money",
+        "m.shopping",
+        "m.math-share"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "M-P2",
+      "subject": "math",
+      "sourceId": "moe-math-2022",
+      "pdfPages": [
+        50,
+        51
+      ],
+      "requirementSummary": "时分秒、时刻和时长、时间单位关系",
+      "goalIds": [
+        "m.clock",
+        "m.elapsed",
+        "m.time-unit"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "M-P3",
+      "subject": "math",
+      "sourceId": "moe-math-2022",
+      "pdfPages": [
+        50,
+        51
+      ],
+      "requirementSummary": "相对位置、东南西北、身体尺测量",
+      "goalIds": [
+        "m.position",
+        "m.direction",
+        "m.length-compare",
+        "m.measure-practice"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "M-P4",
+      "subject": "math",
+      "sourceId": "moe-math-2022",
+      "pdfPages": [
+        51,
+        52,
+        53
+      ],
+      "requirementSummary": "数学游戏分享、连环画、表达数量关系",
+      "goalIds": [
+        "m.math-share"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "C-L1",
+      "subject": "chinese",
+      "sourceId": "moe-chinese-2022",
+      "pdfPages": [
+        14
+      ],
+      "requirementSummary": "认字与写字分开；约1600会认、约800会写",
+      "goalIds": [
+        "c.character",
+        "c.radical",
+        "c.write-character",
+        "c.distinguish"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "C-L2",
+      "subject": "chinese",
+      "sourceId": "moe-chinese-2022",
+      "pdfPages": [
+        14
+      ],
+      "requirementSummary": "拼音认读、声调、拼读、书写、大写字母和字母表",
+      "goalIds": [
+        "c.pinyin-symbol",
+        "c.pinyin-tone",
+        "c.pinyin-blend",
+        "c.write-pinyin",
+        "c.alphabet"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "C-L3",
+      "subject": "chinese",
+      "sourceId": "moe-chinese-2022",
+      "pdfPages": [
+        14
+      ],
+      "requirementSummary": "借助拼音独立识字，音序与部首检字",
+      "goalIds": [
+        "c.dictionary"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "C-R1",
+      "subject": "chinese",
+      "sourceId": "moe-chinese-2022",
+      "pdfPages": [
+        14,
+        15
+      ],
+      "requirementSummary": "朗读、学习默读、上下文词句、标点语气、借图阅读",
+      "goalIds": [
+        "c.read-aloud",
+        "c.silent-read",
+        "c.word-meaning",
+        "c.punctuation",
+        "c.retrieve",
+        "c.sequence",
+        "c.cause",
+        "c.main",
+        "c.genre"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "C-R2",
+      "subject": "chinese",
+      "sourceId": "moe-chinese-2022",
+      "pdfPages": [
+        15
+      ],
+      "requirementSummary": "童话寓言故事、感受想法、儿歌古诗、整本书与分享",
+      "goalIds": [
+        "c.evaluate",
+        "c.recall",
+        "c.recite",
+        "c.read-habit"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "C-X1",
+      "subject": "chinese",
+      "sourceId": "moe-chinese-2022",
+      "pdfPages": [
+        15
+      ],
+      "requirementSummary": "认真倾听，复述大意，讲故事见闻，有礼交流讨论",
+      "goalIds": [
+        "c.listen",
+        "c.retell",
+        "c.describe",
+        "c.interact"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "C-X2",
+      "subject": "chinese",
+      "sourceId": "moe-chinese-2022",
+      "pdfPages": [
+        15
+      ],
+      "requirementSummary": "写见闻感受与想象，运用词语与逗句问叹号",
+      "goalIds": [
+        "c.sentence",
+        "c.write-message",
+        "c.punctuation"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "C-I1",
+      "subject": "chinese",
+      "sourceId": "moe-chinese-2022",
+      "pdfPages": [
+        15,
+        16,
+        27
+      ],
+      "requirementSummary": "整理字形和语言材料、活动见闻、提问讨论",
+      "goalIds": [
+        "c.organize",
+        "c.inquiry",
+        "c.culture"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "E-P1",
+      "subject": "english",
+      "sourceId": "moe-english-2022",
+      "pdfPages": [
+        41,
+        42
+      ],
+      "requirementSummary": "听课堂指令、听词做事、图片动作辅助听故事",
+      "goalIds": [
+        "e.listen-word",
+        "e.listen-message",
+        "e.listen-story"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "E-P2",
+      "subject": "english",
+      "sourceId": "moe-english-2022",
+      "pdfPages": [
+        41,
+        42
+      ],
+      "requirementSummary": "据录音模仿；问候、个人信息、看图说词句、表达喜好",
+      "goalIds": [
+        "e.sound",
+        "e.speak-name",
+        "e.speak-social",
+        "e.speak-self"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "E-P3",
+      "subject": "english",
+      "sourceId": "moe-english-2022",
+      "pdfPages": [
+        42
+      ],
+      "requirementSummary": "歌谣歌曲、游戏交流、简单角色扮演",
+      "goalIds": [
+        "e.perform",
+        "e.speak-social"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "E-P4",
+      "subject": "english",
+      "sourceId": "moe-english-2022",
+      "pdfPages": [
+        42
+      ],
+      "requirementSummary": "看简单动画/节目、理解大意、模仿话语",
+      "goalIds": [
+        "e.view-listen",
+        "e.sound"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    },
+    {
+      "id": "E-LOCAL",
+      "subject": "english",
+      "sourceId": "moe-english-2022",
+      "pdfPages": [
+        20,
+        41,
+        42
+      ],
+      "requirementSummary": "读写为已确认教材的扩展，不是预备级统一要求",
+      "goalIds": [
+        "e.word-form",
+        "e.read-message",
+        "e.read-story",
+        "e.letter",
+        "e.write-letter",
+        "e.write-word",
+        "e.write-message",
+        "e.speak-story"
+      ],
+      "interpretation": "authored-assessment-decomposition; school-scope-still-required"
+    }
+  ],
+  "quantitativeCoverageLedgers": [
+    {
+      "id": "chinese-character-coverage",
+      "sourceId": "moe-chinese-2022",
+      "pdfPages": [
+        14
+      ],
+      "expected": "约1600字会认、约800字会写；分开统计证据范围",
+      "policy": "not-1600-goals; per-character-evidence; stage-end-not-first-login-demand"
+    },
+    {
+      "id": "chinese-reading-coverage",
+      "sourceId": "moe-chinese-2022",
+      "pdfPages": [
+        15
+      ],
+      "expected": "背诵优秀诗文50篇（段），课外阅读不少于5万字",
+      "policy": "verified-material/activity-ledger; never-convert-counts-to-general-mastery"
+    },
+    {
+      "id": "english-audiovisual-coverage",
+      "sourceId": "moe-english-2022",
+      "pdfPages": [
+        42
+      ],
+      "expected": "课堂视听时间每周不少于20分钟",
+      "policy": "observed-activity-ledger; time-is-not-understanding"
+    }
+  ],
+  "scopeCaveats": [
+    "课程标准列学段末要求，不规定本插件的每学期单元顺序",
+    "二年级下册旧框架与具体教材尚未完全对齐",
+    "数学质量单位是旧二下扩展，国家课标放在第二学段",
+    "英语一二年级预备级以视听说为主，教材读写须单独确认",
+    "工作区自定义目标/题库与真实旧回答未在本轮枚举或迁移"
+  ]
+}

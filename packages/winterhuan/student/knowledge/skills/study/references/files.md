@@ -14,7 +14,7 @@ node "$STUDY_CLI" example term-settings
 node "$STUDY_CLI" validate --workspace '<当前工作区绝对路径>'
 ```
 
-开发者在插件仓库构建后使用 `node packages/winterhuan/student/lib/cli.js`。`study-validate` bin 指向同一文件，但 DSH Git 安装不承诺将它加进 shell PATH。schema/example 输出按需生成，不常驻在工具参数中。kind 可用 term-settings、block、worksheet、collections、openmaic-lessons、figure；figure 的 example 输出全部 23 种。示例是结构起点，不能当学生已学内容或用户确认。
+开发者在插件仓库构建后使用 `node packages/winterhuan/student/lib/cli.js`。`study-validate` bin 指向同一文件，但 DSH Git 安装不承诺将它加进 shell PATH。schema/example 输出按需生成，不常驻在工具参数中。kind 可用 term-settings、block、worksheet、collections、openmaic-lessons、capability-goal、question-family、knowledge-extension、figure；figure 的 example 输出全部 23 种。示例是结构起点，不能当学生已学内容或用户确认。
 
 结构 schema 来自共享 Zod 输入定义；CLI 再核对身份、关联、范围、帮助与已观察使用内容。日期合法性和其他跨字段规则以 CLI 为准，不以 JSON schema 独立判定业务完成。
 
@@ -30,7 +30,15 @@ node "$STUDY_CLI" validate --workspace '<当前工作区绝对路径>'
 | `.study/collections.json` | format 2，kind collections；错题、题库、确认概念/目标/关系、教学队列和奖励 |
 | `.study/openmaic-lessons.json` | format 1；独立课程生命周期，不存学生作答或 cookie |
 
-每次新增身份都使用新的稳定 ID，文件名与所属身份一致。设置保留当前 termId；新学期创建新 termId。当前题只存在于所属学习段/卷中；评价引用 responseId，不能用局部题号跨段查找。原回答和已使用题目内容冻结；替换内容使用新题 ID，评价更正沿用回答 ID。每题都保存 objectiveId、来源、答案和可复查依据。
+每次新增身份都使用新的稳定 ID，文件名与所属身份一致。设置保留当前 termId 和稳定 learnerId；新学期创建新 termId 并保留同一孩子的 learnerId。缺少 learnerId 的旧格式2档案先核对身份，不能用家长账号、MAIC 账号或 DSH Session 代替。当前题只存在于所属学习段/卷中；评价引用 responseId，不能用局部题号跨段查找。原回答和已使用题目内容冻结；替换内容使用新题 ID，评价更正沿用回答 ID。每题都保存 objectiveId、来源、答案和可复查依据。
+
+## 能力、母题与历史引用
+
+能力内容在 `../../../knowledge/curriculum/capabilities/`，不写入学生回答。通过共享 `queryWorkspace` 的 capabilities、families、knowledge-sources 查询按需读取；完整目标、方法、变式约束与来源保留在目录。旧教材地图继续提供教材位置；整单元旧评分不授予拆分后的所有能力。工作区内容扩展写在既有 collections 的 knowledge 字段；相同能力、核心解法和结构只有一个有效母题，数字或情境变式保留为实例。
+
+新能力题的 objectiveId 是稳定能力 ID，并保存 capability 的 goalId、familyId 和 scope；scope 包含独立 id、描述、表现形式及适用数域或词表。听、说、视听和实际操作分别保留对应证据。保持当时的题面、选项、答案依据和范围；母题更新不改写已使用实例。
+
+settings 的 evidenceReferences 引用原 learnerId、termId、ownerKind、ownerId、responseId、goalId 与 scope；可保留复习的 mistakeId、stage、dueAt 和 independentDays。原文件位于 `.study/archives/<termId>/blocks|worksheets/<ownerId>.json`。先独立核对原学生、原回答和兼容范围，不能仅凭结构校验继承掌握。数域或词表扩展重新检查；未完成复习保留原到期日与阶段。
 
 ## 校验结果与恢复
 
@@ -58,9 +66,11 @@ console.log(JSON.stringify({ candidates: result.backups.map(({ path, backup }) =
 JS
 ```
 
-同一导出提供 `readWorkspace`、`backupVersions`、`describeMigration(read, backup, existing)`、`describeRestore(read, chosen)` 和 `describeArchive(source, archive, active)`；完整输入说明在包内 `lib/types/files/recovery.d.ts`。`read` 使用 `readWorkspace` 的当前观察；迁移的 backup 是单独读取且版本稳定的原字节 `ObservedFile`，existing 是已校验的输出。中断迁移保留此前源观察，或单独读取原 v1 来源并校验，再比对现有输出。恢复的 chosen 是家长选定的 `readBackups` 项；归档的三个参数分别是原学期、导出目录与当前活动学期的独立读取。描述只读，输出文件仍由原生工具逐项写入。
+同一导出提供 `readWorkspace`、`backupVersions`、`describeMigration(read, backup, existing)`、`describeKnowledgeMigration(read, learnerId?)`、`describeRestore(read, chosen)` 和 `describeArchive(source, archive, active)`；完整输入说明在包内 `lib/types/files/recovery.d.ts`。`read` 使用 `readWorkspace` 的当前观察；迁移的 backup 是单独读取且版本稳定的原字节 `ObservedFile`，existing 是已校验的输出。中断迁移保留此前源观察，或单独读取原 v1 来源并校验，再比对现有输出。恢复的 chosen 是家长选定的 `readBackups` 项；归档的三个参数分别是原学期、导出目录与当前活动学期的独立读取。描述只读，输出文件仍由原生工具逐项写入。
 
 旧 `.study/state.json` 先保留原字节、摘要与备份路径。使用随包 `./files` 的 `describeMigration` 逐项 outputs；不要根据旧评分时间、照片接收时间、默认 independent 和未保存的答案补出新事实。无法核实的字段保留 pendingLegacy、未知日期/帮助和来源。迁移路径含 termId 和实体身份，部分写入时先比对已有输出后继续；最后 CLI 校验并读取消费者。
+
+格式2的知识与身份迁移先在隔离副本调用 describeKnowledgeMigration。缺少身份时必须传入明确核对的 learnerId，否则描述返回 blocked；已有身份保持不变，不能用学期标签或共享账号生成孩子身份。保留原字节，按 outputs 的 write-needed/already-valid 写入或跳过；旧 ID 的 pending/review-required 去向不授予掌握。重试复用相同身份和原回答，不重新生成母题或评分，不能把不同孩子合并。
 
 归档前确认家长意图并结束活动段，保存其待评价回答。按描述保留学期所有源字节到 `.study/archives/<termId>/`，逐项检查已有输出；报告未完成文件。新学期另建 termId，不重用旧身份。CLI 校验当前学期不等于归档副本逐字节完整，必须独立比对归档输出。
 

@@ -1,0 +1,94 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/capability-rebuild/README.md
+/student-capability-goal-reconstruction:
+  en: 47de285a3cc8547f
+  zh: 688d48ff1b1910ec
+/student-capability-goal-reconstruction/summary:
+  en: 55c1c7db7da1b54b
+  zh: 0532d72a1d038814
+/student-capability-goal-reconstruction/table-of-contents:
+  en: d363e3ac713b4eaa
+  zh: d7f9a48b2b542b6e
+/student-capability-goal-reconstruction/how-goals-are-defined:
+  en: 6560e2d4adc60cf5
+  zh: fae02355a0606e96
+/student-capability-goal-reconstruction/the-child-s-learning-path:
+  en: 93ec68cae0deb813
+  zh: 1531b3f2484b4344
+/student-capability-goal-reconstruction/capability-goal-tree:
+  en: 55e55a7ba197756a
+  zh: 434037d1452f6ce6
+/student-capability-goal-reconstruction/capability-goal-tree/chinese-literacy-and-pinyin:
+  en: 17a1989dcd193e8a
+  zh: adc0d9a2e4a55fc9
+/student-capability-goal-reconstruction/capability-goal-tree/chinese-sentences-and-writing:
+  en: 3c06c400b904af73
+  zh: 2ab9209379af11b6
+/student-capability-goal-reconstruction/capability-goal-tree/chinese-reading:
+  en: ffc31d930db342fc
+  zh: ff455b1cc7a6b4e0
+/student-capability-goal-reconstruction/capability-goal-tree/chinese-language-and-cultural-accumulation:
+  en: 848ed64c2c6fb805
+  zh: 7a949b970a83ae55
+/student-capability-goal-reconstruction/capability-goal-tree/chinese-listening-and-communication:
+  en: 0d05393607c4aeb6
+  zh: 0c4d0380e633c221
+/student-capability-goal-reconstruction/capability-goal-tree/chinese-practice-and-participation:
+  en: e9750338d7eeb0c4
+  zh: 327a47b3a59032fa
+/student-capability-goal-reconstruction/capability-goal-tree/chinese-organization-and-inquiry:
+  en: 3a41b00ff2c58626
+  zh: f5859b91708e385c
+/student-capability-goal-reconstruction/capability-goal-tree/math-numbers:
+  en: c84206170e9b849c
+  zh: 18ceecbe90819981
+/student-capability-goal-reconstruction/capability-goal-tree/math-operations-and-quantity-relationships:
+  en: 3f3b88785d508c5b
+  zh: 41d8b4a858964d39
+/student-capability-goal-reconstruction/capability-goal-tree/math-shapes-and-position:
+  en: 0488397a2c8f40c8
+  zh: 9e751048f575e48c
+/student-capability-goal-reconstruction/capability-goal-tree/math-measurement-and-everyday-use:
+  en: 1daeb75739227804
+  zh: 67810ba278976a6a
+/student-capability-goal-reconstruction/capability-goal-tree/math-classification-and-records:
+  en: b984b9032e8f7586
+  zh: 35368d34f817f1a4
+/student-capability-goal-reconstruction/capability-goal-tree/math-practice-and-participation:
+  en: 659de1e97c4162ec
+  zh: 624a27328bc877c7
+/student-capability-goal-reconstruction/capability-goal-tree/math-confirmed-curriculum-extensions:
+  en: 54d2914dd53739fc
+  zh: a42653782953800c
+/student-capability-goal-reconstruction/capability-goal-tree/english-listening-and-audiovisual-understanding:
+  en: a21ff4a0653ee604
+  zh: 6416fff1e1f1a1bb
+/student-capability-goal-reconstruction/capability-goal-tree/english-speech-sounds:
+  en: a7c85a2ffa158610
+  zh: 82ab6af7b5526519
+/student-capability-goal-reconstruction/capability-goal-tree/english-reading:
+  en: 6f7fca106124344f
+  zh: 4eaa34aaa0e9d238
+/student-capability-goal-reconstruction/capability-goal-tree/english-writing:
+  en: d20e6bf7bb9aa0ac
+  zh: 9e9de3f8ddf96676
+/student-capability-goal-reconstruction/capability-goal-tree/english-speaking:
+  en: e124408fb9b5c144
+  zh: db6952ba3176c6a8
+/student-capability-goal-reconstruction/capability-goal-tree/english-practice-and-participation:
+  en: fba5e87563dbf372
+  zh: 29ca8cf1c905fa16
+/student-capability-goal-reconstruction/question-families-and-legacy-mappings:
+  en: 957b14870d8de909
+  zh: 49b11237bbedec0b
+/student-capability-goal-reconstruction/sources-and-coverage-gaps:
+  en: 3a19b47ea1b1a94c
+  zh: aafead8805633ec7
+/student-capability-goal-reconstruction/phased-changes-and-validation:
+  en: 2f08bf823860bed6
+  zh: 69255a2ff97b2e58
+/student-capability-goal-reconstruction/dev-note:
+  en: 7f6e464d36a53163
+  zh: 156eca3eb14d9f53

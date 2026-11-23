@@ -34,6 +34,38 @@ it('has only Learning and Parent main entries and preserves an answer draft thro
   expect(screen.queryByText(en.openmaicTitle)).toBeNull()
 })
 
+it('preserves reflection and exploration drafts through parent browsing', () => {
+  mount()
+  fireEvent.change(screen.getByLabelText(en.reflection), { target: { value: 'I made ten first' } })
+  fireEvent.change(screen.getByLabelText(en.mode), { target: { value: 'explore' } })
+  fireEvent.change(screen.getByLabelText(en.inquiryQuestion), { target: { value: 'Why does making ten help?' } })
+  const main = screen.getByRole('navigation', { name: en.title })
+  fireEvent.click(within(main).getByRole('button', { name: en.parentEntry }))
+  fireEvent.click(within(main).getByRole('button', { name: en.learningEntry }))
+  expect((screen.getByLabelText(en.reflection) as HTMLTextAreaElement).value).toBe('I made ten first')
+  expect((screen.getByLabelText(en.inquiryQuestion) as HTMLTextAreaElement).value).toBe('Why does making ten help?')
+})
+
+it('keeps the question draft visible and waits for matching dashboard and learning-context versions', () => {
+  const state = updateStudy(updateStudy(updateStudy(undefined, setup, NOW), start, NOW), { action: 'task', task: { id: 'current-question', sessionId: start.id, subject: 'math', topic: 'Addition', prompt: '8 + 7?' } }, NOW)
+  const fixture = studentClientFixture(state, undefined, { learnerId: 'learner-one', termId: 'term-one', nextAction: { kind: 'answer', reason: 'unfinished-question', subject: 'math', title: 'Addition', blockId: start.id, questionId: 'current-question' } })
+  let contextVersion = 'v2'
+  const useResource: import('../src/client/workspace.ts').UseStudentResource = address => {
+    const resource = fixture.useResource(address)
+    return { ...resource, value: { ...resource.value, versions: [{ path: '.study/blocks/current.json', targetKey: 'current', version: address.includes('learning-context') ? contextVersion : 'v2' }] } }
+  }
+  function Desk() { return <StudyDesk {...useDraftFixture()} {...createStudentManualActions(fixture.remote)} useResource={useResource} sessionId="coherent" visible running={false} ask={vi.fn()} t={t} /> }
+  const view = render(<Desk />)
+  fireEvent.change(screen.getByLabelText(en.answer), { target: { value: 'Keep this thought' } })
+  contextVersion = 'v1'
+  view.rerender(<Desk />)
+  expect((screen.getByRole('button', { name: en.continueLearning }) as HTMLButtonElement).disabled).toBe(true)
+  contextVersion = 'v2'
+  view.rerender(<Desk />)
+  expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('Keep this thought')
+  expect((screen.getByRole('button', { name: en.continueLearning }) as HTMLButtonElement).disabled).toBe(false)
+})
+
 it('continues the original block after browsing another subject without starting a new block', async () => {
   const { ask } = mount()
   fireEvent.click(screen.getByRole('button', { name: en.chinese }))
@@ -77,6 +109,12 @@ const currentScope = { id: 'within20', description: 'Addition within20', modalit
 const currentAction = { kind: 'answer', reason: 'unfinished-question', subject: 'math', title: 'Make ten', goalId: 'm.add', blockId: start.id, questionId: 'current-question', scope: currentScope }
 const currentContext = { termId: 'term-one', learnerId: 'learner-one', nextAction: currentAction, currentQuestion: { id: 'current-question', openmaic: { bindingId: 'binding-one' } } }
 const currentClassroom = { ...classroom, blockId: start.id, learnerId: 'learner-one', termId: 'term-one', subject: 'math', objectiveId: 'm.add', feedback: { bindingId: 'binding-one', blockId: start.id, learnerId: 'learner-one', termId: 'term-one', goalId: 'm.add', familyId: 'math.add-column', scope: currentScope } }
+
+it.each(['ready', 'generating'] as const)('keeps an unowned %s classroom out of the current learning status', status => {
+  mount({ learnerId: 'learner-one', termId: 'term-one' }, { lessons: lessonList({ ...classroom, title: 'Unowned old classroom', status } as typeof classroom) })
+  expect(screen.queryByText('Unowned old classroom')).toBeNull()
+  expect(screen.queryByText(/Unowned old classroom/)).toBeNull()
+})
 
 
 it('keeps the current local question ahead of a ready classroom for the same goal', async () => {
@@ -172,6 +210,18 @@ it('keeps the shared next goal and scope when Continue is used after subject bro
   await waitFor(() => expect(ask).toHaveBeenCalledOnce())
   const intention = JSON.parse(String(ask.mock.calls[0]![0]).split('Student intention:\n')[1]!.split('\n')[0]!)
   expect(intention.selection).toEqual({ subject: nextAction.subject, goalId: nextAction.goalId, scope: nextAction.scope })
+})
+
+it('continues the projected prerequisite goal and capability scope while preserving the old question owner', async () => {
+  const nextAction = { kind: 'learn', reason: 'prerequisite-gap', subject: 'math', title: 'Compose ten', goalId: 'm.compose', scope: currentScope, requirement: 'Use the prerequisite gap in the current round' }
+  const { ask } = mount({ learnerId: 'learner-one', termId: 'term-one', nextAction })
+  fireEvent.click(screen.getByRole('button', { name: en.continueLearning }))
+  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+  const intention = JSON.parse(String(ask.mock.calls[0]![0]).split('Student intention:\n')[1]!.split('\n')[0]!)
+  expect(intention.selection).toEqual({ subject: 'math', goalId: 'm.compose', scope: currentScope })
+  expect(intention.nextAction.requirement).toBe(nextAction.requirement)
+  expect(intention.blockId).toBe(start.id)
+  expect(intention.questionId).toBe('current-question')
 })
 
 it('shows only the saved scope and actual independent days in Parent goal progress', () => {

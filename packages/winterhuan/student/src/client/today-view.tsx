@@ -56,6 +56,8 @@ export function TodayView({ nextAction, learnerId, termId, classroomBindingId, o
   onOpenClassroom: (lessonId: string) => void
 }) {
   const active = study.active
+  const reflectionKey = formDraftKey(`reflection:${active?.id ?? 'none'}`, draftScope)
+  const reflection = useStore(state => state.drafts[reflectionKey]) ?? ''
   const ownSession = !!active
   const task = ownSession && study.task?.sessionId === active.id ? study.task : undefined
   const recommendation = study.recommendation
@@ -69,14 +71,14 @@ export function TodayView({ nextAction, learnerId, termId, classroomBindingId, o
     : undefined
   const explain = study.understandingReminders[0]
   const matchesCurrent = (item: typeof lessons[number]) => !!active && !!learnerId && !!termId && item.learnerId === learnerId && item.termId === termId && item.blockId === active.id && (item.subject === undefined || item.subject === (nextAction?.subject ?? active.subject))
-  const generating = lessons.find(item => item.status === 'generating')
+  const generating = lessons.find(item => item.status === 'generating' && matchesCurrent(item))
   const ready = lessons.find(item => item.status === 'ready' && matchesCurrent(item) && classroomUrl(item.url)
     && nextAction?.goalId !== undefined && item.feedback?.goalId === nextAction.goalId
     && nextAction.scope !== undefined && JSON.stringify(item.feedback.scope) === JSON.stringify(nextAction.scope)
     && (nextAction.kind === 'answer' && nextAction.blockId === active?.id && nextAction.questionId === task?.id && classroomBindingId !== undefined && item.feedback.bindingId === classroomBindingId
       || nextAction.kind === 'learn' && !task))
   const readyUrl = classroomUrl(ready?.url)
-  const shownReady = ready ?? (!nextAction ? lessons.find(item => item.status === 'ready' && classroomUrl(item.url)) : undefined)
+  const shownReady = ready ?? (!nextAction ? lessons.find(item => item.status === 'ready' && matchesCurrent(item) && classroomUrl(item.url)) : undefined)
   const goalPractice = recommendation?.kind === 'practice' || recommendation?.kind === 'learn' || recommendation?.kind === 'preview' || (recommendation?.kind === 'review' && recommendation.objectiveId !== undefined)
   const chosen = nextAction
   const nextTitle = chosen?.title ?? goalTitle(study, task?.objectiveId) ?? recommendation?.title ?? task?.topic ?? t('todayPlan')
@@ -111,7 +113,7 @@ export function TodayView({ nextAction, learnerId, termId, classroomBindingId, o
         <details className="student-fold">
           <summary>{t('reflectionOptional')}</summary>
           {(explain || task?.objectiveId) && <p>{t('explainPrompt')}{explain ? ` · ${explain.title}` : ''}</p>}
-          <label>{t('reflection')}<textarea aria-label={t('reflection')} name="reflection" maxLength={2000} placeholder={t('explainPrompt')} /></label>
+          <label>{t('reflection')}<textarea aria-label={t('reflection')} name="reflection" value={reflection} onChange={event => actions.setDraft(reflectionKey, event.target.value)} maxLength={2000} placeholder={t('explainPrompt')} /></label>
         </details>
       </form>
     </>}
@@ -146,7 +148,7 @@ export function TodayView({ nextAction, learnerId, termId, classroomBindingId, o
       {study.dueBacklog > study.dueToday.length && <p className="student-muted">{t('dueLater').replace('{count}', String(study.dueBacklog - study.dueToday.length))}</p>}
     </section>}
     </details>}
-    {<Alternate study={study} subject={subject} activity={activity} setActivity={setActivity} disabled={disabled || running} t={t} goal={goal} intensityLabel={intensityLabel} openCheckins={openCheckins} scope={scope} setScope={setScope} scopeUnits={scopeUnits} start={start} />}
+    {<Alternate useStore={useStore} actions={actions} draftScope={draftScope} study={study} subject={subject} activity={activity} setActivity={setActivity} disabled={disabled || running} t={t} goal={goal} intensityLabel={intensityLabel} openCheckins={openCheckins} scope={scope} setScope={setScope} scopeUnits={scopeUnits} start={start} />}
     {!ownSession && <details className="student-fold"><summary>{t('morePractice')}</summary>
     {!ownSession && (() => {
       const unit = progress && curriculum ? curriculum.units.find(item => item.id === progress.unitId) : undefined
@@ -195,7 +197,8 @@ function goalTitle(study: Study, objectiveId: string | undefined): string | unde
   return study.curriculum?.objectives.find(item => item.id === objectiveId)?.title ?? study.objectives.find(item => item.id === objectiveId)?.title
 }
 
-function Alternate({ study, subject, activity, setActivity, disabled, start, goal, intensityLabel, openCheckins, scope, setScope, scopeUnits, t }: {
+function Alternate({ study, subject, activity, setActivity, disabled, start, goal, intensityLabel, openCheckins, scope, setScope, scopeUnits, t, draftScope, useStore, actions }: DraftProps & {
+  draftScope?: string | undefined
   study: Study
   subject: Subject
   activity: Activity
@@ -216,7 +219,8 @@ function Alternate({ study, subject, activity, setActivity, disabled, start, goa
   const uiMode = mode === 'review' || mode === 'explore' || mode === 'diagnose' ? mode : 'sync'
   const alternate = uiMode !== 'sync' || goal !== undefined
   const [open, setOpen] = useState(alternate)
-  const [inquiry, setInquiry] = useState('')
+  const inquiryKey = formDraftKey(`inquiry:${subject}`, draftScope)
+  const inquiry = useStore(state => state.drafts[inquiryKey]) ?? ''
   useEffect(() => { if (alternate) setOpen(true) }, [alternate])
   const scoped = scope.grade !== undefined || scope.term !== undefined
   return <details className="student-fold" open={open} onToggle={event => setOpen(event.currentTarget.open)}>
@@ -233,7 +237,7 @@ function Alternate({ study, subject, activity, setActivity, disabled, start, goa
         <option value="explore">{t('explore')}</option>
       </select></label>
       <p>{t(uiMode === 'sync' ? 'syncHelp' : uiMode === 'review' ? 'reviewHelp' : uiMode === 'diagnose' ? 'diagnoseHelp' : 'exploreHelp')}</p>
-      {uiMode === 'explore' && <label>{t('inquiryQuestion')}<textarea aria-label={t('inquiryQuestion')} value={inquiry} onChange={event => setInquiry(event.target.value)} maxLength={2000} placeholder={t('inquiryPlaceholder')} /></label>}
+      {uiMode === 'explore' && <label>{t('inquiryQuestion')}<textarea aria-label={t('inquiryQuestion')} value={inquiry} onChange={event => actions.setDraft(inquiryKey, event.target.value)} maxLength={2000} placeholder={t('inquiryPlaceholder')} /></label>}
       {(uiMode === 'sync' || uiMode === 'diagnose') && <p>
         <label>{t('scopeLabel')}<select aria-label={t('scopeLabel')} value={scoped ? `${scope.grade ?? study.profile.grade}-${scope.term ?? study.profile.term}` : 'current'} onChange={event => {
           const value = event.target.value

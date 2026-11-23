@@ -28,7 +28,10 @@ export function useStudy(sessionId: StudentSessionId, visible: boolean, networkE
   const goalProgress = facts && typeof facts === 'object' && 'goalProgress' in facts && Array.isArray(facts.goalProgress) ? facts.goalProgress as StudentJsonValue[] & CapabilityProgress[] : []
   const loadNeeded = !data && (resource.failure?.code === 'student/main-session-required' || context.failure?.code === 'student/main-session-required')
   const stale = resource.status === 'failed' || context.status === 'failed'
-  return { data, context: facts, termId, learnerId, classroomBindingId, nextAction, goalProgress, value: resource.value, loadNeeded, stale, error: stale ? networkError : '', offset }
+  // Independent streams must agree on the files before an action can combine their facts.
+  const contextReady = context.status === 'live' && context.value?.status === 'valid' && facts !== null && facts !== undefined && resource.value !== undefined
+    && resource.value.versions.length === context.value.versions.length && resource.value.versions.every(file => context.value!.versions.some(other => other.path === file.path && other.targetKey === file.targetKey && other.version === file.version))
+  return { data, context: facts, contextReady, termId, learnerId, classroomBindingId, nextAction, goalProgress, value: resource.value, loadNeeded, stale, error: stale ? networkError : '', offset }
 }
 
 // The shared Host dashboard query validates all business content; this checks its wire discriminator.

@@ -57,7 +57,7 @@ dsh plugin --profile student add ./packages/winterhuan/student
 
 Student 组合固定官方 OpenMAIC 0.4.0：四个工具和四个 DSH skill，可使用完整课堂、独立 simulation/game/code 组件、课件和教学卡片。Host 默认连接官方服务，Token 剩余不足 24 小时自动续登并核对相同 learner，明确 401 最多续登重试一次。生成及时返回结构化 job 身份，重启后继续同一活动只轮询原任务。学习文件均由 agent 编写并运行只读 CLI。[24 项方法来源清单](knowledge/skills/study/openmaic/README.md)区分可复用教学方法与官网专用工作流，正文和引用按需读取。独立的已安装 Chrome 窗口通过官方登录流程核对账号后播放课堂；挑战保留同一窗口供家长登录，普通系统浏览器保持自身登录状态。
 
-安装 Student 会启用 profile 已有的 DSH Credentials provider，包括 headless。保留已配置的存储，显式用户补丁仍优先；已保存引用优先于环境后备。Student 的 `openmaic` Host 配置默认引用 `OPEN_MAIC_USER`、`OPEN_MAIC_PASSWORD` 和 `OPEN_MAIC_ACCESS_CODE`，由受保护的 provider 解析值，不将值写入插件配置。账号授权与 job 恢复使用 provider 的私有 grant 记录。`browserProfileRoot` 可指定私有的持久化 Chrome 目录，默认使用 `DSH_HOME/student-openmaic-browser`（或 `~/.dsh/student-openmaic-browser`）。打开或继续课堂时核对过期时间；Host 释放时关闭所属 Chrome context，重启后复用该 profile。维护的官方包补丁只为顶层 Client renderer 行增加 `hostTools:false`，让 Host 工具和技能保持在 Student 模式内。
+安装 Student 会启用 profile 已有的 DSH Credentials provider，包括 headless。保留已配置的存储，显式用户补丁仍优先；已保存引用优先于环境后备。Student 的 `openmaic` Host 配置默认引用 `OPEN_MAIC_USER`、`OPEN_MAIC_PASSWORD` 和 `OPEN_MAIC_ACCESS_CODE`，由受保护的 provider 解析值，不将值写入插件配置。账号授权与 job 恢复使用 provider 的私有 grant 记录。`browserProfileRoot` 可指定私有的持久化 Chrome 目录，默认使用 `DSH_HOME/student-openmaic-browser`（或 `~/.dsh/student-openmaic-browser`）。打开或继续课堂时核对过期时间；Host 释放时关闭所属 Chrome context，重启后复用该 profile。预构建包包含固定官方 Host 及其 npm 依赖，通过仅发布客户端的 Loader 行提供未修改的官方浏览器 bundle，并将工具和技能限定在 Student 模式内。安装无需构建或修改安装器策略；生成的 `lib/openmaic/source.json` 记录固定源码与依赖锁。
 
 ### 选择学习方式
 

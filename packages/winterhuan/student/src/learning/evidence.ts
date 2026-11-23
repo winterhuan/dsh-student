@@ -1,9 +1,10 @@
 /** One read-derived evidence index for mastery, review, history and summary consumers. */
 import type { StudyState } from '../schema.ts'
 import type { ValidatedWorkspace } from '../files/validation.ts'
-import type { AnswerDate, Assessment, LearnerResponse } from '../files/schema.ts'
+import type { AnswerDate, Assessment, LearnerResponse, LearningBlock } from '../files/schema.ts'
 import { matchOpenmaicResponse } from '../openmaic/feedback-consumer.ts'
 import { studyDay } from './shared.ts'
+import { scopeSupports } from '../capabilities.ts'
 
 /** Effective assessment of one original response; corrections retain its identity and answer date. */
 export interface EffectiveEvidence {
@@ -13,6 +14,8 @@ export interface EffectiveEvidence {
   basisStatus?: 'legacy-pending'
   official?: Assessment['official']; officialHistory?: Assessment['officialHistory']; grading?: Assessment['grading']
   source: LearnerResponse['source']; sourceStatus: 'known' | 'unknown'; assessedAt?: number
+  capability?: LearningBlock['questions'][number]['capability']; criteria?: Assessment['criteria']; feedback?: string; errorType?: Assessment['errorType']
+  referenceScopes?: NonNullable<LearningBlock['questions'][number]['capability']>['scope'][]
 }
 /** Shared normalized response facts and separately preserved current help signals. */
 export interface EvidenceIndex { entries: EffectiveEvidence[]; stuckSignals: { objectiveId: string; at: number }[] }
@@ -41,9 +44,11 @@ export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
         ? matchedNative && matchedNative.receiptAt === declaredDate.at ? declaredDate : { kind: 'unknown' }
         : declaredDate
       entries.push({ termId: file.termId, ownerId: file.id, ownerKind: file.kind, responseId: response.id, questionId: question.id,
-        subject: file.subject, topic: question.topic, ...(typeof question.objectiveId === 'string' && !question.basisStatus ? { objectiveId: question.objectiveId } : {}),
+        subject: file.subject, topic: question.topic, ...(!question.basisStatus && (question.capability || typeof question.objectiveId === 'string') ? { objectiveId: question.capability?.goalId ?? question.objectiveId as string } : {}),
         ...(question.basisStatus ? { basisStatus: question.basisStatus } : {}),
         ...(question.mistakeId ? { mistakeId: question.mistakeId } : {}), rawResponse: response.rawResponse,
+        ...(question.capability ? { capability: question.capability } : {}),
+        ...(assessment ? { feedback: assessment.feedback, criteria: assessment.criteria ?? [question.phase === 'vary' ? 'variation' : question.phase === 'guide' ? 'method' : 'basic'], ...(assessment.errorType ? { errorType: assessment.errorType } : {}) } : {}),
         result: question.basisStatus ? 'unassessed' : source.kind === 'openmaic' ? matchedOfficial?.result ?? 'unassessed' : assessment?.result ?? 'unassessed',
         ...(assessment?.official ? { official: assessment.official } : {}), ...(assessment?.officialHistory ? { officialHistory: assessment.officialHistory } : {}), ...(assessment?.grading ? { grading: assessment.grading } : {}), assistance: source.kind === 'openmaic' && (matchedOfficial?.answerExposure || !response.assistanceConfirmation) ? 'unknown' : response.assistance, source: response.source,
         sourceStatus: source.kind === 'unknown' || source.kind === 'openmaic' && !matchedOfficial || source.kind === 'native' && (!matchedNative || source.receiptAt !== undefined && source.receiptAt !== matchedNative.receiptAt) ? 'unknown' : 'known',
@@ -53,6 +58,13 @@ export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
     if (file.kind === 'block') for (const signal of file.stuckSignals ?? []) {
       const goal = questions.find(item => item.id === signal.questionId)?.objectiveId
       if (typeof goal === 'string') stuckSignals.push({ objectiveId: goal, at: signal.at })
+    }
+  }
+  for (const archive of workspace.archivedEvidence ?? []) {
+    const original = deriveEvidence(archive.workspace)
+    for (const entry of original.entries) {
+      const references = archive.references.filter(reference => entry.capability && reference.goalId === entry.capability.goalId && scopeSupports(entry.capability.scope, reference.scope) && (reference.ownerKind === entry.ownerKind && reference.ownerId === entry.ownerId && reference.responseId === entry.responseId || reference.review?.mistakeId === entry.mistakeId))
+      if (references.length && !entries.some(existing => existing.termId === entry.termId && existing.ownerKind === entry.ownerKind && existing.ownerId === entry.ownerId && existing.responseId === entry.responseId)) entries.push({ ...entry, referenceScopes: references.map(reference => reference.scope) })
     }
   }
   return { entries, stuckSignals }
@@ -107,7 +119,7 @@ export function evidenceDay(evidence: EffectiveEvidence): string | undefined { r
  */
 export function evidenceAtCutoff(index: EvidenceIndex, now: number): EffectiveEvidence[] {
   const today = studyDay(now)
-  return index.entries.filter(item => item.answerDate.kind === 'instant' ? item.answerDate.at <= now : item.answerDate.kind === 'day' ? item.answerDate.day <= today : false)
+  return index.entries.filter(item => item.sourceStatus === 'known' && (item.answerDate.kind === 'instant' ? item.answerDate.at <= now : item.answerDate.kind === 'day' ? item.answerDate.day <= today : false))
 }
 
 /**

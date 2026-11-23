@@ -23,6 +23,7 @@ const { nodeStudyFiles, readWorkspace, queryWorkspace } = await import(pathToFil
 let records = []
 let sourceReads = 0
 let generations = 0
+const generationRequirements = []
 const snapshot = { id: 'official-q', type: 'single', question: '9 − 4 equals?', options: [{ value: 'A', label: '5' }, { value: 'B', label: '5.0' }], answer: ['A'], analysis: '5.0 and 5 are the same value.' }
 const server = createServer(async (req, res) => {
   const url = new URL(req.url, 'http://fixture.test')
@@ -30,8 +31,8 @@ const server = createServer(async (req, res) => {
   let value
   if (path === '/fixture/submit') { records = ['draft', 'submitted', 'reviewed'].map((phase, seq) => ({ id: `record-${seq}`, sessionId: 'attempt-1', seq, sceneId: 'scene-1', createdAt: '2026-11-20T01:00:00Z', payload: { payloadVersion: 1, phase, answers: { 'official-q': 'B' }, ...(phase === 'reviewed' ? { results: [{ questionId: 'official-q', correct: false, status: 'incorrect', earned: 0 }] } : {}) } })); value = { submitted: true } }
   else if (path.endsWith('/learner-key')) value = { learnerKey: 'user:fixture-parent' }
-  else if (path === '/api/generate-classroom') { generations++; value = { jobId: 'job-1', pollUrl: '/api/generate-classroom/job-1' } }
-  else if (path === '/api/generate-classroom/job-1') value = { status: 'succeeded', result: { classroomId: 'stage-1' } }
+  else if (path === '/api/generate-classroom') { let body = ''; for await (const chunk of req) body += chunk; generationRequirements.push(JSON.parse(body).requirement); generations++; value = { jobId: `job-${generations}`, pollUrl: `/api/generate-classroom/job-${generations}` } }
+  else if (path.startsWith('/api/generate-classroom/job-')) value = { status: 'succeeded', result: { classroomId: 'stage-' + path.split('job-')[1] } }
   else if (path.endsWith('/manifest')) value = { rev: 1, scenes: [{ id: 'scene-1', order: 0, rev: 1 }] }
   else if (path === '/api/persistence/documents/stage-1') value = { dslVersion: '0.3.0', stage: { id: 'stage-1' }, scenes: [{ id: 'scene-1', stageId: 'stage-1', type: 'quiz', content: { type: 'quiz', questions: [snapshot] } }] }
   else { sourceReads++; const session = { id: 'attempt-1', runtimeDslVersion: '0.1.0', kind: 'quizAttempt', stageId: 'stage-1', learnerKey: 'user:fixture-parent', status: 'completed', createdAt: '2026-11-20T01:00:00Z', updatedAt: '2026-11-20T01:00:00Z' }; value = path.endsWith('/records') ? records : path.endsWith('/sessions') ? records.length ? [session] : [] : session }
@@ -83,6 +84,12 @@ case 12:next=['openmaic_feedback',{action:'read',lessonId:'fixture-lesson'}];bre
 case 13:{if(value.consumption.status!=='accepted')throw new Error('Independent reader did not accept the saved import');const before={format:1,lessons:[this.lesson]};this.lesson={...this.lesson,checkpoint:value.consumption.checkpoint};next=edit('.study/openmaic-lessons.json',before,{format:1,lessons:[this.lesson]});break;}
 case 14:next=validate;break;
 case 15:next=['study_status',{kind:'learning-context'}];break;
+case 16:if(!config.online){if(value.data.nextAction.kind!=='supplement')throw new Error('Accepted official answer must request only missing evidence');this.requirement=value.data.nextAction.requirement;this.block={...this.block,endedAt:${now}};next=write(${JSON.stringify('.study/blocks/'+block.id+'.json')},this.block);}break;
+case 17:if(!config.online){this.followup={...${JSON.stringify(block)},id:'fixture-followup'};next=write('.study/blocks/fixture-followup.json',this.followup);}break;
+case 18:if(!config.online)next=['study_status',{kind:'learning-context'}];break;
+case 19:if(!config.online){if(value.status!=='valid')throw new Error('Followup formal files must be independently valid');next=['openmaic_generate',{...${JSON.stringify(owner)},blockId:'fixture-followup',requirement:this.requirement}];}break;
+case 20:if(!config.online)next=['openmaic_generate',{...${JSON.stringify(owner)},blockId:'fixture-followup',jobId:value.jobId}];break;
+
 }
 this.index++;await appendFile(config.telemetry,JSON.stringify({index:this.index,action:next?.[0]??'final',messages:options.messages,tools:options.tools??[],promptCharacters:JSON.stringify(options.messages).length})+'\\n');if(next){const [name,args]=next;if(!(options.tools??[]).some(tool=>tool.name===name))throw new Error('Missing native '+name);const id='feedback-'+this.index;yield {type:'block-start',index:0,blockType:'tool-call'};yield {type:'tool-call-delta',index:0,id,name,argumentsDelta:JSON.stringify(args)};yield {type:'block-end',index:0,block:{type:'tool-call',id,name,arguments:JSON.stringify(args)}};yield {type:'finish',reason:{kind:'tool-calls'}};}else{const text='Native source import and independent file consumption finished.';yield {type:'block-start',index:0,blockType:'text'};yield {type:'text-delta',index:0,text};yield {type:'block-end',index:0,block:{type:'text',text}};yield {type:'finish',reason:{kind:'stop'}};}}}ctx.effect(()=>ctx.llm.registerAdapter(['student-feedback-fixture'],new Fixture()));}`)
   const runs = []
@@ -107,7 +114,7 @@ this.index++;await appendFile(config.telemetry,JSON.stringify({index:this.index,
   }
   const read = await readWorkspace(nodeStudyFiles(project), new AbortController().signal)
   assert.equal(read.status, 'valid')
-  const saved = read.workspace.blocks[0]
+  const saved = read.workspace.blocks.find(item => item.id === block.id)
   assert.equal(saved.responses.length, online ? 3 : 1)
   assert.equal(saved.assessments.length, online ? 3 : 1)
   if (!online) { assert.equal(saved.responses[0].rawResponse, '"B"'); assert.equal(saved.assessments[0].official.result.correct, false); assert.equal(saved.assessments[0].result, 'correct') }
@@ -119,8 +126,17 @@ this.index++;await appendFile(config.telemetry,JSON.stringify({index:this.index,
   const cli = (await readFile(join(root, 'cli.jsonl'), 'utf8')).trim().split('\n').map(JSON.parse)
   assert.equal(cli.length, 2)
   assert.ok(cli.every(row => row.bytesAndVersionsInvariant))
-  assert.equal(generations, online ? 0 : 1)
-  const summary = { runs, generations, sourceReads: online ? 'Authorized original transport rereads; private native receipts retained.' : sourceReads, cliInvocations: cli.length, nativeAuthoring: true, restartIndependentRead: true, checkpointAfterIndependentAcceptance: true, unknownDatesAndHelpPreserved: true, agentOnlyAcademicWrites: true, sourceWithoutAuthorizationExcluded: true, networkAndModel: online ? 'Actual authorized official records with a scripted native model. Protected original job/capture metadata is seeded; academic writes are exclusively native tools. Original classroom generation is validated separately.' : 'Synthetic HTTP source and scripted model; all native tools, protected transport, formal writer, built CLI and independent Student reader are real.', cleanup: 'Awaited subprocess and server closure before temporary directory removal.' }
+  assert.equal(generations, online ? 0 : 2)
+  if (!online) {
+    const requirement = JSON.parse(generationRequirements[1])
+    assert.equal(requirement.goalId, 'm.sub')
+    assert.equal(requirement.action, 'supplement')
+    assert.ok(requirement.missingCriteria.some(item => item.criteria.includes('method') && item.criteria.includes('variation') && !item.criteria.includes('basic')))
+    assert.ok(requirement.feedback.some(item => item.result === 'correct' && item.assistance === 'unknown' && item.answerDate.kind === 'unknown'))
+    assert.equal(read.workspace.blocks.find(item => item.id === 'fixture-followup').responses.length, 0)
+    assert.notEqual(generationRequirements[0], generationRequirements[1])
+  }
+  const summary = { runs, generations, sourceReads: online ? 'Authorized original transport rereads; private native receipts retained.' : sourceReads, cliInvocations: cli.length, nativeAuthoring: true, feedbackDrivenNextGeneration: !online, restartIndependentRead: true, checkpointAfterIndependentAcceptance: true, unknownDatesAndHelpPreserved: true, agentOnlyAcademicWrites: true, sourceWithoutAuthorizationExcluded: true, networkAndModel: online ? 'Actual authorized official records with a scripted native model. Protected original job/capture metadata is seeded; academic writes are exclusively native tools. Original classroom generation is validated separately.' : 'Synthetic HTTP source and scripted model; all native tools, protected transport, formal writer, built CLI and independent Student reader are real.', cleanup: 'Awaited subprocess and server closure before temporary directory removal.' }
   if (outputRoot) { await writeFile(join(outputRoot, 'summary.json'), JSON.stringify(summary, null, 2)); await writeFile(join(outputRoot, 'cli.jsonl'), await readFile(join(root, 'cli.jsonl'))); await writeFile(join(outputRoot, 'final-block.json'), JSON.stringify(saved)); await writeFile(join(outputRoot, 'final-lessons.json'), JSON.stringify(lessons)) }
   console.log(JSON.stringify(summary, null, 2))
 } finally {

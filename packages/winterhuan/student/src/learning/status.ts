@@ -56,7 +56,7 @@ export function studyStatus(state: StudyState, now: number) {
   for (const entry of evidenceOf(state).entries) {
     const day = evidenceDay(entry)
     const goal = entry.objectiveId ? objectiveInfo(state, entry.objectiveId) : undefined
-    includeEvidence(entry.subject, goal?.title ?? entry.topic, day === undefined ? undefined : dayStart(day), entry.result, entry.assistance, undefined, entry.objectiveId)
+    includeEvidence(entry.subject, goal?.title ?? entry.topic, day === undefined || entry.sourceStatus !== 'known' ? undefined : dayStart(day), entry.result, entry.assistance, undefined, entry.objectiveId)
   }
   const interests = interestTagsOf(state.interests?.tags)
   return {

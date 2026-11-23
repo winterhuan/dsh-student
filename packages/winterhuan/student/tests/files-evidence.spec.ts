@@ -261,6 +261,7 @@ it('rejects a new question bound to another goal mistake but preserves an observ
   block.questions[0]!.mistakeId = 'm1'
   block.questions[0]!.source = { kind: 'mistake', mistakeId: 'm1', description: 'Original subtraction mistake' }
   block.responses[0]!.assistance = 'independent'; block.assessments[0]!.assistance = 'independent'
+  block.responses[0]!.source = { kind: 'manual', entry: 'historical', parentConfirmation: 'Parent confirms the original dated answer' }
   block.responses[0]!.answerDate = { kind: 'day', day: '2026-10-05', parentConfirmation: 'Actual date confirmed' }
   const mistake = { id: 'm1', subject: 'math', topic: 'Subtraction', prompt: '18 - 7?', learnerAnswer: '10', correction: '11', explanation: 'Subtract seven', answerEvidence: '11 + 7 = 18', uncertainties: '', objectiveId: 'm2a-o-sub', confirmedAt: Date.parse('2026-10-01T09:00:00+08:00'), userConfirmation: 'Confirmed' }
   const collection = (objectiveId: string) => collectionsSchema.parse({ format: 2, kind: 'collections', termId: 'term-1', mistakes: [{ ...mistake, objectiveId }], rewards: [], teachingQueue: [] })

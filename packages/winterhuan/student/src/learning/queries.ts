@@ -10,7 +10,7 @@ import { checkInHistory, curriculumView, exercisesFor, objectiveElements, review
 import { evidenceOf } from './evidence.ts'
 import { studyDay, taughtUnit, canonical } from './shared.ts'
 import { projectWorkspace } from '../files/projection.ts'
-import { diagnosticFor, insightSummary, studyInsight } from './mastery.ts'
+import { diagnosticFor, insightSummary, studyInsight, learningContinuation } from './mastery.ts'
 import { studyStatus, weeklySummary, timeStatus, summaryMinutes } from './status.ts'
 import { effectiveKnowledge, knowledgeSources } from '../capabilities.ts'
 import { builtinObjectiveAnywhere, curriculumFor, subjectExercises, subjectIdeas } from '../curriculum.ts'
@@ -29,7 +29,7 @@ function workspaceProjection(read: WorkspaceRead, now: number) {
   const workspaceQueryCache = (read.cache ??= new StudyReadCache()).queries
   const workspace = read.workspace!
   const identity = read.files.find(file => file.path === '.study/settings.json')!.targetKey
-  const signature = JSON.stringify([read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), workspace.nativeSources ?? [], workspace.openmaicSources ?? [], read.sourceVerification ?? null])
+  const signature = JSON.stringify([[...read.files, ...read.archiveFiles ?? []].map(({ path, targetKey, version }) => ({ path, targetKey, version })), workspace.nativeSources ?? [], workspace.openmaicSources ?? [], read.archiveIssues ?? [], read.sourceVerification ?? null])
   let cached = workspaceQueryCache.get(identity)
   if (!cached || cached.signature !== signature || now >= cached.refreshAfter || now < cached.at) {
     const state = projectWorkspace(workspace, now)
@@ -108,13 +108,18 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
     const discardedSheets = new Set<string>(workspace.worksheets.filter(sheet => sheet.discardedAt !== undefined).map(sheet => sheet.id))
     const pendingFacts = index.entries.filter(item => (item.ownerKind !== 'worksheet' || !discardedSheets.has(item.ownerId)) && (item.answerDate.kind === 'unknown' || item.assistance === 'unknown' || item.sourceStatus === 'unknown' || !item.objectiveId))
     return { status: read.status === 'valid' ? 'valid' : 'partial', issues: read.issues, versions, refreshAfter, data: { termId: workspace.settings.termId, learnerId: workspace.settings.learnerId ?? null,
-      activeBlock: active ? { id: active.id, subject: active.subject, mode: active.mode, context: active.context, currentQuestionId: active.currentQuestionId } : null, currentQuestion: currentQuestion ?? null, responses,
+      activeBlock: active ? { id: active.id, subject: active.subject, mode: active.mode, context: active.context, currentQuestionId: active.currentQuestionId } : null, currentQuestion: currentQuestion ?? null, activeQuestions: active?.questions ?? [], responses,
+      ...learningContinuation(workspace, state, now, request.subject), archiveIssues: read.archiveIssues ?? [],
       assessments: active?.assessments.filter(assessment => responses.some(response => response.id === assessment.responseId)) ?? [], savedResponse, savedAssessment, pendingAssessment: savedResponse !== null && savedAssessment === null,
       target: target ? { id: target.id, title: target.title, goal: target.goal, method: target.method, source: currentQuestion?.source, facts: elements?.facts ?? [] } : null,
       pendingFactCount: pendingFacts.length,
       pendingFacts: pendingFacts.slice(0, 20).map(item => ({ ownerId: item.ownerId, ownerKind: item.ownerKind, responseId: item.responseId, subject: item.subject, topic: item.topic, fields: [...(item.answerDate.kind === 'unknown' ? ['answerDate'] : []), ...(item.assistance === 'unknown' ? ['assistance'] : []), ...(item.sourceStatus === 'unknown' ? ['source'] : []), ...(item.basisStatus ? ['answerBasis'] : !item.objectiveId ? ['objectiveId'] : [])] })),
       sourceVerification: read.sourceVerification ?? { native: [], openmaic: [] },
-      officialFeedback: index.entries.filter(item => item.source.kind === 'openmaic').slice(-20).map(item => ({ termId: item.termId, ownerId: item.ownerId, responseId: item.responseId, questionId: item.questionId, objectiveId: item.objectiveId ?? null, result: item.result, grading: item.grading ?? 'pending', official: item.official ?? null, sourceStatus: item.sourceStatus, assistance: item.assistance, answerDate: item.answerDate })),
+      officialFeedback: index.entries.filter(item => item.source.kind === 'openmaic').slice(-20).map(item => {
+        const original = [workspace, ...(workspace.archivedEvidence ?? []).map(archive => archive.workspace)].find(owner => owner.settings.termId === item.termId)
+        const question = original?.blocks.find(block => block.id === item.ownerId)?.questions.find(question => question.id === item.questionId)
+        return { termId: item.termId, ownerId: item.ownerId, responseId: item.responseId, questionId: item.questionId, objectiveId: item.objectiveId ?? null, rawResponse: item.rawResponse, prompt: question?.prompt ?? null, feedback: item.feedback ?? '', result: item.result, grading: item.grading ?? 'pending', official: item.official ?? null, officialHistory: item.officialHistory ?? [], sourceStatus: item.sourceStatus, assistance: item.assistance, answerDate: item.answerDate }
+      }),
       capability: capability ?? null, sourceExercise: currentQuestion?.capability ? knowledge.families.find(family => family.id === (knowledge.familyAliases[currentQuestion.capability!.familyId] ?? currentQuestion.capability!.familyId))?.representative ?? null : null,
       seeds: currentQuestion && typeof currentQuestion.objectiveId === 'string' ? subjectExercises(active!.subject).filter(item => item.objectiveId === currentQuestion.objectiveId).slice(0, 3) : [],
       elements: elements ? { ...elements, exercises: elements.exercises.slice(0, 3) } : null,
@@ -122,7 +127,13 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
     } }
   }
   if (request.kind === 'summary') {
-    const summary = cached.summary ??= weeklySummary(state, now, studyInsight(state, now))
+    const summary = cached.summary ??= (() => {
+      const legacy = weeklySummary(state, now, studyInsight(state, now))
+      const progress = learningContinuation(workspace, state, now).goalProgress
+      const firstDay = studyDay(now - 6 * 86_400_000)
+      return { ...legacy, masteredGoals: legacy.masteredGoals + progress.filter(item => item.level === 'mastered' && !item.baseline && item.firstMasteredDay && item.firstMasteredDay >= firstDay).length,
+        recoveredGoals: legacy.recoveredGoals + progress.filter(item => item.level === 'mastered' && item.recoveredDay && item.recoveredDay >= firstDay).length }
+    })()
     const minutesByDay = summaryMinutes(state, now)
     return { status: 'valid', versions, refreshAfter, data: { ...summary, minutesByDay, activeDays: minutesByDay.filter(item => item.minutes > 0).length } }
   }

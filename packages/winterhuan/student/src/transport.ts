@@ -17,7 +17,7 @@ import type { FileIssue } from './files/validation.ts'
 export interface StudentOfficialFeedback extends OpenmaicSourceVerification { consumption?: ReturnType<typeof consumeOpenmaicFeedback>; source?: OpenmaicFeedbackRead }
 /** Independently observed native cuts, exact validated files and bounded official feedback availability. */
 export interface StudentWorkspaceRead { read: WorkspaceRead; native: NativeSourceContext; backupIssues: FileIssue[]; openmaic: StudentOfficialFeedback[] }
-const signature = (read: WorkspaceRead) => JSON.stringify([read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), read.membership])
+const signature = (read: WorkspaceRead) => JSON.stringify([[...read.files, ...read.archiveFiles ?? []].map(({ path, targetKey, version }) => ({ path, targetKey, version })), read.membership, read.archiveIssues ?? []])
 /**
  * Read original sources with independent workspace/Remote authorization and consume the same formal files.
  * @param exec - Registered main execution Agent and caller cancellation.

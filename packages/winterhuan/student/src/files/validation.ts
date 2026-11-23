@@ -155,7 +155,7 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
         return used && canonical(old) === canonical(question)
       })
       if (file.kind === 'block' && file.mode === 'diagnose' && question.phase !== undefined) fail(path, `questions.${i}.phase`, 'diagnostic-phase', 'Omit teaching phases from diagnostic questions.')
-      if (file.kind === 'block' && file.mode === 'review' && !question.mistakeId && question.source.kind !== 'legacy') fail(path, `questions.${i}.mistakeId`, 'review-mistake', 'Bind a review question to a confirmed mistake of the same subject and goal.')
+      if (file.kind === 'block' && file.mode === 'review' && !question.mistakeId && !question.capability && question.source.kind !== 'legacy') fail(path, `questions.${i}.mistakeId`, 'review-mistake', 'Bind a review question to a confirmed mistake or an explicitly scoped learned capability of the same subject.')
       if (question.basisStatus && question.source.kind !== 'legacy') fail(path, `questions.${i}.basisStatus`, 'legacy-basis-source', 'Unresolved answer bases belong only to preserved legacy questions.')
       if (typeof question.objectiveId !== 'string') {
         if (question.source.kind !== 'legacy') fail(path, `questions.${i}.objectiveId`, 'pending-target', 'Only preserved legacy questions may carry an unresolved target.')

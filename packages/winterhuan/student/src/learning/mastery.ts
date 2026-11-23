@@ -1,13 +1,170 @@
 import type { ErrorType, StudyState } from '../schema.ts'
-import { builtinObjectives, builtinObjectivesIn, curriculumFor, type CurriculumMethod, type CurriculumScope, type CurriculumSubject } from '../curriculum.ts'
+import { builtinObjectives, builtinObjectivesIn, builtinObjectiveAnywhere, curriculumFor, type CurriculumMethod, type CurriculumScope, type CurriculumSubject } from '../curriculum.ts'
 import { evidenceOf, evidenceDay, evidenceAtCutoff, demonstrablyAfter } from './evidence.ts'
-import { dayStart } from './schedule.ts'
+import { dayStart, replayMistake } from './schedule.ts'
 import { DAY, schoolGate, scopeSelects, studyDay, taughtUnit, type ObjectiveBase, type Outcome } from './shared.ts'
+import { effectiveKnowledge, scopeSupports, type CapabilityScope } from '../capabilities.ts'
+import type { ValidatedWorkspace } from '../files/validation.ts'
+import type { Assessment } from '../files/schema.ts'
+import type { EffectiveEvidence } from './evidence.ts'
 
 /** Subject display order shared by check-in plans and history. */
 export const SUBJECT_ORDER = ['chinese', 'math', 'english'] as const
 const DIAGNOSIS_INTERVAL = 14 * DAY
 const RECHECK_AFTER = 35 * DAY
+
+/** A goal's evidence within one explicitly selected tested range. */
+export interface CapabilityProgress {
+  id: string; subject: CurriculumSubject; title: string; scope: CapabilityScope | null
+  level: 'untouched' | 'practising' | 'weak' | 'due' | 'mastered'; independentDays: string[]
+  firstMasteredDay?: string; recoveredDay?: string; baseline: boolean
+  missingFamilyIds: string[]; missingCriteria: { familyId: string; criteria: NonNullable<Assessment['criteria']> }[]
+  feedback: { termId: string; ownerId: string; responseId: string; familyId: string; result: EffectiveEvidence['result']; feedback: string; errorType?: ErrorType; sourceStatus: EffectiveEvidence['sourceStatus']; assistance: EffectiveEvidence['assistance']; answerDate: EffectiveEvidence['answerDate'] }[]
+}
+/** One continuation selected from validated files for the native tutor and workbench. */
+export interface LearningNextAction {
+  kind: 'answer' | 'assess' | 'supplement' | 'teach' | 'review' | 'learn' | 'hold'
+  reason: 'unfinished-question' | 'pending-assessment' | 'missing-evidence' | 'current-gap' | 'prerequisite-gap' | 'due-review' | 'new-goal' | 'confirmed-scope-required'
+  subject: CurriculumSubject; title: string; goalId?: string; familyId?: string; scope?: CapabilityScope
+  blockId?: string; questionId?: string; responseId?: string; requirement?: string
+  supplement?: { missingFamilyIds: string[]; missingCriteria: CapabilityProgress['missingCriteria']; maxNewQuestions: number; remaining: number }
+  review?: { mistakeIds: string[]; familyIds: string[]; remaining: number }
+}
+/** The short-review round is reconstructed from completed formal blocks and actual answer days. */
+export interface LearningContinuation { nextAction: LearningNextAction | null; goalProgress: CapabilityProgress[]; reviewRound: { limit: 2; usedFamilyIds: string[]; remaining: number; backlog: number } }
+
+/**
+ * Continue one current activity, bounded evidence check or review round without a workflow file.
+ * @param workspace - independently validated current and explicitly referenced original term files.
+ * @param state - shared evidence and review projection.
+ * @param now - actual query cutoff.
+ * @param subject - optional browsing subject; unfinished activity retains priority.
+ * @returns one permitted action, scoped progress and the current two-mother review allowance.
+ */
+export function learningContinuation(workspace: ValidatedWorkspace, state: StudyState, now: number, subject?: CurriculumSubject): LearningContinuation {
+  const knowledge = effectiveKnowledge(workspace.collections?.knowledge)
+  const index = evidenceOf(state)
+  const active = workspace.blocks.find(block => block.endedAt === undefined)
+  const current = active?.questions.find(question => question.id === active.currentQuestionId)
+  const ordered = workspace.blocks.slice().sort((a, b) => b.startedAt - a.startedAt || a.id.localeCompare(b.id))
+  const questionBindings = ordered.flatMap(block => block.questions.flatMap(question => question.capability ? [{ block, binding: question.capability }] : []))
+  const scopeFor = (goalId: string) => current?.capability?.goalId === goalId ? current.capability.scope : questionBindings.find(item => item.binding.goalId === goalId)?.binding.scope ?? workspace.archivedEvidence?.flatMap(archive => archive.references).find(reference => reference.goalId === goalId)?.scope
+  const canonicalFamily = (id: string) => knowledge.familyAliases[id] ?? id
+  const accepted = (entry: EffectiveEvidence) => entry.sourceStatus === 'known' && entry.result === 'correct'
+  const independent = (entry: EffectiveEvidence) => accepted(entry) && entry.assistance === 'independent' && evidenceDay(entry) !== undefined
+  const progress: CapabilityProgress[] = knowledge.goals.map(goal => {
+    const scope = scopeFor(goal.id) ?? null
+    const relevant = scope ? index.entries.filter(entry => entry.capability?.goalId === goal.id && scopeSupports(entry.capability.scope, scope) && (!entry.referenceScopes || entry.referenceScopes.some(reference => scopeSupports(reference, scope))) && (entry.answerDate.kind === 'unknown' || (entry.answerDate.kind === 'instant' ? entry.answerDate.at <= now : entry.answerDate.day <= studyDay(now)))) : []
+    const dated = evidenceAtCutoff({ entries: relevant, stuckSignals: [] }, now)
+    const familyIds = [...new Set(questionBindings.filter(item => item.binding.goalId === goal.id && scope && scopeSupports(item.binding.scope, scope)).map(item => canonicalFamily(item.binding.familyId))) ]
+    const required = familyIds.length ? familyIds : [goal.familyIds[0]!]
+    const missingAt = (entries: EffectiveEvidence[]) => required.map(familyId => ({ familyId, criteria: (['basic', 'method', 'variation'] as const).filter(criterion => !entries.some(entry => accepted(entry) && canonicalFamily(entry.capability!.familyId) === familyId && entry.criteria?.includes(criterion))) })).filter(item => item.criteria.length)
+    const missingCriteria = missingAt(relevant)
+    const days = [...new Set(dated.filter(independent).map(entry => evidenceDay(entry)!))].sort()
+    const mistakes = state.mistakes.filter(mistake => mistake.subject === goal.subject && mistake.objectiveId === goal.id && mistake.confirmedAt !== undefined && mistake.confirmedAt <= now && (!scope || !index.entries.some(entry => entry.mistakeId === mistake.id && entry.capability) || index.entries.some(entry => entry.mistakeId === mistake.id && entry.capability && scopeSupports(entry.capability.scope, scope))))
+    const difficultiesAt = (entries: EffectiveEvidence[], at: number) => entries.some(entry => {
+      const day = evidenceDay(entry)
+      const instant = entry.answerDate.kind === 'instant' ? entry.answerDate.at : day ? dayStart(day) + DAY - 1 : undefined
+      return entry.sourceStatus === 'known' && instant !== undefined && instant >= at - 14 * DAY && (['incorrect', 'partial', 'stuck'].includes(entry.result) || entry.result === 'correct' && ['hint', 'worked-example'].includes(entry.assistance))
+    })
+    let firstMasteredDay: string | undefined
+    for (const day of days) {
+      const cut = dated.filter(entry => evidenceDay(entry)! <= day)
+      const at = dayStart(day) + DAY - 1
+      const open = mistakes.some(mistake => mistake.confirmedAt! <= at && (replayMistake(mistake, index, at).stage < 4 || (replayMistake(mistake, index, at).dueAt ?? Infinity) <= at))
+      if (new Set(cut.filter(independent).map(evidenceDay)).size >= 3 && !missingAt(cut).length && !difficultiesAt(cut, at) && !open) { firstMasteredDay = day; break }
+    }
+    const weak = difficultiesAt(dated, now) || relevant.some(entry => entry.sourceStatus === 'known' && entry.answerDate.kind === 'unknown' && ['incorrect', 'partial', 'stuck'].includes(entry.result)) || mistakes.some(mistake => mistake.stage < 4)
+    const due = mistakes.some(mistake => mistake.dueAt !== undefined && mistake.dueAt <= now) || !weak && days.length > 0 && days.length < 3 && days.at(-1)! < studyDay(now)
+    const level = due ? 'due' : weak ? 'weak' : days.length >= 3 && !missingCriteria.length ? 'mastered' : relevant.length ? 'practising' : 'untouched'
+    const baseline = firstMasteredDay !== undefined && dated.filter(entry => evidenceDay(entry)! <= firstMasteredDay!).every(entry => entry.termId !== workspace.settings.termId)
+    const troubleDays = dated.filter(entry => firstMasteredDay && evidenceDay(entry)! > firstMasteredDay && ['incorrect', 'partial', 'stuck'].includes(entry.result)).map(entry => evidenceDay(entry)!).sort()
+    const recovered = level === 'mastered' && troubleDays.length > 0 && days.at(-1)! > troubleDays.at(-1)!
+    return { id: goal.id, subject: goal.subject, title: goal.title, scope, level, independentDays: days, baseline,
+      ...(firstMasteredDay ? { firstMasteredDay } : {}), ...(recovered ? { recoveredDay: days.at(-1)! } : {}), missingFamilyIds: missingCriteria.map(item => item.familyId), missingCriteria,
+      feedback: relevant.slice(-20).map(entry => ({ termId: entry.termId, ownerId: entry.ownerId, responseId: entry.responseId, familyId: canonicalFamily(entry.capability!.familyId), result: entry.result, feedback: entry.feedback ?? '', ...(entry.errorType ? { errorType: entry.errorType } : {}), sourceStatus: entry.sourceStatus, assistance: entry.assistance, answerDate: entry.answerDate })) }
+  })
+  const familyForMistake = (id: string) => {
+    const entry = index.entries.find(entry => entry.mistakeId === id && entry.capability)
+    return entry?.capability ? canonicalFamily(entry.capability.familyId) : `mistake:${id}`
+  }
+  const due = state.mistakes.filter(mistake => mistake.confirmedAt !== undefined && mistake.dueAt !== undefined && mistake.dueAt <= now && (!subject || mistake.subject === subject))
+    .sort((a, b) => {
+      const currentGoal = knowledge.goals.find(goal => goal.id === current?.capability?.goalId)
+      return Number(!currentGoal?.prerequisites.includes(a.objectiveId ?? '')) - Number(!currentGoal?.prerequisites.includes(b.objectiveId ?? '')) || a.dueAt! - b.dueAt! || familyForMistake(a.id).localeCompare(familyForMistake(b.id)) || a.id.localeCompare(b.id)
+    })
+  const lastNew = ordered.find(block => block.mode !== 'review' && block.endedAt !== undefined)
+  const reviewed = ordered.filter(block => block.mode === 'review' && block.endedAt !== undefined && (!lastNew || block.endedAt! > lastNew.endedAt!))
+  const used = [...new Set(reviewed.flatMap(block => index.entries.filter(entry => entry.termId === workspace.settings.termId && entry.ownerId === block.id && entry.result !== 'unassessed' && entry.sourceStatus === 'known' && evidenceDay(entry) === studyDay(now)).map(entry => entry.capability ? canonicalFamily(entry.capability.familyId) : familyForMistake(entry.mistakeId ?? entry.questionId))))]
+  const goalReviews = progress.filter(item => item.level === 'due' && item.scope && (!subject || item.subject === subject) && !due.some(mistake => mistake.objectiveId === item.id))
+  const dueFamilies = [...new Set([...due.map(mistake => familyForMistake(mistake.id)), ...goalReviews.map(item => questionBindings.find(binding => binding.binding.goalId === item.id)?.binding.familyId ?? knowledge.goals.find(goal => goal.id === item.id)!.familyIds[0]!)])]
+  const reviewRound = { limit: 2 as const, usedFamilyIds: used, remaining: Math.max(0, 2 - used.length), backlog: dueFamilies.length }
+  const finish = (nextAction: LearningNextAction | null): LearningContinuation => ({ nextAction, goalProgress: progress.filter(item => item.scope !== null || item.feedback.length > 0), reviewRound })
+  const actionFor = (goalId: string, kind: LearningNextAction['kind'], reason: LearningNextAction['reason'], scope?: CapabilityScope): LearningNextAction => {
+    const goal = knowledge.goals.find(goal => goal.id === goalId)!
+    const item = progress.find(item => item.id === goalId)!
+    const familyId = item.missingFamilyIds[0] ?? questionBindings.find(item => item.binding.goalId === goalId)?.binding.familyId ?? goal.familyIds[0]!
+    const family = knowledge.families.find(family => family.id === canonicalFamily(familyId))!
+    const selectedScope = scope ?? item.scope ?? undefined
+    const feedback = progress.filter(item => item.subject === goal.subject).flatMap(item => item.feedback).sort((a, b) => {
+      const day = (date: EffectiveEvidence['answerDate']) => date.kind === 'day' ? date.day : date.kind === 'instant' ? studyDay(date.at) : ''
+      return day(a.answerDate).localeCompare(day(b.answerDate))
+    })
+    const boundedScope = selectedScope ? { ...selectedScope, description: selectedScope.description.slice(0, 200), ...(selectedScope.vocabulary ? { vocabulary: selectedScope.vocabulary.slice(0, 8), omittedVocabulary: Math.max(0, selectedScope.vocabulary.length - 8), useOnlyListedVocabulary: true } : {}) } : null
+    const requirement = JSON.stringify({ goalId, title: goal.title.slice(0, 200), criterion: goal.criterion.slice(0, 600), scope: boundedScope, familyId: family.id, method: family.coreMethod.slice(0, 200), structure: family.structure.slice(0, 200), variationAxes: family.variationAxes.slice(0, 4).map(axis => axis.slice(0, 100)), rubric: family.representative.rubric.slice(0, 400), action: kind,
+      missingCriteria: item.missingCriteria.slice(0, 3), omittedCriteria: Math.max(0, item.missingCriteria.length - 3), feedback: feedback.slice(-3).map(row => ({ ...row, feedback: row.feedback.slice(0, 200), answerDate: row.answerDate.kind === 'day' ? { kind: 'day', day: row.answerDate.day } : row.answerDate.kind === 'instant' ? { kind: 'instant', at: row.answerDate.at } : { kind: 'unknown' } })), omittedFeedback: Math.max(0, feedback.length - 3), reviewFindings: state.mistakes.filter(mistake => mistake.subject === goal.subject).slice(0, 4).map(mistake => ({ topic: mistake.topic.slice(0, 100), errorType: mistake.errorType ?? null, stage: mistake.stage, dueAt: mistake.dueAt ?? null })),
+      teaching: 'Use the appropriate official direct component, short content or full classroom. Ask one question at a time; address the saved error before a constrained variant. Preserve unknown facts; clicks and scores create no evidence. Reuse accepted responses; add at most three targeted native questions for missing criteria.' })
+    return { kind, reason, subject: goal.subject, title: goal.title, goalId, familyId: family.id, ...(selectedScope ? { scope: selectedScope } : {}), ...(active ? { blockId: active.id } : {}), requirement }
+  }
+  if (active && current) {
+    const originals = active.responses.filter(response => response.questionId === current.id)
+    const selected = originals.find(response => response.id === active.currentResponseId) ?? originals.at(-1)
+    const base = current.capability ? actionFor(current.capability.goalId, 'answer', 'unfinished-question') : { kind: 'answer' as const, reason: 'unfinished-question' as const, subject: active.subject, title: current.topic }
+    if (!selected) return finish({ ...base, blockId: active.id, questionId: current.id })
+    const effective = index.entries.find(entry => entry.termId === active.termId && entry.ownerId === active.id && entry.responseId === selected.id)
+    if (!active.assessments.some(assessment => assessment.responseId === selected.id)) return finish({ ...base, kind: 'assess', reason: 'pending-assessment', blockId: active.id, questionId: current.id, responseId: selected.id })
+    if (current.capability) {
+      const item = progress.find(item => item.id === current.capability!.goalId)!
+      if (effective?.sourceStatus === 'known' && (['incorrect', 'partial', 'stuck'].includes(effective.result) || ['hint', 'worked-example'].includes(effective.assistance))) return finish(actionFor(item.id, 'teach', 'current-gap'))
+      const goal = knowledge.goals.find(goal => goal.id === item.id)!
+      const prerequisite = goal.prerequisites.find(id => {
+        const rows = index.entries.filter(entry => entry.capability?.goalId === id && scopeSupports(entry.capability.scope, current.capability!.scope))
+        return rows.some(entry => entry.sourceStatus === 'known' && ['incorrect', 'partial', 'stuck'].includes(entry.result)) && !rows.some(entry => independent(entry) && rows.filter(row => ['incorrect', 'partial', 'stuck'].includes(row.result)).every(row => demonstrablyAfter(entry, row)))
+      })
+      if (prerequisite) return finish(actionFor(prerequisite, 'teach', 'prerequisite-gap', current.capability.scope))
+      if (item.missingCriteria.length || effective?.result === 'unassessed' || effective?.sourceStatus === 'unknown' || effective?.assistance === 'unknown' || effective?.answerDate.kind === 'unknown') {
+        const nativeQuestions = active.questions.filter(question => question.capability?.goalId === item.id && !question.openmaic && question.phase !== 'demo').length
+        const remaining = Math.max(0, 3 - nativeQuestions)
+        if (remaining) return finish({ ...actionFor(item.id, 'supplement', 'missing-evidence'), supplement: { missingFamilyIds: item.missingFamilyIds, missingCriteria: item.missingCriteria, maxNewQuestions: 3, remaining } })
+      }
+    }
+    const next = active.questions.find(question => !active.responses.some(response => response.questionId === question.id))
+    if (next) return finish({ ...(next.capability ? actionFor(next.capability.goalId, 'answer', 'unfinished-question') : base), blockId: active.id, questionId: next.id })
+  }
+  const remainingDue = due.filter(mistake => !used.includes(familyForMistake(mistake.id)))
+  if (reviewRound.remaining && remainingDue.length) {
+    const selectedFamilies = [...new Set(remainingDue.map(mistake => familyForMistake(mistake.id)))].slice(0, reviewRound.remaining)
+    const selected = remainingDue.filter(mistake => selectedFamilies.includes(familyForMistake(mistake.id)))
+    const first = selected[0]!
+    const scope = index.entries.find(entry => entry.mistakeId === first.id && entry.capability)?.capability?.scope
+    const base = first.objectiveId && knowledge.goals.some(goal => goal.id === first.objectiveId) ? actionFor(first.objectiveId, 'review', 'due-review', scope) : { kind: 'review' as const, reason: 'due-review' as const, subject: first.subject, title: first.topic }
+    return finish({ ...base, review: { mistakeIds: selected.map(mistake => mistake.id), familyIds: selectedFamilies, remaining: reviewRound.remaining } })
+  }
+  const goalReview = goalReviews.find(item => !used.includes(questionBindings.find(binding => binding.binding.goalId === item.id)?.binding.familyId ?? knowledge.goals.find(goal => goal.id === item.id)!.familyIds[0]!))
+  if (reviewRound.remaining && goalReview) {
+    const action = actionFor(goalReview.id, 'review', 'due-review')
+    return finish({ ...action, review: { mistakeIds: [], familyIds: [action.familyId!], remaining: reviewRound.remaining } })
+  }
+  const selectedSubject = active?.subject ?? subject
+  const newGoal = progress.find(item => (!selectedSubject || item.subject === selectedSubject) && item.level === 'untouched' && item.scope && questionBindings.some(binding => binding.binding.goalId === item.id && binding.block.context.scope?.objectiveIds?.includes(item.id)))
+  if (newGoal) return finish(actionFor(newGoal.id, 'learn', 'new-goal'))
+  const schoolGoal = knowledge.goals.find(goal => (!selectedSubject || goal.subject === selectedSubject) && progress.find(item => item.id === goal.id)?.level === 'untouched' && workspace.settings.courses.some(course => course.subject === goal.subject && course.progress?.pace !== 'review' && goal.curriculumAssociationIds.some(id => { const old = builtinObjectiveAnywhere(id); return old && taughtUnit(state, goal.subject, old.unit) })))
+  if (schoolGoal) {
+    const scope = scopeFor(schoolGoal.id)
+    if (scope) return finish(actionFor(schoolGoal.id, 'learn', 'new-goal', scope))
+  }
+  return finish({ kind: 'hold', reason: 'confirmed-scope-required', subject: selectedSubject ?? 'math', title: 'Confirm the next learning range or choose another allowed activity.' })
+}
 
 /** Why an objective needs attention; codes are localized by the workbench and read by the model. */
 export interface InsightReason {

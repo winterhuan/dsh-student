@@ -73,20 +73,64 @@ it('shows original answers, original grade history and effective grades in the P
 
 const classroom = { id: 'original-class', title: 'Make ten', requirement: 'Use the confirmed goal', status: 'ready' as const, createdAt: '2026-10-28T06:00:00.000Z', updatedAt: '2026-10-28T06:05:00.000Z', base: 'https://example.test', classroomId: 'room-one', url: 'https://example.test/classroom/room-one' }
 const lessonList = (lesson: typeof classroom) => ({ lessons: [lesson] })
+const currentScope = { id: 'within20', description: 'Addition within20', modality: 'written' as const, numberMax: 20 }
+const currentAction = { kind: 'answer', reason: 'unfinished-question', subject: 'math', title: 'Make ten', goalId: 'm.add', blockId: start.id, questionId: 'current-question', scope: currentScope }
+const currentContext = { termId: 'term-one', learnerId: 'learner-one', nextAction: currentAction, currentQuestion: { id: 'current-question', openmaic: { bindingId: 'binding-one' } } }
+const currentClassroom = { ...classroom, blockId: start.id, learnerId: 'learner-one', termId: 'term-one', subject: 'math', objectiveId: 'm.add', feedback: { bindingId: 'binding-one', blockId: start.id, learnerId: 'learner-one', termId: 'term-one', goalId: 'm.add', familyId: 'math.add-column', scope: currentScope } }
+
+
+it('keeps the current local question ahead of a ready classroom for the same goal', async () => {
+  const nextAction = { kind: 'answer', reason: 'unfinished-question', subject: 'math', title: 'Local missing evidence', goalId: 'm.add', blockId: start.id, questionId: 'current-question', scope: { id: 'within20', description: 'Addition within20', modality: 'written', numberMax: 20 } }
+  const openLesson = vi.fn()
+  const { ask } = mount({ termId: 'term-one', nextAction }, { lessons: lessonList({ ...classroom, blockId: start.id, objectiveId: 'm.add' } as typeof classroom), openLesson })
+  expect(screen.queryByRole('button', { name: en.goToClass })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: en.continueLearning }))
+  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+  expect(openLesson).not.toHaveBeenCalled()
+  expect(String(ask.mock.calls[0]![0])).toContain('current-question')
+})
 
 it('opens the chosen saved classroom through protected playback rather than a direct URL', async () => {
   const open = vi.spyOn(window, 'open').mockReturnValue(null)
   const openLesson = vi.fn().mockResolvedValue({ status: 'opened', browser: 'dedicated-chrome', classroomUrl: classroom.url })
-  const { ask } = mount(undefined, { lessons: lessonList({ ...classroom, blockId: start.id } as typeof classroom), openLesson })
+  const { ask } = mount(currentContext, { lessons: lessonList(currentClassroom), openLesson })
+  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+  ask.mockClear()
   fireEvent.click(screen.getByRole('button', { name: en.goToClass }))
   await waitFor(() => expect(openLesson).toHaveBeenCalledWith(classroom.id))
   expect(open).not.toHaveBeenCalled()
   expect(ask).not.toHaveBeenCalled()
 })
 
+it.each([
+  { objectiveId: 'm.sub', feedback: { ...currentClassroom.feedback, goalId: 'm.sub' } },
+  { feedback: { ...currentClassroom.feedback, scope: { ...currentScope, numberMax: 100 } } },
+  { feedback: { ...currentClassroom.feedback, bindingId: 'old-binding' } },
+  { blockId: 'old-block' },
+  { learnerId: 'another-learner' },
+  { termId: 'another-term' },
+])('keeps Continue on the current action when a ready classroom has an incompatible binding: %j', overrides => {
+  mount(currentContext, { lessons: lessonList({ ...currentClassroom, ...overrides }) })
+  expect(screen.queryByRole('button', { name: en.goToClass })).toBeNull()
+  expect(screen.getByRole('button', { name: en.continueLearning })).toBeTruthy()
+})
+
+it('opens a newly ready classroom for the current canonical goal and scope before further questions', async () => {
+  const openLesson = vi.fn().mockResolvedValue({ status: 'opened', browser: 'dedicated-chrome', classroomUrl: classroom.url })
+  const { ask, fixture } = mount({ ...currentContext, currentQuestion: null, nextAction: { ...currentAction, kind: 'learn', reason: 'new-goal' } }, { lessons: { lessons: [currentClassroom, { ...classroom, id: 'unrelated-job', status: 'generating', blockId: 'another-block' }] }, openLesson })
+  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+  ask.mockClear()
+  fixture.replace(updateStudy(updateStudy(undefined, setup, NOW), start, NOW))
+  fireEvent.click(await screen.findByRole('button', { name: en.goToClass }))
+  await waitFor(() => expect(openLesson).toHaveBeenCalledWith(currentClassroom.id))
+  expect(ask).not.toHaveBeenCalled()
+})
+
 it('retains protected playback login failures and queues original ownership preparation', async () => {
   const openLesson = vi.fn().mockResolvedValueOnce({ status: 'login-required', browser: 'dedicated-chrome', classroomUrl: classroom.url }).mockResolvedValueOnce({ status: 'ownership-unresolved', reason: 'Frozen questions need saving' })
-  const { ask } = mount(undefined, { lessons: lessonList({ ...classroom, blockId: start.id } as typeof classroom), openLesson })
+  const { ask } = mount(currentContext, { lessons: lessonList(currentClassroom), openLesson })
+  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+  ask.mockClear()
   fireEvent.click(screen.getByRole('button', { name: en.goToClass }))
   await screen.findByText(en.classroomLoginRequired)
   fireEvent.click(screen.getByRole('button', { name: en.goToClass }))

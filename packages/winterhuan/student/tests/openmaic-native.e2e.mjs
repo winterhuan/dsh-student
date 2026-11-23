@@ -100,21 +100,7 @@ ctx.effect(()=>ctx.llm.registerAdapter(['openmaic-fixture'],new Fixture()));}
   await dsh('--profile', 'openmaic-web', '--from-default-profile', 'web', '--dump-config')
   await dsh('plugin', '--profile', 'openmaic-web', 'add', installSource)
   const clientResult = join(root, 'client.json')
-  const observer = join(root, 'client-observer.mjs')
-  await writeFile(observer, `import assert from 'node:assert/strict';
-import {readFile,writeFile} from 'node:fs/promises';
-import {createHash} from 'node:crypto';
-import {runInNewContext} from 'node:vm';
-export const inject=['clientModules'];
-export function apply(ctx,config){async function inspect(){
-try{const graph=ctx.clientModules.graph();const row=graph.entries.find(row=>row.id==='@openmaic/dsh-openmaic');if(!row)return;
-const response=await ctx.clientModules.fetchBundle(new Request(new URL(row.url,'http://fixture/')));assert.equal(response.status,200);const served=await response.text();
-const path=ctx.clientModules.clientPath(row.id);const original=await readFile(path,'utf8');assert.ok(served.includes(original),'The carrier must serve the complete original browser bundle');
-let registered;runInNewContext(served,{window:{__ModuleLoader__:{load(value){registered=value;}}}});assert.equal(registered.id,row.id);assert.equal(typeof registered.factory,'function');
-const source=JSON.parse(await readFile(new URL('../source.json',new URL('file://'+path)),'utf8'));const hash=createHash('sha256').update(original).digest('hex');assert.equal(hash,source.originalClientSha256);
-await writeFile(config.result,JSON.stringify({row,clientSha256:hash,source,servedStatus:response.status,factoryId:registered.id,graph},null,2));
-}catch(error){await writeFile(config.result,JSON.stringify({error:String(error),stack:error.stack}));}}ctx.effect(()=>ctx.clientModules.onGraphChanged(inspect));void inspect();}
-`)
+  const observer = fileURLToPath(new URL('./openmaic-client-observer.mjs', import.meta.url))
   const clientOverlay = join(root, 'client.overlay.json')
   await writeFile(clientOverlay, JSON.stringify([{ insert: [{ id: 'client-observer', name: observer, config: { result: clientResult } }] }]))
   const web = spawn(process.execPath, [dshBin, '--profile', 'openmaic-web', '--patch', clientOverlay, '--host', '127.0.0.1', '--port', '0', '--no-open'], { cwd: project, env, stdio: ['ignore', 'pipe', 'pipe'] })

@@ -39,6 +39,23 @@ it('validates learner, family and tested scope through the shared official-file 
   expect(validateStudyFiles([{ ...files[0]! }, { ...files[1]!, value: { ...block, learnerId: 'other-child' } }]).issues).toContainEqual(expect.objectContaining({ rule: 'learner-identity' }))
 })
 
+it('keeps canonical and mapped legacy questions inside the explicitly confirmed activity goals', async () => {
+  const { validateStudyFiles } = await import('../src/files/validation.ts')
+  const { setup, NOW } = await import('./fixtures.ts')
+  const settings = { format: 2, kind: 'term-settings', termId: 'term-1', learnerId: 'learner-1', revision: 1, updatedAt: NOW, profile: setup.profile, materials: [], courses: [] }
+  const question = { id: 'q1', objectiveId: 'm.sub', capability: { goalId: 'm.sub', familyId: 'math.sub-column', scope: { id: 'within100', description: 'Written subtraction within100', modality: 'written', numberMax: 100 } }, source: { kind: 'authored', description: 'Column subtraction' }, topic: 'Subtraction', prompt: '62 - 38?', answer: '24', explanation: 'Regroup one ten', answerEvidence: '24 + 38 = 62' }
+  const validate = (objectiveIds: string[], objectiveId = 'm.sub') => validateStudyFiles([{ path: '.study/settings.json', value: settings }, { path: '.study/blocks/block-1.json', value: {
+    format: 2, kind: 'block', termId: 'term-1', learnerId: 'learner-1', id: 'block-1', subject: 'math', mode: 'foundation', startedAt: NOW,
+    context: { profile: setup.profile, scope: { grade: 2, term: 'first', objectiveIds } }, questions: [{ ...question, objectiveId }], responses: [], hints: [], assessments: [],
+  } }])
+  expect(validate(['m.add']).issues).toContainEqual(expect.objectContaining({ rule: 'effective-scope' }))
+  expect(validate(['m.sub']).valid).toBe(true)
+  expect(validate(['m2a-o-sub']).valid).toBe(true)
+  expect(validate(['m.sub'], 'm2a-o-sub').valid).toBe(true)
+  expect(validate(['m.add'], 'm2a-o-sub').issues).toContainEqual(expect.objectContaining({ rule: 'effective-scope' }))
+  expect(validate(['unknown-goal']).issues).toContainEqual(expect.objectContaining({ rule: 'effective-scope' }))
+})
+
 it('reuses only compatible tested scopes and derives archive paths from stable entity identities', async () => {
   const { scopeSupports } = await import('../src/capabilities.ts')
   const { archiveEvidencePath, archiveEvidenceReferenceSchema } = await import('../src/files/schema.ts')

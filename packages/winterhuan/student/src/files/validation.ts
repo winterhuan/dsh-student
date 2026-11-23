@@ -181,7 +181,13 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
       if (!goal || goal.subject !== file.subject) fail(path, `questions.${i}.objectiveId`, 'subject-target', 'Reference a saved or shipped learning goal of this subject.')
       const effective = file.context.scope ?? file.context.profile
       if (builtin && !frozen && question.source.kind !== 'legacy' && (!effective || !builtinObjectiveIn(effective, file.subject, question.objectiveId))) fail(path, `questions.${i}.objectiveId`, 'effective-curriculum', 'Publish a goal in the historical profile book, or save an explicit scope selecting the goal’s book.')
-      if (file.context.scope && !capabilityGoal && (!goal || !scopeSelects(file.context.scope, file.subject, builtin?.unit ?? '', question.objectiveId))) fail(path, `questions.${i}.objectiveId`, 'effective-scope', 'Publish a question inside the explicitly selected scope.')
+      if (file.context.scope) {
+        const scope = file.context.scope
+        const target = knowledge.goals.find(item => item.id === question.capability?.goalId)
+        const compatibleLegacy = target?.curriculumAssociationIds.filter(id => resolveLegacyReference('objective', id).candidateGoalIds.includes(target.id)) ?? []
+        const targets = [question.objectiveId, ...(capabilityGoal ? compatibleLegacy : target && compatibleLegacy.includes(question.objectiveId) ? [target.id] : [])]
+        if (!goal || !targets.some(id => scopeSelects(scope, file.subject, builtinObjectiveAnywhere(id)?.unit ?? '', id))) fail(path, `questions.${i}.objectiveId`, 'effective-scope', 'Publish a question inside the explicitly selected scope.')
+      }
       if (question.source.kind === 'exercise') {
         const sourceId = question.source.exerciseId
         const objectiveId = question.objectiveId

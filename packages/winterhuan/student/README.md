@@ -197,7 +197,7 @@ The Student preset adds study_status, openmaic_feedback and the four official Op
 
 #### Token effect
 
-Skill bodies and references load on demand. Two read-only Student tool schemas are advertised when enabled; native tools also contribute to each request. Collection queries return 20 records with a next offset. Textbooks are not loaded as a whole. No real-model token or teaching-quality benchmark has been measured.
+Skill bodies and references load on demand. Two read-only Student tool schemas are advertised when enabled; native tools also contribute to each request. Collection queries return 20 records with a next offset. Textbooks are not loaded as a whole. Two isolated DSH 0.2.2-rc.1 first requests with the same empty workspace and input measured a fixed-density estimate of 8,765 tokens for the baseline package and 10,744 for the official composition: +1,979 (+22.6%), including messages and tool definitions. The 24 official method bodies remained deferred. These requests made no paid model calls or academic writes; the estimate does not measure provider billing, total lesson cost, teaching quality or KV Cache performance.
 
 #### KV Cache effect
 

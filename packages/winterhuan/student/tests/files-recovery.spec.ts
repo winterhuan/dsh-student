@@ -5,10 +5,100 @@ import { createHash } from 'node:crypto'
 import { it, expect, onTestFinished } from 'vitest'
 import { nodeStudyFiles } from '../src/files/node.ts'
 import { readWorkspace } from '../src/files/read.ts'
-import { describeMigration, describeArchive } from '../src/files/recovery.ts'
+import { describeMigration, describeArchive, describeKnowledgeMigration, describeRestore, backupSchema, sourceSha256 } from '../src/files/recovery.ts'
+import { readLessonFile } from '../src/files/lessons.ts'
 import { queryWorkspace } from '../src/learning/queries.ts'
 import { stateSchema } from '../src/schema.ts'
 import { NOW, setup } from './fixtures.ts'
+import { termSettingsSchema } from '../src/files/schema.ts'
+
+const noLessons = { backups: [], lessons: { status: 'missing' as const, issues: [] } }
+
+it('refuses to restore a format-2 backup over an unknown future-format term', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-future-restore-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study'))
+  const original = JSON.stringify({ format: 2, kind: 'term-settings', termId: 'term-1', revision: 1, updatedAt: NOW, profile: setup.profile, materials: [], courses: [] })
+  const path = '.study/settings.json'
+  await writeFile(join(cwd, path), original)
+  const fs = nodeStudyFiles(cwd), signal = new AbortController().signal
+  const observed = (await fs.stat(path, signal))!
+  const chosen = { path: '.study/backups/settings.json', backup: backupSchema.parse({ format: 1, kind: 'observed-version', sourcePath: path, targetKey: observed.targetKey, version: observed.version, observedAt: NOW, sha256: sourceSha256(new TextEncoder().encode(original)), bytesBase64: Buffer.from(original).toString('base64') }) }
+  const future = original.replace('"format":2', '"format":3')
+  await writeFile(join(cwd, path), future)
+  const read = await readWorkspace(fs, signal)
+  expect(read.status).toBe('future-format')
+  expect(describeRestore(read, chosen)).toMatchObject({ status: 'blocked', issues: [expect.objectContaining({ rule: 'future-format' })] })
+  expect(await readFile(join(cwd, path), 'utf8')).toBe(future)
+})
+
+it('preserves every archived format-2 source and classroom log before resuming an interrupted identity migration', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-v2-preservation-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study/blocks'), { recursive: true })
+  const originals = new Map([
+    ['.study/settings.json', `${JSON.stringify({ format: 2, kind: 'term-settings', termId: 'old-term', revision: 1, updatedAt: NOW, archivedAt: NOW, profile: setup.profile, materials: [], courses: [] }, null, 2)}\n`],
+    ['.study/blocks/old-block.json', JSON.stringify({ format: 2, kind: 'block', termId: 'old-term', id: 'old-block', subject: 'math', mode: 'foundation', startedAt: NOW - 1, endedAt: NOW, context: { profile: setup.profile }, questions: [], responses: [], hints: [], assessments: [] })],
+    ['.study/openmaic-lessons.json', JSON.stringify({ format: 1, lessons: [{ id: 'old-lesson', status: 'ready', createdAt: '2026-10-05T00:00:00Z', updatedAt: '2026-10-05T00:00:00Z', title: 'Saved lesson', requirement: 'Count counters', base: 'https://open.maic.chat', classroomId: 'old-classroom' }] })],
+  ])
+  for (const [path, bytes] of originals) await writeFile(join(cwd, path), bytes)
+  const fs = nodeStudyFiles(cwd), signal = new AbortController().signal
+  const source = await readWorkspace(fs, signal), lessons = await readLessonFile(fs, signal)
+  const learnerId = termSettingsSchema.shape.learnerId.unwrap().parse('confirmed-child')
+  expect(describeKnowledgeMigration(source, learnerId)).toMatchObject({ status: 'blocked', outputs: [], issues: [expect.objectContaining({ rule: 'original-byte-backup' })] })
+  const backups = []
+  for (const [path, text] of originals) {
+    const backupPath = `.study/originals/${path.slice('.study/'.length)}`
+    await mkdir(join(cwd, backupPath, '..'), { recursive: true })
+    await writeFile(join(cwd, backupPath), text)
+    backups.push({ ...(await fs.stat(backupPath, signal))!, path: backupPath, bytes: new TextEncoder().encode(text) })
+  }
+  const recovery = { backups, lessons }
+  const initial = describeKnowledgeMigration(source, learnerId, recovery)
+  expect(initial).toMatchObject({ status: 'ready', preservedSources: [...originals].map(([path, bytes]) => ({ path, backupPath: `.study/originals/${path.slice('.study/'.length)}`, sha256: sourceSha256(new TextEncoder().encode(bytes)) })) })
+  expect(initial.pending).toContainEqual(expect.objectContaining({ sourcePath: '.study/openmaic-lessons.json', row: 'lessons.0', fields: expect.arrayContaining(['learnerId', 'termId', 'blockId']) }))
+  expect(initial.outputs.at(-1)?.file.kind).toBe('term-settings')
+  const first = initial.outputs[0]!
+  await writeFile(join(cwd, first.path), JSON.stringify(first.file))
+  const partialRead = await readWorkspace(fs, signal)
+  expect(partialRead.status).toBe('invalid')
+  const resumed = describeKnowledgeMigration(source, learnerId, { ...recovery, current: partialRead })
+  expect(resumed.status).toBe('partial')
+  expect(resumed.outputs.find(output => output.path === first.path)?.status).toBe('already-valid')
+  for (const output of resumed.outputs.filter(output => output.status === 'write-needed')) await writeFile(join(cwd, output.path), JSON.stringify(output.file))
+  const completed = await readWorkspace(nodeStudyFiles(cwd), signal)
+  expect(completed).toMatchObject({ status: 'archived', workspace: { settings: { learnerId: 'confirmed-child', archivedAt: NOW }, blocks: [{ learnerId: 'confirmed-child', responses: [], assessments: [] }] } })
+  expect(describeKnowledgeMigration(source, learnerId, { ...recovery, current: completed })).toMatchObject({ status: 'complete', outputs: [expect.objectContaining({ status: 'already-valid' }), expect.objectContaining({ status: 'already-valid' })] })
+  for (const [path, bytes] of originals) expect(await readFile(join(cwd, `.study/originals/${path.slice('.study/'.length)}`), 'utf8')).toBe(bytes)
+  expect(await readFile(join(cwd, '.study/openmaic-lessons.json'), 'utf8')).toBe(originals.get('.study/openmaic-lessons.json'))
+  const extra = { ...completed.workspace!.blocks[0]!, id: 'concurrent-block' }
+  await writeFile(join(cwd, '.study/blocks/concurrent-block.json'), JSON.stringify(extra))
+  const concurrent = await readWorkspace(nodeStudyFiles(cwd), signal)
+  expect(describeKnowledgeMigration(source, learnerId, { ...recovery, current: concurrent })).toMatchObject({ status: 'blocked', issues: [expect.objectContaining({ rule: 'migration-conflict' })] })
+})
+
+it('requires the confirmed same-child identity for legacy terms instead of deriving it from source bytes', async () => {
+  const cwd = await mkdtemp(join(tmpdir(), 'student-legacy-identity-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  await mkdir(join(cwd, '.study'))
+  const original = await readFile(new URL('./fixtures/legacy-recovery.json', import.meta.url))
+  await writeFile(join(cwd, '.study/state.json'), original)
+  await writeFile(join(cwd, '.study/v1-original.json'), original)
+  const fs = nodeStudyFiles(cwd), signal = new AbortController().signal
+  const read = await readWorkspace(fs, signal)
+  const backup = { ...(await fs.stat('.study/v1-original.json', signal))!, path: '.study/v1-original.json', bytes: original }
+  expect(describeMigration(read, backup)).toMatchObject({ status: 'blocked', outputs: [], issues: [expect.objectContaining({ rule: 'learner-identity' })] })
+  const learnerId = termSettingsSchema.shape.learnerId.unwrap().parse('same-child')
+  const plan = describeMigration(read, backup, [], learnerId)
+  expect(plan).toMatchObject({ status: 'blocked', outputs: [], issues: [expect.objectContaining({ rule: 'original-byte-backup' })] })
+  await writeFile(join(cwd, '.study/openmaic-lessons.json'), JSON.stringify({ format: 2, lessons: [] }))
+  expect(describeMigration(read, backup, [], learnerId, { backups: [], lessons: await readLessonFile(fs, signal) })).toMatchObject({ status: 'blocked', outputs: [], issues: [expect.objectContaining({ rule: 'migration-read' })] })
+  const confirmed = describeMigration(read, backup, [], learnerId, noLessons)
+  expect(confirmed.status).toBe('ready')
+  expect(confirmed.outputs.every(output => output.file.learnerId === learnerId)).toBe(true)
+  expect(describeMigration(read, backup, confirmed.outputs, undefined, noLessons).outputs.every(output => output.status === 'already-valid')).toBe(true)
+  expect(describeMigration(read, backup, confirmed.outputs, termSettingsSchema.shape.learnerId.unwrap().parse('other-child'), noLessons)).toMatchObject({ status: 'blocked', outputs: [] })
+})
 
 it('rereads official files edited while the preserved migration source is being verified', async () => {
   const cwd = await mkdtemp(join(tmpdir(), 'student-migrate-race-'))
@@ -56,9 +146,9 @@ it('requires an original-byte verified backup, retains pending legacy facts and 
   const backupObservation = (await fs.stat('.study/v1-original.json', new AbortController().signal))!
   const backup = { ...backupObservation, path: '.study/v1-original.json', bytes: new TextEncoder().encode(original) }
   expect(describeMigration(read, { ...backup, bytes: new TextEncoder().encode('{}') })).toMatchObject({ status: 'blocked' })
-  const plan = describeMigration(read, backup)
+  const plan = describeMigration(read, backup, [], termSettingsSchema.shape.learnerId.unwrap().parse('fixture-child'), noLessons)
   expect(plan).toMatchObject({ status: 'ready', outputs: expect.arrayContaining([expect.objectContaining({ path: '.study/worksheets/workbook-wb1.json', file: expect.objectContaining({ responses: [expect.objectContaining({ rawResponse: '15', assistance: 'hint', answerDate: { kind: 'unknown' } })], assessments: [expect.objectContaining({ result: 'correct', assistance: 'hint' })] }) })]) })
-  const retry = describeMigration(read, backup, plan.outputs)
+  const retry = describeMigration(read, backup, plan.outputs, undefined, noLessons)
   expect(retry.outputs.map(output => output.status)).toEqual(plan.outputs.map(() => 'already-valid'))
   expect(retry.termId).toBe(plan.termId)
   expect(plan.pending).toContainEqual(expect.objectContaining({ fields: expect.arrayContaining(['answerDate', 'nativeSource']) }))
@@ -87,7 +177,7 @@ it('withholds current data until every stable migration output exists and permit
   const signal = new AbortController().signal
   const source = await readWorkspace(fs, signal)
   const backup = { ...(await fs.stat('.study/v1-original.json', signal))!, path: '.study/v1-original.json', bytes: original }
-  const plan = describeMigration(source, backup)
+  const plan = describeMigration(source, backup, [], termSettingsSchema.shape.learnerId.unwrap().parse('fixture-child'), noLessons)
   const settings = plan.outputs.find(output => output.file.kind === 'term-settings')!
   await writeFile(join(cwd, settings.path), JSON.stringify(settings.file))
   const partial = await readWorkspace(fs, signal)
@@ -144,7 +234,7 @@ it('keeps absent legacy confirmations pending instead of turning parser defaults
   const signal = new AbortController().signal
   const read = await readWorkspace(fs, signal)
   const backup = { ...(await fs.stat('.study/v1-original.json', signal))!, path: '.study/v1-original.json', bytes: new TextEncoder().encode(original) }
-  expect(describeMigration(read, backup)).toMatchObject({ status: 'blocked', outputs: [], pending: [expect.objectContaining({ row: 'profile', fields: ['parentConfirmation'] })] })
+  expect(describeMigration(read, backup, [], termSettingsSchema.shape.learnerId.unwrap().parse('fixture-child'), noLessons)).toMatchObject({ status: 'blocked', outputs: [], pending: [expect.objectContaining({ row: 'profile', fields: ['parentConfirmation'] })] })
 })
 
 it('preserves unsupported legacy reward declarations as pending facts without inflating valid stars', async () => {
@@ -159,10 +249,10 @@ it('preserves unsupported legacy reward declarations as pending facts without in
   const signal = new AbortController().signal
   const read = await readWorkspace(fs, signal)
   const backup = { ...(await fs.stat('.study/v1-original.json', signal))!, path: '.study/v1-original.json', bytes: new TextEncoder().encode(original) }
-  const plan = describeMigration(read, backup)
+  const plan = describeMigration(read, backup, [], termSettingsSchema.shape.learnerId.unwrap().parse('fixture-child'), noLessons)
   expect(plan).toMatchObject({ status: 'ready', pending: expect.arrayContaining([expect.objectContaining({ row: 'rewards.2', fields: ['day', 'reason'] }), expect.objectContaining({ row: 'rewards.3', fields: ['day', 'reason'] })]) })
   expect(plan.outputs.find(output => output.file.kind === 'collections')?.file).toMatchObject({ rewards: [{ day: '2024-02-29', reason: 'participation' }, { day: '2024-02-29', reason: 'reflection' }] })
-  expect(describeMigration(read, backup, plan.outputs).outputs.every(output => output.status === 'already-valid')).toBe(true)
+  expect(describeMigration(read, backup, plan.outputs, undefined, noLessons).outputs.every(output => output.status === 'already-valid')).toBe(true)
   expect(await readFile(join(cwd, '.study/state.json'), 'utf8')).toBe(original)
   expect(await readFile(join(cwd, '.study/v1-original.json'), 'utf8')).toBe(original)
 })
@@ -181,13 +271,13 @@ it('materializes every old answer and original grade once while keeping unknown 
   const fs = nodeStudyFiles(cwd); const signal = new AbortController().signal
   const read = await readWorkspace(fs, signal)
   const backup = { ...(await fs.stat('.study/v1-original.json', signal))!, path: '.study/v1-original.json', bytes: new TextEncoder().encode(original) }
-  const plan = describeMigration(read, backup)
+  const plan = describeMigration(read, backup, [], termSettingsSchema.shape.learnerId.unwrap().parse('fixture-child'), noLessons)
   expect(plan.status).toBe('ready')
   const block = plan.outputs.find(output => output.file.kind === 'block')!.file
   expect(block).toMatchObject({ questions: [{ prompt: '8+7等于多少？', objectiveId: 'm2a-o-sub', basisStatus: 'legacy-pending' }], responses: [{ id: 'old-answer', rawResponse: '十五', response: '15', assistance: 'unknown', answerDate: { kind: 'unknown' } }], assessments: [{ result: 'correct', assessedAt: NOW }] })
-  expect(plan.outputs.find(output => output.file.kind === 'term-settings')!.file).toMatchObject({ learnerId: expect.stringMatching(/^learner-/) })
+  expect(plan.outputs.find(output => output.file.kind === 'term-settings')!.file).toMatchObject({ learnerId: 'fixture-child' })
   expect(plan.outputs.find(output => output.file.kind === 'collections')!.file).toMatchObject({ legacyReferences: expect.arrayContaining([expect.objectContaining({ oldId: 'm2a-o-sub', status: 'pending' })]) })
-  expect(describeMigration(read, backup, plan.outputs).outputs.every(output => output.status === 'already-valid')).toBe(true)
+  expect(describeMigration(read, backup, plan.outputs, undefined, noLessons).outputs.every(output => output.status === 'already-valid')).toBe(true)
   for (const output of plan.outputs) { await mkdir(join(cwd, output.path, '..'), { recursive: true }); await writeFile(join(cwd, output.path), JSON.stringify(output.file)) }
   const independent = await readWorkspace(fs, signal)
   expect(independent.status).toBe('valid')
@@ -206,8 +296,8 @@ it('keeps the unfinished legacy question, choices and reported help without fabr
   const fs = nodeStudyFiles(cwd), signal = new AbortController().signal
   const read = await readWorkspace(fs, signal)
   const backup = { ...(await fs.stat('.study/v1-original.json', signal))!, path: '.study/v1-original.json', bytes: new TextEncoder().encode(original) }
-  const plan = describeMigration(read, backup)
+  const plan = describeMigration(read, backup, [], termSettingsSchema.shape.learnerId.unwrap().parse('fixture-child'), noLessons)
   expect(plan.status).toBe('ready')
   expect(plan.outputs.find(output => output.file.kind === 'block')!.file).toMatchObject({ currentQuestionId: 'live-q', questions: [{ id: 'live-q', prompt: '8+7是多少？', choices: ['15', '14'], objectiveId: { kind: 'pending' }, basisStatus: 'legacy-pending' }], responses: [{ rawResponse: '15', assistance: 'hint', answerDate: { kind: 'unknown' }, legacyRecord: { answeredAt: NOW - 10, hintLevel: 1 } }] })
-  expect(describeMigration(read, backup, plan.outputs).outputs.every(output => output.status === 'already-valid')).toBe(true)
+  expect(describeMigration(read, backup, plan.outputs, undefined, noLessons).outputs.every(output => output.status === 'already-valid')).toBe(true)
 })

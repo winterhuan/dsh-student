@@ -7,14 +7,16 @@ import { applicationStudyFiles } from './files/application.ts'
 import { readWorkspace, type WorkspaceRead } from './files/read.ts'
 import { readBackups, backupVersions, retainObservedBackups } from './files/recovery.ts'
 import { resolveNativeSources, type NativeSourceContext } from './native-source.ts'
+import { rememberNativeOwner } from './native-capture.ts'
 import { readNativeHistory } from './native-history.ts'
 import { readLessonFile } from './files/lessons.ts'
 import { consumeOpenmaicFeedback } from './openmaic/feedback-consumer.ts'
 import type { OpenmaicSourceVerification, OpenmaicInputObservation } from './openmaic/feedback-schema.ts'
+import { OpenmaicError } from './openmaic/connection.ts'
 import type { OpenmaicFeedbackRead } from './openmaic/feedback.ts'
 import type { FileIssue } from './files/validation.ts'
 /** One independent source read and its saved-file consumption outcome. */
-export interface StudentOfficialFeedback extends OpenmaicSourceVerification { consumption?: ReturnType<typeof consumeOpenmaicFeedback>; source?: OpenmaicFeedbackRead }
+export interface StudentOfficialFeedback extends Omit<OpenmaicSourceVerification, 'consumption'> { consumption?: ReturnType<typeof consumeOpenmaicFeedback>; source?: OpenmaicFeedbackRead }
 /** Independently observed native cuts, exact validated files and bounded official feedback availability. */
 export interface StudentWorkspaceRead { read: WorkspaceRead; native: NativeSourceContext; backupIssues: FileIssue[]; openmaic: StudentOfficialFeedback[] }
 const signature = (read: WorkspaceRead) => JSON.stringify([[...read.files, ...read.archiveFiles ?? []].map(({ path, targetKey, version }) => ({ path, targetKey, version })), read.membership, read.archiveIssues ?? []])
@@ -34,6 +36,7 @@ export async function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | '
   const files = applicationStudyFiles(exec)
   const backups = await readBackups(files, exec.signal)
   const backupIssues = backups.issues.slice()
+  let unstableSources: StudentOfficialFeedback[] = []
   for (let attempt = 0; attempt < 3; attempt++) {
     const initial = await readWorkspace(files, exec.signal, backupVersions(backups.backups), native.observations)
     const historical = await readNativeHistory(agent, initial, exec.signal, invocation)
@@ -42,15 +45,15 @@ export async function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | '
     const lessons = await readLessonFile(files, exec.signal)
     const workspace = initial.workspace
     if (lessons.status === 'valid' && workspace) for (const [index, lesson] of lessons.file!.lessons.filter(lesson => lesson.status === 'ready').entries()) {
-      const fact: StudentOfficialFeedback = { lessonId: lesson.id, status: 'ownership-unresolved', omitted: 0, ...(lesson.feedback ? { bindingId: lesson.feedback.bindingId } : {}) }
+      const fact: StudentOfficialFeedback = { lessonId: lesson.id, ...(lesson.learnerId ? { learnerId: lesson.learnerId } : {}), ...(lesson.termId ? { termId: lesson.termId } : {}), ...(lesson.blockId ? { blockId: lesson.blockId } : {}), status: 'ownership-unresolved', omitted: 0, ...(lesson.feedback ? { bindingId: lesson.feedback.bindingId } : {}) }
       openmaic.push(fact)
       const original = [workspace, ...(workspace.archivedEvidence ?? []).map(archive => archive.workspace)].find(owner => lesson.learnerId === workspace.settings.learnerId && lesson.learnerId === owner.settings.learnerId && lesson.termId === owner.settings.termId && owner.blocks.some(block => block.id === lesson.blockId && block.learnerId === lesson.learnerId))
       if (!lesson.feedback || !original || !lesson.learnerId || !lesson.termId || !lesson.blockId || !lesson.classroomId || !lesson.learnerKey) { fact.reason = 'Confirm the original learner and classroom binding before importing records.'; continue }
-      if (!service || !agent.session.header.cwd || index >= 8) { fact.status = 'unavailable'; fact.reason = index >= 8 ? 'Official source reads exceed eight bound classrooms.' : 'Official source connection is unavailable.'; continue }
+      if (!service || !agent.session.header.cwd || index >= 8) { fact.status = 'unavailable'; if (index >= 8) { fact.failure = 'read-limit'; fact.omitted = 1 }; fact.reason = index >= 8 ? 'Official source reads exceed eight bound classrooms.' : 'Official source connection is unavailable.'; continue }
       try {
         fact.source = await service.feedback(agent.session.header.cwd).read({ learnerId: lesson.learnerId, termId: lesson.termId, blockId: lesson.blockId, classroomId: lesson.classroomId, base: lesson.base, learnerKey: lesson.learnerKey }, lesson.feedback, exec.signal)
         fact.status = 'available'; observations.push(...fact.source.observations)
-      } catch (error) { if (exec.signal.aborted) throw error; fact.status = 'unavailable'; fact.reason = 'Original official source could not be authorized or read. Restore its account connection and retry the same classroom.' }
+      } catch (error) { if (exec.signal.aborted) throw error; fact.status = 'unavailable'; fact.failure = error instanceof OpenmaicError ? error.code : 'invalid-response'; fact.reason = error instanceof OpenmaicError ? error.message : 'Original official source could not be read completely. Retry the same classroom.' }
     }
     let read = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations)
     const finalLessons = await readLessonFile(files, exec.signal)
@@ -62,12 +65,12 @@ export async function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | '
       try { if (!await service!.feedback(agent.session.header.cwd!).verify({ learnerId: lesson.learnerId!, termId: lesson.termId!, blockId: lesson.blockId!, classroomId: lesson.classroomId!, base: lesson.base, learnerKey: lesson.learnerKey! }, lesson.feedback!, exec.signal, fact.source.revision)) sourceChanged = true }
       catch (error) {
         if (exec.signal.aborted) throw error
-        fact.status = 'unavailable'; fact.reason = 'Original official source access changed before publication.'
+        fact.status = 'unavailable'; fact.failure = error instanceof OpenmaicError ? error.code : 'incomplete-read'; fact.reason = 'Original official source access changed before publication.'
         const bindingId = fact.bindingId; delete fact.source
         for (let index = observations.length - 1; index >= 0; index--) if (observations[index]!.binding.bindingId === bindingId) observations.splice(index, 1)
       }
     }
-    if (sourceChanged) continue
+    if (sourceChanged) { unstableSources = openmaic.map(({ source: _source, consumption: _consumption, ...fact }) => ({ ...fact, status: 'unavailable', failure: 'incomplete-read', reason: 'Original official source changed during verification. Retry the same classroom.' })); continue }
     const publication = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations)
     const publicationLessons = await readLessonFile(files, exec.signal)
     if (signature(read) !== signature(publication) || finalLessons.observation?.version !== publicationLessons.observation?.version || finalLessons.observation?.targetKey !== publicationLessons.observation?.targetKey) continue
@@ -79,11 +82,12 @@ export async function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | '
       for (const owner of owners) { owner.nativeSources = [...native.observations, ...historical.observations]; owner.openmaicSources = observations }
       for (const fact of openmaic) if (fact.source) { const original = owners.find(owner => owner.settings.termId === lessons.file!.lessons.find(lesson => lesson.id === fact.lessonId)?.termId) ?? read.workspace; fact.consumption = consumeOpenmaicFeedback(original, fact.source) }
     }
-    read.sourceVerification = { native: historical.verification, openmaic: openmaic.map(({ source: _source, consumption: _consumption, ...fact }) => fact) }
+    read.sourceVerification = { native: historical.verification, openmaic: openmaic.map(({ source, consumption, ...fact }) => ({ ...fact, ...(consumption ? { consumption: consumption.status, pendingCount: source!.pending.length, conflictCount: consumption.conflicts.length } : {}) })) }
     read.backupIssues = backupIssues.slice(0, 100)
     exec.signal.throwIfAborted()
+    rememberNativeOwner(agent, read)
     return { read, native, backupIssues: read.backupIssues, openmaic }
   }
   const read: WorkspaceRead = { status: 'changing', files: [], membership: [], issues: [{ path: '.study', field: '', rule: 'changing-source-reference', correction: 'Finish related file edits and independently read the original source again.' }] }
-  return { read, native, backupIssues, openmaic: [] }
+  return { read, native, backupIssues, openmaic: unstableSources }
 }

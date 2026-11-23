@@ -2,13 +2,13 @@
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import { canonical } from '../learning/shared.ts'
-import { OpenmaicConnection, OpenmaicError } from './connection.ts'
-import { feedbackBindingSchema, feedbackCheckpointSchema, officialQuestionSchema, officialAnswerSchema, officialResultSchema, openmaicQuestionSchema, type OpenmaicInputObservation, type OpenmaicGrading } from './feedback-schema.ts'
+import { OpenmaicConnection, OpenmaicError, boundedOpenmaicOperation } from './connection.ts'
+import { feedbackBindingSchema, feedbackCheckpointSchema, officialQuestionSchema, officialAnswerSchema, officialResultSchema, openmaicQuestionSchema, type OpenmaicInputObservation, type OpenmaicGrading, officialRuntimeRecordSchema, officialRuntimePayloadSchema, type PendingOpenmaic } from './feedback-schema.ts'
 const sourceId = z.string().min(1).max(500).refine(value => value !== '.' && value !== '..' && !/[\u0000-\u001f]/u.test(value))
 const stamp = z.string().max(80).refine(value => Number.isFinite(Date.parse(value)))
 const sessionSchema = z.object({ id: sourceId, runtimeDslVersion: z.literal('0.1.0'), kind: z.string(), stageId: sourceId, learnerKey: sourceId, status: z.enum(['active', 'completed', 'archived']), createdAt: stamp, updatedAt: stamp }).passthrough()
-const recordSchema = z.object({ id: sourceId, sessionId: sourceId, seq: z.number().int().nonnegative(), createdAt: stamp, sceneId: sourceId.optional(), payload: z.unknown() }).passthrough()
-const payloadSchema = z.object({ payloadVersion: z.literal(1), phase: z.enum(['draft', 'submitted', 'reviewed']), answers: z.record(sourceId, officialAnswerSchema), results: z.array(officialResultSchema).max(200).optional() }).passthrough()
+const recordSchema = officialRuntimeRecordSchema
+const payloadSchema = officialRuntimePayloadSchema
 const manifestSchema = z.object({ rev: z.number().int().nonnegative(), scenes: z.array(z.object({ id: sourceId, order: z.number().int(), rev: z.number().int().nonnegative() }).strict()).max(500) }).strict()
 const documentSchema = z.object({ dslVersion: z.literal('0.3.0'), stage: z.object({ id: sourceId }).passthrough(), scenes: z.array(z.object({ id: sourceId, stageId: sourceId, type: z.string(), content: z.unknown() }).passthrough()).max(500) }).passthrough()
 const captureSchema = z.object({ binding: feedbackBindingSchema, stageId: sourceId, base: z.string(), learnerKey: sourceId, questions: z.array(openmaicQuestionSchema).max(200), heads: feedbackCheckpointSchema.shape.attempts }).strict()
@@ -19,7 +19,13 @@ export interface OpenmaicLessonOwner { learnerId: string; termId: string; blockI
 /** Frozen source preparation returned for explicit agent-authored question/binding files. */
 export interface OpenmaicPreparation { binding: z.infer<typeof feedbackBindingSchema>; questions: z.infer<typeof openmaicQuestionSchema>[] }
 /** Bounded independent source read, including the exact replay checkpoint candidate. */
-export interface OpenmaicFeedbackRead { revision: string; observations: OpenmaicInputObservation[]; checkpoint: z.infer<typeof feedbackCheckpointSchema>; drafts: number; omitted: number }
+export interface OpenmaicFeedbackRead { revision: string; observations: OpenmaicInputObservation[]; pending: PendingOpenmaic[]; checkpoint: z.infer<typeof feedbackCheckpointSchema>; drafts: number; omitted: number }
+function parseSource<T>(schema: z.ZodType<T>, value: unknown): T {
+  const parsed = schema.safeParse(value)
+  if (parsed.success) return parsed.data
+  if (parsed.error.issues.some(issue => issue.path.some(part => ['runtimeDslVersion', 'payloadVersion', 'dslVersion'].includes(String(part))))) throw new OpenmaicError('unsupported-version')
+  throw new OpenmaicError(parsed.error.issues.some(issue => issue.code === 'too_big') ? 'read-limit' : 'incomplete-read')
+}
 const digest = (value: unknown) => createHash('sha256').update(canonical(value)).digest('hex')
 const part = (value: string) => encodeURIComponent(sourceId.parse(value))
 /**
@@ -96,20 +102,22 @@ export class OpenmaicFeedback {
     catch (error) { if (error instanceof OpenmaicError && ['not-found', 'permission-denied'].includes(error.code)) return undefined; throw error }
   }
   private async runtime(owner: OpenmaicLessonOwner, signal: AbortSignal) {
-    const sessions = z.array(sessionSchema).max(100).parse(await this.connection.read(`/api/persistence/runtime/stages/${part(owner.classroomId)}/learners/${part(owner.learnerKey)}/sessions`, signal))
+    const sessions = parseSource(z.array(sessionSchema).max(100), await this.connection.read(`/api/persistence/runtime/stages/${part(owner.classroomId)}/learners/${part(owner.learnerKey)}/sessions`, signal))
     if (new Set(sessions.map(item => item.id)).size !== sessions.length || sessions.some(item => item.stageId !== owner.classroomId || item.learnerKey !== owner.learnerKey)) throw new OpenmaicError('identity-changed')
     let bytes = Buffer.byteLength(JSON.stringify(sessions))
     const attempts: { id: string; records: z.infer<typeof recordSchema>[] }[] = []
     for (const listed of sessions.filter(item => item.kind === 'quizAttempt')) {
-      const session = sessionSchema.parse(await this.connection.read(`/api/persistence/runtime/sessions/${part(listed.id)}`, signal))
+      const session = parseSource(sessionSchema, await this.connection.read(`/api/persistence/runtime/sessions/${part(listed.id)}`, signal))
       if (session.id !== listed.id || session.stageId !== owner.classroomId || session.learnerKey !== owner.learnerKey || session.kind !== 'quizAttempt') throw new OpenmaicError('identity-changed')
-      const records = z.array(recordSchema).max(2000).parse(await this.connection.read(`/api/persistence/runtime/sessions/${part(session.id)}/records`, signal))
+      const records = parseSource(z.array(recordSchema).max(2000), await this.connection.read(`/api/persistence/runtime/sessions/${part(session.id)}/records`, signal))
       bytes += Buffer.byteLength(JSON.stringify(records))
-      if (bytes > 8_388_608) throw new OpenmaicError('invalid-response')
+      if (bytes > 8_388_608) throw new OpenmaicError('read-limit')
       records.sort((a, b) => a.seq - b.seq)
-      if (records.some((record, index) => record.seq !== index || record.sessionId !== session.id) || new Set(records.map(item => item.id)).size !== records.length) throw new OpenmaicError('invalid-response')
+      if (records.some((record, index) => record.seq !== index || record.sessionId !== session.id) || new Set(records.map(item => item.id)).size !== records.length || canonical(session) !== canonical(listed)) throw new OpenmaicError('incomplete-read')
       attempts.push({ id: session.id, records })
     }
+    const final = parseSource(z.array(sessionSchema).max(100), await this.connection.read(`/api/persistence/runtime/stages/${part(owner.classroomId)}/learners/${part(owner.learnerKey)}/sessions`, signal))
+    if (canonical([...sessions].sort((a, b) => a.id.localeCompare(b.id))) !== canonical(final.sort((a, b) => a.id.localeCompare(b.id)))) throw new OpenmaicError('incomplete-read')
     return attempts.sort((left, right) => left.id.localeCompare(right.id))
   }
   /**
@@ -120,32 +128,34 @@ export class OpenmaicFeedback {
    * @returns Exact source question snapshots and the binding for native agent authoring.
    */
   async prepare(owner: OpenmaicLessonOwner, target: Omit<z.infer<typeof feedbackBindingSchema>, 'bindingId' | 'learnerId' | 'termId' | 'blockId'>, signal: AbortSignal): Promise<OpenmaicPreparation> {
-    await this.authorize(owner, signal)
-    const key = this.key(owner)
-    const existing = await this.captures.load(key)
-    if (existing !== undefined) return this.preparation(this.capture(existing, owner), target)
-    let questions: z.infer<typeof openmaicQuestionSchema>[] = []
-    const binding = feedbackBindingSchema.parse({ ...target, learnerId: owner.learnerId, termId: owner.termId, blockId: owner.blockId, bindingId: `maic-binding-${key.slice(0, 32)}` })
-    for (let retry = 0; retry < 3; retry++) {
-      const before = await this.manifest(owner.classroomId, signal)
-      const document = documentSchema.parse(await this.connection.read(`/api/persistence/documents/${part(owner.classroomId)}`, signal))
-      const after = await this.manifest(owner.classroomId, signal)
-      if (canonical(before) !== canonical(after)) { if (retry === 2) throw new OpenmaicError('service-unavailable'); continue }
-      if (document.stage.id !== owner.classroomId || document.scenes.some(scene => scene.stageId !== owner.classroomId) || new Set(document.scenes.map(scene => scene.id)).size !== document.scenes.length || before && canonical(before.scenes.map(scene => scene.id).sort()) !== canonical(document.scenes.map(scene => scene.id).sort())) throw new OpenmaicError('invalid-response')
-      questions = document.scenes.flatMap(scene => {
-        if (scene.type !== 'quiz') return []
-        const content = z.object({ type: z.literal('quiz'), questions: z.array(officialQuestionSchema).max(200) }).passthrough().parse(scene.content)
-        if (new Set(content.questions.map(question => question.id)).size !== content.questions.length) throw new OpenmaicError('invalid-response')
-        const rev = before?.scenes.find(item => item.id === scene.id)?.rev
-        return content.questions.map(question => openmaicQuestionSchema.parse({ bindingId: binding.bindingId, sceneId: scene.id, questionId: question.id, snapshot: question, snapshotHash: digest(question), revision: before && rev !== undefined ? { kind: 'manifest', stageRev: before.rev, sceneRev: rev } : { kind: 'unavailable' } }))
-      })
-      break
-    }
-    if (questions.length > 200) throw new OpenmaicError('invalid-response')
-    const attempts = await this.runtime(owner, signal)
-    const capture = captureSchema.parse({ binding, stageId: owner.classroomId, base: owner.base, learnerKey: owner.learnerKey, questions, heads: attempts.map(attempt => ({ attemptId: attempt.id, seq: attempt.records.at(-1)?.seq ?? -1 })) })
-    await this.authorize(owner, signal)
-    return this.preparation(this.capture(await this.captures.claim(key, capture), owner), target)
+    return boundedOpenmaicOperation(signal, this.connection.operationTimeoutMs, async signal => {
+      await this.authorize(owner, signal)
+      const key = this.key(owner)
+      const existing = await this.captures.load(key)
+      if (existing !== undefined) return this.preparation(this.capture(existing, owner), target)
+      let questions: z.infer<typeof openmaicQuestionSchema>[] = []
+      const binding = feedbackBindingSchema.parse({ ...target, learnerId: owner.learnerId, termId: owner.termId, blockId: owner.blockId, bindingId: `maic-binding-${key.slice(0, 32)}` })
+      for (let retry = 0; retry < 3; retry++) {
+        const before = await this.manifest(owner.classroomId, signal)
+        const document = parseSource(documentSchema, await this.connection.read(`/api/persistence/documents/${part(owner.classroomId)}`, signal))
+        const after = await this.manifest(owner.classroomId, signal)
+        if (canonical(before) !== canonical(after)) { if (retry === 2) throw new OpenmaicError('service-unavailable'); continue }
+        if (document.stage.id !== owner.classroomId || document.scenes.some(scene => scene.stageId !== owner.classroomId) || new Set(document.scenes.map(scene => scene.id)).size !== document.scenes.length || before && canonical(before.scenes.map(scene => scene.id).sort()) !== canonical(document.scenes.map(scene => scene.id).sort())) throw new OpenmaicError('invalid-response')
+        questions = document.scenes.flatMap(scene => {
+          if (scene.type !== 'quiz') return []
+          const content = z.object({ type: z.literal('quiz'), questions: z.array(officialQuestionSchema).max(200) }).passthrough().parse(scene.content)
+          if (new Set(content.questions.map(question => question.id)).size !== content.questions.length) throw new OpenmaicError('invalid-response')
+          const rev = before?.scenes.find(item => item.id === scene.id)?.rev
+          return content.questions.map(question => openmaicQuestionSchema.parse({ bindingId: binding.bindingId, sceneId: scene.id, questionId: question.id, snapshot: question, snapshotHash: digest(question), revision: before && rev !== undefined ? { kind: 'manifest', stageRev: before.rev, sceneRev: rev } : { kind: 'unavailable' } }))
+        })
+        break
+      }
+      if (questions.length > 200) throw new OpenmaicError('invalid-response')
+      const attempts = await this.runtime(owner, signal)
+      const capture = captureSchema.parse({ binding, stageId: owner.classroomId, base: owner.base, learnerKey: owner.learnerKey, questions, heads: attempts.map(attempt => ({ attemptId: attempt.id, seq: attempt.records.at(-1)?.seq ?? -1 })) })
+      await this.authorize(owner, signal)
+      return this.preparation(this.capture(await this.captures.claim(key, capture), owner), target)
+    })
   }
   private capture(raw: unknown, owner: OpenmaicLessonOwner): z.infer<typeof captureSchema> {
     const capture = captureSchema.parse(raw)
@@ -165,9 +175,11 @@ export class OpenmaicFeedback {
    * @returns Whether source content still matches the independently observed cut.
    */
   async verify(owner: OpenmaicLessonOwner, binding: z.infer<typeof feedbackBindingSchema>, signal: AbortSignal, revision?: string): Promise<boolean> {
-    await this.authorize(owner, signal)
-    if (canonical(this.capture(await this.captures.load(this.key(owner)), owner).binding) !== canonical(binding)) throw new OpenmaicError('identity-changed')
-    return revision === undefined || digest([await this.manifest(owner.classroomId, signal), await this.runtime(owner, signal)]) === revision
+    return boundedOpenmaicOperation(signal, this.connection.operationTimeoutMs, async signal => {
+      await this.authorize(owner, signal)
+      if (canonical(this.capture(await this.captures.load(this.key(owner)), owner).binding) !== canonical(binding)) throw new OpenmaicError('identity-changed')
+      return revision === undefined || digest([await this.manifest(owner.classroomId, signal), await this.runtime(owner, signal)]) === revision
+    })
   }
   /**
    * Reread exact original partition/attempts and compare current revisions with its protected capture.
@@ -177,47 +189,66 @@ export class OpenmaicFeedback {
    * @returns Source responses and grades with explicit historical/revision uncertainty; performs no academic writes.
    */
   async read(owner: OpenmaicLessonOwner, binding: z.infer<typeof feedbackBindingSchema>, signal: AbortSignal): Promise<OpenmaicFeedbackRead> {
-    await this.authorize(owner, signal)
-    const capture = this.capture(await this.captures.load(this.key(owner)), owner)
-    if (canonical(capture.binding) !== canonical(binding)) throw new OpenmaicError('identity-changed')
-    const before = await this.manifest(owner.classroomId, signal)
-    const attempts = await this.runtime(owner, signal)
-    const after = await this.manifest(owner.classroomId, signal)
-    const observations: OpenmaicInputObservation[] = []
-    let drafts = 0
-    for (const attempt of attempts) {
-      const grouped = new Map<string, { submission?: z.infer<typeof recordSchema>; answer?: z.infer<typeof officialAnswerSchema>; review?: z.infer<typeof recordSchema>; result?: z.infer<typeof officialResultSchema> | null; history: NonNullable<OpenmaicInputObservation['officialHistory']>; conflict: boolean }>()
-      for (const record of attempt.records) {
-        const payload = payloadSchema.parse(record.payload)
-        if (payload.phase === 'draft') { drafts++; continue }
-        if (!record.sceneId) throw new OpenmaicError('invalid-response')
-        if (payload.results && (new Set(payload.results.map(item => item.questionId)).size !== payload.results.length || payload.results.some(item => !Object.hasOwn(payload.answers, item.questionId)))) throw new OpenmaicError('invalid-response')
-        for (const [questionId, answer] of Object.entries(payload.answers)) {
-          const key = canonical([record.sceneId, questionId])
-          const row = grouped.get(key) ?? { conflict: false, history: [] }
-          if (row.answer !== undefined && canonical(row.answer) !== canonical(answer)) row.conflict = true
-          if (payload.phase === 'submitted' && !row.submission) { row.submission = record; row.answer = answer }
-          if (payload.phase === 'reviewed') { row.review = record; row.result = payload.results?.find(item => item.questionId === questionId) ?? null; row.history.push({ recordId: record.id, seq: record.seq, createdAt: record.createdAt, result: row.result }); if (row.answer === undefined) row.answer = answer }
-          grouped.set(key, row)
+    return boundedOpenmaicOperation(signal, this.connection.operationTimeoutMs, async signal => {
+      await this.authorize(owner, signal)
+      const capture = this.capture(await this.captures.load(this.key(owner)), owner)
+      if (canonical(capture.binding) !== canonical(binding)) throw new OpenmaicError('identity-changed')
+      const before = await this.manifest(owner.classroomId, signal)
+      const attempts = await this.runtime(owner, signal)
+      const after = await this.manifest(owner.classroomId, signal)
+      if (canonical(before) !== canonical(after)) throw new OpenmaicError('incomplete-read')
+      const observations: OpenmaicInputObservation[] = []
+      const pending = new Map<string, PendingOpenmaic>()
+      const sessionsByQuestion = new Map<string, Set<string>>()
+      for (const attempt of attempts) for (const record of attempt.records) if (record.payload.phase !== 'draft') for (const questionId of Object.keys(record.payload.answers)) {
+        const key = canonical([record.sceneId, questionId])
+        const sessions = sessionsByQuestion.get(key) ?? new Set<string>()
+        sessions.add(attempt.id); sessionsByQuestion.set(key, sessions)
+      }
+      let drafts = 0
+      for (const attempt of attempts) {
+        const grouped = new Map<string, { submission?: z.infer<typeof recordSchema>; answer?: z.infer<typeof officialAnswerSchema>; review?: z.infer<typeof recordSchema>; result?: z.infer<typeof officialResultSchema> | null; history: NonNullable<OpenmaicInputObservation['officialHistory']>; records: z.infer<typeof recordSchema>[]; conflict: boolean }>()
+        for (const record of attempt.records) {
+          const payload = payloadSchema.parse(record.payload)
+          if (payload.phase === 'draft') { drafts++; continue }
+          if (!record.sceneId) throw new OpenmaicError('invalid-response')
+          if (payload.results && (new Set(payload.results.map(item => item.questionId)).size !== payload.results.length || payload.results.some(item => !Object.hasOwn(payload.answers, item.questionId)))) throw new OpenmaicError('invalid-response')
+          for (const [questionId, answer] of Object.entries(payload.answers)) {
+            const key = canonical([record.sceneId, questionId])
+            const row = grouped.get(key) ?? { conflict: false, history: [], records: [] }
+            row.records.push(record)
+            if (payload.phase === 'submitted' && row.submission) row.conflict = true
+            if (row.answer !== undefined && canonical(row.answer) !== canonical(answer)) row.conflict = true
+            if (payload.phase === 'submitted' && !row.submission) { row.submission = record; row.answer = answer }
+            if (payload.phase === 'reviewed') { row.review = record; row.result = payload.results?.find(item => item.questionId === questionId) ?? null; row.history.push({ recordId: record.id, seq: record.seq, createdAt: record.createdAt, result: row.result }); if (row.answer === undefined) row.answer = answer }
+            grouped.set(key, row)
+          }
+        }
+        for (const [tuple, row] of grouped) {
+          const [sceneId, questionId] = z.tuple([z.string(), z.string()]).parse(JSON.parse(tuple))
+          const snapshot = capture.questions.find(item => item.sceneId === sceneId && item.questionId === questionId)
+          const ambiguous = (sessionsByQuestion.get(tuple)?.size ?? 0) > 1
+          const association = ambiguous ? 'ambiguous-session' : row.conflict ? 'conflicting-submissions' : !row.submission || row.history.some(review => review.seq <= row.submission!.seq) ? 'missing-submission' : undefined
+          if (association) {
+            for (const record of row.records) pending.set(canonical([record.sessionId, record.id]), { binding, record, reason: association })
+            continue
+          }
+          const original = row.submission!
+          const question = snapshot ?? openmaicQuestionSchema.parse({ bindingId: binding.bindingId, sceneId, questionId, snapshot: null, snapshotHash: digest(null), revision: { kind: 'unavailable' } })
+          const revision = question.revision
+          const known = !!row.submission && !!snapshot && !row.conflict && original.seq > (capture.heads.find(head => head.attemptId === attempt.id)?.seq ?? -1) && revision.kind === 'manifest' && before?.rev === revision.stageRev && before.scenes.find(scene => scene.id === sceneId)?.rev === revision.sceneRev && canonical(before) === canonical(after)
+          if (!known) for (const record of row.records) pending.set(canonical([record.sessionId, record.id]), { binding, record, reason: 'unresolved-question' })
+          const official = row.review ? { recordId: row.review.id, seq: row.review.seq, createdAt: row.review.createdAt, result: row.result ?? null } : undefined
+          const grade = gradeOpenmaicAnswer(question.snapshot, row.answer!, official?.result)
+          observations.push({ binding, questionId: openmaicEntityId('q', [binding.bindingId, sceneId, questionId]), responseId: openmaicEntityId('r', [binding.bindingId, attempt.id, sceneId, questionId]), question,
+            source: { kind: 'openmaic', bindingId: binding.bindingId, attemptId: attempt.id, sceneId, questionId, submission: { id: original.id, seq: original.seq, createdAt: original.createdAt }, submittedAnswer: row.answer! }, ...(official ? { official, officialHistory: row.history } : {}),
+            sourceStatus: known ? 'known' : 'unknown', ...(!known ? { reason: row.conflict ? 'Attempt contains conflicting submitted answers.' : !row.submission ? 'Original submitted record is unavailable.' : 'Original question capture or content revision is unresolved.' } : {}), result: known ? grade.result : 'unassessed', grading: known ? grade.grading : 'pending' })
         }
       }
-      for (const [tuple, row] of grouped) {
-        const [sceneId, questionId] = z.tuple([z.string(), z.string()]).parse(JSON.parse(tuple))
-        const snapshot = capture.questions.find(item => item.sceneId === sceneId && item.questionId === questionId)
-        const original = row.submission ?? row.review!
-        const question = snapshot ?? openmaicQuestionSchema.parse({ bindingId: binding.bindingId, sceneId, questionId, snapshot: null, snapshotHash: digest(null), revision: { kind: 'unavailable' } })
-        const revision = question.revision
-        const known = !!row.submission && !!snapshot && !row.conflict && original.seq > (capture.heads.find(head => head.attemptId === attempt.id)?.seq ?? -1) && revision.kind === 'manifest' && before?.rev === revision.stageRev && before.scenes.find(scene => scene.id === sceneId)?.rev === revision.sceneRev && canonical(before) === canonical(after)
-        const official = row.review ? { recordId: row.review.id, seq: row.review.seq, createdAt: row.review.createdAt, result: row.result ?? null } : undefined
-        const grade = gradeOpenmaicAnswer(question.snapshot, row.answer!, official?.result)
-        observations.push({ binding, questionId: openmaicEntityId('q', [binding.bindingId, sceneId, questionId]), responseId: openmaicEntityId('r', [binding.bindingId, attempt.id, sceneId, questionId]), question,
-          source: { kind: 'openmaic', bindingId: binding.bindingId, attemptId: attempt.id, sceneId, questionId, submission: { id: original.id, seq: original.seq, createdAt: original.createdAt }, submittedAnswer: row.answer! }, ...(official ? { official, officialHistory: row.history } : {}),
-          sourceStatus: known ? 'known' : 'unknown', ...(!known ? { reason: row.conflict ? 'Attempt contains conflicting submitted answers.' : !row.submission ? 'Original submitted record is unavailable.' : 'Original question capture or content revision is unresolved.' } : {}), result: known ? grade.result : 'unassessed', grading: known ? grade.grading : 'pending' })
-      }
-    }
-    for (const observation of observations) if (observations.some(other => other.source.attemptId !== observation.source.attemptId && other.source.sceneId === observation.source.sceneId && other.source.questionId === observation.source.questionId && other.official)) observation.answerExposure = 'possible'
-    await this.authorize(owner, signal)
-    if (observations.length > 500) throw new OpenmaicError('invalid-response')
-    return { revision: digest([after, attempts]), observations, drafts, omitted: 0, checkpoint: { bindingId: binding.bindingId, attempts: attempts.map(attempt => ({ attemptId: attempt.id, seq: attempt.records.at(-1)?.seq ?? -1 })).sort((a, b) => a.attemptId.localeCompare(b.attemptId)) } }
+      for (const observation of observations) if (observations.some(other => other.source.attemptId !== observation.source.attemptId && other.source.sceneId === observation.source.sceneId && other.source.questionId === observation.source.questionId && other.official)) observation.answerExposure = 'possible'
+      await this.authorize(owner, signal)
+      if (observations.length > 500 || pending.size > 2000) throw new OpenmaicError('read-limit')
+      return { revision: digest([after, attempts]), observations, pending: [...pending.values()], drafts, omitted: 0, checkpoint: { bindingId: binding.bindingId, attempts: attempts.map(attempt => ({ attemptId: attempt.id, seq: attempt.records.at(-1)?.seq ?? -1 })).sort((a, b) => a.attemptId.localeCompare(b.attemptId)) } }
+    })
   }
 }

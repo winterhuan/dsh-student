@@ -13,7 +13,7 @@ const authSchema = z.object({ token: z.string().min(1), accountId: z.string().mi
 const jsonObject = z.record(z.string(), z.unknown())
 /** Credential failures expose only actionable codes, never server messages or secret payloads. */
 export class OpenmaicError extends Error {
-  constructor(readonly code: 'login-required' | 'login-challenge' | 'identity-changed' | 'permission-denied' | 'not-found' | 'service-unavailable' | 'invalid-response' | 'unsafe-origin' | 'generation-unknown' | 'browser-unavailable' | 'operation-timeout' | 'operation-canceled' | 'response-too-large', readonly status?: number) { super(`OpenMAIC ${code}. ${code === 'login-required' || code === 'login-challenge' ? 'A parent can restore authorization using the official sign-in page or Host credential settings.' : 'Keep the current activity and retry its existing identity after checking the service.'}`) }
+  constructor(readonly code: 'login-required' | 'login-challenge' | 'identity-changed' | 'permission-denied' | 'not-found' | 'service-unavailable' | 'invalid-response' | 'unsafe-origin' | 'generation-unknown' | 'browser-unavailable' | 'operation-timeout' | 'operation-canceled' | 'response-too-large' | 'incomplete-read' | 'read-limit' | 'unsupported-version', readonly status?: number) { super(`OpenMAIC ${code}. ${code === 'login-required' || code === 'login-challenge' ? 'A parent can restore authorization using the official sign-in page or Host credential settings.' : 'Keep the current activity and retry its existing identity after checking the service.'}`) }
 }
 /**
  * Bound local waiting without reporting that the remote job was canceled.

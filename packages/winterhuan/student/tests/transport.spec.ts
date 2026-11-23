@@ -15,6 +15,11 @@ import StudentRemote from '../src/remote-service.ts'
 import { NOW, setup, updateStudy, mistake, confirm, material, course } from './fixtures.ts'
 import type { ManualSaveRequest } from '../src/files/manual.ts'
 import type { StudentManualSaveRequest } from '../src/types.ts'
+import ToolRuntime, { type ToolRunContext } from '@deepseek-ai/dsh-tools'
+import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
+import { registerOpenmaicFeedback } from '../src/openmaic/feedback-agent.ts'
+import type { OpenmaicFeedbackRead } from '../src/openmaic/feedback.ts'
+import { OpenmaicError } from '../src/openmaic/connection.ts'
 import { applicationStudyFiles } from '../src/files/application.ts'
 import { readWorkspace } from '../src/files/read.ts'
 import { retainObservedBackups, readBackups } from '../src/files/recovery.ts'
@@ -267,11 +272,44 @@ it('rereads files changed during the final official source authorization before 
   await writeFile(join(f.cwd, '.study/openmaic-lessons.json'), JSON.stringify({ format: 1, lessons: [{ id: 'lesson-1', learnerId: 'child-1', termId: 'term-1', blockId: 'block-1', learnerKey: 'user:fixture-parent', classroomId: 'stage-1', base: 'https://classroom.test', status: 'ready', title: 'Original classroom', requirement: 'Subtraction within20', createdAt: new Date(NOW).toISOString(), updatedAt: new Date(NOW).toISOString(), feedback: binding }] }))
   let sourceReads = 0
   const reader = {
-    async read() { sourceReads++; return { revision: 'fixture-cut', observations: [], drafts: 0, omitted: 0, checkpoint: { bindingId: binding.bindingId, attempts: [] } } },
+    async read() { sourceReads++; return { revision: 'fixture-cut', observations: [], pending: [], drafts: 0, omitted: 0, checkpoint: { bindingId: binding.bindingId, attempts: [] } } },
     async verify() { if (sourceReads === 1) await writeFile(settingsPath, JSON.stringify({ ...settings, profile: { ...settings.profile, nickname: 'Changed during authorization' } })); return true },
   }
   f.ctx.provide('studentOpenmaic', { feedback: () => reader } as Context['studentOpenmaic'])
   const result = await f.ctx.student.query(f.id, { kind: 'settings' }, f.signal)
   expect(sourceReads).toBe(2)
   expect(result).toMatchObject({ status: 'valid', data: { profile: { nickname: 'Changed during authorization' } } })
+  expect(await f.ctx.student.query(f.id, { kind: 'learning-context' }, f.signal)).toMatchObject({ data: { sourceVerification: { openmaic: [{ learnerId: 'child-1', termId: 'term-1', blockId: 'block-1', consumption: 'accepted', pendingCount: 0, conflictCount: 0 }] } } })
+})
+
+it('exposes complete source, unavailable source and an oversized original event distinctly through the native tool', async () => {
+  const f = await fixture()
+  const settingsPath = join(f.cwd, '.study/settings.json')
+  await writeFile(settingsPath, JSON.stringify({ ...JSON.parse(await readFile(settingsPath, 'utf8')), learnerId: 'child-1' }))
+  await mkdir(join(f.cwd, '.study/blocks'))
+  await writeFile(join(f.cwd, '.study/blocks/block-1.json'), JSON.stringify({ format: 2, kind: 'block', learnerId: 'child-1', termId: 'term-1', id: 'block-1', subject: 'math', mode: 'foundation', startedAt: NOW, context: { profile: setup.profile }, questions: [], responses: [], hints: [], assessments: [] }))
+  const binding = { bindingId: 'binding-1', learnerId: 'child-1', termId: 'term-1', blockId: 'block-1', goalId: 'm.sub', familyId: 'math.sub-basic', scope: { id: 'within20', description: 'Written subtraction within20', modality: 'written' as const, numberMax: 20 } }
+  await writeFile(join(f.cwd, '.study/openmaic-lessons.json'), JSON.stringify({ format: 1, lessons: [{ id: 'lesson-1', learnerId: 'child-1', termId: 'term-1', blockId: 'block-1', learnerKey: 'user:fixture-parent', classroomId: 'stage-1', base: 'https://classroom.test', status: 'ready', title: 'Original classroom', requirement: 'Subtraction within20', createdAt: new Date(NOW).toISOString(), updatedAt: new Date(NOW).toISOString(), feedback: binding, checkpoint: { bindingId: binding.bindingId, attempts: [{ attemptId: 'attempt-1', seq: 999 }] } }] }))
+  const source: OpenmaicFeedbackRead = { revision: 'original-cut', observations: [], pending: [], drafts: 0, omitted: 0, checkpoint: { bindingId: binding.bindingId, attempts: [] } }
+  let mode: 'complete' | 'failure' | 'changing' = 'complete'
+  f.ctx.provide('studentOpenmaic', { feedback: () => ({ async read() { if (mode === 'failure') throw new OpenmaicError('unsupported-version'); return structuredClone(source) }, async verify() { return mode !== 'changing' } }) } as Context['studentOpenmaic'])
+  await f.ctx.plugin(SystemPrompt)
+  await f.ctx.plugin(ToolRuntime)
+  registerOpenmaicFeedback(f.ctx)
+  const callId = 'native-source' as ToolRunContext['callId']
+  const execution: ToolRunContext = { agent: f.agent, signal: f.signal, callId, rootCallId: callId, name: 'openmaic_feedback', arguments: {}, token: Symbol('feedback') as ToolRunContext['token'], deferContext() {}, concludeTurn() {} }
+  const read = () => f.ctx.tools.get('openmaic_feedback')!.execute({ action: 'read', lessonId: 'lesson-1' }, execution)
+  expect(await read()).toMatchObject({ status: 'available', complete: true, total: 0, nextOffset: null, consumption: { status: 'accepted', checkpoint: { attempts: [] } } })
+  mode = 'failure'
+  expect(await read()).toMatchObject({ status: 'unavailable', failure: 'unsupported-version', complete: false, total: null, drafts: null })
+  mode = 'changing'
+  expect(await read()).toMatchObject({ status: 'unavailable', failure: 'incomplete-read', complete: false, total: null })
+  mode = 'complete'
+  source.pending = [{ binding, reason: 'missing-submission', record: { id: 'review-only', sessionId: 'attempt-1', seq: 0, sceneId: 'scene-1', createdAt: new Date(NOW).toISOString(), payload: { payloadVersion: 1, phase: 'reviewed', answers: { q1: 'A' } }, originalExtension: 'x'.repeat(40_000) } }]
+  source.checkpoint.attempts = [{ attemptId: 'attempt-1', seq: 0 }]
+  const oversized = await read()
+  expect(oversized).toMatchObject({ status: 'unavailable', failure: 'read-limit', complete: false, records: [], nextOffset: 0, omitted: 1 })
+  expect(oversized).not.toHaveProperty('consumption')
+  source.pending[0]!.record.originalExtension = 'retained'
+  expect(await read()).toMatchObject({ status: 'available', complete: true, records: [{ pendingOpenmaic: source.pending[0] }], consumption: { status: 'pending', checkpoint: { attempts: [{ seq: 0 }] } } })
 })

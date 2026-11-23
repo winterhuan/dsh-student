@@ -144,7 +144,7 @@ DSH_BIN=/absolute/path/to/dsh STUDENT_EVIDENCE_DIR=/path/to/evidence pnpm run te
 
 测试使用隔离临时 Home、Agents 和 Documents 目录，再等待子进程清理。它通过真实原生 write/edit、构建 CLI 和独立消费方覆盖合成 v1 来源保留、中断迁移及来源变化拒绝、有界已观察备份、明确恢复、部分归档、新学期拒绝与重启。它不在独立恢复工作区运行旧插件，也不建立浏览器、固定 Git、真实教学、OCR、课堂或物理打印验收。
 
-[官方反馈读取器](src/openmaic/feedback.ts)在播放前冻结题面，再读取已授权原 learner 的 sessions/records。agent 将返回的归属、题目、不可变提交与官方批改历史写入原学习文件，运行打包只读 CLI；Student 独立消费接受保存内容后，agent 才推进课堂检查点。明确数值等价保留原官方评分与有效评分。无法自动比较的文字选项保持待核对，家长的明确判据更正须匹配真实消费过的原生输入、原回答及题面哈希；更正保留官方历史，不确认作答日期或独立性。未解决的冲突与题面修订保持待核对，未知日期与帮助保持未知。模型自写的来源或确认标记不认证证据。详见[反馈流程](knowledge/skills/study/references/openmaic-feedback.md)。
+[官方反馈读取器](src/openmaic/feedback.ts)在播放前冻结题面，再读取已授权原 learner 的 sessions/records。agent 将返回的归属、题目、不可变提交与官方批改历史写入原学习文件，运行打包只读 CLI；Student 独立消费接受保存内容后，agent 才推进课堂检查点。明确数值等价保留原官方评分与有效评分。无法自动比较的文字选项保持待核对，家长的明确判据更正须匹配真实消费过的原生输入、原回答及题面哈希；更正保留官方历史，不确认作答日期或独立性。仅批改、提交冲突与跨 session 关联不明的记录，以完整原事件保存在所属 block 的 pendingOpenmaic 数组。完整保存的待核对事实可以确认已读取，但不授予掌握；不完整或超限读取保留原检查点。未知日期与帮助保持未知。模型自写的来源或确认标记不认证证据。详见[反馈流程](knowledge/skills/study/references/openmaic-feedback.md)。
 
 构建后运行 `node packages/winterhuan/student/tests/openmaic-feedback-native.e2e.mjs`，验证确定性 HTTP 来源、原生作者、CLI、独立消费与重启；`DSH_BIN` 指定已安装可执行文件，`STUDENT_EVIDENCE_DIR` 指定仓库外证据目录。可选 `STUDENT_OPENMAIC_ONLINE_DIR` 保存私有原 job/auth/capture 元数据，用于真实线上来源验收；证据目录须保持私有。该模式保留既有生成归属并核验真实来源导入，完整原生建课另行验收。
 
@@ -169,9 +169,9 @@ node packages/winterhuan/student/lib/cli.js validate --workspace /path/to/worksp
 
 [Student Remote](src/remote-service.ts)为已注册的 DSH 主会话提供生成的类型化查询、显式手动保存与提交检查。Gateway 在每次调用前检查会话权限；缺失、已关闭和子 Agent 会被拒绝，且不触发激活。提交检查分别报告原生消息接纳、已保存原答与有效的已保存评分，绝不重发输入。手动保存使用已观察的学期、版本和编辑字段基线；设置明确提供 `editedProfileFields`。Host 配置默认 `refreshIntervalMs: 3000`、`maxWireBytes: 1048576`，限制完整请求与响应的 JSON 大小，包含 watch/manual/inspection 包装；超大的手动请求在保存前拒绝。[客户端资源提供者](src/client/resource.ts)通过原生重连跟踪 `dsh-resource://student/session/<encoded-id>?query=<encoded-JSON>`，在失败时报告错误并将之前的值标记为过期状态，等待流关闭后才撤销命名空间。
 
-[原生来源读取器](src/transport.ts)观察调用方会话与明确引用的原始主会话。历史读取须核对相同规范工作区、当前调用权限，以及原消费 Student intention 中的 learner/term/block/question 归属；原来源缺失或不匹配时保留未知日期。最多读取八个原会话、32 MiB 物理历史和 32 MiB 总重放；公共 provider 支持正常压缩历史，不要求可选 eventCount。每次完整原始重放上限为 100,000 事件与 16 MiB；原生返回视图上限为 32 KiB、20 个已消费输入、20 个接收状态、每输入 2,000 字符及八个附件引用，明确报告遗漏数量。不完整或不支持的历史不提供可信接收事实。接收版本匹配包含附件的完整来源与内容，后续消费、文件写入与批改不产生作答接收时间。
+[原生来源读取器](src/transport.ts)观察调用方会话与明确引用的原始主会话。历史读取须核对相同规范工作区、当前调用权限，以及原消费 Student intention 或 Host 接收捕获中的 learner/term/block/question 归属。普通输入框和 Headless 的空闲输入在接纳前冻结独立读取的原归属、题面与文件版本，证据接受前再核对精确消费和未变版本。Headless profile 必须在创建 Agent 前加载 Student 的 `/agent` 能力；DSH Headless 不选择 Web preset。`dsh-session` 使用 peer 依赖，确保捕获记录写入运行中的同一 Session 实例。活动回合中排队或缺少有效捕获的输入保持归属未知。系统同步、工具和技能消息不提供孩子回答或作答日；原来源缺失或不匹配时保留未知日期。最多读取八个原会话、32 MiB 物理历史和 32 MiB 总重放；公共 provider 支持正常压缩历史，不要求可选 eventCount。每次完整原始重放上限为 100,000 事件与 16 MiB；原生返回视图上限为 32 KiB、20 个已消费输入、20 个接收状态、每输入 2,000 字符及八个附件引用，明确报告遗漏数量。不完整或不支持的历史不提供可信接收事实。接收版本匹配包含附件的完整来源与内容，后续消费、文件写入与批改不产生作答接收时间。
 
-练习单由[客户端试卷视图](src/client/worksheet-view.tsx)渲染，与屏上题图共用同一套 SVG 图形；打印走浏览器打印对话框（可选择打印机或存储为 PDF），Host 不生成 PDF，也不调用系统打印队列。客户端通过原生会话队列提交辅导请求，不替换输入框草稿。
+练习单由[客户端试卷视图](src/client/worksheet-view.tsx)渲染，与屏上题图共用同一套 SVG 图形；打印走浏览器打印对话框（可选择打印机或存储为 PDF），Host 不生成 PDF，也不调用系统打印队列。客户端通过原生会话队列提交辅导请求，不替换输入框草稿。已授权课堂的返回、继续与恢复共用每课堂一个待处理系统同步意图；暂停在原生取消前撤销所属待执行同步。接纳消息不等于反馈保存，完成或取消后可在下次明确触发时重试。
 
 默认教材资源位于技能的 `textbooks/`，随 `knowledge` 打包。目录、逐页图片和未校对文字由[教材准备脚本](scripts/prepare-textbooks.py)从两份已核对的 PDF 生成；脚本使用 PyMuPDF 1.28.2 并在写入前校验源文件哈希。运行时使用原生文件和图片工具，无需 Python、PDF 解析器或原始下载路径。教材选择由技能指引，不自动修改学习状态；默认教材作答的页码和依据保存在 `answerEvidence`。
 

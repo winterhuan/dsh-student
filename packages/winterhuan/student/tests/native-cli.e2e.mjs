@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { execFile } from 'node:child_process'
 import { createRequire } from 'node:module'
-import { mkdtemp, mkdir, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises'
+import { cp, mkdtemp, mkdir, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { promisify } from 'node:util'
@@ -22,13 +22,13 @@ const quote = value => `'${value.replaceAll("'", "'\\''")}'`
 const json = value => `${JSON.stringify(value, null, 2)}\n`
 const now = Date.parse('2026-11-12T09:00:00+08:00')
 const profile = { nickname: 'Native fixture', region: '上海市', grade: 2, term: 'first', schoolYear: '2026-2027', schoolSystem: 'five-four', schoolAlias: '', parentConfirmation: 'Fixture parent confirms the profile.' }
-const settings = { format: 2, kind: 'term-settings', termId: 'native-term', revision: 1, updatedAt: now, profile, materials: [], courses: [] }
+const settings = { format: 2, kind: 'term-settings', learnerId: 'native-fixture-child', termId: 'native-term', revision: 1, updatedAt: now, profile, materials: [], courses: [] }
 const question = { id: 'q1', objectiveId: 'm2a-o-sub', source: { kind: 'authored', description: 'Original deterministic fixture' }, topic: 'Subtraction', prompt: '18 − 7?', answer: '11', explanation: 'Subtract seven ones', answerEvidence: '18 − 7 = 11; 11 + 7 = 18', phase: 'try' }
-const block = { format: 2, kind: 'block', termId: settings.termId, id: 'native-block', subject: 'math', mode: 'foundation', startedAt: now, context: { profile, scope: { grade: 2, term: 'first', objectiveIds: ['m2a-o-sub'] } }, currentQuestionId: 'q1', questions: [question], responses: [], hints: [], assessments: [] }
+const block = { format: 2, kind: 'block', learnerId: settings.learnerId, termId: settings.termId, id: 'native-block', subject: 'math', mode: 'foundation', startedAt: now, context: { profile, scope: { grade: 2, term: 'first', objectiveIds: ['m2a-o-sub'] } }, currentQuestionId: 'q1', questions: [question], responses: [], hints: [], assessments: [] }
 const response = { id: 'r1', questionId: 'q1', rawResponse: '11', assistance: 'unknown', answerDate: { kind: 'unknown' }, source: { kind: 'unknown' } }
 const assessment = { id: 'a1', responseId: 'r1', result: 'correct', assistance: 'unknown', feedback: 'Correct', answerEvidence: question.answerEvidence, assessedAt: now }
 const draft = { id: 'draft1', questionId: 'q1', response: '11', result: 'correct', assistance: 'unknown', confidence: 'high', uncertainties: '', imagePaths: ['photo.png'], receivedAt: now }
-const worksheet = { format: 2, kind: 'worksheet', termId: settings.termId, id: 'native-photo', subject: 'math', origin: 'workbook', createdAt: now, context: { profile }, items: [question], responses: [], assessments: [], drafts: [draft] }
+const worksheet = { format: 2, kind: 'worksheet', learnerId: settings.learnerId, termId: settings.termId, id: 'native-photo', subject: 'math', origin: 'workbook', createdAt: now, context: { profile }, items: [question], responses: [], assessments: [], drafts: [draft] }
 const sheet = { ...worksheet, id: 'native-sheet', origin: 'prepared', worksheetKind: 'practice', drafts: [] }
 const write = (file_path, value) => ['write', { file_path, content: json(value) }]
 const edit = (file_path, old_string, new_string) => ['edit', { file_path, old_string, new_string }]
@@ -177,7 +177,10 @@ ctx.effect(()=>ctx.llm.registerAdapter(['student-cli-fixture'],new Fixture()));
   assert.equal(persistedCalls, summaries.reduce((sum, row) => sum + row.nativeToolCalls, 0))
   if (outputRoot) await writeFile(join(outputRoot, 'cli-evidence.jsonl'), await readFile(join(root, 'cli-evidence.jsonl')))
   const final = { flows: summaries, cliInvocations: cliEvidence.length, invalidValidations: 1, businessRepairEdits: 1, persistedCalls, harnessDispatches: summaries.reduce((sum, row) => sum + row.harnessDispatches, 0), retries, usageSamples, tokenUsage: 'unavailable: keyless adapter emits no provider usage', photoLimit: 'Persisted transcription/confirmation mechanics only; native image admission, OCR and image-token costs belong to integrated acceptance.', archiveLimit: 'Known fixture term files preserved; interrupted migration/explicit restore belong to integrated acceptance.', cleanup: 'awaited subprocess exit before temporary root removal' }
-  if (outputRoot) await writeFile(join(outputRoot, 'summary.json'), json(final))
+  if (outputRoot) {
+    await cp(join(project, '.study'), join(outputRoot, 'authored-workspace/.study'), { recursive: true })
+    await writeFile(join(outputRoot, 'summary.json'), json(final))
+  }
   process.stdout.write(json(final))
 } finally {
   await rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 })

@@ -138,7 +138,7 @@ DSH_BIN=/absolute/path/to/dsh STUDENT_EVIDENCE_DIR=/path/to/evidence pnpm run te
 
 测试使用隔离临时 Home、Agents 和 Documents 目录，再等待子进程清理。它通过真实原生 write/edit、构建 CLI 和独立消费方覆盖合成 v1 来源保留、中断迁移及来源变化拒绝、有界已观察备份、明确恢复、部分归档、新学期拒绝与重启。它不在独立恢复工作区运行旧插件，也不建立浏览器、固定 Git、真实教学、OCR、课堂或物理打印验收。
 
-[官方反馈读取器](src/openmaic/feedback.ts)在播放前冻结题面，再读取已授权原 learner 的 sessions/records。agent 将返回的归属、题目、不可变提交与官方批改历史写入原学习文件，运行打包只读 CLI；Student 独立消费接受保存内容后，agent 才推进课堂检查点。明确数值等价保留原官方评分与有效评分；未解决的冲突、题面修订、实际日期与帮助保持待核对或未知。模型自写的来源标记不认证证据。详见[反馈流程](knowledge/skills/study/references/openmaic-feedback.md)。
+[官方反馈读取器](src/openmaic/feedback.ts)在播放前冻结题面，再读取已授权原 learner 的 sessions/records。agent 将返回的归属、题目、不可变提交与官方批改历史写入原学习文件，运行打包只读 CLI；Student 独立消费接受保存内容后，agent 才推进课堂检查点。明确数值等价保留原官方评分与有效评分。无法自动比较的文字选项保持待核对，家长的明确判据更正须匹配真实消费过的原生输入、原回答及题面哈希；更正保留官方历史，不确认作答日期或独立性。未解决的冲突与题面修订保持待核对，未知日期与帮助保持未知。模型自写的来源或确认标记不认证证据。详见[反馈流程](knowledge/skills/study/references/openmaic-feedback.md)。
 
 构建后运行 `node packages/winterhuan/student/tests/openmaic-feedback-native.e2e.mjs`，验证确定性 HTTP 来源、原生作者、CLI、独立消费与重启；`DSH_BIN` 指定已安装可执行文件，`STUDENT_EVIDENCE_DIR` 指定仓库外证据目录。可选 `STUDENT_OPENMAIC_ONLINE_DIR` 保存私有原 job/auth/capture 元数据，用于真实线上来源验收；证据目录须保持私有。该模式保留既有生成归属并核验真实来源导入，完整原生建课另行验收。
 

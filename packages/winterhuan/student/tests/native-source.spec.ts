@@ -3,6 +3,7 @@ import { SESSION_FORMAT_VERSION, SessionId, SessionSeq, SessionLogOffset } from 
 import type { SessionEvent, SessionHeader } from '@deepseek-ai/dsh-session'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { resolveNativeSources } from '../src/native-source.ts'
+import { nativeIntentPrompt } from '../src/client/prompts.ts'
 
 const message = { ...createUserMessage({ source: { kind: 'user', rpcId: 'r' }, content: [{ type: 'text', text: '42' }] }), id: 'm' }
 const header: SessionHeader = { version: SESSION_FORMAT_VERSION, id: SessionId('s'), createdAt: 1, isSeeded: false }
@@ -42,6 +43,21 @@ it('bounds emitted text context without truncating exact response observations o
   expect(many.inputs).toHaveLength(20)
   expect(many.omitted).toBe(5)
   expect(many.observations).toHaveLength(25)
+})
+it('preserves a short actual answer inside a large Student panel intention without accepting arbitrary long text', () => {
+  const scope = { learnerId: 'child-1', termId: 'term-1', blockId: 'block-1', questionId: 'q1', responseId: 'r1' }
+  const answer = 'Split seven into two and five: 8+2=10, 10+5=15.'
+  const intent = { nativeSessionId: 's', ...scope, selection: { subject: 'math' }, nextAction: { requirement: 'bounded teaching context '.repeat(100) }, operation: { action: 'answer', taskId: 'q1', response: answer }, request: 'Save my original answer.' }
+  const withText = (text: string) => consumed().map(event => event.type === 'user/message' ? { ...event, data: { ...message, content: [{ type: 'text' as const, text }] } } : event.type === 'agent/inbox/spliced' && event.seq === 0 ? { ...event, data: { ...event.data, inserted: [{ ...message, content: [{ type: 'text' as const, text }] }] } } : event)
+  const text = nativeIntentPrompt(intent, intent.request)
+  expect(text.length).toBeGreaterThan(2000)
+  const original = resolve(withText(text))
+  expect(original.inputs[0]).toMatchObject({ rawResponse: answer, receipt: { kind: 'known', at: 10 } })
+  expect(original.observations).toMatchObject([{ rawResponse: answer, learningScope: scope }])
+  const changed = resolve(withText(nativeIntentPrompt({ ...intent, nextAction: { requirement: 'different context' } }, intent.request)))
+  expect(changed.inputs[0]!.inputVersion).not.toBe(original.inputs[0]!.inputVersion)
+  for (const invalid of [{ ...intent, nativeSessionId: 'foreign' }, { ...intent, operation: { ...intent.operation, taskId: 'foreign' } }, { ...intent, operation: { ...intent.operation, response: 'x'.repeat(2001) } }]) expect(resolve(withText(nativeIntentPrompt(invalid, intent.request))).observations).toEqual([])
+  expect(resolve(withText(`${text} altered request`)).observations).toEqual([])
 })
 it('resolves edits and reversions from the continuous pending version, preserving byte-identical edits', () => {
   const original = consumed()

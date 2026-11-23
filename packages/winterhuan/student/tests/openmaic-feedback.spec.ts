@@ -26,7 +26,7 @@ import { OpenmaicConnection } from '../src/openmaic/connection.ts'
 import { OpenmaicGeneration } from '../src/openmaic/generation.ts'
 import { OpenmaicFeedback, gradeOpenmaicAnswer } from '../src/openmaic/feedback.ts'
 const signal = new AbortController().signal
-async function officialFixture() {
+async function officialFixture(originalQuestion = snapshot) {
   const saved = new Map<string, unknown>()
   const captures = new Map<string, unknown>()
   let records: unknown[] = []
@@ -44,7 +44,7 @@ async function officialFixture() {
     if (path === '/api/generate-classroom/job-1') return envelope({ status: 'succeeded', result: { classroomId: 'stage-1' } })
     if (path.endsWith('/manifest') && missingManifest) return envelope({}, 404)
     if (path.endsWith('/manifest')) return envelope({ rev, scenes: [{ id: 'scene-1', order: 0, rev }] })
-    if (path === '/api/persistence/documents/stage-1') return envelope({ dslVersion: '0.3.0', stage: { id: 'stage-1' }, scenes: [{ id: 'scene-1', stageId: 'stage-1', type: 'quiz', content: { type: 'quiz', questions: [snapshot] } }] })
+    if (path === '/api/persistence/documents/stage-1') return envelope({ dslVersion: '0.3.0', stage: { id: 'stage-1' }, scenes: [{ id: 'scene-1', stageId: 'stage-1', type: 'quiz', content: { type: 'quiz', questions: [originalQuestion] } }] })
     reads++
     if (forbidden) return envelope({}, 403)
     if (path.endsWith('/records')) return envelope(records.filter(item => typeof item === 'object' && item !== null && 'sessionId' in item && path.includes(String(item.sessionId))))
@@ -171,4 +171,43 @@ it('keeps unavailable manifest snapshots unresolved and rejects a separately aut
 it('keeps exact-choice disagreement and uncheckable text grading pending for review', () => {
   expect(gradeOpenmaicAnswer(snapshot, 'A', official.result)).toEqual({ result: 'unassessed', grading: 'conflict' })
   expect(gradeOpenmaicAnswer({ ...snapshot, type: 'short_answer' }, 'One half', { ...official.result, correct: true, status: 'correct', earned: 1 })).toEqual({ result: 'unassessed', grading: 'pending' })
+})
+
+it('keeps a nonnumeric alternative pending rather than inheriting the official incorrect grade', () => {
+  const split = { ...snapshot, question: 'Split five into two parts', options: [{ value: 'A', label: '1和4' }, { value: 'C', label: '4和1' }], answer: ['A'] }
+  expect(gradeOpenmaicAnswer(split, 'C', official.result)).toEqual({ result: 'unassessed', grading: 'pending' })
+})
+
+it('keeps a mixed numeral and word alternative pending until its criterion is confirmed', () => {
+  for (const [expected, submitted] of [['15', '十五'], ['十五', '15']]) {
+    const mixed = { ...snapshot, options: [{ value: 'A', label: expected }, { value: 'C', label: submitted }], answer: ['A'] }
+    expect(gradeOpenmaicAnswer(mixed, 'C', official.result)).toEqual({ result: 'unassessed', grading: 'pending' })
+  }
+})
+
+it('accepts one explicit native parent criterion correction without replacing original source or inventing independent credit', async () => {
+  const split = { ...snapshot, question: 'Split five into two parts', options: [{ value: 'A', label: '1和4' }, { value: 'C', label: '4和1' }], answer: ['A'] }
+  const f = await officialFixture(split), prepared = await f.feedback().prepare(f.lesson, f.target, signal)
+  f.setRecords([record(0, 'submitted', { [snapshot.id]: 'C' }), record(1, 'reviewed', { [snapshot.id]: 'C' }, [official.result])])
+  const sourceRead = await f.feedback().read(f.lesson, prepared.binding, signal), observation = sourceRead.observations[0]!
+  const question = openmaicAcademicQuestion(observation)
+  const response = { id: observation.responseId, questionId: question.id, rawResponse: '"C"', assistance: 'unknown', answerDate: { kind: 'unknown' }, source: observation.source }
+  const decision = { learnerId: 'child-1', termId: 'term-1', blockId: 'block-1', responseId: response.id, questionId: question.id, snapshotHash: observation.question.snapshotHash, submittedAnswer: 'C', result: 'correct', criterion: 'Either order of the two positive parts is valid because 4+1=5.', parentConfirmation: 'I confirm this criterion for this original answer.' }
+  const rawResponse = `Student grading correction:\n${JSON.stringify(decision)}`
+  const native = { sessionId: 'parent-main', messageId: 'parent-message', inputVersion: 'parent-version', rawResponse, receiptAt: NOW }
+  const assessment = { id: 'a1', responseId: response.id, result: 'correct', grading: 'equivalent', official: observation.official, officialHistory: observation.officialHistory, assistance: 'unknown', feedback: decision.criterion, answerEvidence: question.answerEvidence, assessedAt: NOW,
+    criterionCorrection: { sessionId: native.sessionId, messageId: native.messageId, inputVersion: native.inputVersion, rawResponse } }
+  const files = input()
+  Object.assign(files[1]!.value, { questions: [question], currentQuestionId: question.id, responses: [response], assessments: [assessment] })
+  const read = validateStudyFiles(files, [], [native], sourceRead.observations)
+  expect(read.valid).toBe(true)
+  expect(deriveEvidence(read.workspace!).entries).toMatchObject([{ result: 'correct', sourceStatus: 'known', official: { result: { correct: false } }, answerDate: { kind: 'unknown' }, assistance: 'unknown' }])
+  expect(consumeOpenmaicFeedback(read.workspace!, sourceRead)).toMatchObject({ status: 'accepted', missingResponseIds: [], conflicts: [] })
+  const replay = validateStudyFiles(files, read.files, [native], sourceRead.observations)
+  expect(replay.workspace!.blocks[0]!.responses).toHaveLength(1)
+  expect(replay.workspace!.blocks[0]!.assessments).toHaveLength(1)
+  expect(consumeOpenmaicFeedback(replay.workspace!, sourceRead)).toEqual(consumeOpenmaicFeedback(read.workspace!, sourceRead))
+  expect(deriveEvidence(validateStudyFiles(files, [], [], sourceRead.observations).workspace!).entries).toMatchObject([{ result: 'unassessed', sourceStatus: 'known' }])
+  expect(deriveEvidence(validateStudyFiles(files, [], [{ ...native, rawResponse: 'model-authored confirmation' }], sourceRead.observations).workspace!).entries).toMatchObject([{ result: 'unassessed', sourceStatus: 'known' }])
+  expect(deriveEvidence(validateStudyFiles(files, [], [native], [{ ...observation, sourceStatus: 'unknown' }]).workspace!).entries).toMatchObject([{ result: 'unassessed', sourceStatus: 'unknown' }])
 })

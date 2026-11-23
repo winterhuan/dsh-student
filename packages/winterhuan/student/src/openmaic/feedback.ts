@@ -74,6 +74,7 @@ export function gradeOpenmaicAnswer(snapshot: unknown, answer: z.infer<typeof of
   const remaining = resolved.map((item, index) => item?.label ?? expected[index]!)
   const equivalent = selected.length === expected.length && submitted.every((item, index) => { const at = remaining.findIndex(label => equals(item?.label ?? selected[index]!, label)); if (at < 0) return false; remaining.splice(at, 1); return true })
   const correct = exact || equivalent
+  if (!correct && (submitted.some(item => !fraction(item?.label ?? '')) || resolved.some(item => !fraction(item?.label ?? '')))) return { result: 'unassessed', grading: 'pending' }
   if (!official) return { result: correct ? 'correct' : 'incorrect', grading: 'pending' }
   if (official.correct === null || official.status !== (official.correct ? 'correct' : 'incorrect') || official.correct && official.earned === 0 || !official.correct && official.earned !== 0 || official.earned > (question.points ?? 1)) return { result: 'unassessed', grading: 'conflict' }
   if (correct && !official.correct && equivalent && !exact) return { result: 'correct', grading: 'equivalent' }

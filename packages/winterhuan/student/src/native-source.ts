@@ -26,6 +26,17 @@ function learningScope(text: string): NativeInputObservation['learningScope'] {
   try { const scope = learningScopeSchema.safeParse(JSON.parse(intention)); return scope.success ? { learnerId: scope.data.learnerId, termId: scope.data.termId, blockId: scope.data.blockId, questionId: scope.data.questionId, ...(scope.data.responseId ? { responseId: scope.data.responseId } : {}) } : undefined }
   catch { return undefined }
 }
+function panelAnswer(text: string, sessionId: string): { rawResponse: string; scope: NonNullable<NativeInputObservation['learningScope']> } | 'invalid' | undefined {
+  if (!text.startsWith('请加载 study 技能。在当前原生会话处理下面的意图，')) return undefined
+  if (Buffer.byteLength(text) > 32_768) return 'invalid'
+  const lines = /^[^\n]+\nStudent intention:\n([^\n]+)\n([\s\S]*)$/u.exec(text)
+  try {
+    const intent = lines && z.object({ ...learningScopeSchema.shape, responseId: z.string().min(1), nativeSessionId: z.literal(sessionId), request: z.string(), operation: z.object({ action: z.literal('answer'), taskId: z.string().min(1), response: z.string().min(1).max(2000) }).passthrough() }).passthrough().safeParse(JSON.parse(lines[1]!))
+    if (!intent || !intent.success || intent.data.request !== lines![2] || intent.data.operation.taskId !== intent.data.questionId) return 'invalid'
+    const { learnerId, termId, blockId, questionId, responseId } = intent.data
+    return { rawResponse: intent.data.operation.response, scope: { learnerId, termId, blockId, questionId, responseId } }
+  } catch { return 'invalid' }
+}
 type Slot = { message: UserMessage; receipt: NativeReceipt; admission?: NativeAdmission }
 
 /**
@@ -98,12 +109,15 @@ export function resolveNativeSources(observation: Pick<SessionObservation, 'head
         const receipt: NativeReceipt = event.seq < observation.inheritedEventCount ? { kind: 'unknown', reason: 'Inherited consumption is not new input in this Session.' } : consumed?.receipt ?? { kind: 'unknown', reason: 'No exact claim in the entered step.' }
         const inputVersion = `dsh-native-v1:${createHash('sha256').update(canonical({ algorithm: 'dsh-native-v1', sessionId: cut.sessionId, consumedSeq: event.seq, message })).digest('hex')}`
         const text = message.content.filter(block => block.type === 'text').map(block => block.text).join('')
-        const rawResponse = text.length > 0 && text.length <= 2000 ? text : undefined
+        const panel = panelAnswer(text, cut.sessionId)
+        const rawResponse = panel === 'invalid' ? undefined : panel?.rawResponse ?? (text.length > 0 && text.length <= 2000 ? text : undefined)
         const attachments = message.content.flatMap(block => block.type === 'image' || block.type === 'file' ? [{ kind: block.type, attachmentId: block.attachment.attachmentId }] : [])
         const input: NativeConsumedInput = { status: 'consumed', messageId: message.id, inputVersion, consumedSeq: event.seq, ...(rawResponse === undefined ? { textUnavailable: 'Exact native text is empty or exceeds 2000 characters.' } : { rawResponse }), receipt, ...('rpcId' in message.source ? { requestId: message.source.rpcId } : {}), attachments: attachments.slice(0, 8), omittedAttachments: Math.max(0, attachments.length - 8) }
         inputs.push(input)
-        const originalScope = rawResponse === undefined ? undefined : learningScope(rawResponse)
+        const originalScope = panel && panel !== 'invalid' ? panel.scope : rawResponse === undefined ? undefined : learningScope(rawResponse)
         if (receipt.kind === 'known' && rawResponse !== undefined) observations.push({ sessionId: cut.sessionId, messageId: message.id, inputVersion, rawResponse, receiptAt: receipt.at, ...(originalScope ? { learningScope: originalScope } : {}) })
+        // Previously saved short panel envelopes retain their exact input reference during answer extraction.
+        if (receipt.kind === 'known' && panel && panel !== 'invalid' && text.length <= 2000) observations.push({ sessionId: cut.sessionId, messageId: message.id, inputVersion, rawResponse: text, receiptAt: receipt.at, learningScope: panel.scope })
         break
       }
       case 'step/end': claims = []; sealed = []; entered = false; claimWindow = true; claimTargets.clear(); break

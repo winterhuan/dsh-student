@@ -140,6 +140,10 @@ export function learningContinuation(workspace: ValidatedWorkspace, state: Study
     }
     const next = active.questions.find(question => !active.responses.some(response => response.questionId === question.id))
     if (next) return finish({ ...(next.capability ? actionFor(next.capability.goalId, 'answer', 'unfinished-question') : base), blockId: active.id, questionId: next.id })
+    if (current.capability) {
+      const item = progress.find(item => item.id === current.capability!.goalId)!
+      if (item.level === 'weak' && item.scope) return finish(actionFor(item.id, 'teach', 'current-gap'))
+    }
   }
   const remainingDue = due.filter(mistake => !used.includes(familyForMistake(mistake.id)))
   if (reviewRound.remaining && remainingDue.length) {

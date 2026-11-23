@@ -17,7 +17,7 @@ import { validateStudyFiles } from '../src/files/validation.ts'
 import type { WorkspaceRead } from '../src/files/read.ts'
 import { NOW, setup } from './fixtures.ts'
 
-async function fixture(foreign = false, scoped = true) {
+async function fixture(foreign = false, scoped = true, correction = false) {
   const root = await mkdtemp(join(tmpdir(), 'student-original-history-'))
   const cwd = join(root, 'workspace'), ctx = new Context(), seed = new Context()
   onTestFinished(async () => { await seed.fiber.dispose(); await ctx.fiber.dispose(); await rm(root, { recursive: true, force: true }) })
@@ -25,7 +25,7 @@ async function fixture(foreign = false, scoped = true) {
   await seed.plugin(SessionStore); await seed.plugin(SessionQuery)
   const original = seed.sessions.create(SessionId('original-main'), { meta: { cwd: foreign ? join(root, 'foreign') : cwd } })
   const scope = { learnerId: 'child-1', termId: 'term-1', blockId: 'block-1', questionId: 'q1', responseId: 'r1' }
-  const rawResponse = scoped ? `Student intention:\n${JSON.stringify(scope)}\n15` : '15'
+  const rawResponse = correction ? `Student grading correction:\n${JSON.stringify({ ...scope, snapshotHash: 'a'.repeat(64), submittedAnswer: 'C', result: 'correct', criterion: 'Either part order is valid.', parentConfirmation: 'I confirm the original criterion.' })}` : scoped ? `Student intention:\n${JSON.stringify(scope)}\n15` : '15'
   const message = createUserMessage({ source: { kind: 'user', rpcId: 'original-request' as SessionRequestId }, content: [{ type: 'text', text: rawResponse }] })
   original.append('agent/inbox/spliced', { target: 'next-turn', start: 0, inserted: [message] })
   original.append('turn/start', { turn: 1 })
@@ -50,6 +50,11 @@ async function fixture(foreign = false, scoped = true) {
     { path: '.study/blocks/block-1.json', value: { format: 2, kind: 'block', learnerId: 'child-1', termId: 'term-1', id: 'block-1', subject: 'math', mode: 'foundation', startedAt: NOW, context: { profile: setup.profile }, questions: [{ id: 'q1', objectiveId: 'm2a-o-sub', source: { kind: 'authored', description: 'Original question' }, topic: 'Math', prompt: '18 − 3?', answer: '15', explanation: 'Subtract three', answerEvidence: '15 + 3 = 18' }], responses: [{ id: 'r1', questionId: 'q1', rawResponse, assistance: 'unknown', source: { kind: 'native', sessionId: source.sessionId, messageId: source.messageId, inputVersion: source.inputVersion, receiptAt: source.receiptAt } }], hints: [], assessments: [] } },
   ])
   expect(parsed.valid).toBe(true)
+  if (correction) {
+    const block = parsed.workspace!.blocks[0]!
+    block.responses[0]!.source = { kind: 'legacy', sourcePath: '.study/state.json', row: 'original-response' }
+    block.assessments.push({ id: 'correction-1', responseId: 'r1', result: 'correct', assistance: 'unknown', feedback: 'Either part order is valid.', answerEvidence: 'Five has parts one and four.', assessedAt: NOW, criterionCorrection: { sessionId: source.sessionId, messageId: source.messageId, inputVersion: source.inputVersion, rawResponse } })
+  }
   const read: WorkspaceRead = { status: 'valid', files: [], membership: [], issues: [], workspace: parsed.workspace! }
   return { ctx, agent, source, read, signal: new AbortController().signal }
 }
@@ -96,4 +101,16 @@ it('does not read a denied original Session or trust foreign and unscoped histor
   expect(await readNativeHistory(foreign.agent, foreign.read, foreign.signal)).toMatchObject({ observations: [], verification: [{ status: 'unavailable' }] })
   const ambiguous = await fixture(false, false)
   expect(await readNativeHistory(ambiguous.agent, ambiguous.read, ambiguous.signal)).toMatchObject({ observations: [], verification: [{ status: 'available' }] })
+})
+it('reauthenticates the exact original parent correction input after a cold restart and excludes revoked access', async () => {
+  const f = await fixture(false, true, true)
+  const invocation = new Context()
+  onTestFinished(() => invocation.fiber.dispose())
+  let allowed = true
+  invocation.provide('remoteAccess', { allows: async () => allowed } as Context['remoteAccess'])
+  const historical = await readNativeHistory(f.agent, f.read, f.signal, invocation)
+  expect(historical.observations).toEqual([f.source])
+  allowed = false
+  await historical.recheck()
+  expect(historical.observations).toEqual([])
 })

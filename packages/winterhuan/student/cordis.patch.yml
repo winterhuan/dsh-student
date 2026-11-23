@@ -1,6 +1,9 @@
 # Student's protected OpenMAIC records require the shared store in headless too.
 - id: credentials
   disabled: false
+# Enable the base policy before preset tools register their file mutations.
+- id: fs-observation-policy
+  disabled: false
 - insert:
     - id: student
       name: '@winterhuan/dsh-student'

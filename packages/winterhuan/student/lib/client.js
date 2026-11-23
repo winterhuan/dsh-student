@@ -13482,7 +13482,7 @@ window.__ModuleLoader__.load({
 					icon: _deepseek_ai_dsh_client_ui_primitives.IconPlayOutlineRegular
 				}]
 			}), "student: sidebar");
-			context.inject(["remote.student"], (scope) => {
+			context.inject(["remote.student", "remote.studentOpenmaicPlayback"], (scope) => {
 				const store = createStudentDraftStore();
 				registerWorkbench(scope, store);
 				scope.slots.inject("sidebar.right.pane.tab", () => scope.slots.register({

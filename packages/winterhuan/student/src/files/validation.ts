@@ -16,7 +16,7 @@ export interface ParsedFile { path: string; value: unknown }
 /** The relevant valid business entities; no second persisted evidence authority. */
 export interface ValidatedWorkspace { settings: TermSettings; blocks: LearningBlock[]; worksheets: WorksheetFile[]; collections?: CollectionsFile; nativeSources?: readonly NativeInputObservation[]; openmaicSources?: readonly OpenmaicInputObservation[]; archivedEvidence?: { workspace: ValidatedWorkspace; references: NonNullable<TermSettings['evidenceReferences']> }[] }
 /** Host-resolved consumed input version; official-file declarations alone cannot supply this observation. */
-export interface NativeInputObservation { sessionId: string; messageId: string; inputVersion: string; rawResponse: string; receiptAt: number; learningScope?: { learnerId: string; termId: string; blockId: string; questionId: string; responseId?: string } }
+export interface NativeInputObservation { sessionId: string; messageId: string; inputVersion: string; rawResponse: string; receiptAt: number; learningScope?: { learnerId: string; termId: string; blockId: string; questionId: string; responseId?: string }; questionSnapshot?: string }
 /** Validation outcome retains independently valid parsed files when related data fails. */
 export interface ValidationResult { valid: boolean; issues: FileIssue[]; files: { path: string; file: OfficialFile }[]; workspace?: ValidatedWorkspace }
 
@@ -200,6 +200,17 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
         if (!frozen && question.source.kind !== 'legacy' && file.kind === 'worksheet' && file.origin === 'prepared' && mistake?.prompt === question.prompt) fail(path, `questions.${i}.prompt`, 'review-variation', 'Vary the prompt of a prepared mistake question; retain original prompts in workbook records.')
       }
     }
+    if (file.kind === 'block' && file.pendingOpenmaic) {
+      const events = new Set<string>()
+      for (const [i, pending] of file.pendingOpenmaic.entries()) {
+        const { binding, record } = pending
+        const key = canonical([binding.bindingId, record.sessionId, record.id])
+        if (events.has(key)) fail(path, `pendingOpenmaic.${i}`, 'duplicate-pending-event', 'Preserve one original event per binding, runtime session and record ID.')
+        events.add(key)
+        if (binding.learnerId !== file.learnerId || binding.termId !== file.termId || binding.blockId !== file.id) fail(path, `pendingOpenmaic.${i}.binding`, 'pending-event-owner', 'Preserve the original learner, term and block binding.')
+        for (const question of questions.filter(question => question.openmaic?.bindingId === binding.bindingId)) if (question.capability && canonical(question.capability) !== canonical({ goalId: binding.goalId, familyId: binding.familyId, scope: binding.scope })) fail(path, `pendingOpenmaic.${i}.binding`, 'pending-event-target', 'Retain the frozen question capability and scope for this binding.')
+      }
+    }
     for (const [i, response] of file.responses.entries()) {
       const question = questions.find(item => item.id === response.questionId)
       if (!question) fail(path, `responses.${i}.questionId`, 'question-reference', 'Save the referenced question before its original answer.')
@@ -244,6 +255,9 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
       for (const question of oldQuestions) {
         const used = old.file.kind === 'worksheet' || old.file.responses.some(response => response.questionId === question.id)
         if (used && canonical(question) !== canonical(questions.find(item => item.id === question.id))) fail(path, 'questions', 'frozen-content', 'Retain published worksheet and used block question content and target; publish replacements under a new identity.')
+      }
+      if (file.kind === 'block' && old.file.kind === 'block') for (const pending of old.file.pendingOpenmaic ?? []) {
+        if (!file.pendingOpenmaic?.some(current => canonical(current.binding) === canonical(pending.binding) && canonical(current.record) === canonical(pending.record))) fail(path, 'pendingOpenmaic', 'original-pending-event', 'Preserve original pending events when resolving their association or assessment.')
       }
       for (const response of old.file.responses) {
         const current = file.responses.find(item => item.id === response.id)

@@ -35,6 +35,7 @@ async function officialFixture(originalQuestion = snapshot) {
   let missingManifest = false
   let forbidden = false
   let reads = 0
+  let changeDuringRead = false
   const envelope = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status, headers: { 'content-type': 'application/json' } })
   const token = `fixture.${Buffer.from(JSON.stringify({ exp: 7 * 86400 })).toString('base64url')}.signature`
   const network: typeof fetch = async (url) => {
@@ -47,7 +48,7 @@ async function officialFixture(originalQuestion = snapshot) {
     if (path === '/api/persistence/documents/stage-1') return envelope({ dslVersion: '0.3.0', stage: { id: 'stage-1' }, scenes: [{ id: 'scene-1', stageId: 'stage-1', type: 'quiz', content: { type: 'quiz', questions: [originalQuestion] } }] })
     reads++
     if (forbidden) return envelope({}, 403)
-    if (path.endsWith('/records')) return envelope(records.filter(item => typeof item === 'object' && item !== null && 'sessionId' in item && path.includes(String(item.sessionId))))
+    if (path.endsWith('/records')) { if (changeDuringRead) rev++; return envelope(records.filter(item => typeof item === 'object' && item !== null && 'sessionId' in item && path.includes(String(item.sessionId)))) }
     if (path.endsWith('/sessions')) return envelope(sessions)
     return envelope(sessions.find(item => typeof item === 'object' && item !== null && 'id' in item && path.endsWith(String(item.id))))
   }
@@ -61,7 +62,7 @@ async function officialFixture(originalQuestion = snapshot) {
   const feedback = () => new OpenmaicFeedback(connection(), captureStore, (request, stage, signal) => generation.verify(request, stage, signal))
   const target = { goalId: 'm.sub', familyId: 'math.sub-basic', scope: { id: 'within20', description: 'Written subtraction within20', modality: 'written' as const, numberMax: 20 } }
   const lesson = { ...owner, classroomId: 'stage-1', base: 'https://classroom.test', learnerKey: 'user:fixture-parent' }
-  return { feedback, lesson, target, setRecords(next: ReturnType<typeof record>[]) { records = next; sessions = [...new Set(next.map(item => item.sessionId))].map(id => ({ id, runtimeDslVersion: '0.1.0', kind: 'quizAttempt', stageId: 'stage-1', learnerKey: lesson.learnerKey, status: 'completed', createdAt: '2026-11-20T01:00:00Z', updatedAt: '2026-11-20T01:01:00Z' })) }, async anotherChild() { const other = { ...owner, learnerId: 'child-2' }; await generation.run({ ...other, requirement: 'Equivalent fractions' }, signal); await generation.run(other, signal); return { ...lesson, ...other } }, noManifest() { missingManifest = true }, setRevision() { rev++ }, deny() { forbidden = true }, readCount() { return reads } }
+  return { feedback, lesson, target, setRecords(next: ReturnType<typeof record>[]) { records = next; sessions = [...new Set(next.map(item => item.sessionId))].map(id => ({ id, runtimeDslVersion: '0.1.0', kind: 'quizAttempt', stageId: 'stage-1', learnerKey: lesson.learnerKey, status: 'completed', createdAt: '2026-11-20T01:00:00Z', updatedAt: '2026-11-20T01:01:00Z' })) }, setSessions(next: unknown[]) { sessions = next }, async anotherChild() { const other = { ...owner, learnerId: 'child-2' }; await generation.run({ ...other, requirement: 'Equivalent fractions' }, signal); await generation.run(other, signal); return { ...lesson, ...other } }, changeDuringRead() { changeDuringRead = true }, noManifest() { missingManifest = true }, setRevision() { rev++ }, deny() { forbidden = true }, readCount() { return reads } }
 }
 const record = (seq: number, phase: string, answers = { [snapshot.id]: 'B' }, results?: unknown[]) => ({ id: `record-${seq}`, sessionId: 'attempt-1', seq, sceneId: 'scene-1', createdAt: '2026-11-20T01:00:00Z', payload: { payloadVersion: 1, phase, answers, ...(results ? { results } : {}) } })
 it('reauthorizes submitted answers after restart and applies an independently checked equivalent choice', async () => {
@@ -130,7 +131,7 @@ it('rejects changed Student ownership, source partition and internally conflicti
   await expect(f.feedback().prepare({ ...f.lesson, learnerId: 'child-2' }, f.target, signal)).rejects.toMatchObject({ code: 'identity-changed' })
   await expect(f.feedback().read({ ...f.lesson, learnerKey: 'user:foreign' }, prepared.binding, signal)).rejects.toMatchObject({ code: 'identity-changed' })
   f.setRecords([record(0, 'submitted'), record(1, 'reviewed', { [snapshot.id]: 'A' }, [official.result])])
-  expect(await f.feedback().read(f.lesson, prepared.binding, signal)).toMatchObject({ observations: [{ sourceStatus: 'unknown', result: 'unassessed', reason: 'Attempt contains conflicting submitted answers.' }] })
+  expect(await f.feedback().read(f.lesson, prepared.binding, signal)).toMatchObject({ observations: [], pending: [{ reason: 'conflicting-submissions' }, { reason: 'conflicting-submissions' }] })
 })
 
 it('rejects inconsistent original source tuples, duplicate submissions, snapshots and official review ordering', () => {
@@ -147,13 +148,15 @@ it('rejects inconsistent original source tuples, duplicate submissions, snapshot
   }
 })
 
-it('gives genuine retries separate identities and keeps answer exposure out of independent evidence', async () => {
+it('keeps two sessions of the same question pending without assuming that a new session proves a retry', async () => {
   const f = await officialFixture(), prepared = await f.feedback().prepare(f.lesson, f.target, signal)
   const first = [record(0, 'submitted'), record(1, 'reviewed', undefined, [official.result])]
   f.setRecords([...first, ...first.map(item => ({ ...item, id: `retry-${item.id}`, sessionId: 'attempt-2' }))])
   const read = await f.feedback().read(f.lesson, prepared.binding, signal)
-  expect(new Set(read.observations.map(item => item.responseId)).size).toBe(2)
-  expect(read.observations).toMatchObject([{ answerExposure: 'possible' }, { answerExposure: 'possible' }])
+  expect(read.observations).toEqual([])
+  expect(read.pending).toHaveLength(4)
+  expect(read.pending.every(item => item.reason === 'ambiguous-session')).toBe(true)
+  expect(read.checkpoint.attempts).toEqual([{ attemptId: 'attempt-1', seq: 1 }, { attemptId: 'attempt-2', seq: 1 }])
 })
 it('keeps unavailable manifest snapshots unresolved and rejects a separately authorized second child on the original partition', async () => {
   const f = await officialFixture()
@@ -210,4 +213,86 @@ it('accepts one explicit native parent criterion correction without replacing or
   expect(deriveEvidence(validateStudyFiles(files, [], [], sourceRead.observations).workspace!).entries).toMatchObject([{ result: 'unassessed', sourceStatus: 'known' }])
   expect(deriveEvidence(validateStudyFiles(files, [], [{ ...native, rawResponse: 'model-authored confirmation' }], sourceRead.observations).workspace!).entries).toMatchObject([{ result: 'unassessed', sourceStatus: 'known' }])
   expect(deriveEvidence(validateStudyFiles(files, [], [native], [{ ...observation, sourceStatus: 'unknown' }]).workspace!).entries).toMatchObject([{ result: 'unassessed', sourceStatus: 'unknown' }])
+})
+
+it('acknowledges completely saved pending grading without turning it into independent mastery', async () => {
+  const f = await officialFixture(), prepared = await f.feedback().prepare(f.lesson, f.target, signal)
+  f.setRecords([record(0, 'submitted')])
+  const read = await f.feedback().read(f.lesson, prepared.binding, signal), observation = read.observations[0]!
+  const question = openmaicAcademicQuestion(observation)
+  const response = { id: observation.responseId, questionId: question.id, rawResponse: JSON.stringify(observation.source.submittedAnswer), assistance: 'unknown', answerDate: { kind: 'unknown' }, source: observation.source }
+  const files = input()
+  Object.assign(files[1]!.value, { questions: [question], currentQuestionId: question.id, responses: [response], assessments: [{ id: 'a1', responseId: response.id, result: observation.result, grading: 'pending', assistance: 'unknown', feedback: 'Original grade is missing.', answerEvidence: question.answerEvidence, assessedAt: NOW }] })
+  const validated = validateStudyFiles(files, [], [], read.observations)
+  expect(validated.valid).toBe(true)
+  expect(consumeOpenmaicFeedback(validated.workspace!, read)).toMatchObject({ status: 'accepted', conflicts: [response.id] })
+  expect(deriveEvidence(validated.workspace!).entries).toMatchObject([{ assistance: 'unknown', answerDate: { kind: 'unknown' }, grading: 'pending' }])
+})
+
+it.each(['review-only', 'review-before-submit', 'conflicting-submit', 'cross-session'])('preserves %s original events as pending facts and acknowledges only complete saved coverage', async kind => {
+  const f = await officialFixture(), prepared = await f.feedback().prepare(f.lesson, f.target, signal)
+  const records = kind === 'review-only' ? [record(0, 'reviewed', undefined, [official.result])]
+    : kind === 'review-before-submit' ? [record(0, 'reviewed', undefined, [official.result]), record(1, 'submitted')]
+      : kind === 'conflicting-submit' ? [record(0, 'submitted'), record(1, 'submitted', { [snapshot.id]: 'A' })]
+        : [record(0, 'submitted'), { ...record(0, 'reviewed', undefined, [official.result]), id: 'other-review', sessionId: 'attempt-2' }]
+  Object.assign(records[0]!, { extension: { original: ['retained', 1] } })
+  f.setRecords(records)
+  const read = await f.feedback().read(f.lesson, prepared.binding, signal)
+  expect(read.observations).toEqual([])
+  expect(read.pending.map(item => item.record)).toEqual(records)
+  const files = input()
+  Object.assign(files[1]!.value, { questions: [], currentQuestionId: undefined, responses: [], assessments: [], pendingOpenmaic: read.pending })
+  const saved = validateStudyFiles(files)
+  expect(saved.valid).toBe(true)
+  expect(deriveEvidence(saved.workspace!).entries).toEqual([])
+  expect(consumeOpenmaicFeedback(saved.workspace!, read)).toMatchObject({ status: 'accepted', missingPendingIds: [] })
+  Object.assign(files[1]!.value, { pendingOpenmaic: read.pending.slice(1) })
+  expect(consumeOpenmaicFeedback(validateStudyFiles(files).workspace!, read).status).toBe('pending')
+  Object.assign(files[1]!.value, { pendingOpenmaic: [read.pending[0], read.pending[0]] })
+  expect(validateStudyFiles(files).valid).toBe(false)
+  Object.assign(files[1]!.value, { pendingOpenmaic: read.pending.map(item => ({ ...item, binding: { ...item.binding, learnerId: 'another-child' } })) })
+  expect(validateStudyFiles(files).valid).toBe(false)
+})
+
+it.each([['gap', 'incomplete-read'], ['duplicate-event', 'incomplete-read'], ['record-limit', 'read-limit'], ['session-limit', 'read-limit'], ['payload-version', 'unsupported-version'], ['session-version', 'unsupported-version']])('reports %s as %s without a checkpoint', async (kind, code) => {
+  const f = await officialFixture(), prepared = await f.feedback().prepare(f.lesson, f.target, signal)
+  let events = [record(0, 'submitted')]
+  if (kind === 'gap') events = [record(1, 'submitted')]
+  if (kind === 'duplicate-event') events = [record(0, 'submitted'), { ...record(1, 'submitted'), id: 'record-0' }]
+  if (kind === 'record-limit') events = Array.from({ length: 2001 }, (_, index) => record(index, 'draft'))
+  if (kind === 'payload-version') events[0]!.payload.payloadVersion = 2
+  f.setRecords(events)
+  if (kind === 'session-limit' || kind === 'session-version') f.setSessions(Array.from({ length: kind === 'session-limit' ? 101 : 1 }, (_, index) => ({ id: `attempt-${index}`, runtimeDslVersion: kind === 'session-version' ? '9.0.0' : '0.1.0', kind: 'quizAttempt', stageId: 'stage-1', learnerKey: f.lesson.learnerKey, status: 'completed', createdAt: '2026-11-20T01:00:00Z', updatedAt: '2026-11-20T01:01:00Z' })))
+  await expect(f.feedback().read(f.lesson, prepared.binding, signal)).rejects.toMatchObject({ code })
+})
+
+it('distinguishes an empty complete source from a source changed during the read', async () => {
+  const f = await officialFixture(), prepared = await f.feedback().prepare(f.lesson, f.target, signal)
+  const empty = await f.feedback().read(f.lesson, prepared.binding, signal)
+  expect(empty).toMatchObject({ observations: [], pending: [], drafts: 0, omitted: 0, checkpoint: { attempts: [] } })
+  expect(consumeOpenmaicFeedback(validateStudyFiles(input()).workspace!, empty).status).toBe('accepted')
+  f.setRecords([record(0, 'submitted')]); f.changeDuringRead()
+  await expect(f.feedback().read(f.lesson, prepared.binding, signal)).rejects.toMatchObject({ code: 'incomplete-read' })
+})
+
+it('bounds the aggregate runtime read even when every individual session fits the HTTP response limit', async () => {
+  const f = await officialFixture(), prepared = await f.feedback().prepare(f.lesson, f.target, signal)
+  f.setRecords([1, 2].map(index => ({ ...record(0, 'submitted'), id: `large-${index}`, sessionId: `attempt-${index}`, extension: 'x'.repeat(4_200_000) })))
+  await expect(f.feedback().read(f.lesson, prepared.binding, signal)).rejects.toMatchObject({ code: 'read-limit' })
+})
+
+it('preserves original official grading extension fields in matched formal assessments', async () => {
+  const f = await officialFixture(), prepared = await f.feedback().prepare(f.lesson, f.target, signal)
+  const originalResult = { ...official.result, criterionVersion: 'source-v1', marks: ['original'] }
+  f.setRecords([record(0, 'submitted'), record(1, 'reviewed', undefined, [originalResult])])
+  const source = await f.feedback().read(f.lesson, prepared.binding, signal), observation = source.observations[0]!
+  const question = openmaicAcademicQuestion(observation), response = { id: observation.responseId, questionId: question.id, rawResponse: JSON.stringify(observation.source.submittedAnswer), assistance: 'unknown', answerDate: { kind: 'unknown' }, source: observation.source }
+  const files = input()
+  Object.assign(files[1]!.value, { currentQuestionId: question.id, questions: [question], responses: [response], assessments: [{ id: 'a1', responseId: response.id, result: observation.result, grading: observation.grading, official: observation.official, officialHistory: observation.officialHistory, assistance: 'unknown', assessedAt: NOW, feedback: 'Equivalent value', answerEvidence: question.answerEvidence }] })
+  const saved = validateStudyFiles(files, [], [], source.observations)
+  expect(saved.valid).toBe(true)
+  expect(saved.workspace!.blocks[0]!.assessments[0]!.official!.result).toEqual(originalResult)
+  expect(consumeOpenmaicFeedback(saved.workspace!, source).status).toBe('accepted')
+  Object.assign(files[1]!.value, { assessments: [] })
+  expect(consumeOpenmaicFeedback(validateStudyFiles(files).workspace!, source)).toMatchObject({ status: 'pending', missingResponseIds: [response.id] })
 })

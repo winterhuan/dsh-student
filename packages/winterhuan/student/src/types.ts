@@ -33,3 +33,8 @@ export interface StudentManualReply { status: ManualSaveResult['status']; curren
 export interface StudentSubmissionRequest { requestId: string; response?: { termId: TermId; owner: { kind: 'block'; id: BlockId } | { kind: 'worksheet'; id: WorksheetId }; responseId: ResponseId } }
 /** Native admission, a saved original answer and a valid saved assessment are independent facts. */
 export interface StudentSubmissionInspection { requestId: string; admission: 'accepted' | 'unknown'; nativeStates: NativeAdmission['status'][]; nativeSourceStatus: NativeSourceView['status']; cut?: NativeSourceCut; answer: 'not-requested' | 'saved' | 'missing' | 'unavailable'; assessment: 'not-requested' | 'valid' | 'pending' | 'unavailable'; readStatus: WorkspaceRead['status']; versions: WorkspaceQueryResult['versions']; issues: FileIssue[]; backupIssues?: FileIssue[] }
+
+/** Explicit learning return/continue/resume or pause of one bound classroom's native feedback intent. */
+export interface StudentFeedbackSyncRequest { lessonId: string; trigger: 'return' | 'continue' | 'resume' | 'pause' }
+/** Native queue admission is separate from independently accepted saved learning facts. */
+export interface StudentFeedbackSyncReply { lessonId: string; status: 'queued' | 'coalesced' | 'paused' | 'unavailable'; messageId?: string }

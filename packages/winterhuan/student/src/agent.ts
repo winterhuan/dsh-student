@@ -3,6 +3,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-skill'
 import { createStudySkillProvider } from './skill-provider.ts'
 import { registerStudyTools } from './tools.ts'
+import { registerNativeCapture } from './native-capture.ts'
 import * as OpenmaicAgent from './openmaic/agent.ts'
 
 export const name = 'student-agent'
@@ -13,6 +14,7 @@ export const inject = ['skills', 'tools']
  */
 export function apply(context: Context): void {
   context.effect(() => context.skills.registerProvider(() => createStudySkillProvider()), 'student: skills')
+  registerNativeCapture(context)
   registerStudyTools(context)
   context.plugin(OpenmaicAgent)
 }

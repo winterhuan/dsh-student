@@ -49,7 +49,7 @@ export async function apply(context: Context): Promise<void> {
     id: '@winterhuan/dsh-student', kind: 'student', title: () => t('title'),
     guide: [{ id: 'student', order: 24, title: () => t('title'), description: () => t('description'), icon: IconPlayOutlineRegular }],
   }), 'student: sidebar')
-  context.inject(['remote.student'], scope => {
+  context.inject(['remote.student', 'remote.studentOpenmaicPlayback'], scope => {
     const store = createStudentDraftStore()
     registerWorkbench(scope, store)
     scope.slots.inject('sidebar.right.pane.tab', () => scope.slots.register({ name: 'sidebar.right.pane.tab', key: '@winterhuan/dsh-student', locale: NS, store, inject: () => studentCallbacks(scope) }, Sidebar))

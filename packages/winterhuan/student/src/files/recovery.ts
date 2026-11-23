@@ -9,6 +9,8 @@ import { canonical } from '../learning/shared.ts'
 import { officialFileSchemas, termSettingsSchema, blockSchema, worksheetSchema, collectionsSchema, type OfficialFile, type TermId, type WorksheetFile } from './schema.ts'
 import { validateStudyFiles, type FileIssue } from './validation.ts'
 import type { ObservedFile, WorkspaceRead, StudyFiles } from './read.ts'
+import type { LessonFileRead } from './lessons.ts'
+import { OPENMAIC_LESSONS_PATH } from '../openmaic.ts'
 
 /**
  * Hash original bytes for backup/source verification and recoverable migration identity.
@@ -34,19 +36,21 @@ export interface MigrationOutput { path: string; file: OfficialFile; status: 'mi
 /** Unsupported legacy facts remain located in the preserved source material. */
 export interface PendingLegacyFact { sourcePath: string; row: string; fields: string[]; reason: string }
 /** Migration description identifies exact source/backup bytes and every independent output. */
-export interface MigrationPlan { status: 'ready' | 'partial' | 'blocked'; termId?: TermId; sourceSha256: string; sourceVersion?: string; backupPath?: string; outputs: MigrationOutput[]; pending: PendingLegacyFact[]; issues: FileIssue[] }
+export interface MigrationPlan { status: 'ready' | 'partial' | 'blocked'; termId?: TermId; sourceSha256: string; sourceVersion?: string; backupPath?: string; outputs: MigrationOutput[]; preservedSources: KnowledgeMigrationPlan['preservedSources']; pending: PendingLegacyFact[]; issues: FileIssue[] }
 
 /**
  * Describe a v1 conversion only after verifying a distinct original-byte backup.
  * @param read - freshly observed, non-mutating legacy read.
  * @param backup - independently observed original-byte backup, never an overwritten existing original.
  * @param existing - independently read existing v2 output for interrupted-operation recovery.
+ * @param learner - confirmed child identity, required unless an existing output already records it.
+ * @param recovery - complete classroom-log read and original-byte backups; future formats block all outputs.
  * @returns stable entities, named unsupported facts and explicit partial/conflicting outputs; performs no writes.
  */
-export function describeMigration(read: WorkspaceRead, backup: ObservedFile, existing: readonly { path: string; file: OfficialFile }[] = []): MigrationPlan {
+export function describeMigration(read: WorkspaceRead, backup: ObservedFile, existing: readonly { path: string; file: OfficialFile }[] = [], learner?: import('./schema.ts').LearnerId, recovery?: MigrationRecovery): MigrationPlan {
   const source = read.files.find(file => file.path === '.study/state.json')
   const hash = source ? sourceSha256(source.bytes) : ''
-  const plan: MigrationPlan = { status: 'blocked', sourceSha256: hash, outputs: [], pending: [], issues: [] }
+  const plan: MigrationPlan = { status: 'blocked', sourceSha256: hash, outputs: [], preservedSources: [], pending: [], issues: [] }
   if (!source || read.status !== 'legacy' || backup.path === source.path || backup.targetKey === source.targetKey || sourceSha256(backup.bytes) !== hash) {
     plan.issues.push({ path: backup.path, field: '', rule: 'original-byte-backup', correction: 'Preserve a distinct original-byte backup and verify it against the currently observed v1 source.' })
     return plan
@@ -64,12 +68,21 @@ export function describeMigration(read: WorkspaceRead, backup: ObservedFile, exi
     plan.issues.push({ path: source.path, field: 'parentConfirmation', rule: 'legacy-confirmation', correction: 'Keep the verified legacy bytes and obtain explicit statements for reviewed v2 settings before conversion.' })
     return plan
   }
+  const knownLearner = existing.find(entry => entry.file.kind === 'term-settings' && entry.file.termId === termId)?.file.learnerId
+  if ((!knownLearner && !learner) || knownLearner && learner && knownLearner !== learner) {
+    plan.issues.push({ path: source.path, field: 'learnerId', rule: 'learner-identity', correction: 'Provide the confirmed Student learner identity and retain it across terms; source bytes and accounts cannot identify a child.' })
+    return plan
+  }
+  const learnerId = termSettingsSchema.shape.learnerId.unwrap().parse(knownLearner ?? learner)
+  const preserved = migrationSources([source], recovery ? { ...recovery, backups: [backup, ...recovery.backups] } : undefined)
+  plan.preservedSources = preserved.preservedSources; plan.pending.push(...preserved.pending); plan.issues.push(...preserved.issues)
+  if (plan.issues.length) return plan
   const target = (objectiveId: string | undefined, subject: 'math' | 'chinese' | 'english') => {
     const goal = objectiveId ? builtinObjectiveAnywhere(objectiveId) ?? state.objectives.find(goal => goal.id === objectiveId) : undefined
     return goal?.subject === subject ? objectiveId : { kind: 'pending' as const, reason: 'Original capability target requires source review.' }
   }
   const files: { path: string; file: OfficialFile }[] = []
-  files.push({ path: '.study/settings.json', file: termSettingsSchema.parse({ format: 2, kind: 'term-settings', termId, learnerId: `learner-${hash.slice(0, 32)}`, revision: state.revision, updatedAt: state.updatedAt,
+  files.push({ path: '.study/settings.json', file: termSettingsSchema.parse({ format: 2, kind: 'term-settings', termId, learnerId, revision: state.revision, updatedAt: state.updatedAt,
     profile: state.profile, materials: state.materials, courses: state.courses, ...(state.interests ? { interests: state.interests } : {}), ...(state.openmaic ? { openmaic: state.openmaic } : {}),
     ...(state.archivedAt !== undefined ? { archivedAt: state.archivedAt } : {}), migration: { sourcePath: source.path, sourceSha256: hash, backupPath: backup.path } }) })
   for (const [i, block] of state.sessions.entries()) {
@@ -175,6 +188,7 @@ export function describeMigration(read: WorkspaceRead, backup: ObservedFile, exi
     legacyHistory: state.attempts.filter(attempt => !state.sessions.some(block => block.id === attempt.sessionId)).map(attempt => ({ sourcePath: source.path, row: `attempts.${state.attempts.indexOf(attempt)}`, record: attempt })),
     mistakes: state.mistakes.map(({ stage: _stage, independentDays: _days, dueAt: _due, ...mistake }) => mistake), exercises: state.exercises, concepts: state.concepts, objectives: state.objectives, relations: state.relations, teachingQueue: state.teachingQueue, rewards,
     pendingLegacy: plan.pending.slice(0, 5000) }) })
+  for (const { file } of files) file.learnerId = learnerId
   const validation = validateStudyFiles(files.map(({ path, file }) => ({ path, value: file })))
   plan.issues.push(...validation.issues)
   plan.outputs = files.map(({ path, file }) => {
@@ -315,6 +329,7 @@ export function describeRestore(read: WorkspaceRead, chosen: { path: string; bac
     ...read.files.flatMap(({ path, targetKey }) => { const file = read.cache?.files.get(targetKey)?.file; return file ? [{ path, file }] : [] })]
   const issues = source ? validateStudyFiles([...read.files.filter(file => file.path !== source.path && file.file).map(file => ({ path: file.path, value: file.file })), { path: source.path, value: source.file }], prior, read.workspace?.nativeSources).issues
     : [{ path: chosen.path, field: '', rule: 'backup-verification', correction: 'Choose a byte-verified strict official backup.' }]
+  if (read.status === 'future-format') issues.unshift({ path: chosen.backup.sourcePath, field: 'format', rule: 'future-format', correction: 'Use a compatible plugin for this newer format; do not overwrite it with an older backup.' })
   return { status: issues.length === 0 ? 'available' : 'blocked', destinationPath: chosen.backup.sourcePath, backupPath: chosen.path, sourceSha256: chosen.backup.sha256,
     ...(current ? { preserveCurrent: { path: current.path, version: current.version, sha256: sourceSha256(current.bytes) } } : {}), issues }
 }
@@ -341,24 +356,35 @@ export function describeArchive(source: WorkspaceRead, archive: WorkspaceRead, a
 
 /** Read-only format-2 identity and reference migration, with no copied or reassessed learner responses. */
 export interface KnowledgeMigrationPlan {
-  status: 'ready' | 'blocked'; learnerId?: import('./schema.ts').LearnerId; termId?: TermId;
-  outputs: { path: string; file: OfficialFile; status: 'write-needed' | 'already-valid' }[];
-  issues: FileIssue[];
+  status: 'ready' | 'partial' | 'complete' | 'blocked'; learnerId?: import('./schema.ts').LearnerId; termId?: TermId;
+  outputs: { path: string; file: OfficialFile; status: 'write-needed' | 'already-valid' | 'conflict' }[];
+  preservedSources: { path: string; backupPath: string; sha256: string }[];
+  pending: PendingLegacyFact[]; issues: FileIssue[];
+}
+/** Independently observed original-byte backups and current outputs for resuming the same migration plan. */
+export interface MigrationRecovery {
+  backups: readonly ObservedFile[];
+  lessons: LessonFileRead;
+  current?: WorkspaceRead;
 }
 /**
  * Describe stable learner identity and complete old-ID routing for an isolated format-2 term.
  * @param read - current independently validated term; agents preserve bytes and publish the returned files.
  * @param learner - explicitly known identity when joining this term to earlier terms of the same child.
+ * @param recovery - verified per-file originals, complete lesson-log read and optional fresh partial outputs.
  * @returns repeatable same-identity outputs; unknown custom content stays pending and no learning fact is added.
  */
-export function describeKnowledgeMigration(read: WorkspaceRead, learner?: import('./schema.ts').LearnerId): KnowledgeMigrationPlan {
-  const plan: KnowledgeMigrationPlan = { status: 'blocked', outputs: [], issues: [] }
-  if (read.status !== 'valid' || !read.workspace) { plan.issues.push({ path: '.study/settings.json', field: '', rule: 'migration-read', correction: 'Read and repair the complete isolated term before describing knowledge migration.' }); return plan }
+export function describeKnowledgeMigration(read: WorkspaceRead, learner?: import('./schema.ts').LearnerId, recovery?: MigrationRecovery): KnowledgeMigrationPlan {
+  const plan: KnowledgeMigrationPlan = { status: 'blocked', outputs: [], preservedSources: [], pending: [], issues: [] }
+  if (!['valid', 'archived'].includes(read.status) || !read.workspace) { plan.issues.push({ path: '.study/settings.json', field: '', rule: 'migration-read', correction: 'Read and repair the complete isolated active or archived term before describing knowledge migration.' }); return plan }
   const { settings, collections, blocks, worksheets } = read.workspace
   if (settings.learnerId && learner && learner !== settings.learnerId) { plan.issues.push({ path: '.study/settings.json', field: 'learnerId', rule: 'learner-identity', correction: 'Retain the known stable child identity; account sharing cannot join different learners.' }); return plan }
   if (!settings.learnerId && !learner) { plan.issues.push({ path: '.study/settings.json', field: 'learnerId', rule: 'learner-identity', correction: 'Provide the explicitly confirmed Student learner identity; a term, workspace or shared service account cannot establish child ownership.' }); return plan }
   const learnerId = termSettingsSchema.shape.learnerId.unwrap().parse(settings.learnerId ?? learner)
   plan.learnerId = learnerId; plan.termId = settings.termId
+  const preserved = migrationSources(read.files, recovery)
+  plan.preservedSources = preserved.preservedSources; plan.pending = preserved.pending; plan.issues = preserved.issues
+  if (plan.issues.length) return plan
   const references = new Map((collections?.legacyReferences ?? []).map(reference => [`${reference.kind}:${reference.oldId}`, reference]))
   const add = (kind: 'objective' | 'exercise', oldId: string): void => {
     if (references.has(`${kind}:${oldId}`)) return
@@ -378,7 +404,40 @@ export function describeKnowledgeMigration(read: WorkspaceRead, learner?: import
   if (!collections && references.size) outputs.push({ path: '.study/collections.json', file: collectionsSchema.parse({ format: 2, kind: 'collections', termId: settings.termId, learnerId, mistakes: [], rewards: [], legacyReferences: [...references.values()] }) })
   const validation = validateStudyFiles(outputs.map(({ path, file }) => ({ path, value: file })), entries)
   plan.issues = validation.issues
-  plan.outputs = outputs.map(({ path, file }) => ({ path, file, status: canonical(entries.find(entry => entry.path === path)?.file) === canonical(file) ? 'already-valid' : 'write-needed' }))
-  plan.status = validation.valid ? 'ready' : 'blocked'
+  const current = recovery?.current ?? read
+  plan.outputs = outputs.map(({ path, file }) => {
+    const observed = current.files.find(entry => entry.path === path)?.file
+    const original = entries.find(entry => entry.path === path)?.file
+    return { path, file, status: canonical(observed) === canonical(file) ? 'already-valid' : canonical(observed) === canonical(original) ? 'write-needed' : 'conflict' }
+  })
+  plan.outputs.sort((left, right) => Number(left.file.kind === 'term-settings') - Number(right.file.kind === 'term-settings'))
+  if (plan.outputs.some(output => output.status === 'conflict') || current.files.some(file => !outputs.some(output => output.path === file.path))) plan.issues.push({ path: '.study', field: '', rule: 'migration-conflict', correction: 'Preserve concurrent edits and reread the original backups and current outputs before merging by identity.' })
+  plan.status = !validation.valid || plan.issues.length ? 'blocked' : plan.outputs.every(output => output.status === 'already-valid') ? 'complete' : plan.outputs.some(output => output.status === 'already-valid') ? 'partial' : 'ready'
   return plan
+}
+
+function migrationSources(sources: readonly ObservedFile[], recovery: MigrationRecovery | undefined): Pick<KnowledgeMigrationPlan, 'preservedSources' | 'pending' | 'issues'> {
+  const result: Pick<KnowledgeMigrationPlan, 'preservedSources' | 'pending' | 'issues'> = { preservedSources: [], pending: [], issues: [] }
+  if (!recovery) { result.issues.push({ path: '.study', field: '', rule: 'original-byte-backup', correction: 'Independently read a distinct exact-byte backup of every original file and the complete classroom log before migration.' }); return result }
+  if (recovery.current?.status === 'future-format' || !['valid', 'missing'].includes(recovery.lessons.status)) {
+    result.issues.push({ path: recovery.current?.status === 'future-format' ? '.study' : OPENMAIC_LESSONS_PATH, field: 'format', rule: 'migration-read', correction: 'Preserve unsupported or incomplete files and use a compatible reader before any migration write.' }); return result
+  }
+  const originals = [...sources]
+  if (recovery.lessons.status === 'valid') {
+    const { bytes, observation, file } = recovery.lessons
+    if (!bytes || !observation || !file) { result.issues.push({ path: OPENMAIC_LESSONS_PATH, field: '', rule: 'migration-read', correction: 'Read the complete original lesson file and its exact bytes.' }); return result }
+    originals.push({ path: OPENMAIC_LESSONS_PATH, ...observation, bytes })
+    for (const [index, lesson] of file.lessons.entries()) {
+      const fields = (['learnerId', 'termId', 'blockId'] as const).filter(field => !lesson[field])
+      if (fields.length) result.pending.push({ sourcePath: OPENMAIC_LESSONS_PATH, row: `lessons.${index}`, fields, reason: 'Preserve the original unbound lesson; a URL or shared account cannot establish learning ownership.' })
+    }
+  }
+  const backups = recovery.backups.map(backup => ({ backup, sha256: sourceSha256(backup.bytes) }))
+  for (const source of originals) {
+    const sha256 = sourceSha256(source.bytes)
+    const backup = backups.find(entry => entry.backup.path !== source.path && entry.backup.targetKey !== source.targetKey && entry.sha256 === sha256)?.backup
+    if (!backup) result.issues.push({ path: source.path, field: '', rule: 'original-byte-backup', correction: 'Preserve and independently verify a distinct backup of these exact original bytes before migration.' })
+    else result.preservedSources.push({ path: source.path, backupPath: backup.path, sha256 })
+  }
+  return result
 }

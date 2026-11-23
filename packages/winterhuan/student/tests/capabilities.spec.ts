@@ -92,12 +92,15 @@ it('plans repeatable format-2 knowledge migration without copying or changing or
   expect(describeKnowledgeMigration(read)).toMatchObject({ status: 'blocked', outputs: [], issues: [{ rule: 'learner-identity' }] })
   const { termSettingsSchema } = await import('../src/files/schema.ts')
   const learnerId = termSettingsSchema.shape.learnerId.unwrap().parse('verified-child')
-  const plan = describeKnowledgeMigration(read, learnerId)
-  expect(plan).toMatchObject({ status: 'ready', learnerId: 'verified-child', outputs: [{ path: '.study/settings.json', status: 'write-needed' }, { path: '.study/collections.json', status: 'write-needed' }] })
+  const recovery = { backups: read.files.map(file => ({ ...file, path: `${file.path}.original`, targetKey: `${file.targetKey}.original` })), lessons: { status: 'missing' as const, issues: [] } }
+  const plan = describeKnowledgeMigration(read, learnerId, recovery)
+  expect(plan).toMatchObject({ status: 'ready', learnerId: 'verified-child', outputs: [{ path: '.study/collections.json', status: 'write-needed' }, { path: '.study/settings.json', status: 'write-needed' }] })
   const completed = validateStudyFiles(plan.outputs.map(output => ({ path: output.path, value: output.file })))
   const reread = { ...read, files: completed.files.map(({ path, file }) => ({ path, targetKey: path, version: '2', bytes: new TextEncoder().encode(JSON.stringify(file)), file })), workspace: completed.workspace! }
-  expect(describeKnowledgeMigration(reread).outputs.every(output => output.status === 'already-valid')).toBe(true)
+  expect(describeKnowledgeMigration(read, learnerId, { ...recovery, current: reread }).outputs.every(output => output.status === 'already-valid')).toBe(true)
   expect(read.workspace.settings.learnerId).toBeUndefined()
+  const archived = { ...read, status: 'archived' as const, workspace: { ...read.workspace, settings: { ...read.workspace.settings, archivedAt: NOW } }, files: read.files.map(file => file.file.kind === 'term-settings' ? { ...file, file: { ...file.file, archivedAt: NOW } } : file) }
+  expect(describeKnowledgeMigration(archived, learnerId, recovery)).toMatchObject({ status: 'ready', learnerId: 'verified-child', outputs: expect.arrayContaining([expect.objectContaining({ path: '.study/settings.json', file: expect.objectContaining({ archivedAt: NOW }) })]) })
 })
 
 it('keeps a different core method as a separate family serving an existing capability', () => {

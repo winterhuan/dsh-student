@@ -12,7 +12,7 @@ import { zstdDecompressSync } from 'node:zlib'
 const execute = promisify(execFile)
 const packageRoot = fileURLToPath(new URL('..', import.meta.url))
 const filesUrl = pathToFileURL(join(packageRoot, 'lib/files.js')).href
-const { nodeStudyFiles, readWorkspace, queryWorkspace, describeMigration, describeArchive, describeRestore, readBackups } = await import(filesUrl)
+const { nodeStudyFiles, readWorkspace, queryWorkspace, describeMigration, describeArchive, describeRestore, readBackups, termSettingsSchema, readLessonFile } = await import(filesUrl)
 const dshBin = await realpath(process.env.DSH_BIN ?? '/Users/winter/.nvm/versions/node/v24.22.2/bin/dsh')
 const runtime = createRequire(dshBin)
 const root = await mkdtemp(join(tmpdir(), 'student-recovery-native-'))
@@ -52,7 +52,7 @@ async function migration() {
   const backupPath = '.study/v1-original.json'
   const backup = { ...await fs.stat(backupPath, signal), path: backupPath, bytes: await fs.read(backupPath, signal, 8_388_608) }
   const current = await readWorkspace(fs, signal)
-  return describeMigration(legacy, backup, current.files.flatMap(row => row.file ? [{ path: row.path, file: row.file }] : []))
+  return describeMigration(legacy, backup, current.files.flatMap(row => row.file ? [{ path: row.path, file: row.file }] : []), termSettingsSchema.shape.learnerId.unwrap().parse('recovery-fixture-child'), { backups: [], lessons: await readLessonFile(fs, signal), current })
 }
 async function observe(label, expectedExit) {
   const before = await bytesAndVersions()

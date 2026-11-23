@@ -66,11 +66,15 @@ console.log(JSON.stringify({ candidates: result.backups.map(({ path, backup }) =
 JS
 ```
 
-同一导出提供 `readWorkspace`、`backupVersions`、`describeMigration(read, backup, existing)`、`describeKnowledgeMigration(read, learnerId?)`、`describeRestore(read, chosen)` 和 `describeArchive(source, archive, active)`；完整输入说明在包内 `lib/types/files/recovery.d.ts`。`read` 使用 `readWorkspace` 的当前观察；迁移的 backup 是单独读取且版本稳定的原字节 `ObservedFile`，existing 是已校验的输出。中断迁移保留此前源观察，或单独读取原 v1 来源并校验，再比对现有输出。恢复的 chosen 是家长选定的 `readBackups` 项；归档的三个参数分别是原学期、导出目录与当前活动学期的独立读取。描述只读，输出文件仍由原生工具逐项写入。
+同一导出提供 `readWorkspace`、`backupVersions`、`describeMigration(read, backup, existing, learnerId, recovery)`、`describeKnowledgeMigration(read, learnerId, recovery)`、`describeRestore(read, chosen)` 和 `describeArchive(source, archive, active)`；完整输入说明在包内 `lib/types/files/recovery.d.ts`。`read` 使用 `readWorkspace` 的当前观察；迁移的 backup 是单独读取且版本稳定的原字节 `ObservedFile`，existing 是已校验的输出。中断迁移保留此前源观察，或单独读取原 v1 来源并校验，再比对现有输出。恢复的 chosen 是家长选定的 `readBackups` 项；归档的三个参数分别是原学期、导出目录与当前活动学期的独立读取。描述只读，输出文件仍由原生工具逐项写入。
 
-旧 `.study/state.json` 先保留原字节、摘要与备份路径。使用随包 `./files` 的 `describeMigration` 逐项 outputs；不要根据旧评分时间、照片接收时间、默认 independent 和未保存的答案补出新事实。无法核实的字段保留 pendingLegacy、未知日期/帮助和来源。迁移路径含 termId 和实体身份，部分写入时先比对已有输出后继续；最后 CLI 校验并读取消费者。
+旧 `.study/state.json` 先保留原字节、摘要与备份路径，并传入明确核对的 Student learnerId；重试可沿用已保存输出中的身份，文件摘要不能识别孩子。使用随包 `./files` 的 `describeMigration` 逐项 outputs；不要根据旧评分时间、照片接收时间、默认 independent 和未保存的答案补出新事实。无法核实的字段保留 pendingLegacy、未知日期/帮助和来源。迁移路径含 termId 和实体身份，部分写入时先比对已有输出后继续；最后 CLI 校验并读取消费者。
 
-格式2的知识与身份迁移先在隔离副本调用 describeKnowledgeMigration。缺少身份时必须传入明确核对的 learnerId，否则描述返回 blocked；已有身份保持不变，不能用学期标签或共享账号生成孩子身份。保留原字节，按 outputs 的 write-needed/already-valid 写入或跳过；旧 ID 的 pending/review-required 去向不授予掌握。重试复用相同身份和原回答，不重新生成母题或评分，不能把不同孩子合并。
+格式2的活动学期和归档逐学期在隔离副本调用 describeKnowledgeMigration。缺少身份时必须传入明确核对的 learnerId，否则描述返回 blocked；已有身份保持不变，不能用学期标签或共享账号生成孩子身份。原题、选项、回答、评分、帮助、日期、归档时间和课堂日志保留；旧 ID 的 pending/review-required 去向不授予掌握。相同身份的重试不创建回答、复习、母题或奖励。
+
+两种迁移的 recovery 都包含独立读取的原字节 backups 和 readLessonFile 返回的 lessons；课堂日志缺失也须实际读取确认。V1 的 backup 参数提供 state.json 原件，backups 另含已有课堂日志；格式2的 backups 包含全部正式文件及课堂日志。preservedSources 返回每个原路径、备份路径和 SHA-256；先保存该清单与旧 ID 映射，再按输出逐文件写入。未绑定旧课堂保持 pending，不自动补 learnerId、termId 或 blockId。新版本或不完整日志返回 blocked 且不给可写输出。归档使用路径重映射的 StudyFiles 读取，保留原 termId；按同一流程逐个处理全部归档，不能只检查当前引用的学期。
+
+格式2输出将 settings 放在最后。恢复时以保留原件重新取得 source read，将当前输出的独立 readWorkspace 观察放进 recovery.current；write-needed 才写，already-valid 跳过，conflict 或 blocked 先保留并核对并发变更。partial 仍未完成，complete 只说明该份计划已保存；再运行 CLI、重新创建读取器并核对原答案数、评分、复习和奖励。已验证备份用于回退，不让旧插件强读或降级覆盖未知新格式。原生工具单文件版本保护不能覆盖 shell、多文件迁移或归档，逐份失败必须保留已完成状态。
 
 归档前确认家长意图并结束活动段，保存其待评价回答。按描述保留学期所有源字节到 `.study/archives/<termId>/`，逐项检查已有输出；报告未完成文件。新学期另建 termId，不重用旧身份。CLI 校验当前学期不等于归档副本逐字节完整，必须独立比对归档输出。
 

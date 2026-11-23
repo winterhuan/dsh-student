@@ -155,7 +155,7 @@ node packages/winterhuan/student/lib/cli.js validate --workspace /path/to/worksp
 
 安装后使用 `<study 技能 Base directory>/../../../lib/cli.js`；`./cli` 导出与 `study-validate` bin 指向同一文件。DSH Git 安装不承诺全局 PATH 命令。校验读取正式文件与完整独立课程日志，保留字节/修订，不创建备份或修复。退出 0 指明观察到的 kind、身份和版本；非零 JSON 指明路径、字段、规则和修正方式。校验输出最多 32 KiB，并明确遗漏。schema/example 从源定义生成完整资源；跨文件和来源事实检查仍由 CLI 执行。CLI 未独立匹配 Host 接收版本时，原生作答日期保持未知。部分操作和明确恢复见[编辑参考](knowledge/skills/study/references/files.md)。
 
-能力与母题查询从[随包学习目录](knowledge/curriculum/capabilities/catalog.json)读取判据、先修和来源，与个人记录分开。新能力题保存母题及实际检验范围；旧课程 ID 保留历史去向。等价工作区母题解析为同一有效题型。学期设置的稳定 `learnerId` 跨学期延续；旧格式2缺少身份时需核对。归档证据引用指向同一学生的原学期、实体与回答，不复制答案。`describeKnowledgeMigration` 描述可重复的格式2身份和旧 ID 去向；原题、回答与评分声明保留，未知日期、帮助和答案依据不授予进度。CLI 按需资源包括 `capability-goal`、`question-family`、`knowledge-extension`；详见[编辑参考](knowledge/skills/study/references/files.md)。
+能力与母题查询从[随包学习目录](knowledge/curriculum/capabilities/catalog.json)读取判据、先修和来源，与个人记录分开。新能力题保存母题及实际检验范围；旧课程 ID 保留历史去向。等价工作区母题解析为同一有效题型。学期设置的稳定 `learnerId` 跨学期延续；旧格式2缺少身份时需核对。归档证据引用指向同一学生的原学期、实体与回答，不复制答案。只读迁移描述要求确认学生身份、逐文件原字节备份和完整课堂日志读取。`describeKnowledgeMigration` 覆盖活动及归档格式2学期，报告部分写入与冲突，未绑定旧课堂保留待核对；原题、回答与评分声明保留，未知日期、帮助和答案依据不授予进度。CLI 按需资源包括 `capability-goal`、`question-family`、`knowledge-extension`；详见[编辑参考](knowledge/skills/study/references/files.md)。
 
 [共享继续查询](src/learning/mastery.ts)按当前题、待评价、当前或先修缺口、短复习及已确认新学给出一个下一步。查询复用有效回答，只请求缺失的基本应用、方法或变式证据；当前目标学习段最多新增三道原生检验题。评分可记录实际证明的判据。两个已结束母题用完当前短复习额度；连续继续随后提供允许的新学。明确原归档引用提供范围内掌握基线和独立重放的复习日期、阶段；缺失或不兼容原档不授予进度。首次掌握与恢复掌握跨学期分别保留。下一官方教学需求包含有界的已保存反馈与复习发现，并明确报告遗漏；大词表请求只教学列出的子集。
 

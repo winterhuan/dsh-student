@@ -5,7 +5,7 @@ import { updateStudy } from './fixtures.ts'
 import type { StudentQueryResult, StudentQueryRequest } from '../src/types.ts'
 
 /** Native conversation substitute for UI intent tests; business regressions separately use real files and tools. */
-export function studentClientFixture(initial: ReturnType<typeof updateStudy>, lessons?: Dashboard['interactiveLessons']) {
+export function studentClientFixture(initial: ReturnType<typeof updateStudy>, lessons?: Dashboard['interactiveLessons'], context?: import('../src/types.ts').StudentJsonValue) {
   let state = initial
   let generation = 0
   const listeners = new Set<() => void>()
@@ -19,7 +19,7 @@ export function studentClientFixture(initial: ReturnType<typeof updateStudy>, le
     if (!value) {
       addresses(address)
       const request: StudentQueryRequest = address ? JSON.parse(new URL(address).searchParams.get('query')!) : { kind: 'dashboard' }
-      const data = request.kind === 'learning-context' ? { termId: 'term-one', pendingFacts: [] } : dashboard(state, Date.now(), request.kind === 'dashboard' ? request.options : undefined)
+      const data = request.kind === 'learning-context' ? context ?? { termId: 'term-one', pendingFacts: [] } : dashboard(state, Date.now(), request.kind === 'dashboard' ? request.options : undefined)
       if (lessons && 'interactiveLessons' in data) data.interactiveLessons = lessons
       value = { status: 'live', failure: undefined, value: { status: 'valid', token: String(generation), readAt: Date.now(), refreshAfter: Date.now() + 3000, versions: [], native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [], data } }
       snapshots.set(key, value)

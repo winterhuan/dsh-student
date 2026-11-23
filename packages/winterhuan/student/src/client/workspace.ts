@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import type { ResourceSnapshot } from '@deepseek-ai/dsh-client-resources/client'
+import type { CapabilityProgress, LearningNextAction } from '../learning/mastery.ts'
 import type { Dashboard, MistakeStatus } from '../dashboard.ts'
 import type { StudentQueryResult, StudentSessionId, StudentJsonValue } from '../types.ts'
 import { studentResourceAddress } from './resource.ts'
@@ -19,8 +20,12 @@ export function useStudy(sessionId: StudentSessionId, visible: boolean, networkE
   if (data) offset.current = data.serverNow - Date.now()
   const facts = context.value?.data
   const termId = facts && typeof facts === 'object' && 'termId' in facts && typeof facts.termId === 'string' ? facts.termId : undefined
+  const learnerId = facts && typeof facts === 'object' && 'learnerId' in facts && typeof facts.learnerId === 'string' ? facts.learnerId : undefined
+  const nextAction = facts && typeof facts === 'object' && 'nextAction' in facts ? facts.nextAction as (StudentJsonValue & LearningNextAction) | null : null
+  const goalProgress = facts && typeof facts === 'object' && 'goalProgress' in facts && Array.isArray(facts.goalProgress) ? facts.goalProgress as StudentJsonValue[] & CapabilityProgress[] : []
+  const loadNeeded = !data && (resource.failure?.code === 'student/main-session-required' || context.failure?.code === 'student/main-session-required')
   const stale = resource.status === 'failed' || context.status === 'failed'
-  return { data, context: facts, termId, value: resource.value, stale, error: stale ? networkError : '', offset }
+  return { data, context: facts, termId, learnerId, nextAction, goalProgress, value: resource.value, loadNeeded, stale, error: stale ? networkError : '', offset }
 }
 
 // The shared Host dashboard query validates all business content; this checks its wire discriminator.

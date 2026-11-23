@@ -22,7 +22,7 @@ export type StudentQueryRequest = WorkspaceQuery | { kind: 'dashboard'; options?
 /** Current validated projection, explicit partial status and independently observed Session cut. */
 export interface StudentQueryResult extends Omit<WorkspaceQueryResult<never>, 'data'> { data: StudentJsonValue; readAt: number; refreshAfter: number; token: string; native: NativeSourceView; backupIssues: FileIssue[] }
 /** Only changed snapshots or current read failures cross one resource stream. */
-export type StudentWatchFrame = { kind: 'snapshot'; value: StudentQueryResult } | { kind: 'failure'; message: string }
+export type StudentWatchFrame = { kind: 'snapshot'; value: StudentQueryResult } | { kind: 'failure'; message: string; reason?: 'main-session-required' }
 /** The shared manual request with JSON values at its wire baseline. */
 export interface StudentManualSaveRequest extends Omit<ManualSaveRequest, 'baseline'> { baseline: Record<string, StudentJsonValue> }
 /** Thin current owner/version facts for a retained manual draft; file bytes never cross the wire. */

@@ -63,14 +63,13 @@ export class StudentRemote extends TypertRemoteService {
   }
   /**
    * Follow current files and time thresholds; unchanged version/cut/projection tokens produce no frame.
-   * @param sessionId - registered main native Session identity, authorized before the stream opens.
+   * @param sessionId - native Session identity; every read requires a registered main Agent.
    * @param request - shared bounded projection selector.
    * @param signal - cancellation stops reads and the owned refresh timer.
    * @returns an initial snapshot and later changes or recoverable read-failure frames.
    */
   @Remote({ mode: 'stream', resources: { session: sessionId => sessionId } })
   async *watch(sessionId: StudentSessionId, request: StudentQueryRequest, signal: AbortSignal): AsyncIterable<StudentWatchFrame> {
-    await this.mainAgent(sessionId, signal)
     let token: string | undefined
     while (!signal.aborted) {
       let delay = this.config.refreshIntervalMs
@@ -81,7 +80,7 @@ export class StudentRemote extends TypertRemoteService {
       } catch (error) {
         if (signal.aborted) return
         token = undefined
-        yield this.wire({ kind: 'failure', message: (error instanceof Error ? error.message : 'Student data could not be read.').slice(0, 200) } as const)
+        yield this.wire({ kind: 'failure', ...(error instanceof RemoteError && error.code === 'student/main-session-required' ? { reason: 'main-session-required' as const } : {}), message: (error instanceof Error ? error.message : 'Student data could not be read.').slice(0, 200) } as const)
       }
       try { await setTimeout(delay, undefined, { signal }) }
       catch (error) { if (signal.aborted) return; throw error }

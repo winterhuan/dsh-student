@@ -21,7 +21,7 @@ import { blockSchema, collectionsSchema, termSettingsSchema } from '../src/files
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import type { SessionRequestId } from '@deepseek-ai/dsh-api-session-controller'
 
-async function fixture(maxWireBytes = 1_048_576, child = false) {
+async function fixture(maxWireBytes = 1_048_576, child = false, refreshIntervalMs = 3000) {
   const cwd = await mkdtemp(join(tmpdir(), 'student-transport-'))
   onTestFinished(() => rm(cwd, { recursive: true, force: true }))
   const ctx = new Context()
@@ -40,7 +40,7 @@ async function fixture(maxWireBytes = 1_048_576, child = false) {
   const resolve = vi.fn((wire: SessionId) => wire === id ? agent : undefined)
   ctx.provide('agents', { get } as Context['agents'])
   ctx.typert.lookups.register('agent', { parameter: 'agent', wire: 'agentId', resource: 'session', hostTypeSymbol: '@deepseek-ai/dsh-agent#Agent', wireTypeSymbol: '@deepseek-ai/dsh-session#SessionId', resolve })
-  await ctx.plugin(StudentRemote, { refreshIntervalMs: 3000, maxWireBytes })
+  await ctx.plugin(StudentRemote, { refreshIntervalMs, maxWireBytes })
   return { cwd, ctx, id, agent, get, resolve, signal: new AbortController().signal }
 }
 
@@ -49,6 +49,20 @@ it('rejects absent and child Agents without invoking the cold activation lookup'
   for (const target of [SessionId('absent'), id]) await expect(ctx.student.query(target, { kind: 'dashboard' }, signal)).rejects.toMatchObject({ code: 'student/main-session-required' })
   expect(get.mock.calls.map(([target]) => target)).toEqual(['absent', id])
   expect(resolve).not.toHaveBeenCalled()
+})
+
+it('keeps a cold main Session watch alive until native admission registers its Agent', async () => {
+  const { ctx, id, agent, get, resolve } = await fixture(1_048_576, false, 1)
+  get.mockReturnValue(undefined)
+  const abort = new AbortController()
+  const iterator = ctx.student.watch(id, { kind: 'dashboard' }, abort.signal)[Symbol.asyncIterator]()
+  onTestFinished(async () => { abort.abort(); await iterator.return?.() })
+  expect((await iterator.next()).value).toMatchObject({ kind: 'failure', reason: 'main-session-required' })
+  expect(resolve).not.toHaveBeenCalled()
+  get.mockReturnValue(agent)
+  expect((await iterator.next()).value).toMatchObject({ kind: 'snapshot', value: { status: 'valid', data: { study: { profile: setup.profile } } } })
+  abort.abort()
+  expect(await iterator.next()).toEqual({ done: true, value: undefined })
 })
 
 it('reads paged and filtered notebooks and browsed maps through the resource Remote query', async () => {

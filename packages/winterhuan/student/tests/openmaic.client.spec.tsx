@@ -13,6 +13,10 @@ import { dashboard } from '../src/dashboard.ts'
 import { updateStudy } from '../src/learning/update/index.ts'
 import { NOW, setup } from './fixtures.ts'
 
+function openParent() {
+  if (!screen.queryByRole('navigation', { name: en.parentEntry })) fireEvent.click(screen.getByRole('button', { name: en.parentEntry }))
+}
+
 const t = (key: keyof typeof en) => en[key]
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); window.sessionStorage.clear() })
 
@@ -75,7 +79,7 @@ describe('interactive lesson desk', () => {
     expect(change).toHaveBeenCalledWith({ action: 'openmaic-settings', baseUrl: 'http://127.0.0.1:3000/', parentConfirmation: en.openmaicConfirm }, 1, expect.any(String))
   })
 
-  it('pins go to class when a lesson is ready and shows generating', async () => {
+  it('continues the original work while another lesson is generating', async () => {
     const open = vi.spyOn(window, 'open').mockReturnValue(null)
     const base = dashboard(updateStudy(undefined, setup, Date.now()), Date.now())
     const generating = { ...ready, id: 'om-gen', status: 'generating' as const, title: '正在生成', pollUrl: '/api/generate-classroom/run-1', url: undefined, classroomId: undefined, summary: undefined }
@@ -85,9 +89,9 @@ describe('interactive lesson desk', () => {
     render(<StudyDesk sessionId="ready-lesson" visible running={false} ask={ask} t={t} />)
     expect(await screen.findByText(/Generating · 正在生成/)).toBeTruthy()
     expect((screen.getByRole('button', { name: en.openLesson }) as HTMLButtonElement).disabled).toBe(true)
-    fireEvent.click(screen.getByRole('button', { name: en.goToClass }))
-    expect(open).toHaveBeenCalledWith(ready.url, '_blank', 'noopener,noreferrer')
-    fireEvent.click(screen.getByRole('button', { name: en.openmaicQuery }))
+    expect(screen.queryByRole('button', { name: en.goToClass })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: en.continueLearning }))
+    expect(open).not.toHaveBeenCalled()
     await waitFor(() => expect(ask).toHaveBeenCalledOnce())
     expect(ask.mock.calls[0]).toMatchSnapshot()
   })
@@ -113,6 +117,8 @@ describe('interactive lesson desk', () => {
       summary: undefined, runId: 'run-paused', pollUrl: '/api/generate-classroom/run-paused', retryable: true,
     }] })
     render(<StudyDesk sessionId="retry-lesson" visible running={false} ask={ask} t={t} />)
+    openParent()
+    fireEvent.click(screen.getByRole('button', { name: en.lessonHistory }))
     fireEvent.click(await screen.findByRole('button', { name: en.openmaicRetry }))
     await waitFor(() => expect(ask).toHaveBeenCalledOnce())
     expect(ask.mock.calls[0]).toMatchSnapshot()

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Dashboard, MistakeStatus } from '../dashboard.ts'
 import type { Command } from '../schema.ts'
-import type { CheckInIntensity } from '../learning/mastery.ts'
+import type { CapabilityProgress, CheckInIntensity } from '../learning/mastery.ts'
 import { StudySubmissionError, type AskTutor, type StudyPhoto } from './bridge.ts'
 import type { StudentManualActions } from './manual-actions.ts'
 import type { DraftProps } from './drafts.tsx'
@@ -15,12 +15,12 @@ import type { StudentJsonValue } from '../types.ts'
 import { ParentSettings } from './forms.tsx'
 import type { Translate } from './locales.ts'
 import { useStudy } from './workspace.ts'
-import { intensityKeys, levelKeys, subjects, type Activity, type Mode, type ScopeChoice, type Subject } from './display.ts'
+import { assistKeys, day, intensityKeys, levelKeys, subjects, type Activity, type Mode, type ScopeChoice, type Subject } from './display.ts'
 import { IdeasView } from './ideas-view.tsx'
 import { MapView } from './map-view.tsx'
 import { PracticeView } from './practice-view.tsx'
-import { LessonsPanel, lessonsForSubject, openClassroom } from './lessons-view.tsx'
-import { continuePrompt, dailySheetPrompt, diagnosePrompt, dictationPrompt, dueClearPrompt, explorePrompt, goalPrompt, interestPracticePrompt, openmaicGeneratePrompt, openmaicQueryPrompt, openmaicRetryPrompt, openmaicReviewPrompt, organizePrompt, nativeIntentPrompt, pendingRecordPrompt, pendingRecordsPrompt, previewPrompt, reviewPrompt, teachPrompt, teachQueuePrompt } from './prompts.ts'
+import { LessonsPanel, lessonsForSubject } from './lessons-view.tsx'
+import { continuePrompt, loadLearningPrompt, dailySheetPrompt, diagnosePrompt, dictationPrompt, dueClearPrompt, explorePrompt, goalPrompt, interestPracticePrompt, openmaicGeneratePrompt, openmaicQueryPrompt, openmaicRetryPrompt, openmaicReviewPrompt, organizePrompt, nativeIntentPrompt, pendingRecordPrompt, pendingRecordsPrompt, previewPrompt, reviewPrompt, teachPrompt, teachQueuePrompt } from './prompts.ts'
 import { TodayView } from './today-view.tsx'
 import css from './desk.module.css'
 
@@ -36,7 +36,7 @@ function storeSubject(value: Subject) {
 }
 
 /** Workbench actions share the same persisted state as the native tutoring tools. */
-export function StudyDesk({ sessionId, visible, ask, running, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, inspectSubmission, useStore, actions }: DraftProps & StudentManualActions & { sessionId: StudentSessionId; useResource: UseStudentResource; visible: boolean; ask: AskTutor; running: boolean; t: Translate }) {
+export function StudyDesk({ sessionId, visible, ask, running, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, inspectSubmission, openLesson, useStore, actions }: DraftProps & StudentManualActions & { sessionId: StudentSessionId; useResource: UseStudentResource; visible: boolean; ask: AskTutor; running: boolean; t: Translate; openLesson?: (lessonId: string) => Promise<import('../openmaic/playback.ts').OpenmaicPlaybackResult> }) {
   const [subject, setSubject] = useState<Subject>(storedSubject)
   const [mistakeOffset, setMistakeOffset] = useState(0)
   const [mistakeStatus, setMistakeStatus] = useState<MistakeStatus>('all')
@@ -45,13 +45,13 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
   const [selectedConceptId, setSelectedConceptId] = useState('')
   const [intensities, setIntensities] = useState<Partial<Record<Subject, CheckInIntensity>>>({})
   const [scopeChoice, setScopeChoice] = useState<Partial<Record<Subject, ScopeChoice>>>({})
-  const [tab, setTab] = useState<'today' | 'map' | 'mistakes' | 'parent'>('today')
+  const [tab, setTab] = useState<'today' | 'map' | 'mistakes' | 'parent' | 'lessons'>('today')
   const [knowledgeView, setKnowledgeView] = useState<'map' | 'ideas'>('map')
   const scopeOf = (target: Subject): ScopeChoice => scopeChoice[target] ?? {}
   const activeScope = scopeOf(subject)
   const showMap = tab === 'map' && knowledgeView === 'map'
   const showBook = tab === 'map'
-  const workspace = useStudy(sessionId, visible, t('networkError'), { tab, offset: mistakeOffset, subject, status: mistakeStatus, ...(showBook && mapGrade !== undefined ? { mapGrade } : {}), ...(showBook && mapTerm !== undefined ? { mapTerm } : {}), ...(activeScope.grade !== undefined ? { diagGrade: activeScope.grade } : {}), ...(activeScope.term !== undefined ? { diagTerm: activeScope.term } : {}), ...(activeScope.unit ? { diagUnit: activeScope.unit } : {}) }, useResource)
+  const workspace = useStudy(sessionId, visible, t('networkError'), { tab: tab === 'lessons' ? 'parent' : tab, offset: mistakeOffset, subject, status: mistakeStatus, ...(showBook && mapGrade !== undefined ? { mapGrade } : {}), ...(showBook && mapTerm !== undefined ? { mapTerm } : {}), ...(activeScope.grade !== undefined ? { diagGrade: activeScope.grade } : {}), ...(activeScope.term !== undefined ? { diagTerm: activeScope.term } : {}), ...(activeScope.unit ? { diagUnit: activeScope.unit } : {}) }, useResource)
   const { data } = workspace
   const readOnly = workspace.value?.status === 'legacy'
   const [activity, setActivity] = useState<Activity>({ subject: storedSubject(), mode: 'foundation' })
@@ -88,7 +88,7 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
     const retained = submissions.find(item => item.questionId === task?.id && item.response?.owner.id === ownerId && item.response?.termId === workspace.termId && item.admission === 'unknown')
     if (retained?.response) responseIds.current.set(key, retained.response.responseId)
     if (command?.action === 'answer' && !responseIds.current.has(key)) responseIds.current.set(key, crypto.randomUUID())
-    return { termId: workspace.termId, blockId: ownerId, questionId: task?.id, responseId: task?.responseId ?? responseIds.current.get(key) }
+    return { learnerId: workspace.learnerId, termId: workspace.termId, blockId: ownerId, questionId: task?.id, responseId: task?.responseId ?? responseIds.current.get(key) }
   }
   async function tutor(text = continuePrompt, photo?: StudyPhoto, command?: Command, currentBlock = false) {
     if (readOnly) throw new Error(t('legacyFilesHelp'))
@@ -97,11 +97,22 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
     setSending(true); setSendError('')
     const active = data?.study?.active
     const retainBlock = active && (currentBlock || command?.action === 'answer' || command?.action === 'hint' || command?.action === 'stuck' || command?.action === 'stop')
-    const selection = retainBlock ? { subject: active.subject, goalId: data?.study?.task?.objectiveId, scope: active.scope } : { subject: command?.action === 'start' ? command.subject : subject, goalId: selectedObjectiveId || undefined, scope: command?.action === 'start' ? command.scope : scopeCommand(subject).scope }
-    const intent = { nativeSessionId: sessionId, ...ids, selection, ...(command ? { operation: command } : {}), request: text.trim() === '' ? continuePrompt : text }
+    const next = currentBlock ? workspace.nextAction : null
+    const selection = retainBlock ? { subject: active.subject, goalId: data?.study?.task?.objectiveId, scope: active.scope } : next ? { subject: next.subject, goalId: next.goalId, scope: next.scope } : { subject: command?.action === 'start' ? command.subject : subject, goalId: selectedObjectiveId || undefined, scope: command?.action === 'start' ? command.scope : scopeCommand(subject).scope }
+    const intent = { nativeSessionId: sessionId, ...ids, selection, nextAction: workspace.nextAction, ...(command ? { operation: command } : {}), request: text.trim() === '' ? continuePrompt : text }
     const retain = (requestId: string, admission: 'accepted' | 'unknown') => setSubmissions(previous => [...previous, { requestId, admission, ...(ids.questionId ? { questionId: ids.questionId } : {}), ...(command?.action === 'answer' && ids.termId && ids.blockId && ids.responseId ? { response: { termId: ids.termId as TermId, owner: { kind: 'block' as const, id: ids.blockId as BlockId }, responseId: ids.responseId as ResponseId } } : {}) }].slice(-12))
     try { const result = await ask(nativeIntentPrompt(intent, intent.request), photo); if (result) retain(result.requestId, result.admission) }
     catch (reason) { if (reason instanceof StudySubmissionError) retain(reason.requestId, 'unknown'); setSendError(reason instanceof Error ? reason.message : t('sendError')); throw reason }
+    finally { setSending(false) }
+  }
+  async function openSavedLesson(lessonId: string) {
+    if (!openLesson) { await tutor(openmaicQueryPrompt(lessonId), undefined, undefined, true); return }
+    setSending(true); setSendError('')
+    try {
+      const result = await openLesson(lessonId)
+      if (result.status === 'ownership-unresolved') { setSending(false); await tutor(openmaicQueryPrompt(lessonId), undefined, undefined, true) }
+      else if (result.status !== 'opened') setSendError(t(result.status === 'login-required' ? 'classroomLoginRequired' : result.status === 'identity-mismatch' ? 'classroomIdentityMismatch' : 'classroomUnavailable'))
+    } catch (_error) { setSendError(t('classroomUnavailable')) }
     finally { setSending(false) }
   }
   async function change(command: Command, _revision?: number, _baseline?: string): Promise<Dashboard> {
@@ -133,6 +144,16 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
       selectSubject(active.subject); setActivity({ subject: active.subject, mode: active.mode })
     }
   }, [active?.id, sessionId])
+  const synchronized = useRef(new Set<string>())
+  useEffect(() => {
+    if (!visible || disabled || running || !active || !workspace.learnerId || !workspace.termId) return
+    const lesson = data?.interactiveLessons.lessons.find(item => item.blockId === active.id && item.learnerId === workspace.learnerId && item.termId === workspace.termId && item.status !== 'failed')
+    if (!lesson) return
+    const key = JSON.stringify([sessionId, lesson.id, lesson.status, lesson.updatedAt, lesson.checkpoint])
+    if (synchronized.current.has(key)) return
+    synchronized.current.add(key)
+    void tutor(`请加载 study，阅读 references/openmaic-feedback.md。同步原课堂 id=${lesson.id}：生成中用 openmaic_generate 查询原 jobId；就绪时 prepare 并分页保存全部冻结原题及绑定，随后 read 全部有界来源页。经原生文件保存、打包 CLI 和独立消费接受后才推进 checkpoint。只同步当前原活动，不创建新课堂、不换题、不打开播放窗口；无新来源就保留状态。`, undefined, undefined, true).catch(() => {})
+  }, [visible, disabled, running, active?.id, workspace.learnerId, workspace.termId, data?.interactiveLessons.lessons, sessionId])
   const curriculum = study?.curriculum ?? null
   const scopeGrade = curriculum?.scope.grade ?? mapGrade ?? study?.profile.grade ?? 1
   const scopeTerm = curriculum?.scope.term ?? mapTerm ?? study?.profile.term ?? 'first'
@@ -211,6 +232,7 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
   }
   const nativeT: Translate = key => ['saved', 'gradesSaved', 'confirmPaperDone', 'teachQueued', 'workbookSaved'].includes(key) ? t('intentAdmitted') : t(key)
   const parentSettings = tab === 'parent'
+  const parentVisible = tab !== 'today'
   const draft = { useStore, actions }
   const draftScope = `student:draft:${sessionId}:${workspace.termId ?? 'setup'}`
   const context = workspace.context
@@ -220,27 +242,31 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
   return <main className={`student-desk ${css.desk}`} aria-label={t('title')}>
     <header className="student-top">
       <nav className={`student-tabs ${css.navigation}`} aria-label={t('title')}>
-        <button type="button" aria-pressed={tab === 'today'} onClick={() => setTab('today')}>{t('today')}</button>
-        <button type="button" aria-pressed={tab === 'map'} onClick={() => setTab('map')}>{t('parentProgress')}</button>
-        <button type="button" aria-label={t('parentPractice')} aria-pressed={tab === 'mistakes'} onClick={() => setTab('mistakes')}>{t('parentPractice')}{study && study.dueTotal > 0 ? ` · ${study.dueTotal}` : ''}</button>
-        <button type="button" aria-pressed={tab === 'parent'} onClick={() => setTab('parent')}>{t('parentProfile')}</button>
+        <button type="button" aria-pressed={tab === 'today'} onClick={() => setTab('today')}>{t('learningEntry')}</button>
+        <button type="button" aria-pressed={parentVisible} onClick={() => setTab('parent')}>{t('parentEntry')}</button>
       </nav>
+      {parentVisible && <nav className="student-segments" aria-label={t('parentEntry')}>
+        <button type="button" aria-pressed={tab === 'parent'} onClick={() => setTab('parent')}>{t('parentProfile')}</button>
+        <button type="button" aria-pressed={tab === 'map'} onClick={() => setTab('map')}>{t('parentProgress')}</button>
+        <button type="button" aria-pressed={tab === 'mistakes'} onClick={() => setTab('mistakes')}>{t('parentPractice')}</button>
+        <button type="button" aria-pressed={tab === 'lessons'} onClick={() => setTab('lessons')}>{t('lessonHistory')}</button>
+      </nav>}
       <div className="student-toolbar">
-        {study && !parentSettings && <nav className="student-subjects" aria-label={t('subject')}>{subjects.map(item => <button key={item} type="button" aria-pressed={subject === item} onClick={() => { selectSubject(item); setActivity({ subject: item, mode: 'foundation' }); setSelectedObjectiveId(''); setMistakeOffset(0); setMistakeStatus('all') }}>{t(item)}</button>)}</nav>}
-        <span className="student-muted">{t(workspace.stale ? 'updatePaused' : 'liveUpdates')}</span>
+        {study && !parentSettings && <nav className="student-subjects" aria-label={t('subject')}>{subjects.map(item => <button key={item} type="button" aria-pressed={subject === item} onClick={() => { selectSubject(item); setMistakeOffset(0); setMistakeStatus('all') }}>{t(item)}</button>)}</nav>}
+        <span className="student-muted">{t(workspace.loadNeeded ? 'readyToContinue' : workspace.stale ? 'updatePaused' : 'liveUpdates')}</span>
       </div>
     </header>
     {readOnly && data && <p role="status">{t('legacyFilesHelp')}</p>}
-    {workspace.error && <p role="alert">{t('staleData')}</p>}
+    {workspace.error && !workspace.loadNeeded && <p role="alert">{t('staleData')}</p>}
     {sendError && <p role="alert">{sendError}</p>}
     {submissions.length > 0 && <details className="student-fold"><summary>{t('submissionStatus')}</summary>{submissions.map(item => <div key={item.requestId}>
       <p>{t(item.admission === 'accepted' ? 'messageAdmitted' : 'messageUnknown')}</p>
       {item.response && <p>{t(item.inspection?.answer === 'saved' ? 'answerSaved' : 'answerPending')} · {t(item.inspection?.assessment === 'valid' ? 'assessmentSaved' : 'assessmentPending')}</p>}
       <button type="button" disabled={sending} onClick={() => { void inspectSubmission(sessionId, { requestId: item.requestId, ...(item.response ? { response: item.response } : {}) }).then(result => { setSubmissions(previous => previous.map(current => current.requestId === item.requestId ? { ...current, admission: result.admission, inspection: result } : current)) }).catch(reason => setSendError(reason instanceof Error ? reason.message : t('networkError'))) }}>{t('inspectSubmission')}</button>
     </div>)}</details>}
-    {!data ? workspace.value?.status === 'missing' ? <section><p>{t('setupFirst')}</p><button disabled={sending} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('setupConversation')}</button></section> : workspace.value ? <section><p>{t(workspace.value.status === 'legacy' ? 'legacyFilesHelp' : 'unavailableFilesHelp')}</p></section> : !workspace.error && <progress aria-label={t('busy')} /> : !study && tab === 'today' ? <section><p>{t('setupFirst')}</p><button disabled={sending} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('setupConversation')}</button></section> : subjectLoading && !parentSettings ? <progress aria-label={t('busy')} /> : <>
-      {study && tab === 'today' && <TodayView {...draft} draftScope={draftScope} study={study} subject={subject} activity={activity} setActivity={setActivity} goal={goals.find(item => item.id === selectedObjectiveId)} clearGoal={() => setSelectedObjectiveId('')} curriculum={curriculum} selectedObjectiveId={selectedObjectiveId} chooseGoal={chooseGoal} intensityLabel={`${t(intensityKeys[chosenIntensity(subject)])} · ${planOf(subject)?.samples[chosenIntensity(subject)].length ?? 0}`} openParent={() => setTab('parent')} openCheckins={() => setTab('map')} scope={activeScope} setScope={next => setScopeChoice(previous => ({ ...previous, [subject]: next }))} scopeUnits={study.scopedUnits ?? []} start={start} startRecommended={startRecommended} startDiagnosis={startDiagnosis} chosenIntensity={chosenIntensity(subject)} disabled={disabled} running={running} act={act} tutor={(text, currentBlock) => tutor(text, undefined, undefined, currentBlock)} t={t} prompts={{ daily: dailySheetPrompt(subject), dictation: dictationPrompt(subject) }} lessons={lessonsForSubject(data.interactiveLessons?.lessons ?? [], subject)} onInterestPractice={startInterest} onOpenLesson={() => { const request = lessonRequest(); void tutor(openmaicGeneratePrompt(request.subjectLabel, request.objectiveId, request.tags, request.focus, request.unitName)).catch(() => {}) }} onClearDue={startDue} onOpenClassroom={openClassroom} />}
-      {study && tab === 'today' && data.interactiveLessons && <LessonsPanel lessons={lessonsForSubject(data.interactiveLessons.lessons, subject)} {...(data.interactiveLessons.error !== undefined ? { error: data.interactiveLessons.error } : {})} disabled={disabled} running={running} t={t} onQuery={lessonId => { void tutor(openmaicQueryPrompt(lessonId)).catch(() => {}) }} onRetry={runId => { void tutor(openmaicRetryPrompt(runId)).catch(() => {}) }} onReview={classroomId => { void tutor(openmaicReviewPrompt(classroomId)).catch(() => {}) }} />}
+    {!data ? workspace.loadNeeded ? <section><p>{t('continueSavedLearning')}</p><button type="button" disabled={sending || running} onClick={() => { void tutor(loadLearningPrompt).catch(() => {}) }}>{t('continueLearning')}</button></section> : workspace.value?.status === 'missing' ? <section><p>{t('setupFirst')}</p><button disabled={sending} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('setupConversation')}</button></section> : workspace.value ? <section><p>{t(workspace.value.status === 'legacy' ? 'legacyFilesHelp' : 'unavailableFilesHelp')}</p></section> : !workspace.error && <progress aria-label={t('busy')} /> : !study && tab === 'today' ? <section><p>{t('setupFirst')}</p><button disabled={sending} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('setupConversation')}</button></section> : subjectLoading && !parentSettings ? <progress aria-label={t('busy')} /> : <>
+      {study && tab === 'today' && <TodayView {...draft} draftScope={draftScope} nextAction={workspace.nextAction} onContinue={() => { void tutor(continuePrompt, undefined, undefined, true).catch(() => {}) }} study={study} subject={subject} activity={activity} setActivity={setActivity} goal={goals.find(item => item.id === selectedObjectiveId)} clearGoal={() => setSelectedObjectiveId('')} curriculum={curriculum} selectedObjectiveId={selectedObjectiveId} chooseGoal={chooseGoal} intensityLabel={`${t(intensityKeys[chosenIntensity(subject)])} · ${planOf(subject)?.samples[chosenIntensity(subject)].length ?? 0}`} openParent={() => setTab('parent')} openCheckins={() => setTab('map')} scope={activeScope} setScope={next => setScopeChoice(previous => ({ ...previous, [subject]: next }))} scopeUnits={study.scopedUnits ?? []} start={start} startRecommended={startRecommended} startDiagnosis={startDiagnosis} chosenIntensity={chosenIntensity(subject)} disabled={disabled} running={running} act={act} tutor={(text, currentBlock) => tutor(text, undefined, undefined, currentBlock)} t={t} prompts={{ daily: dailySheetPrompt(subject), dictation: dictationPrompt(subject) }} lessons={(data.interactiveLessons?.lessons ?? []).filter(item => active ? item.blockId === active.id || item.blockId === undefined && (item.subject === undefined || item.subject === active.subject) : item.blockId === undefined && (item.subject === undefined || item.subject === subject))} onInterestPractice={startInterest} onOpenLesson={() => { const request = lessonRequest(); void tutor(openmaicGeneratePrompt(request.subjectLabel, request.objectiveId, request.tags, request.focus, request.unitName)).catch(() => {}) }} onClearDue={startDue} onOpenClassroom={lessonId => { void openSavedLesson(lessonId).catch(() => {}) }} />}
+      {study && tab === 'lessons' && data.interactiveLessons && <LessonsPanel lessons={lessonsForSubject(data.interactiveLessons.lessons, subject)} {...(data.interactiveLessons.error !== undefined ? { error: data.interactiveLessons.error } : {})} disabled={disabled} running={running} t={t} onOpen={lessonId => { void openSavedLesson(lessonId).catch(() => {}) }} onQuery={lessonId => { void tutor(openmaicQueryPrompt(lessonId)).catch(() => {}) }} onRetry={runId => { void tutor(openmaicRetryPrompt(runId)).catch(() => {}) }} onReview={classroomId => { void tutor(openmaicReviewPrompt(classroomId)).catch(() => {}) }} />}
       {study && tab === 'map' && <nav className="student-segments" aria-label={t('parentProgress')}><button type="button" aria-pressed={knowledgeView === 'map'} onClick={() => setKnowledgeView('map')}>{t('map')}</button><button type="button" aria-pressed={knowledgeView === 'ideas'} onClick={() => setKnowledgeView('ideas')}>{t('ideas')}</button></nav>}
       {study && showMap && <MapView study={study} curriculum={curriculum} subject={subject} selectedConceptId={selectedConceptId} setSelectedConceptId={setSelectedConceptId} selectedObjectiveId={selectedObjectiveId} clearGoal={() => setSelectedObjectiveId('')} chooseGoal={chooseGoal} active={!!active} scopeGrade={scopeGrade} scopeTerm={scopeTerm} setMapGrade={setMapGrade} setMapTerm={setMapTerm} clearBrowse={() => { setMapGrade(undefined); setMapTerm(undefined) }} intensities={intensities} setIntensity={(target, level) => setIntensities(previous => ({ ...previous, [target]: level }))} scopeOf={scopeOf} setScope={(target, next) => setScopeChoice(previous => ({ ...previous, [target]: next }))} selectSubject={selectSubject} startDiagnosis={startDiagnosis} disabled={disabled} running={running} organize={() => { void tutor(organizePrompt(subject)).catch(() => {}) }} change={command => change(command).then(() => undefined)} t={t} />}
       {study && tab === 'map' && knowledgeView === 'ideas' && <IdeasView study={study} curriculum={curriculum} t={t} onOpenConcept={id => { setSelectedConceptId(id); setKnowledgeView('map') }} />}
@@ -248,6 +274,7 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
       {study && tab === 'mistakes' && workspace.termId && <WorksheetCorrections {...draft} key={draftScope} sessionId={sessionId} termId={workspace.termId} draftScope={draftScope} useResource={useResource} save={saveWorksheet} disabled={disabled} t={t} />}
       {parentSettings && <section>{study && <><h3>{study.profile.nickname} · {t('grade')}: {study.profile.grade} · {t(study.profile.term)}</h3><p className="student-muted">{study.profile.region} · {study.profile.schoolYear}</p></>}<div className={css.practiceActions}><button type="button" disabled={disabled} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('profileConversation')}</button><button type="button" disabled={disabled} onClick={() => { void tutor(t('courseConversation')).catch(() => {}) }}>{t('courseConversation')}</button><button type="button" disabled={disabled} onClick={() => { void tutor(t('archiveConversation')).catch(() => {}) }}>{t('archiveConversation')}</button></div></section>}
       {parentSettings && study && <details className="student-fold"><summary>{t('manualForms')}</summary><p>{t('manualSummary')}</p><fieldset disabled={readOnly}><ParentSettings {...draft} key={draftScope + subject} draftScope={draftScope} observation={workspace.value?.versions.find(file => file.path === '.study/settings.json')?.version} data={data} change={manual} t={t} curriculum={curriculum} subject={subject} onSubject={item => { selectSubject(item); setActivity({ subject: item, mode: 'foundation' }) }} /></fieldset></details>}
+      {study && parentSettings && <LearningRecords goals={workspace.goalProgress} context={workspace.context} t={t} onReadMore={() => { void tutor('请加载 study，分页读取当前学生及明确引用的历史学期原作答、冻结题面、原官方批改和有效评价。原回答不覆盖，按来源展示差异和未知事实；只读取，不制造新作答或改变当前学习段。').catch(() => {}) }} />}
       {study && parentSettings && <Growth study={study} curriculum={curriculum} subject={subject} goals={goals} t={t} />}
       {study && parentSettings && pendingFacts.length > 0 && <details className="student-fold"><summary>{t('pendingFacts')}</summary><p>{t('pendingFactsHelp')}</p>
         <button type="button" disabled={disabled || running} onClick={() => { void tutor(pendingRecordsPrompt).catch(() => {}) }}>{t('organizeSavedResponses')}</button>
@@ -284,5 +311,38 @@ function Growth({ study, curriculum, subject, goals, t }: { study: Study; curric
       {study.progress.map(item => <p key={JSON.stringify([item.subject, item.topic, item.materialId, item.objectiveId])}>{goals.find(goal => goal.id === item.objectiveId)?.title ?? item.topic} · {t(item.level === 'independent-on-three-days' ? 'independent' : 'practising')}</p>)}
       {study.recentAttempts.map(item => <details key={item.id}><summary>{item.topic} · {t(item.result)}</summary><p>{item.prompt}</p><p>{item.response}</p><p>{item.result === 'unassessed' ? t('assessmentPending') : item.feedback}</p><p>{item.answerEvidence}</p></details>)}
     </section><p>{t('bounded')}</p>
+  </>
+}
+
+function LearningRecords({ context, goals, t, onReadMore }: { context: StudentJsonValue | undefined; goals: CapabilityProgress[]; t: Translate; onReadMore: () => void }) {
+  const value = context && typeof context === 'object' && !Array.isArray(context) ? context : undefined
+  const feedback = value && Array.isArray(value.officialFeedback) ? value.officialFeedback : []
+  const issues = value && Array.isArray(value.archiveIssues) ? value.archiveIssues : []
+  return <>
+    {goals.length > 0 && <section><h3>{t('learningGoal')}</h3>{goals.map(goal => <div key={goal.id}><p>{goal.title} · {t(levelKeys[goal.level])}</p>
+      {goal.scope && <p className="student-muted">{goal.scope.description}</p>}
+      {goal.independentDays.length > 0 && <p>{t('independentDates')}: {goal.independentDays.join(' · ')}</p>}
+      {goal.firstMasteredDay && <p>{t('firstMasteredOn')}: {goal.firstMasteredDay}</p>}
+      {goal.recoveredDay && <p>{t('recoveredOn')}: {goal.recoveredDay}</p>}
+      {goal.baseline && <p className="student-muted">{t('referencedEvidence')}</p>}
+    </div>)}</section>}
+    {feedback.length > 0 && <section><h3>{t('originalClassroomAnswers')}</h3><p className="student-muted">{t('officialFeedbackHelp')}</p>{feedback.map((record, index) => {
+      if (!record || typeof record !== 'object' || Array.isArray(record)) return null
+      const effective = record.result === 'correct' || record.result === 'partial' || record.result === 'incorrect' || record.result === 'stuck' ? record.result : 'unassessed'
+      const history = Array.isArray(record.officialHistory) ? record.officialHistory : []
+      const official = record.official && typeof record.official === 'object' && !Array.isArray(record.official) ? record.official : undefined
+      return <details key={typeof record.responseId === 'string' ? record.responseId : index}><summary>{typeof record.prompt === 'string' ? record.prompt : t('learnerAnswer')} · {t(effective)}</summary>
+        <p>{t('learnerAnswer')}</p><pre>{typeof record.rawResponse === 'string' ? record.rawResponse : ''}</pre>
+        <p>{t('effectiveAssessment')}: {t(effective)}</p><p>{typeof record.feedback === 'string' ? record.feedback : ''}</p>
+        <p>{t(record.sourceStatus === 'known' ? 'verifiedAnswerSource' : 'answerSourceUnknown')}</p>{(record.grading === 'conflict' || record.grading === 'pending') && <p>{t('assessmentPending')}</p>}
+        <p>{t(record.assistance === 'independent' || record.assistance === 'hint' || record.assistance === 'worked-example' ? assistKeys[record.assistance] : 'assistanceUnknown')}</p><p>{record.answerDate && typeof record.answerDate === 'object' && !Array.isArray(record.answerDate) && record.answerDate.kind === 'day' && typeof record.answerDate.day === 'string' ? record.answerDate.day : record.answerDate && typeof record.answerDate === 'object' && !Array.isArray(record.answerDate) && record.answerDate.kind === 'instant' && typeof record.answerDate.at === 'number' ? day(record.answerDate.at) : t('answerDateUnknown')}</p>
+        <h4>{t('officialAssessment')}</h4>{[...history, ...(official && !history.some(item => item && typeof item === 'object' && !Array.isArray(item) && item.seq === official.seq) ? [official] : [])].map((grade, gradeIndex) => {
+          if (!grade || typeof grade !== 'object' || Array.isArray(grade)) return null
+          const result = grade.result && typeof grade.result === 'object' && !Array.isArray(grade.result) ? grade.result : undefined
+          return <div key={typeof grade.seq === 'number' ? grade.seq : gradeIndex}><p>{t(result?.status === 'correct' ? 'correct' : result?.status === 'incorrect' ? 'incorrect' : 'unassessed')}{typeof result?.earned === 'number' ? ` · ${result.earned}` : ''}</p><p>{typeof result?.aiComment === 'string' ? result.aiComment : ''}</p></div>
+        })}
+      </details>
+    })}<button type="button" onClick={onReadMore}>{t('readAnswerHistory')}</button></section>}
+    {issues.length > 0 && <section role="status"><h3>{t('archiveEvidencePending')}</h3><p>{t('archiveEvidenceHelp')}</p><button type="button" onClick={onReadMore}>{t('readAnswerHistory')}</button></section>}
   </>
 }

@@ -16,6 +16,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 }
 declare module '@deepseek-ai/dsh-typert-protocol' {
   interface RemoteErrorDetailsMap {
+    /** A new native Session needs its first admitted tutor request before Student can read it. */
+    'student/main-session-required': Record<string, never>
     /** The resource address does not identify a Student Session query. */
     'student/invalid-address': Record<string, never>
     /** Current official files cannot supply this projection; the last display remains stale. */
@@ -86,7 +88,7 @@ export function createStudentResourceOwner(remote: StudentResourceRemote): Stude
             if (signal.aborted || disposed || item.signal.aborted) return
             const frame = item.value
             item.accept()
-            if (frame.kind === 'failure') { yield { ok: false, error: new RemoteError('student/unavailable', frame.message, {}) }; continue }
+            if (frame.kind === 'failure') { yield { ok: false, error: new RemoteError(frame.reason === 'main-session-required' ? 'student/main-session-required' : 'student/unavailable', frame.message, {}) }; continue }
             const value = frame.value
             if (value.status !== 'valid' && value.status !== 'partial' && value.status !== 'missing' && value.status !== 'legacy' && value.status !== 'archived') {
               yield { ok: false, error: new RemoteError('student/unavailable', value.issues?.[0]?.correction ?? 'Current Student files are unavailable.', {}) }

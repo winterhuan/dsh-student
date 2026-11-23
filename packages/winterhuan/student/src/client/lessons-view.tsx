@@ -5,11 +5,6 @@ import type { Translate } from './locales.ts'
 type Lesson = Dashboard['interactiveLessons']['lessons'][number]
 const statusKey = { generating: 'openmaicGenerating', ready: 'openmaicReady', failed: 'openmaicFailed' } as const
 
-/**
- * Open a classroom URL in another browser tab.
- * The desk does not embed the classroom: a cross-origin frame would not carry the OpenMAIC cookie,
- * and a static export player is intentionally absent.
- */
 /** http(s) URL without credentials, or undefined when the desk must not offer it. */
 export function classroomUrl(value: string | undefined): string | undefined {
   if (value === undefined || value === '') return undefined
@@ -20,7 +15,7 @@ export function classroomUrl(value: string | undefined): string | undefined {
 }
 
 export function openClassroom(url: string) {
-  // TODO: do not add a sidebar iframe or a static export player. Playback stays in the system browser.
+  // Standalone callers retain external playback; Student supplies protected lesson opening.
   const href = classroomUrl(url)
   if (href === undefined) return
   window.open(href, '_blank', 'noopener,noreferrer')
@@ -32,12 +27,13 @@ export function lessonsForSubject<T extends { subject?: 'chinese' | 'math' | 'en
 }
 
 /** Recent OpenMAIC lessons: open or copy the URL, and ask the tutor to generate, retry or review. */
-export function LessonsPanel({ lessons, error, disabled, running, t, onGenerate, onQuery, onRetry, onReview }: {
+export function LessonsPanel({ lessons, error, disabled, running, t, onGenerate, onOpen, onQuery, onRetry, onReview }: {
   lessons: Lesson[]
   error?: string
   disabled: boolean
   running: boolean
   t: Translate
+  onOpen?: (lessonId: string) => void
   onGenerate?: () => void
   onQuery: (lessonId: string) => void
   onRetry: (runId: string) => void
@@ -58,7 +54,7 @@ export function LessonsPanel({ lessons, error, disabled, running, t, onGenerate,
       {classroomUrl(lesson.url) && <>
         <p className="student-url">{classroomUrl(lesson.url)}</p>
         <div className="student-segments">
-          <button type="button" onClick={() => openClassroom(lesson.url ?? '')}>{t('openmaicOpen')}</button>
+          <button type="button" disabled={busy} onClick={() => onOpen ? onOpen(lesson.id) : openClassroom(lesson.url ?? '')}>{t('openmaicOpen')}</button>
           <button type="button" onClick={() => {
             const url = classroomUrl(lesson.url)
             if (url === undefined) return

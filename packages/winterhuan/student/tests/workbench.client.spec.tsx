@@ -12,6 +12,10 @@ import { updateStudy } from './fixtures.ts'
 import { en, zh } from '../src/client/locales.ts'
 import { NOW, MINUTE, DAY, setup, material, course, start, attempt, mistake, confirm } from './fixtures.ts'
 
+function openParent() {
+  if (!screen.queryByRole('navigation', { name: en.parentEntry })) fireEvent.click(screen.getByRole('button', { name: en.parentEntry }))
+}
+
 const t = (key: keyof typeof en) => en[key]
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.useRealTimers(); window.localStorage.clear(); window.sessionStorage.clear() })
 const answerTask = { id: attempt.id, sessionId: attempt.sessionId, subject: attempt.subject, topic: attempt.topic, prompt: attempt.prompt }
@@ -24,6 +28,7 @@ function StudyDesk(props: Omit<ComponentProps<typeof RealStudyDesk>, 'useResourc
 }
 
 async function openDesk(tab: 'Knowledge map' | 'Mistakes' | 'Parent setup') {
+  openParent()
   fireEvent.click(await screen.findByRole('button', { name: tab === 'Knowledge map' ? en.parentProgress : tab === 'Parent setup' ? en.parentProfile : en.parentPractice, exact: false }))
 }
 
@@ -50,6 +55,7 @@ describe('learning workbench', () => {
     expect(answer.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(screen.getByText(en.studyDetails).closest('details')!.open).toBe(false)
     expect(screen.getByRole('main').innerHTML).toMatchSnapshot()
+    openParent()
     fireEvent.click(screen.getByRole('button', { name: en.parentPractice }))
     expect(await screen.findByRole('heading', { name: `${en.worksheets} · 1` })).toBeTruthy()
     expect(screen.getByText(en.uploadHomework).closest('details')!.open).toBe(false)
@@ -264,7 +270,7 @@ it('starts foundation practice with the learner-selected knowledge goal', async 
   render(<StudyDesk sessionId="goal" visible running={false} ask={ask} t={t} />)
   await openDesk('Knowledge map')
   fireEvent.click(await screen.findByRole('button', { name: 'Practise this goal · 凑十加法' }))
-  fireEvent.click(screen.getByRole('button', { name: 'Today' }))
+  fireEvent.click(screen.getByRole('button', { name: en.learningEntry }))
   await screen.findByLabelText(en.scopeLabel)
   fireEvent.change(screen.getByLabelText(en.scopeLabel), { target: { value: '1-second' } })
   fireEvent.click(screen.getByRole('button', { name: en.switchLearning }))
@@ -489,7 +495,7 @@ it('shows the saved answer with feedback and offers the next question', async ()
   render(<StudyDesk sessionId="feedback" visible running={false} ask={vi.fn()} t={t} />)
   await screen.findByText(`My answer: ${attempt.response}`)
   expect(screen.getByText(attempt.feedback)).toBeTruthy()
-  expect(screen.getByRole('button', { name: 'Next question' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: en.continueLearning })).toBeTruthy()
   expect(screen.getByText(/Due for review: 0 · Weak points: 0/)).toBeTruthy()
 })
 
@@ -538,7 +544,7 @@ it('keeps math goals and lessons off the Chinese today page', async () => {
   expect(prompt).toContain('Chinese')
 })
 
-it('shows the knowledge map and mistake book on the main tab and starts the recommended review', async () => {
+it('keeps the knowledge map and mistake book in Parent and starts the selected review', async () => {
   vi.spyOn(Date, 'now').mockReturnValue(NOW)
   let state = updateStudy(undefined, setup, NOW - DAY)
   state = updateStudy(state, { action: 'mistake', mistake }, NOW - DAY)
@@ -560,7 +566,7 @@ it('shows the knowledge map and mistake book on the main tab and starts the reco
   expect(screen.getAllByRole('button', { name: /Practise this goal/ }).length).toBeGreaterThan(0)
   fireEvent.click(screen.getByText('100 以内数的加减法（二） · Mastered 0/3'))
   expect(screen.getAllByRole('img', { name: 'Mastered 0 · Practising 0 · Not practised lately 0 · Needs work 0 · Review due 0 · Not started 3' }).length).toBeGreaterThan(0)
-  fireEvent.click(screen.getByRole('button', { name: 'Today' }))
+  fireEvent.click(screen.getByRole('button', { name: en.learningEntry }))
   fireEvent.click(await screen.findByRole('button', { name: 'Clear these 1' }))
   await waitFor(() => expect(ask).toHaveBeenCalledOnce())
   expect(ask.mock.calls[0]?.[0]).toContain('到期错题')
@@ -808,7 +814,7 @@ it('classifies a mistake in the notebook and shows the routine card with its cau
   fireEvent.change(within(entry).getAllByLabelText(en.errorTypeLabel)[0]!, { target: { value: 'carry-borrow' } })
   fireEvent.click(within(entry).getByRole('button', { name: en.saveErrorType }))
   await waitFor(() => expect(backend.read().mistakes[0]?.errorType).toBe('carry-borrow'))
-  fireEvent.click(screen.getByRole('button', { name: 'Today' }))
+  fireEvent.click(screen.getByRole('button', { name: en.learningEntry }))
   await screen.findByRole('heading', { name: `${en.routineTitle} · Math` })
   expect(screen.getByText(`${en.topCauses}：${en['carry-borrow']} ×1`)).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: en.printDailySheet }))

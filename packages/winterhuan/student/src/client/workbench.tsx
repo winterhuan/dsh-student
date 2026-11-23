@@ -49,7 +49,7 @@ type WorkbenchInjected = {
 }
 type Notice = { success: boolean; sequence: number }
 type NoticeInjected = { hooks: { notice: ObservableSnapshot<Notice | null> }; dismissNotice: () => void }
-type SessionInjected = { ask: AskTutor } & StudentManualActions
+type SessionInjected = { ask: AskTutor; openLesson: (lessonId: string) => Promise<import('../openmaic/playback.ts').OpenmaicPlaybackResult> } & StudentManualActions
 type SessionOwner = { chatVisible: boolean; pane: 'study' | 'chat'; showTutor: () => void; selectPane: (pane: 'study' | 'chat') => void }
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface SlotMap {
@@ -124,7 +124,7 @@ function SelectedSession({ sessionId, chatVisible, pane, showTutor, selectPane, 
   if (failed) return <div className={css.empty}><p role="alert">{t('openConversationError')}</p><button type="button" onClick={() => { setFailed(false); setBinding(null); setRetry(value => value + 1) }}>{t('reload')}</button></div>
   return binding ? <SessionProvider session={binding}>{renderSlot(sessionSlot, { chatVisible, pane, showTutor, selectPane })}</SessionProvider> : <Loading />
 }
-function LearningSession({ sessionId, chatVisible, pane, showTutor, selectPane, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, t }: SessionProps) {
+function LearningSession({ sessionId, chatVisible, pane, showTutor, selectPane, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, openLesson, t }: SessionProps) {
   const session = useSession(state => state)
   const conversation = useConversation(state => state)
   const settling = session.openState === 'loading' && !conversation.activeTargets.size
@@ -133,7 +133,7 @@ function LearningSession({ sessionId, chatVisible, pane, showTutor, selectPane, 
       <button type="button" aria-pressed={pane === 'study'} onClick={() => selectPane('study')}>{t('learningContent')}</button>
       <button type="button" aria-pressed={pane === 'chat'} onClick={() => selectPane('chat')}>{t('tutorConversation')}{session.running ? ` · ${t('busy')}` : ''}</button>
     </nav>
-    <div className={css.study}><StudyDesk sessionId={sessionId} visible={true} running={!!session.running} ask={(text, photo) => { showTutor(); return ask(text, photo) }} t={t} useResource={useResource} {...{ useStore, actions, saveSettings, saveWorksheet, inspectSubmission }} /></div>
+    <div className={css.study}><StudyDesk sessionId={sessionId} visible={true} running={!!session.running} ask={(text, photo) => { showTutor(); return ask(text, photo) }} t={t} useResource={useResource} openLesson={openLesson} {...{ useStore, actions, saveSettings, saveWorksheet, inspectSubmission }} /></div>
     {chatVisible && <aside className={css.chat} aria-label={t('tutorConversation')}><h2>{t('tutorConversation')}</h2>{renderFactorySlot('conversation.content', { variant: 'embedded', phase: settling ? 'settling' : 'active', hero: false })}</aside>}
   </div>
 }
@@ -162,7 +162,7 @@ export function registerWorkbench(context: Context, draftStore: ReturnType<typeo
     }),
   }, Workbench))
   context.slots.inject(sessionSlot, () => context.slots.register({ name: sessionSlot, locale: NS, store: draftStore,
-    inject: (sessionId: SessionId): SessionInjected => ({ ask: tutorBridge(context, sessionId, t('sessionError'), t('sendError')), ...createStudentManualActions(context.remote.student) }),
+    inject: (sessionId: SessionId): SessionInjected => ({ ask: tutorBridge(context, sessionId, t('sessionError'), t('sendError')), openLesson: async lessonId => { const result = await context.remote.studentOpenmaicPlayback.open(sessionId, lessonId, new AbortController().signal); if (!result.ok) throw new Error(result.error.message); return result.value }, ...createStudentManualActions(context.remote.student) }),
   }, LearningSession))
   context.slots.inject('sidebar.panellist', () => context.slots.register({ name: 'sidebar.panellist', id: 'student', order: 6, locale: NS, label: () => t('title') }, PanelIcon))
   context.slots.inject('shell.overlay', () => context.slots.register({ name: 'shell.overlay', id: 'student.workbench.notice', locale: NS,

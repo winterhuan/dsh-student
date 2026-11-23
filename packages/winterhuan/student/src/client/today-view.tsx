@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Command } from '../schema.ts'
-import type { CheckInIntensity } from '../learning/mastery.ts'
+import type { CheckInIntensity, LearningNextAction } from '../learning/mastery.ts'
 import type { Translate } from './locales.ts'
 import { formDraftKey, type DraftProps } from './drafts.tsx'
 import { FigureView } from './figure-view.tsx'
@@ -17,7 +17,9 @@ type Goal = { id: string; title: string }
 type Act = (command: Command, withTutor?: boolean, prompt?: string) => Promise<void>
 
 /** The learner's page: one recommended next step, the current question, and a folded set of other ways to practise. */
-export function TodayView({ study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom, draftScope, useStore, actions }: DraftProps & {
+export function TodayView({ nextAction, onContinue, study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom, draftScope, useStore, actions }: DraftProps & {
+  nextAction: LearningNextAction | null
+  onContinue: () => void
   draftScope?: string
   study: Study
   subject: Subject
@@ -48,12 +50,11 @@ export function TodayView({ study, subject, activity, setActivity, goal, clearGo
   onInterestPractice: () => void
   onOpenLesson: () => void
   onClearDue: () => void
-  onOpenClassroom: (url: string) => void
+  onOpenClassroom: (lessonId: string) => void
 }) {
   const active = study.active
   const ownSession = !!active
   const task = ownSession && study.task?.sessionId === active.id ? study.task : undefined
-  const available = ownSession
   const recommendation = study.recommendation
   const progress = curriculum?.scope.current ? study.courses.find(item => item.subject === subject)?.progress : undefined
   const frontierIndex = progress ? curriculum?.units.findIndex(unit => unit.id === progress.unitId) ?? -1 : -1
@@ -69,10 +70,17 @@ export function TodayView({ study, subject, activity, setActivity, goal, clearGo
     ?? lessons.find(item => item.status === 'ready' && classroomUrl(item.url))
   const readyUrl = classroomUrl(ready?.url)
   const goalPractice = recommendation?.kind === 'practice' || recommendation?.kind === 'learn' || recommendation?.kind === 'preview' || (recommendation?.kind === 'review' && recommendation.objectiveId !== undefined)
+  const chosen = nextAction
+  const nextTitle = chosen?.title ?? goalTitle(study, task?.objectiveId) ?? recommendation?.title ?? task?.topic ?? t('todayPlan')
+  const chosenReason = chosen ? continuationReasons[chosen.reason] : undefined
+  const playable = !!readyUrl && !generating && (!chosen || chosen.kind === 'answer' || chosen.kind === 'learn')
   return <>
+    <section className="student-plan"><h3>{nextTitle}</h3>
+      <p className="student-muted">{t(chosenReason ?? (task ? task.response === undefined ? 'continueCurrentQuestion' : study.feedback ? 'continueAfterFeedback' : 'continuePendingAnswer' : 'continueConfirmedGoal'))}</p>
+      <button type="button" className="student-primary" disabled={disabled || running} onClick={playable ? () => onOpenClassroom(ready!.id) : onContinue}>{t(playable ? 'goToClass' : 'continueLearning')}</button>
+    </section>
     {(generating || readyUrl) && <section>
       {generating && <p role="status">{t('openmaicGenerating')} · {generating.title}</p>}
-      {readyUrl && <div className="student-segments"><button type="button" className="student-primary" onClick={() => onOpenClassroom(readyUrl)}>{t('goToClass')}</button></div>}
       {ready && <p className="student-muted">{ready.title}</p>}
     </section>}
     <section className="student-status"><div className={css.statusHeading}><p>{study.profile.nickname}{active ? ` · ${t(active.subject)} · ${t(active.mode)}` : ''}</p><p>{t('todayStars')}: {study.todayStars}</p></div>
@@ -85,8 +93,7 @@ export function TodayView({ study, subject, activity, setActivity, goal, clearGo
     {ownSession && <>
       <section className="student-focus">{task ? <Task useStore={useStore} actions={actions} draftScope={draftScope} key={`${task.sessionId}:${task.id}`} study={study} goalTitle={goalTitle(study, task.objectiveId)} goalText={objectiveMeta?.goal} days={objectiveMeta?.independentDays} disabled={disabled || running} t={t} act={act} tutor={tutor} /> : <p>{t('waiting')}</p>}
         <p className="student-muted">{t('chatHelp')}</p>
-        {available && (running ? <p role="status">{t('tutorWorking')}</p>
-          : (!task || study.feedback || task.response !== undefined || task.hintLevel > 0) && <button className="student-primary" disabled={disabled} onClick={() => { void tutor(study.feedback ? '明确请求下一题。先保留上一题的原回答和有效反馈，再准备下一题。' : '检查当前题的未完成答案或提示，不换题，不自动重发原回答。', true).catch(() => {}) }}>{t(!task ? 'prepareTask' : study.feedback ? 'nextTask' : task.response !== undefined ? 'retryFeedback' : 'retryHint')}</button>)}
+        {running && <p role="status">{t('tutorWorking')}</p>}
       </section>
       <form onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); void act({ action: 'stop', sessionId: active.id, reflection: String(form.get('reflection') ?? '') }) }}>
         <div className="student-segments">
@@ -100,6 +107,7 @@ export function TodayView({ study, subject, activity, setActivity, goal, clearGo
         </details>
       </form>
     </>}
+    {!ownSession && !chosen && <details className="student-fold"><summary>{t('learningOptions')}</summary>
     {!ownSession && <section className="student-plan"><h3>{t('todayPlan')}</h3>
       {recommendation ? <><p>{t(planKeys[recommendation.kind])} · {t(recommendation.subject)}{recommendation.title ? ` · ${recommendation.title}` : ''}</p>
         {recommendGoal?.goal && <p>{t('objectiveGoal')}: {recommendGoal.goal}</p>}
@@ -129,7 +137,9 @@ export function TodayView({ study, subject, activity, setActivity, goal, clearGo
       <button type="button" disabled={disabled || running} onClick={onClearDue}>{t('clearDue').replace('{count}', String(study.dueToday.length))}</button>
       {study.dueBacklog > study.dueToday.length && <p className="student-muted">{t('dueLater').replace('{count}', String(study.dueBacklog - study.dueToday.length))}</p>}
     </section>}
-    {<Alternate study={study} activity={activity} setActivity={setActivity} disabled={disabled || running} t={t} goal={goal} intensityLabel={intensityLabel} openCheckins={openCheckins} scope={scope} setScope={setScope} scopeUnits={scopeUnits} start={start} />}
+    </details>}
+    {<Alternate study={study} subject={subject} activity={activity} setActivity={setActivity} disabled={disabled || running} t={t} goal={goal} intensityLabel={intensityLabel} openCheckins={openCheckins} scope={scope} setScope={setScope} scopeUnits={scopeUnits} start={start} />}
+    {!ownSession && <details className="student-fold"><summary>{t('morePractice')}</summary>
     {!ownSession && (() => {
       const unit = progress && curriculum ? curriculum.units.find(item => item.id === progress.unitId) : undefined
       const causes = study.errorProfile.filter(item => item.subject === subject).slice(0, 3)
@@ -162,8 +172,11 @@ export function TodayView({ study, subject, activity, setActivity, goal, clearGo
         </div>)}
       </details> : null })()}
     </section>}
+    </details>}
   </>
 }
+
+const continuationReasons = { 'unfinished-question': 'continueCurrentQuestion', 'pending-assessment': 'continuePendingAnswer', 'missing-evidence': 'continueMissingEvidence', 'current-gap': 'continueCurrentGap', 'prerequisite-gap': 'continuePrerequisiteGap', 'due-review': 'continueDueReview', 'new-goal': 'continueConfirmedGoal', 'confirmed-scope-required': 'continueScopeRequired' } as const satisfies Record<LearningNextAction['reason'], Parameters<Translate>[0]>
 
 function levelKey(level: Study['weakPoints'][number]['level']) {
   return level === 'due' ? 'levelDue' as const : level === 'weak' ? 'levelWeak' as const : level === 'stalled' ? 'levelStalled' as const : level === 'mastered' ? 'levelMastered' as const : level === 'practising' ? 'levelPractising' as const : 'levelUntouched' as const
@@ -174,8 +187,9 @@ function goalTitle(study: Study, objectiveId: string | undefined): string | unde
   return study.curriculum?.objectives.find(item => item.id === objectiveId)?.title ?? study.objectives.find(item => item.id === objectiveId)?.title
 }
 
-function Alternate({ study, activity, setActivity, disabled, start, goal, intensityLabel, openCheckins, scope, setScope, scopeUnits, t }: {
+function Alternate({ study, subject, activity, setActivity, disabled, start, goal, intensityLabel, openCheckins, scope, setScope, scopeUnits, t }: {
   study: Study
+  subject: Subject
   activity: Activity
   setActivity: (activity: Activity) => void
   disabled: boolean
@@ -188,7 +202,7 @@ function Alternate({ study, activity, setActivity, disabled, start, goal, intens
   scopeUnits: { id: string; name: string }[]
   t: Translate
 }) {
-  const { subject, mode } = activity
+  const { mode } = activity
   const confirmed = study.courses.some(item => item.subject === subject)
   const due = study.dueSubjects.includes(subject)
   const uiMode = mode === 'review' || mode === 'explore' || mode === 'diagnose' ? mode : 'sync'

@@ -6,7 +6,7 @@
 
 确认 `.study/settings.json` 的稳定 learnerId、termId，以及原 blockId、当前题目的 capability（goalId、familyId、scope）。原课堂日志必须保存同一 learnerId、termId、blockId、base、learnerKey、classroomId 和 jobId。身份缺失或不一致时保留当前活动，请家长核对，不从服务账号或工作区推测孩子身份。
 
-调用 `openmaic_feedback(action="prepare", lessonId)`。Host 核对受保护的原生成任务和当前账户，冻结原 question snapshot/hash/revision，记录已有 attempt 的序列头。同一 base/classroomId/learnerKey 分区只保留一个 Student 学生、学期和学习段；第二个孩子需要自己的课堂。把返回的 feedback 写入原 lesson，把 questions 写入原 block；有 nextOffset 时继续取页，每页最多 20 项。运行随包只读 CLI，成功后才能打开课堂。历史已提交记录不会因今日 prepare 获得已核实题面。
+调用 `openmaic_feedback(action="prepare", lessonId)`。Host 核对受保护的原生成任务和当前账户，冻结原 question snapshot/hash/revision，记录已有 attempt 的序列头。同一 base/classroomId/learnerKey 分区只保留一个 Student 学生、学期和学习段；第二个孩子需要自己的课堂。把返回的 feedback 写入原 lesson，把 questions 写入原 block；有 nextOffset 时继续取页，每页最多 20 项。运行随包只读 CLI，再用 `study_status(kind="learning-context")` 独立读取，确认全部冻结题面及绑定已保存后才能通过受保护的课堂入口打开。历史已提交记录不会因今日 prepare 获得已核实题面。
 
 ## 返回、继续与重启
 

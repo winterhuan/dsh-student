@@ -72,6 +72,7 @@
 .student-desk > details { padding: 14px 18px; border-radius: var(--dsw-radius-xl); background: var(--dsw-alias-bg-layer-2); box-shadow: var(--dsw-elevation-soft); }
 .student-desk section section { padding: 12px 14px; border-radius: var(--dsw-radius-md); background: var(--dsw-alias-interactive-bg-hover); box-shadow: none; }
 .student-desk h3 { font-size: 14px; line-height: 22px; font-weight: 500; margin: 0; }
+.student-desk pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .student-desk p { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 .student-desk form, .student-desk fieldset, .student-desk label { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .student-desk fieldset { border: 0; padding: 0; margin: 0; }
@@ -287,3 +288,7 @@
   .student-sheet { width: 100%; border: 0; border-radius: 0; padding: 0; }
   .student-sheet-item { page-break-inside: avoid; }
 }
+
+.student-teaching-aids { display: grid; gap: 12px; min-width: 0; width: 100%; margin-top: 12px; color: var(--dsw-alias-text-primary); }
+.student-teaching-aids > h3 { margin: 0; font-size: 14px; font-weight: 500; }
+.student-teaching-aids > p { margin: 0; font-size: 13px; color: var(--dsw-alias-text-secondary); }

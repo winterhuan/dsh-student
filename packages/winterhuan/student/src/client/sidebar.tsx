@@ -10,6 +10,7 @@ import { useEffect } from 'react'
 import { NS, zh, en } from './locales.ts'
 import { tutorBridge, type StudyPhoto } from './bridge.ts'
 import { StudyDesk } from './desk.tsx'
+import { registerTeachingAids } from './teaching-aids.tsx'
 import { registerWorkbench } from './workbench.tsx'
 import { mountStudentResource } from './resource.ts'
 import { createStudentDraftStore } from './drafts.tsx'
@@ -22,24 +23,26 @@ function studentCallbacks(scope: Context) {
   const t = scope.locale.bind(NS)
   return {
     ...createStudentManualActions(scope.remote.student),
+    openLesson: async (sessionId: StudentSessionId, lessonId: string) => { const result = await scope.remote.studentOpenmaicPlayback.open(sessionId, lessonId, new AbortController().signal); if (!result.ok) throw new Error(result.error.message); return result.value },
     askStudent: (sessionId: StudentSessionId, text: string, photo?: StudyPhoto) => tutorBridge(scope, sessionId, t('sessionError'), t('sendError'))(text, photo),
   }
 }
 type Props = PropsRuntime<'sidebar.right.pane.tab'> & PropsLocale<typeof NS> & PropsStore<ReturnType<typeof createStudentDraftStore>> & ReturnType<typeof studentCallbacks>
 
-function Sidebar({ sessionId, useTabInfo, useSession, useSessions, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission }: Props) {
+function Sidebar({ sessionId, useTabInfo, useSession, useSessions, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission, openLesson }: Props) {
   const preset = useSessions(state => state.byId[sessionId]?.projectionValues?.agentPreset)
   const { tab } = useTabInfo()
   useEffect(() => { if (typeof preset === 'string' && preset !== 'student') tab.actions.close() }, [preset, tab.actions])
   const running = useSession(snapshot => snapshot.running)
   if (preset !== 'student') return null
-  return <StudyDesk key={sessionId} sessionId={sessionId} visible={tab.visible} running={!!running} ask={(text, photo) => askStudent(sessionId, text, photo)} t={t} useResource={useResource} {...{ useStore, actions, saveSettings, saveWorksheet, inspectSubmission }} />
+  return <StudyDesk key={sessionId} sessionId={sessionId} visible={tab.visible} running={!!running} ask={(text, photo) => askStudent(sessionId, text, photo)} t={t} useResource={useResource} openLesson={lessonId => openLesson(sessionId, lessonId)} {...{ useStore, actions, saveSettings, saveWorksheet, inspectSubmission }} />
 }
 
 /** Register the learning desk inside DSH's existing session sidebar. */
 export async function apply(context: Context): Promise<void> {
   await mountStudentResource(context)
   context.effect(() => context.locale.register(NS, { zh, en }), 'student: dictionaries')
+  registerTeachingAids(context)
   const t = context.locale.bind(NS)
   context.effect(() => registerModeTab(context, {
     id: '@winterhuan/dsh-student', kind: 'student', title: () => t('title'),

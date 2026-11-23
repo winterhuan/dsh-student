@@ -15,13 +15,14 @@ export interface NativeHistoryVerification { sessionId: string; status: 'availab
  * @param agent - Authorized calling main Agent and filesystem provider.
  * @param read - Validated current/explicitly referenced archive entities.
  * @param signal - Caller cancellation; a bounded deadline also applies to history reads.
- * @param invocation - Current Remote invocation context, required for prior-Session permission checks over Remote.
+ * @param invocation - Current Remote context for prior-Session permission checks; native calls use their existing Agent ownership and omit it.
  * @returns Referenced exact original tuples and explicit per-source failures; normal public decoding is provider-owned.
  */
-export async function readNativeHistory(agent: Agent, read: WorkspaceRead, signal: AbortSignal, invocation: Context = agent.ctx): Promise<{ observations: NativeInputObservation[]; verification: NativeHistoryVerification[]; recheck: () => Promise<void> }> {
+export async function readNativeHistory(agent: Agent, read: WorkspaceRead, signal: AbortSignal, invocation?: Context): Promise<{ observations: NativeInputObservation[]; verification: NativeHistoryVerification[]; recheck: () => Promise<void> }> {
   const workspace = read.workspace
   const query = agent.ctx.get('sessionQuery'), fs = agent.ctx.get('fs')
   const observations: NativeInputObservation[] = [], verification: NativeHistoryVerification[] = []
+  const allows = async (id: SessionId) => invocation ? await invocation.get('remoteAccess')?.allows({ kind: 'session', id }) ?? false : true
   if (!workspace) return { observations, verification, recheck: async () => {} }
   const owners = [{ workspace, references: undefined }, ...(workspace.archivedEvidence ?? [])]
   const references = owners.flatMap(owner => [...owner.workspace.blocks, ...owner.workspace.worksheets].flatMap(file => file.responses.flatMap(response => response.source.kind === 'native' && response.source.sessionId !== agent.session.id && (!owner.references || owner.references.some(reference => reference.learnerId === file.learnerId && reference.termId === file.termId && reference.ownerKind === file.kind && reference.ownerId === file.id && reference.responseId === response.id)) ? [{ file, response, source: response.source }] : [])))
@@ -34,9 +35,8 @@ export async function readNativeHistory(agent: Agent, read: WorkspaceRead, signa
     if (index >= 8) { unavailable('Historical source count exceeds eight explicitly referenced Sessions.'); continue }
     if (!query || !fs || !currentRoot) { unavailable('Original workspace or source service is unavailable.'); continue }
     const id = SessionId(rawId)
-    const allows = async () => invocation.get('remoteAccess') ? await invocation.remoteAccess.allows({ kind: 'session', id }) : invocation === agent.ctx
     try {
-      if (!await allows()) { unavailable('Original Session access is unavailable.'); continue }
+      if (!await allows(id)) { unavailable('Original Session access is unavailable.'); continue }
       const live = agent.ctx.get('sessions')?.get(id)
       const stored = !live ? await agent.ctx.get('sessionPersistence')?.stat(id, { signal: deadline }) : undefined
       const header = live?.header ?? stored?.header
@@ -47,7 +47,7 @@ export async function readNativeHistory(agent: Agent, read: WorkspaceRead, signa
       if (physicalBytes > 33_554_432 || stored?.eventCount !== undefined && stored.eventCount > 100_000) { unavailable('Original Session metadata exceeds the history read budget.'); continue }
       using observation = await query.observeSession(id, { signal: deadline, projectionMode: 'none' })
       const finalRoot = observation.header.cwd ? await fs.resolve(observation.header.cwd, { signal: deadline }) : undefined
-      if (observation.header.id !== id || observation.header.parentSession || observation.header.origin === 'subagent' || finalRoot?.targetKey !== currentRoot.targetKey || !await allows()) { unavailable('Original Session ownership or access changed during the read.'); continue }
+      if (observation.header.id !== id || observation.header.parentSession || observation.header.origin === 'subagent' || finalRoot?.targetKey !== currentRoot.targetKey || !await allows(id)) { unavailable('Original Session ownership or access changed during the read.'); continue }
       replayBytes += Buffer.byteLength(JSON.stringify(observation.events))
       if (replayBytes > 33_554_432) { unavailable('Aggregate original Session replay exceeds 32 MiB.'); continue }
       const native = resolveNativeSources(observation)
@@ -61,7 +61,7 @@ export async function readNativeHistory(agent: Agent, read: WorkspaceRead, signa
     for (const fact of verification.filter(fact => fact.status === 'available')) {
       try {
         const id = SessionId(fact.sessionId)
-        const allowed = invocation.get('remoteAccess') ? await invocation.remoteAccess.allows({ kind: 'session', id }) : invocation === agent.ctx
+        const allowed = await allows(id)
         const live = agent.ctx.get('sessions')?.get(id)
         const header = live?.header ?? (await agent.ctx.get('sessionPersistence')?.stat(id, { signal }))?.header
         const current = agent.session.header.cwd && fs ? await fs.resolve(agent.session.header.cwd, { signal }) : undefined

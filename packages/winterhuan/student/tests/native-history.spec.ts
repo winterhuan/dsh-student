@@ -4,6 +4,7 @@ import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
 import SessionQuery from '@deepseek-ai/dsh-session-query'
 import * as JsonlPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
+import RemoteAccessService from '@deepseek-ai/dsh-api-remote-access'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import type { SessionRequestId } from '@deepseek-ai/dsh-api-session-controller'
 import { mkdtemp, mkdir, rm } from 'node:fs/promises'
@@ -66,6 +67,22 @@ it('accepts bounded cold compressed public history without optional event counts
   await read.recheck()
   expect(read.observations).toEqual([])
   expect(read.verification).toMatchObject([{ status: 'unavailable' }])
+})
+it('reads original persisted native inputs from a fresh native plugin context with Remote access composed', async () => {
+  const f = await fixture()
+  await f.ctx.plugin(RemoteAccessService)
+  await f.ctx.plugin({
+    inject: ['fs', 'sessionQuery'],
+    async apply(ctx: Context) {
+      const agent = { ...f.agent, ctx } as Agent
+      const read = await readNativeHistory(agent, f.read, f.signal)
+      expect(read.observations).toEqual([f.source])
+      expect(read.verification).toMatchObject([{ status: 'available' }])
+      await read.recheck()
+      expect(read.observations).toEqual([f.source])
+      expect(read.verification).toMatchObject([{ status: 'available' }])
+    },
+  })
 })
 it('does not read a denied original Session or trust foreign and unscoped history', async () => {
   const denied = await fixture()

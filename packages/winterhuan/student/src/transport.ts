@@ -73,7 +73,7 @@ export async function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | '
     if (signature(read) !== signature(publication) || finalLessons.observation?.version !== publicationLessons.observation?.version || finalLessons.observation?.targetKey !== publicationLessons.observation?.targetKey) continue
     read = publication
     await historical.recheck()
-    if (invocation?.get('remoteAccess') && !await invocation.remoteAccess.allows({ kind: 'session', id: agent.session.id })) throw new Error('Current Student Session access changed before publication.')
+    if (invocation && !await invocation.get('remoteAccess')?.allows({ kind: 'session', id: agent.session.id })) throw new Error('Current Student Session access changed before publication.')
     if (read.workspace) {
       const owners = [read.workspace, ...(read.workspace.archivedEvidence ?? []).map(archive => archive.workspace)]
       for (const owner of owners) { owner.nativeSources = [...native.observations, ...historical.observations]; owner.openmaicSources = observations }

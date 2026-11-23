@@ -21,6 +21,7 @@ import { registerOpenmaicFeedback } from '../src/openmaic/feedback-agent.ts'
 import type { OpenmaicFeedbackRead } from '../src/openmaic/feedback.ts'
 import { OpenmaicError } from '../src/openmaic/connection.ts'
 import { applicationStudyFiles } from '../src/files/application.ts'
+import { readStudentWorkspace } from '../src/transport.ts'
 import { readWorkspace } from '../src/files/read.ts'
 import { retainObservedBackups, readBackups } from '../src/files/recovery.ts'
 import { StudyBackupRetention } from '../src/files/backup-retention.ts'
@@ -312,4 +313,107 @@ it('exposes complete source, unavailable source and an oversized original event 
   expect(oversized).not.toHaveProperty('consumption')
   source.pending[0]!.record.originalExtension = 'retained'
   expect(await read()).toMatchObject({ status: 'available', complete: true, records: [{ pendingOpenmaic: source.pending[0] }], consumption: { status: 'pending', checkpoint: { attempts: [{ seq: 0 }] } } })
+})
+
+
+it.each(['current', 'selected'] as const)('reaches the ninth %s classroom within eight authorized reads', async mode => {
+  const f = await fixture()
+  const settingsPath = join(f.cwd, '.study/settings.json')
+  await writeFile(settingsPath, JSON.stringify({ ...JSON.parse(await readFile(settingsPath, 'utf8')), learnerId: 'child-1' }))
+  await mkdir(join(f.cwd, '.study/blocks'))
+  const lessons = []
+  for (let i = 0; i < 9; i++) {
+    const blockId = `block-${i}`
+    await writeFile(join(f.cwd, `.study/blocks/${blockId}.json`), JSON.stringify({ format: 2, kind: 'block', learnerId: 'child-1', termId: 'term-1', id: blockId, subject: 'math', mode: 'foundation', startedAt: NOW, ...(i === (mode === 'current' ? 8 : 0) ? {} : { endedAt: NOW + 1 }), context: { profile: setup.profile }, questions: [], responses: [], hints: [], assessments: [] }))
+    lessons.push({ id: `lesson-${i}`, learnerId: 'child-1', termId: 'term-1', blockId, learnerKey: 'user:fixture-parent', classroomId: `stage-${i}`, base: 'https://classroom.test', status: 'ready', title: 'Original classroom', requirement: 'Subtraction within20', createdAt: new Date(NOW).toISOString(), updatedAt: new Date(NOW).toISOString(), feedback: { bindingId: `binding-${i}`, learnerId: 'child-1', termId: 'term-1', blockId, goalId: 'm.sub', familyId: 'math.sub-basic', scope: { id: 'within20', description: 'Written subtraction within20', modality: 'written', numberMax: 20 } } })
+  }
+  await writeFile(join(f.cwd, '.study/openmaic-lessons.json'), JSON.stringify({ format: 1, lessons }))
+  const requested: string[] = []
+  f.ctx.provide('studentOpenmaic', { feedback: () => ({ async read(owner: { classroomId: string }, binding: { bindingId: string }) { requested.push(owner.classroomId); return { revision: 'cut', observations: [], pending: [], drafts: 0, omitted: 0, checkpoint: { bindingId: binding.bindingId, attempts: [] } } }, async verify() { return true } }) } as Context['studentOpenmaic'])
+  if (mode === 'selected') {
+    await f.ctx.plugin(SystemPrompt); await f.ctx.plugin(ToolRuntime); registerOpenmaicFeedback(f.ctx)
+    const callId = 'ninth-classroom' as ToolRunContext['callId']
+    const execution: ToolRunContext = { agent: f.agent, signal: f.signal, callId, rootCallId: callId, name: 'openmaic_feedback', arguments: {}, token: Symbol('feedback') as ToolRunContext['token'], deferContext() {}, concludeTurn() {} }
+    expect(await f.ctx.tools.get('openmaic_feedback')!.execute({ action: 'read', lessonId: 'lesson-8' }, execution)).toMatchObject({ status: 'available', complete: true, consumption: { status: 'accepted' } })
+  } else {
+    const result = await readStudentWorkspace({ agent: f.agent, signal: f.signal })
+    expect(result.openmaic.find(fact => fact.lessonId === 'lesson-8')).toMatchObject({ status: 'available', consumption: { status: 'accepted' } })
+    expect(result.openmaic.filter(fact => fact.failure === 'read-limit')).toHaveLength(1)
+  }
+  expect(requested).toHaveLength(8)
+  expect(requested[0]).toBe('stage-8')
+})
+
+it('reauthenticates archived official review from its archived-only classroom log', async () => {
+  const { OpenmaicConnection } = await import('../src/openmaic/connection.ts')
+  const { OpenmaicFeedback } = await import('../src/openmaic/feedback.ts')
+  const { openmaicAcademicQuestion } = await import('../src/openmaic/feedback-consumer.ts')
+  const { queryWorkspace } = await import('../src/learning/queries.ts')
+  const f = await fixture()
+  const days = ['2026-10-01', '2026-10-08', '2026-10-24']
+  const questions = days.map((_day, i) => ({ id: `official-${i}`, type: 'single', question: '18 - 3?', options: [{ value: 'A', label: '15' }, { value: 'B', label: '16' }], answer: ['A'], analysis: 'Subtract three.' }))
+  const owner = { learnerId: 'child-1', termId: 'old-term', blockId: 'original', classroomId: 'stage-1', base: 'https://classroom.test', learnerKey: 'user:parent' }
+  const scope = { id: 'within20', description: 'Written subtraction within twenty', modality: 'written' as const, numberMax: 20 }
+  const target = { goalId: 'm.sub', familyId: 'math.sub-basic', scope }
+  const captures = new Map<string, unknown>()
+  let submitted = false, revoked = false
+  const sessions = days.map((day, i) => ({ id: `attempt-${i}`, runtimeDslVersion: '0.1.0', kind: 'quizAttempt', stageId: 'stage-1', learnerKey: owner.learnerKey, status: 'completed', createdAt: `${day}T01:00:00Z`, updatedAt: `${day}T01:00:00Z` }))
+  const connection = new OpenmaicConnection({ baseUrl: owner.base, accountBaseUrl: 'https://account.test/api', accountRef: '', passwordRef: '', tokenRef: 'token', accountId: '' }, { async resolve() { return `fixture.${Buffer.from(JSON.stringify({ exp: 7 * 86400 })).toString('base64url')}.signature` }, async load() { return undefined }, async save() {} }, { now: () => 0, fetch: async url => {
+    const path = new URL(String(url)).pathname
+    const json = (data: unknown) => new Response(JSON.stringify(data))
+    if (revoked) return new Response('{}', { status: 403 })
+    if (path.endsWith('/learner-key')) return json({ learnerKey: owner.learnerKey })
+    if (path.endsWith('/manifest')) return json({ rev: 1, scenes: [{ id: 'scene-1', rev: 1, order: 0 }] })
+    if (path.endsWith('/documents/stage-1')) return json({ dslVersion: '0.3.0', stage: { id: 'stage-1' }, scenes: [{ id: 'scene-1', stageId: 'stage-1', type: 'quiz', content: { type: 'quiz', questions } }] })
+    if (path.endsWith('/sessions')) return json(submitted ? sessions : [])
+    const index = Number(/attempt-(\d)/u.exec(path)?.[1])
+    if (path.endsWith('/records')) return json(['submitted', 'reviewed'].map((phase, seq) => ({ id: `event-${index}-${seq}`, sessionId: `attempt-${index}`, seq, sceneId: 'scene-1', createdAt: `${days[index]}T01:00:00Z`, payload: { payloadVersion: 1, phase, answers: { [`official-${index}`]: 'A' }, ...(phase === 'reviewed' ? { results: [{ questionId: `official-${index}`, correct: true, status: 'correct', earned: 1 }] } : {}) } })))
+    return json(sessions[index])
+  } })
+  const feedback = new OpenmaicFeedback(connection, { async load(key) { return captures.get(key) }, async claim(key, value) { if (!captures.has(key)) captures.set(key, structuredClone(value)); return captures.get(key) } }, async () => true)
+  const prepared = await feedback.prepare(owner, target, f.signal)
+  submitted = true
+  const source = await feedback.read(owner, prepared.binding, f.signal)
+  expect(source.observations).toHaveLength(3)
+  const mistake = { id: 'm1', subject: 'math', objectiveId: 'm.sub', topic: 'Subtract', prompt: '18 - 3?', learnerAnswer: '16', correction: '15', explanation: 'Subtract three', answerEvidence: '15 + 3 = 18', uncertainties: '', confirmedAt: Date.parse('2026-09-30T09:00:00+08:00'), userConfirmation: 'Original error checked' }
+  const archivedAt = Date.parse('2026-11-01T12:00:00+08:00')
+  const settings = { format: 2, kind: 'term-settings', learnerId: 'child-1', termId: 'old-term', revision: 1, updatedAt: NOW, archivedAt, profile: setup.profile, materials: [], courses: [] }
+  const block = { format: 2, kind: 'block', learnerId: 'child-1', termId: 'old-term', id: 'original', subject: 'math', mode: 'review', startedAt: NOW, endedAt: archivedAt, context: { profile: setup.profile }, questions: source.observations.map(observation => ({ ...openmaicAcademicQuestion(observation), mistakeId: 'm1' })), hints: [], responses: source.observations.map((observation, i) => ({ id: observation.responseId, questionId: observation.questionId, rawResponse: JSON.stringify(observation.source.submittedAnswer), source: observation.source, assistance: 'independent', assistanceConfirmation: 'Original independent answer checked', answerDate: { kind: 'day', day: days[i], parentConfirmation: 'Actual answer day checked' } })), assessments: source.observations.map((observation, i) => ({ id: `assessment-${i}`, responseId: observation.responseId, result: observation.result, grading: observation.grading, official: observation.official, officialHistory: observation.officialHistory, assistance: 'independent', feedback: 'Correct', answerEvidence: '15 + 3 = 18', assessedAt: NOW })) }
+  const old = join(f.cwd, '.study/archives/old-term')
+  await mkdir(join(old, 'blocks'), { recursive: true })
+  await writeFile(join(old, 'settings.json'), JSON.stringify(settings))
+  await writeFile(join(old, 'collections.json'), JSON.stringify({ format: 2, kind: 'collections', learnerId: 'child-1', termId: 'old-term', mistakes: [mistake], rewards: [], teachingQueue: [] }))
+  await writeFile(join(old, 'blocks/original.json'), JSON.stringify(block))
+  await writeFile(join(old, 'openmaic-lessons.json'), JSON.stringify({ format: 1, lessons: [{ ...owner, id: 'old-lesson', status: 'ready', title: 'Original classroom', requirement: 'Subtraction', createdAt: new Date(NOW).toISOString(), updatedAt: new Date(NOW).toISOString(), feedback: prepared.binding }] }))
+  const review = { mistakeId: 'm1', stage: 3, dueAt: Date.parse('2026-11-09T00:00:00+08:00'), independentDays: days }
+  const reference = { learnerId: 'child-1', termId: 'old-term', ownerKind: 'block', ownerId: 'original', responseId: source.observations[2]!.responseId, goalId: 'm.sub', scope, review }
+  await writeFile(join(f.cwd, '.study/settings.json'), JSON.stringify({ ...settings, termId: 'new-term', archivedAt: undefined, evidenceReferences: [reference] }))
+  let activeFeedback: Pick<typeof feedback, 'read' | 'verify'> = feedback
+  f.ctx.provide('studentOpenmaic', { feedback: () => activeFeedback } as Context['studentOpenmaic'])
+  const result = await readStudentWorkspace({ agent: f.agent, signal: f.signal })
+  expect(result.read.status).toBe('valid')
+  expect(result.read.archiveIssues).toEqual([])
+  expect(result.openmaic).toMatchObject([{ lessonId: 'old-lesson', status: 'available', consumption: { status: 'accepted' } }])
+  expect(queryWorkspace(result.read, { kind: 'mistakes' }, archivedAt + 30 * 86400000)).toMatchObject({ data: { items: [{ id: 'm1', stage: 3, dueAt: review.dueAt, independentDays: days }] } })
+  const originalLesson = JSON.parse(await readFile(join(old, 'openmaic-lessons.json'), 'utf8')).lessons[0]
+  await writeFile(join(f.cwd, '.study/openmaic-lessons.json'), JSON.stringify({ format: 1, lessons: [...Array.from({ length: 8 }, (_unused, i) => ({ ...originalLesson, id: `unrelated-${i}`, classroomId: `other-${i}`, feedback: { ...prepared.binding, bindingId: `unrelated-${i}` } })), originalLesson] }))
+  const calls: string[] = []
+  activeFeedback = { async read(request: typeof owner, binding: typeof prepared.binding, signal: AbortSignal) { calls.push(request.classroomId); return request.classroomId === 'stage-1' ? feedback.read(request, binding, signal) : { revision: 'other', observations: [], pending: [], drafts: 0, omitted: 0, checkpoint: { bindingId: binding.bindingId, attempts: [] } } }, async verify(request: typeof owner, binding: typeof prepared.binding, signal: AbortSignal, revision: string) { return request.classroomId === 'stage-1' ? feedback.verify(request, binding, signal, revision) : true } }
+  const repeated = await readStudentWorkspace({ agent: f.agent, signal: f.signal })
+  expect(repeated.read.archiveIssues).toEqual([])
+  expect(calls).toHaveLength(8)
+  expect(calls[0]).toBe('stage-1')
+  expect(calls.filter(id => id === 'stage-1')).toHaveLength(1)
+  expect(repeated.openmaic.filter(fact => fact.failure === 'read-limit')).toHaveLength(1)
+  calls.length = 0
+  await writeFile(join(f.cwd, '.study/openmaic-lessons.json'), JSON.stringify({ format: 1, lessons: [{ ...originalLesson, feedback: { ...prepared.binding, bindingId: 'conflicting-binding' } }] }))
+  const conflicting = await readStudentWorkspace({ agent: f.agent, signal: f.signal })
+  expect(conflicting.read.workspace?.archivedEvidence).toEqual([])
+  expect(conflicting.openmaic).toMatchObject([{ status: 'ownership-unresolved', reason: 'Resolve conflicting saved ownership for the same original classroom before importing records.' }])
+  expect(calls).toEqual([])
+  await rm(join(f.cwd, '.study/openmaic-lessons.json'))
+  revoked = true
+  const denied = await readStudentWorkspace({ agent: f.agent, signal: f.signal })
+  expect(denied.read.workspace?.archivedEvidence).toEqual([])
+  expect(denied.openmaic).toMatchObject([{ status: 'unavailable', failure: 'permission-denied' }])
 })

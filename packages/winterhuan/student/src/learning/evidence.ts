@@ -16,6 +16,7 @@ export interface EffectiveEvidence {
   official?: Assessment['official']; officialHistory?: Assessment['officialHistory']; grading?: Assessment['grading']
   source: LearnerResponse['source']; sourceStatus: 'known' | 'unknown'; assessedAt?: number
   capability?: LearningBlock['questions'][number]['capability']; criteria?: Assessment['criteria']; feedback?: string; errorType?: Assessment['errorType']
+  /** Allowed mastery scopes; an empty list retains this fact only for historical review replay. */
   referenceScopes?: NonNullable<LearningBlock['questions'][number]['capability']>['scope'][]
 }
 /** Shared normalized response facts and separately preserved current help signals. */
@@ -65,8 +66,8 @@ export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
   for (const archive of workspace.archivedEvidence ?? []) {
     const original = deriveEvidence(archive.workspace)
     for (const entry of original.entries) {
-      const references = archive.references.filter(reference => entry.capability && reference.goalId === entry.capability.goalId && scopeSupports(entry.capability.scope, reference.scope) && (reference.ownerKind === entry.ownerKind && reference.ownerId === entry.ownerId && reference.responseId === entry.responseId || reference.review?.mistakeId === entry.mistakeId))
-      if (references.length && !entries.some(existing => existing.termId === entry.termId && existing.ownerKind === entry.ownerKind && existing.ownerId === entry.ownerId && existing.responseId === entry.responseId)) entries.push({ ...entry, referenceScopes: references.map(reference => reference.scope) })
+      const references = archive.references.filter(reference => reference.goalId === entry.objectiveId && (reference.ownerKind === entry.ownerKind && reference.ownerId === entry.ownerId && reference.responseId === entry.responseId && entry.capability && scopeSupports(entry.capability.scope, reference.scope) || reference.review && reference.review.mistakeId === entry.mistakeId))
+      if (references.length && !entries.some(existing => existing.termId === entry.termId && existing.ownerKind === entry.ownerKind && existing.ownerId === entry.ownerId && existing.responseId === entry.responseId)) entries.push({ ...entry, referenceScopes: references.filter(reference => entry.capability && scopeSupports(entry.capability.scope, reference.scope)).map(reference => reference.scope) })
     }
   }
   return { entries, stuckSignals }

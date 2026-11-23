@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { effectiveKnowledge, resolveLegacyReference } from '../src/capabilities.ts'
+import { effectiveKnowledge, resolveLegacyReference, knowledgeSources } from '../src/capabilities.ts'
 
 it('reads source-backed capabilities and one mother per family independently of legacy course maps', () => {
   const knowledge = effectiveKnowledge()
@@ -109,4 +109,21 @@ it('keeps a different core method as a separate family serving an existing capab
   const index = effectiveKnowledge({ goals: [], families: [newMethod] })
   expect(index.families.filter(family => family.goalIds.includes('m.count')).map(family => family.id)).toEqual(['math.count', 'workspace-group-count'])
   expect(index.goals.find(goal => goal.id === 'm.count')!.familyIds).toContain('workspace-group-count')
+})
+
+
+it('borrows immutable packaged and extension content without poisoning subsequent queries', () => {
+  const first = effectiveKnowledge()
+  const counting = first.families.find(family => family.id === 'math.count')!
+  const objective = resolveLegacyReference('objective', 'c1a-o1')
+  const route = resolveLegacyReference('exercise', 'ex-c1a-o0-1')
+  const sources = knowledgeSources()
+  const extended = effectiveKnowledge({ goals: [], families: [] })
+  for (const [target, key, value] of [[counting.representative, 'prompt', 'altered'], [first.goals, '0', {}], [objective.candidateGoalIds, '0', 'altered'], [route.routes[0]!, 'goalId', 'altered'], [route.pendingReasons, '0', 'altered'], [sources.sources[0]!, 'label', 'altered'], [extended.families[0]!.representative, 'prompt', 'altered']] as const) {
+    expect(Reflect.set(target, key, value)).toBe(false)
+  }
+  expect(effectiveKnowledge().families.find(family => family.id === 'math.count')!.representative.prompt).toBe('桌上有7枚棋子，数出总数，再取5枚')
+  expect(resolveLegacyReference('objective', 'c1a-o1').candidateGoalIds[0]).toBe('c.character')
+  expect(resolveLegacyReference('exercise', 'ex-c1a-o0-1').routes[0]!.goalId).toBe('c.recall')
+  expect(effectiveKnowledge().goals).toBe(first.goals)
 })

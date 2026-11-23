@@ -44,7 +44,7 @@ export interface OpenmaicInputObservation {
   binding: z.infer<typeof feedbackBindingSchema>; questionId: string; responseId: string
   question: z.infer<typeof openmaicQuestionSchema>; source: z.infer<typeof openmaicResponseSourceSchema>; official?: z.infer<typeof officialReviewSchema>
   officialHistory?: z.infer<typeof officialReviewSchema>[]; answerExposure?: 'possible'
-  sourceStatus: 'known' | 'unknown'; reason?: string; result: 'correct' | 'incorrect' | 'unassessed'; grading: OpenmaicGrading
+  sourceStatus: 'known' | 'unknown'; reason?: string; result: 'correct' | 'incorrect' | 'partial' | 'unassessed'; grading: OpenmaicGrading
 }
 /** Source reads expose omissions and failures without changing academic files. */
 export interface OpenmaicSourceVerification { bindingId?: string; lessonId: string; learnerId?: string; termId?: string; blockId?: string; status: 'available' | 'unavailable' | 'ownership-unresolved'; reason?: string; failure?: import('./connection.ts').OpenmaicError['code']; consumption?: 'pending' | 'accepted'; pendingCount?: number; conflictCount?: number; omitted: number }

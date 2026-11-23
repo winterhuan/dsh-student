@@ -293,3 +293,27 @@ it('rejects malformed and non-HTTP service addresses without echoing them', asyn
   }
   expect(requests).toBe(0)
 })
+
+
+it.each([401, 403, 404])('renews only an expired bootstrap token (%s) on a fresh Host', async status => {
+  let logins = 0
+  let reads = 0
+  const bootstrap = token(1)
+  const secrets = { ...store(), async resolve(ref: string) { return ref === 'token' ? bootstrap : store().resolve(ref) } }
+  const connection = new OpenmaicConnection({ ...config, tokenRef: 'token', accountId: 'account-1' }, secrets, {
+    now: () => 2000, encryptPassword: async () => 'encrypted', fetch: async (url, init) => {
+      const path = new URL(String(url)).pathname
+      if (path.endsWith('get_public_key')) return json({ is_success: true, data: 'key' })
+      if (path.endsWith('/user/login')) { logins++; return json({ is_success: true, data: { token: token(7 * 86400), id: 'account-1' } }) }
+      if (path.endsWith('/learner-key')) return new Headers(init?.headers).get('cookie') === `auth_token=${bootstrap}` ? json({}, status) : json({ learnerKey: 'user:account-1' })
+      reads++; return json({ answer: 'B' })
+    },
+  })
+  if (status === 401) {
+    expect(await connection.read('/api/persistence/test', new AbortController().signal)).toEqual({ answer: 'B' })
+    expect(logins).toBe(1); expect(reads).toBe(1)
+  } else {
+    await expect(connection.read('/api/persistence/test', new AbortController().signal)).rejects.toMatchObject({ status })
+    expect(logins).toBe(0); expect(reads).toBe(0)
+  }
+})

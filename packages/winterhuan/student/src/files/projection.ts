@@ -34,6 +34,7 @@ export function projectWorkspace(workspace: ValidatedWorkspace, now: number): St
   }
   for (const { mistake, termId } of declarations) {
     const { key, goal, binding } = keyFor(mistake, termId)
+    const inheritedReview = workspace.archivedEvidence?.some(archive => archive.workspace.settings.termId === termId && archive.references.some(reference => reference.review?.mistakeId === mistake.id))
     let id = mothers.get(key)
     if (!id) {
       id = collections?.mistakes.find(current => keyFor(current, settings.termId).key === key)?.id ?? mistake.id
@@ -41,7 +42,7 @@ export function projectWorkspace(workspace: ValidatedWorkspace, now: number): St
       mothers.set(key, id); mistakes.push({ ...mistake, id, ...(goal ? { objectiveId: goal } : {}) })
     }
     for (const entry of index.entries) if (entry.termId === termId && entry.mistakeId === mistake.id) {
-      if (binding && (!entry.capability || (knowledge.familyAliases[entry.capability.familyId] ?? entry.capability.familyId) !== (knowledge.familyAliases[binding.familyId] ?? binding.familyId) || !scopeSupports(binding.scope, entry.capability.scope) || !scopeSupports(entry.capability.scope, binding.scope))) delete entry.mistakeId
+      if (!inheritedReview && binding && (!entry.capability || (knowledge.familyAliases[entry.capability.familyId] ?? entry.capability.familyId) !== (knowledge.familyAliases[binding.familyId] ?? binding.familyId) || !scopeSupports(binding.scope, entry.capability.scope) || !scopeSupports(entry.capability.scope, binding.scope))) delete entry.mistakeId
       else entry.mistakeId = id
     }
   }

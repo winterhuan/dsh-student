@@ -8,6 +8,7 @@ export interface LessonFileRead {
     file?: LessonFile;
     validRows?: InteractiveLesson[];
     observation?: FileObservation;
+    bytes?: Uint8Array;
     issues: FileIssue[];
 }
 /**

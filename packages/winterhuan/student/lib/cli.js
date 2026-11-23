@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { E as officialFileSchemas, _ as readBackups, a as lessonFileSchema, ct as figureSchema, f as backupVersions, l as readLessonFile, lt as stateSchema, u as readWorkspace } from "./openmaic-CBuaaxeA.js";
+import { I as officialFileSchemas, Rt as figureSchema, Wt as capabilityGoalSchema, Xt as questionFamilySchema, bt as lessonFileSchema, ht as readLessonFile, l as readBackups, qt as knowledgeExtensionSchema, r as backupVersions, t as readWorkspace, zt as stateSchema } from "./read-CepqKvWP.js";
 import { t as nodeStudyFiles } from "./node-sZCrHR59.js";
 import { z } from "zod";
 import { parseArgs } from "node:util";
@@ -7,6 +7,9 @@ import { parseArgs } from "node:util";
 /** Authoring resources derive structural constraints from the shared input schemas. */
 const schemas = {
 	...officialFileSchemas,
+	"capability-goal": capabilityGoalSchema,
+	"question-family": questionFamilySchema,
+	"knowledge-extension": knowledgeExtensionSchema,
 	"openmaic-lessons": lessonFileSchema,
 	figure: figureSchema
 };
@@ -96,7 +99,7 @@ try {
 			help: { type: "boolean" }
 		}
 	});
-	if (values.help) console.log("node <installed-package>/lib/cli.js validate [--workspace <root>]\nnode <installed-package>/lib/cli.js schema|example <term-settings|block|worksheet|collections|openmaic-lessons|figure>\nRead-only validation and on-demand source-derived resources. No writes, revisions, backups or repairs.");
+	if (values.help) console.log("node <installed-package>/lib/cli.js validate [--workspace <root>]\nnode <installed-package>/lib/cli.js schema|example <term-settings|block|worksheet|collections|openmaic-lessons|capability-goal|question-family|knowledge-extension|figure>\nRead-only validation and on-demand source-derived resources. No writes, revisions, backups or repairs.");
 	else if (positionals.length === 2 && (positionals[0] === "schema" || positionals[0] === "example")) {
 		const kind = authoringKind(positionals[1]);
 		console.log(JSON.stringify(positionals[0] === "schema" ? authoringSchema(kind) : authoringExample(kind), null, 2));

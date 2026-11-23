@@ -12,6 +12,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 }
 declare module '@deepseek-ai/dsh-typert-protocol' {
     interface RemoteErrorDetailsMap {
+        /** A new native Session needs its first admitted tutor request before Student can read it. */
+        'student/main-session-required': Record<string, never>;
         /** The resource address does not identify a Student Session query. */
         'student/invalid-address': Record<string, never>;
         /** Current official files cannot supply this projection; the last display remains stale. */

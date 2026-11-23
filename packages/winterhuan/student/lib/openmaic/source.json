@@ -1,0 +1,21 @@
+{
+  "source": "github:THU-MAIC/dsh-openmaic#09c1693cfe83224db89fdd4abd245ac9174d3a05",
+  "version": "0.4.0",
+  "bundledDependencies": [
+    "@openmaic/dsh-openmaic",
+    "@openmaic/generation",
+    "entities",
+    "es-module-lexer",
+    "nanoid",
+    "parse5",
+    "picocolors",
+    "postcss",
+    "postcss-value-parser",
+    "source-map-js"
+  ],
+  "lockfileSha256": "88c81364e1bb7334ea71171f6391a6c019261d855f86e72ff88005bfe3f826e7",
+  "originalHostSha256": "3177e2fdf783ee0c6dcfa5a39e226c51249de7f51c1ab9b3c7b7200d9a5d0bb4",
+  "originalClientSha256": "ffb5bcb99f460a75eebab3df5666d54c0d29d33c700146323939082d95fbf549",
+  "host": "The official Host and its npm dependency closure are bundled; DSH services remain external.",
+  "client": "The original browser bundle and skill assets are packaged unchanged. The client-only Loader entry registers no Host tools."
+}

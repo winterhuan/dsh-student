@@ -1,0 +1,2 @@
+- id: official-openmaic-client
+  name: ./client-entry.js

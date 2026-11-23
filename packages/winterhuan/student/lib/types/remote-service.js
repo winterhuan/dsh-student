@@ -36,12 +36,16 @@ var __esDecorate = (this && this.__esDecorate) || function (ctor, descriptorIn, 
 import { createHash } from 'node:crypto';
 import { setTimeout } from 'node:timers/promises';
 import z from '@deepseek-ai/schemastery';
+import { createUserMessage } from '@deepseek-ai/dsh-llm';
+import { z as jsonSchema } from 'zod';
 import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol';
 import { queryWorkspace, queryWorkspaceDashboard, queryJsonData } from "./learning/queries.js";
 import { readInteractiveLessons } from "./openmaic.js";
 import { readStudentWorkspace } from "./transport.js";
 import { applicationStudyFiles } from "./files/application.js";
 import { manualFields, saveManual } from "./files/manual.js";
+import { readLessonFile } from "./files/lessons.js";
+import { readWorkspace } from "./files/read.js";
 /** Host owner for the generated student Remote namespace. */
 let StudentRemote = (() => {
     let _classSuper = TypertRemoteService;
@@ -51,6 +55,7 @@ let StudentRemote = (() => {
     let _manualContext_decorators;
     let _saveManual_decorators;
     let _inspectSubmission_decorators;
+    let _syncFeedback_decorators;
     return class StudentRemote extends _classSuper {
         static {
             const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
@@ -59,15 +64,18 @@ let StudentRemote = (() => {
             _manualContext_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
             _saveManual_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
             _inspectSubmission_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
+            _syncFeedback_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
             __esDecorate(this, null, _query_decorators, { kind: "method", name: "query", static: false, private: false, access: { has: obj => "query" in obj, get: obj => obj.query }, metadata: _metadata }, null, _instanceExtraInitializers);
             __esDecorate(this, null, _watch_decorators, { kind: "method", name: "watch", static: false, private: false, access: { has: obj => "watch" in obj, get: obj => obj.watch }, metadata: _metadata }, null, _instanceExtraInitializers);
             __esDecorate(this, null, _manualContext_decorators, { kind: "method", name: "manualContext", static: false, private: false, access: { has: obj => "manualContext" in obj, get: obj => obj.manualContext }, metadata: _metadata }, null, _instanceExtraInitializers);
             __esDecorate(this, null, _saveManual_decorators, { kind: "method", name: "saveManual", static: false, private: false, access: { has: obj => "saveManual" in obj, get: obj => obj.saveManual }, metadata: _metadata }, null, _instanceExtraInitializers);
             __esDecorate(this, null, _inspectSubmission_decorators, { kind: "method", name: "inspectSubmission", static: false, private: false, access: { has: obj => "inspectSubmission" in obj, get: obj => obj.inspectSubmission }, metadata: _metadata }, null, _instanceExtraInitializers);
+            __esDecorate(this, null, _syncFeedback_decorators, { kind: "method", name: "syncFeedback", static: false, private: false, access: { has: obj => "syncFeedback" in obj, get: obj => obj.syncFeedback }, metadata: _metadata }, null, _instanceExtraInitializers);
             if (_metadata) Object.defineProperty(this, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
         }
         config = __runInitializers(this, _instanceExtraInitializers);
-        static inject = ['typert', 'sessionQuery', 'agents'];
+        feedbackIntents = new WeakMap();
+        static inject = ['typert', 'sessionQuery', 'agents', 'remoteAccess'];
         static Config = z.object({ refreshIntervalMs: z.number().step(1).min(1).max(2_147_483_647).default(3000), maxWireBytes: z.number().step(1).min(1024).default(1_048_576) });
         /**
          * @param ctx - Host services containing authorized native Agent lookups.
@@ -87,7 +95,7 @@ let StudentRemote = (() => {
         async query(sessionId, request, signal) {
             const agent = await this.mainAgent(sessionId, signal);
             this.wire(request);
-            const { read, native, backupIssues } = await readStudentWorkspace({ agent, signal });
+            const { read, native, backupIssues } = await readStudentWorkspace({ agent, signal }, this.ctx);
             const now = Date.now();
             let query;
             if (request.kind === 'dashboard') {
@@ -104,13 +112,12 @@ let StudentRemote = (() => {
         }
         /**
          * Follow current files and time thresholds; unchanged version/cut/projection tokens produce no frame.
-         * @param sessionId - registered main native Session identity, authorized before the stream opens.
+         * @param sessionId - native Session identity; every read requires a registered main Agent.
          * @param request - shared bounded projection selector.
          * @param signal - cancellation stops reads and the owned refresh timer.
          * @returns an initial snapshot and later changes or recoverable read-failure frames.
          */
         async *watch(sessionId, request, signal) {
-            await this.mainAgent(sessionId, signal);
             let token;
             while (!signal.aborted) {
                 let delay = this.config.refreshIntervalMs;
@@ -126,7 +133,7 @@ let StudentRemote = (() => {
                     if (signal.aborted)
                         return;
                     token = undefined;
-                    yield this.wire({ kind: 'failure', message: (error instanceof Error ? error.message : 'Student data could not be read.').slice(0, 200) });
+                    yield this.wire({ kind: 'failure', ...(error instanceof RemoteError && error.code === 'student/main-session-required' ? { reason: 'main-session-required' } : {}), message: (error instanceof Error ? error.message : 'Student data could not be read.').slice(0, 200) });
                 }
                 try {
                     await setTimeout(delay, undefined, { signal });
@@ -148,7 +155,7 @@ let StudentRemote = (() => {
         async manualContext(sessionId, intent, signal) {
             const agent = await this.mainAgent(sessionId, signal);
             this.wire(intent);
-            const { read } = await readStudentWorkspace({ agent, signal });
+            const { read } = await readStudentWorkspace({ agent, signal }, this.ctx);
             return this.wire({ ...this.readFacts(read), baseline: manualFields(read, intent) });
         }
         /**
@@ -175,7 +182,7 @@ let StudentRemote = (() => {
         async inspectSubmission(sessionId, request, signal) {
             const agent = await this.mainAgent(sessionId, signal);
             this.wire(request);
-            const { read, native } = await readStudentWorkspace({ agent, signal });
+            const { read, native } = await readStudentWorkspace({ agent, signal }, this.ctx);
             const nativeStates = native.admissions.filter(row => row.requestId === request.requestId).map(row => row.status);
             const result = { requestId: request.requestId, admission: nativeStates.length ? 'accepted' : 'unknown', nativeStates, nativeSourceStatus: native.status, ...(native.cut ? { cut: native.cut } : {}), answer: 'not-requested', assessment: 'not-requested', ...this.readFacts(read) };
             if (request.response) {
@@ -192,6 +199,58 @@ let StudentRemote = (() => {
                 }
             }
             return this.wire(result);
+        }
+        /**
+         * Queue one authorized feedback intent behind existing native input, or withdraw its pending system message.
+         * @param sessionId - Registered main Student Session; Remote authorization is required.
+         * @param request - Explicit return, continue or resume trigger; pause removes only this lesson's queued system intent before caller-owned native cancellation.
+         * @param signal - Cancellation before admission; admitted work belongs to the native queue.
+         * @returns Queue state only. Failure, cancellation and completion allow a later explicit retry; no automatic wake loop or academic write occurs.
+         */
+        async syncFeedback(sessionId, request, signal) {
+            const agent = await this.mainAgent(sessionId, signal);
+            const { lessonId, trigger } = jsonSchema.object({ lessonId: jsonSchema.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u), trigger: jsonSchema.enum(['return', 'continue', 'resume', 'pause']) }).strict().parse(request);
+            const queued = () => [...agent.inbox.nextTurn, ...agent.inbox.nextStep].find(message => message.source.kind === 'student-sync' && message.source.lessonId === lessonId && message.source.sessionId === sessionId);
+            let intents = this.feedbackIntents.get(agent);
+            if (!intents) {
+                intents = new Map();
+                this.feedbackIntents.set(agent, intents);
+            }
+            if (trigger === 'pause') {
+                for (const message of [...agent.inbox.nextTurn, ...agent.inbox.nextStep])
+                    if (message.source.kind === 'student-sync' && message.source.lessonId === lessonId && message.source.sessionId === sessionId)
+                        agent.inbox.remove(message.id);
+                intents.delete(lessonId);
+                return { lessonId, status: 'paused' };
+            }
+            const existing = queued()?.id ?? intents.get(lessonId)?.messageId;
+            if (existing || intents.has(lessonId))
+                return { lessonId, status: 'coalesced', ...(existing ? { messageId: existing } : {}) };
+            const intent = {};
+            intents.set(lessonId, intent);
+            try {
+                const files = applicationStudyFiles({ agent, signal });
+                const read = await readWorkspace(files, signal);
+                const lessons = await readLessonFile(files, signal);
+                signal.throwIfAborted();
+                if (intents.get(lessonId) !== intent)
+                    return { lessonId, status: 'paused' };
+                const lesson = lessons.file?.lessons.find(lesson => lesson.id === lessonId);
+                const owners = read.workspace ? [read.workspace, ...(read.workspace.archivedEvidence ?? []).map(archive => archive.workspace)] : [];
+                if (read.status !== 'valid' || lessons.status !== 'valid' || lesson?.status !== 'ready' || !lesson.feedback || !lesson.classroomId || !lesson.learnerKey || !owners.some(owner => owner.settings.learnerId === lesson.learnerId && owner.settings.termId === lesson.termId && owner.blocks.some(block => block.learnerId === lesson.learnerId && block.id === lesson.blockId)) || !agent.ctx.tools.get('study_status', agent))
+                    return { lessonId, status: 'unavailable' };
+                const message = createUserMessage({ source: { kind: 'student-sync', sessionId, lessonId, learnerId: lesson.learnerId, termId: lesson.termId, blockId: lesson.blockId, trigger }, content: [{ type: 'text', text: `Student feedback synchronization: ${JSON.stringify({ lessonId, learnerId: lesson.learnerId, termId: lesson.termId, blockId: lesson.blockId, trigger })}. Load study and read this lesson with openmaic_feedback. Preserve original facts with native file tools, run the packaged read-only CLI, and advance its checkpoint only after independent consumption accepts the complete saved batch. ${trigger === 'continue' ? 'After accepted synchronization, the explicit Continue request may follow the shared study_status nextAction and legalActions.' : 'This return or resume requests synchronization only; retain the current activity.'} This system intent supplies no child answer, help confirmation or actual answer date.` }] });
+                agent.followup(message);
+                intent.messageId = message.id;
+                const settled = () => { if (intents.get(lessonId) === intent)
+                    intents.delete(lessonId); };
+                void agent.whenIdle().then(settled, settled);
+                return { lessonId, status: 'queued', messageId: message.id };
+            }
+            finally {
+                if (!intent.messageId && intents.get(lessonId) === intent)
+                    intents.delete(lessonId);
+            }
         }
         wire(value) {
             if (Buffer.byteLength(JSON.stringify(value)) > this.config.maxWireBytes)

@@ -9,11 +9,12 @@ window.__ModuleLoader__.load({
 		let react = require("react");
 		let zod = require("zod");
 		let _deepseek_ai_dsh_client_store = require("@deepseek-ai/dsh-client-store");
+		let node_fs = require("node:fs");
 		let _deepseek_ai_dsh_api_gateway_client = require("@deepseek-ai/dsh-api-gateway/client");
 		require("@deepseek-ai/cordis");
 		let react_dom = require("react-dom");
-		//#region \0dsh-global-css:/home/maiscrm/projects/dsh-creative/plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
-		const css$2 = ".student-desk{box-sizing:border-box;min-width:0;height:100%;min-height:0;color:var(--dsw-alias-label-primary);background:color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));font:14px/22px var(--dsw-font-family);flex-direction:column;gap:14px;padding:12px 12px 28px;display:flex;overflow:auto}.student-top{z-index:2;background:color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));flex-direction:column;gap:8px;padding:0 0 12px;display:flex;position:sticky;top:-12px}.student-toolbar{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-toolbar>.student-muted{border-radius:var(--dsw-radius-sm);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);margin-left:auto;padding:2px 8px;font-size:12px;line-height:20px}.student-tabs{border-radius:var(--dsw-radius-lg);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);max-width:100%;box-shadow:var(--dsw-elevation-soft);backdrop-filter:blur(24px)saturate(160%);flex-wrap:wrap;align-self:flex-start;gap:2px;padding:4px;display:inline-flex}.student-subjects{border-radius:var(--dsw-radius-md);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);box-shadow:var(--dsw-elevation-soft);backdrop-filter:blur(24px)saturate(160%);gap:2px;padding:4px;display:inline-flex}.student-subjects button{background:0 0;border:0}.student-quiet{background:0 0;border:0;flex:none;padding:6px 8px}.student-desk section{border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-bg-layer-2);box-shadow:var(--dsw-elevation-soft);flex-direction:column;gap:8px;padding:18px 20px;display:flex}.student-desk details{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);padding:12px 14px}.student-desk>details{border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-bg-layer-2);box-shadow:var(--dsw-elevation-soft);padding:14px 18px}.student-desk section section{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);box-shadow:none;padding:12px 14px}.student-desk h3{margin:0;font-size:14px;font-weight:500;line-height:22px}.student-desk p{overflow-wrap:anywhere;white-space:pre-wrap;margin:0}.student-desk form,.student-desk fieldset,.student-desk label{flex-direction:column;gap:8px;min-width:0;display:flex}.student-desk fieldset{border:0;margin:0;padding:0}.student-desk button,.student-desk input,.student-desk select,.student-desk textarea{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);box-sizing:border-box;min-width:0;max-width:100%;padding:8px 12px}.student-desk button{cursor:pointer;justify-content:center;align-items:center;gap:6px;min-height:36px;font-size:13px;line-height:20px;transition:background .15s,border-color .15s;display:inline-flex}.student-desk input,.student-desk select,.student-desk textarea{background:var(--dsw-alias-interactive-bg-hover);border-color:#0000}.student-desk .student-tabs button{min-height:32px;color:var(--dsw-alias-label-secondary);white-space:nowrap;background:0 0;border:0;padding:6px 13px}.student-desk .student-subjects button{border-radius:var(--dsw-radius-sm);min-height:28px;color:var(--dsw-alias-label-secondary);padding:4px 12px;font-size:12px}.student-desk .student-subjects button,.student-desk .student-quiet{background:0 0;border:0}.student-desk button:hover:enabled:not([aria-pressed=true]):not(.student-primary){background:var(--dsw-alias-interactive-bg-hover)}.student-desk .student-tabs button[aria-pressed=true],.student-desk .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-inverted);border-color:#0000}.student-desk .student-tabs button[aria-pressed=true]:hover:enabled,.student-desk .student-primary:hover:enabled{background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-inverted)}.student-desk .student-subjects button[aria-pressed=true],.student-desk .student-segments button[aria-pressed=true],.student-desk .student-segments button[aria-checked=true]{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);box-shadow:var(--dsw-elevation-soft)}.student-desk :disabled{opacity:.6;cursor:default}.student-desk :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.student-desk textarea{resize:vertical;min-height:72px}.student-desk .student-check{flex-direction:row;align-items:flex-start}.student-desk .student-check input{flex:none}.student-desk img{object-fit:contain;background:var(--dsw-alias-bg-base);border-radius:8px;width:100%;max-height:240px}.student-desk .student-status{padding:12px 16px;font-size:13px;line-height:20px}.student-desk .student-status details{border-top:.5px solid var(--dsw-alias-border-l2);background:0 0;border-radius:0;padding:8px 0 0}.student-desk .student-focus>h3{font-size:20px;font-weight:400;line-height:28px}.student-desk .student-question{font-size:16px;line-height:1.65}.student-desk summary{cursor:pointer;overflow-wrap:anywhere;font-weight:500}.student-desk .student-pages{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-plan{border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-1))}.student-desk details>details,.student-desk details>div,.student-desk details>p{margin-top:8px}.student-muted{color:var(--dsw-alias-label-secondary)}.student-unit{border-top:1px solid var(--dsw-alias-border-l2);padding-top:8px}.student-choices{flex-direction:column;gap:8px;display:flex}.student-choices button{text-align:left;width:100%;padding:12px 14px;font-size:15px}.student-result{font-size:15px;font-weight:500}.student-scope{flex-wrap:wrap;align-items:flex-end;gap:8px;display:flex}.student-scope label{flex:120px}.student-segments{flex-wrap:wrap;gap:6px;display:flex}.student-desk .student-grade{border-top:1px solid var(--dsw-alias-border-l2);padding:8px 0}.student-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px;height:8px;display:flex;overflow:hidden}.student-bar span{height:100%;display:block}.student-level-mastered,.student-fill-mastered{background:var(--dsw-alias-state-success-primary)}.student-level-practising,.student-fill-practising{background:var(--dsw-alias-state-business-primary)}.student-level-stalled,.student-fill-stalled{background:var(--dsw-alias-state-warn-primary)}.student-level-weak,.student-fill-weak{background:var(--dsw-alias-state-error-primary)}.student-level-due,.student-fill-due{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, var(--dsw-alias-state-warn-primary))}.student-level-untouched,.student-fill-untouched{background:var(--dsw-alias-label-tertiary)}.student-legend{flex-wrap:wrap;gap:8px 12px;display:flex}.student-dot{vertical-align:middle;border-radius:50%;width:8px;height:8px;margin-right:4px;display:inline-block}.student-chips{flex-direction:column;gap:6px;display:flex}.student-chip{text-align:left;border-radius:8px;align-items:center;gap:6px;width:100%;padding:8px 10px;display:flex}.student-pair{grid-template-columns:1fr 1fr;gap:8px;display:grid}.student-mastery{align-items:center;gap:6px;display:flex}.student-mastery span{border-radius:50%;width:10px;height:10px}.student-simon{flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-simon li{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 8px}.student-simon-done{opacity:.7}.student-simon-current{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, var(--dsw-alias-bg-base));font-weight:500}.student-steps{flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-map-inline{border:1px solid var(--dsw-alias-border-l2);border-left:3px solid var(--dsw-alias-state-business-primary);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base));border-radius:8px;margin:4px 0 8px;padding:8px 10px}.student-map-links{margin-top:8px}.student-mindmap-unit{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:8px;margin:8px 0;padding:10px}.student-mindmap-unit>summary{cursor:pointer;font-weight:500}.student-mindmap-branch{border-left:2px solid var(--dsw-alias-border-l2);flex-direction:column;gap:6px;margin:8px 0 0;padding:0 0 0 12px;list-style:none;display:flex}.student-mindmap-node{flex-direction:column;gap:4px;display:flex}.student-mindmap-concept{text-align:left;align-items:center;gap:6px;width:100%;display:flex}.student-mindmap-concept[aria-pressed=true]{background:var(--dsw-alias-bg-layer-2,transparent)}.student-mindmap-concept.student-level-mastered{box-shadow:inset 3px 0 0 var(--dsw-alias-state-success-primary)}.student-mindmap-concept.student-level-practising{box-shadow:inset 3px 0 0 var(--dsw-alias-state-business-primary)}.student-mindmap-concept.student-level-stalled{box-shadow:inset 3px 0 0 var(--dsw-alias-state-warn-primary)}.student-mindmap-concept.student-level-weak,.student-mindmap-concept.student-level-due{box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}.student-figure svg{width:100%;height:auto;max-height:220px;color:var(--dsw-alias-label-primary)}.student-figure circle,.student-figure rect,.student-figure line,.student-figure path,.student-figure polyline,.student-figure polygon{fill:none;stroke:currentColor;stroke-width:1.4px}.student-figure text{fill:currentColor;stroke:none}.student-figure .student-fill{fill:currentColor}.student-desk progress{width:100%;height:8px}.student-desk progress::-webkit-progress-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px}.student-desk progress::-webkit-progress-value{background:var(--dsw-alias-state-business-primary);border-radius:999px}.student-sheet-portal{font:13px/20px var(--dsw-font-family)}.student-sheet-portal button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);cursor:pointer;padding:8px 14px}.student-sheet-portal .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-inverted);border-color:#0000}.student-sheet-portal .student-quiet{background:0 0;border:0}.student-sheet-backdrop{z-index:1000;box-sizing:border-box;background:color-mix(in srgb, var(--dsw-alias-label-primary) 32%, transparent);justify-content:center;align-items:flex-start;padding:32px 16px;display:flex;position:fixed;inset:0;overflow:auto}.student-sheet-dialog{box-sizing:border-box;border-radius:var(--dsw-radius-panel);background:var(--dsw-alias-bg-layer-2);width:min(720px,100%);box-shadow:var(--dsw-elevation-prominent);flex-direction:column;gap:8px;padding:16px;display:flex}.student-sheet-toolbar{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.student-sheet-toolbar .student-muted{flex:200px;margin:0}.student-sheet-scroll{overflow:auto}.student-sheet{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);color:#333;font:14px/1.6 var(--dsw-font-family);background:#fff;border-radius:8px;flex-direction:column;gap:12px;padding:24px;display:flex}.student-url{user-select:text;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.student-sheet h2{text-align:center;margin:0;font-size:18px;font-weight:500}.student-sheet-meta{text-align:center;margin:0;font-size:12px}.student-sheet-item{break-inside:avoid;flex-direction:column;gap:8px;display:flex}.student-sheet-item>p{white-space:pre-wrap;margin:0}.student-sheet .student-figure svg{color:#333;width:100%;height:auto;max-height:260px}.student-sheet-lines{flex-direction:column;display:flex}.student-sheet-rule{border-bottom:1px solid #b9c0c7;height:22px}.student-sheet-box{border:1px dashed #b9c0c7;border-radius:4px;height:84px}@page{size:A4;margin:12mm 14mm}@media print{body>:not(.student-sheet-portal){display:none!important}.student-sheet-backdrop{background:0 0;padding:0;display:block;position:static;overflow:visible}.student-sheet-dialog{display:contents}.student-sheet-toolbar{display:none}.student-sheet-scroll{overflow:visible}.student-sheet{border:0;border-radius:0;width:100%;padding:0}.student-sheet-item{page-break-inside:avoid}}";
+		//#region \0dsh-global-css:/Users/winter/dsh-creative/.worktrees/student-openmaic-integration/packages/winterhuan/student/src/client/plugin.css.mjs
+		const css$2 = ".student-desk{box-sizing:border-box;min-width:0;height:100%;min-height:0;color:var(--dsw-alias-label-primary);background:color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));font:14px/22px var(--dsw-font-family);flex-direction:column;gap:14px;padding:12px 12px 28px;display:flex;overflow:auto}.student-top{z-index:2;background:color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));flex-direction:column;gap:8px;padding:0 0 12px;display:flex;position:sticky;top:-12px}.student-toolbar{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-toolbar>.student-muted{border-radius:var(--dsw-radius-sm);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);margin-left:auto;padding:2px 8px;font-size:12px;line-height:20px}.student-tabs{border-radius:var(--dsw-radius-lg);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);max-width:100%;box-shadow:var(--dsw-elevation-soft);backdrop-filter:blur(24px)saturate(160%);flex-wrap:wrap;align-self:flex-start;gap:2px;padding:4px;display:inline-flex}.student-subjects{border-radius:var(--dsw-radius-md);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);box-shadow:var(--dsw-elevation-soft);backdrop-filter:blur(24px)saturate(160%);gap:2px;padding:4px;display:inline-flex}.student-subjects button{background:0 0;border:0}.student-quiet{background:0 0;border:0;flex:none;padding:6px 8px}.student-desk section{border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-bg-layer-2);box-shadow:var(--dsw-elevation-soft);flex-direction:column;gap:8px;padding:18px 20px;display:flex}.student-desk details{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);padding:12px 14px}.student-desk>details{border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-bg-layer-2);box-shadow:var(--dsw-elevation-soft);padding:14px 18px}.student-desk section section{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);box-shadow:none;padding:12px 14px}.student-desk h3{margin:0;font-size:14px;font-weight:500;line-height:22px}.student-desk pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}.student-desk p{overflow-wrap:anywhere;white-space:pre-wrap;margin:0}.student-desk form,.student-desk fieldset,.student-desk label{flex-direction:column;gap:8px;min-width:0;display:flex}.student-desk fieldset{border:0;margin:0;padding:0}.student-desk button,.student-desk input,.student-desk select,.student-desk textarea{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);box-sizing:border-box;min-width:0;max-width:100%;padding:8px 12px}.student-desk button{cursor:pointer;justify-content:center;align-items:center;gap:6px;min-height:36px;font-size:13px;line-height:20px;transition:background .15s,border-color .15s;display:inline-flex}.student-desk input,.student-desk select,.student-desk textarea{background:var(--dsw-alias-interactive-bg-hover);border-color:#0000}.student-desk .student-tabs button{min-height:32px;color:var(--dsw-alias-label-secondary);white-space:nowrap;background:0 0;border:0;padding:6px 13px}.student-desk .student-subjects button{border-radius:var(--dsw-radius-sm);min-height:28px;color:var(--dsw-alias-label-secondary);padding:4px 12px;font-size:12px}.student-desk .student-subjects button,.student-desk .student-quiet{background:0 0;border:0}.student-desk button:hover:enabled:not([aria-pressed=true]):not(.student-primary){background:var(--dsw-alias-interactive-bg-hover)}.student-desk .student-tabs button[aria-pressed=true],.student-desk .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-inverted);border-color:#0000}.student-desk .student-tabs button[aria-pressed=true]:hover:enabled,.student-desk .student-primary:hover:enabled{background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-inverted)}.student-desk .student-subjects button[aria-pressed=true],.student-desk .student-segments button[aria-pressed=true],.student-desk .student-segments button[aria-checked=true]{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);box-shadow:var(--dsw-elevation-soft)}.student-desk :disabled{opacity:.6;cursor:default}.student-desk :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.student-desk textarea{resize:vertical;min-height:72px}.student-desk .student-check{flex-direction:row;align-items:flex-start}.student-desk .student-check input{flex:none}.student-desk img{object-fit:contain;background:var(--dsw-alias-bg-base);border-radius:8px;width:100%;max-height:240px}.student-desk .student-status{padding:12px 16px;font-size:13px;line-height:20px}.student-desk .student-status details{border-top:.5px solid var(--dsw-alias-border-l2);background:0 0;border-radius:0;padding:8px 0 0}.student-desk .student-focus>h3{font-size:20px;font-weight:400;line-height:28px}.student-desk .student-question{font-size:16px;line-height:1.65}.student-desk summary{cursor:pointer;overflow-wrap:anywhere;font-weight:500}.student-desk .student-pages{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-plan{border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-1))}.student-desk details>details,.student-desk details>div,.student-desk details>p{margin-top:8px}.student-muted{color:var(--dsw-alias-label-secondary)}.student-unit{border-top:1px solid var(--dsw-alias-border-l2);padding-top:8px}.student-choices{flex-direction:column;gap:8px;display:flex}.student-choices button{text-align:left;width:100%;padding:12px 14px;font-size:15px}.student-result{font-size:15px;font-weight:500}.student-scope{flex-wrap:wrap;align-items:flex-end;gap:8px;display:flex}.student-scope label{flex:120px}.student-segments{flex-wrap:wrap;gap:6px;display:flex}.student-desk .student-grade{border-top:1px solid var(--dsw-alias-border-l2);padding:8px 0}.student-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px;height:8px;display:flex;overflow:hidden}.student-bar span{height:100%;display:block}.student-level-mastered,.student-fill-mastered{background:var(--dsw-alias-state-success-primary)}.student-level-practising,.student-fill-practising{background:var(--dsw-alias-state-business-primary)}.student-level-stalled,.student-fill-stalled{background:var(--dsw-alias-state-warn-primary)}.student-level-weak,.student-fill-weak{background:var(--dsw-alias-state-error-primary)}.student-level-due,.student-fill-due{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, var(--dsw-alias-state-warn-primary))}.student-level-untouched,.student-fill-untouched{background:var(--dsw-alias-label-tertiary)}.student-legend{flex-wrap:wrap;gap:8px 12px;display:flex}.student-dot{vertical-align:middle;border-radius:50%;width:8px;height:8px;margin-right:4px;display:inline-block}.student-chips{flex-direction:column;gap:6px;display:flex}.student-chip{text-align:left;border-radius:8px;align-items:center;gap:6px;width:100%;padding:8px 10px;display:flex}.student-pair{grid-template-columns:1fr 1fr;gap:8px;display:grid}.student-mastery{align-items:center;gap:6px;display:flex}.student-mastery span{border-radius:50%;width:10px;height:10px}.student-simon{flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-simon li{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 8px}.student-simon-done{opacity:.7}.student-simon-current{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, var(--dsw-alias-bg-base));font-weight:500}.student-steps{flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-map-inline{border:1px solid var(--dsw-alias-border-l2);border-left:3px solid var(--dsw-alias-state-business-primary);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base));border-radius:8px;margin:4px 0 8px;padding:8px 10px}.student-map-links{margin-top:8px}.student-mindmap-unit{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:8px;margin:8px 0;padding:10px}.student-mindmap-unit>summary{cursor:pointer;font-weight:500}.student-mindmap-branch{border-left:2px solid var(--dsw-alias-border-l2);flex-direction:column;gap:6px;margin:8px 0 0;padding:0 0 0 12px;list-style:none;display:flex}.student-mindmap-node{flex-direction:column;gap:4px;display:flex}.student-mindmap-concept{text-align:left;align-items:center;gap:6px;width:100%;display:flex}.student-mindmap-concept[aria-pressed=true]{background:var(--dsw-alias-bg-layer-2,transparent)}.student-mindmap-concept.student-level-mastered{box-shadow:inset 3px 0 0 var(--dsw-alias-state-success-primary)}.student-mindmap-concept.student-level-practising{box-shadow:inset 3px 0 0 var(--dsw-alias-state-business-primary)}.student-mindmap-concept.student-level-stalled{box-shadow:inset 3px 0 0 var(--dsw-alias-state-warn-primary)}.student-mindmap-concept.student-level-weak,.student-mindmap-concept.student-level-due{box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}.student-figure svg{width:100%;height:auto;max-height:220px;color:var(--dsw-alias-label-primary)}.student-figure circle,.student-figure rect,.student-figure line,.student-figure path,.student-figure polyline,.student-figure polygon{fill:none;stroke:currentColor;stroke-width:1.4px}.student-figure text{fill:currentColor;stroke:none}.student-figure .student-fill{fill:currentColor}.student-desk progress{width:100%;height:8px}.student-desk progress::-webkit-progress-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px}.student-desk progress::-webkit-progress-value{background:var(--dsw-alias-state-business-primary);border-radius:999px}.student-sheet-portal{font:13px/20px var(--dsw-font-family)}.student-sheet-portal button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);cursor:pointer;padding:8px 14px}.student-sheet-portal .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-inverted);border-color:#0000}.student-sheet-portal .student-quiet{background:0 0;border:0}.student-sheet-backdrop{z-index:1000;box-sizing:border-box;background:color-mix(in srgb, var(--dsw-alias-label-primary) 32%, transparent);justify-content:center;align-items:flex-start;padding:32px 16px;display:flex;position:fixed;inset:0;overflow:auto}.student-sheet-dialog{box-sizing:border-box;border-radius:var(--dsw-radius-panel);background:var(--dsw-alias-bg-layer-2);width:min(720px,100%);box-shadow:var(--dsw-elevation-prominent);flex-direction:column;gap:8px;padding:16px;display:flex}.student-sheet-toolbar{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.student-sheet-toolbar .student-muted{flex:200px;margin:0}.student-sheet-scroll{overflow:auto}.student-sheet{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);color:#333;font:14px/1.6 var(--dsw-font-family);background:#fff;border-radius:8px;flex-direction:column;gap:12px;padding:24px;display:flex}.student-url{user-select:text;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.student-sheet h2{text-align:center;margin:0;font-size:18px;font-weight:500}.student-sheet-meta{text-align:center;margin:0;font-size:12px}.student-sheet-item{break-inside:avoid;flex-direction:column;gap:8px;display:flex}.student-sheet-item>p{white-space:pre-wrap;margin:0}.student-sheet .student-figure svg{color:#333;width:100%;height:auto;max-height:260px}.student-sheet-lines{flex-direction:column;display:flex}.student-sheet-rule{border-bottom:1px solid #b9c0c7;height:22px}.student-sheet-box{border:1px dashed #b9c0c7;border-radius:4px;height:84px}@page{size:A4;margin:12mm 14mm}@media print{body>:not(.student-sheet-portal){display:none!important}.student-sheet-backdrop{background:0 0;padding:0;display:block;position:static;overflow:visible}.student-sheet-dialog{display:contents}.student-sheet-toolbar{display:none}.student-sheet-scroll{overflow:visible}.student-sheet{border:0;border-radius:0;width:100%;padding:0}.student-sheet-item{page-break-inside:avoid}}.student-teaching-aids{width:100%;min-width:0;color:var(--dsw-alias-text-primary);gap:12px;margin-top:12px;display:grid}.student-teaching-aids>h3{margin:0;font-size:14px;font-weight:500}.student-teaching-aids>p{color:var(--dsw-alias-text-secondary);margin:0;font-size:13px}";
 		const tagId$2 = "@winterhuan/dsh-student/plugin.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId$2) + "]") === null) {
 			const tag = document.createElement("style");
@@ -65,6 +66,28 @@ window.__ModuleLoader__.load({
 		//#region lib/types/client/locales.js
 		const NS = "studentDesk";
 		const zh = {
+			"feedbackAuthorizationRequired": "请家长恢复原课堂的登录授权，再核对记录",
+			"feedbackReadInterrupted": "课堂记录读取已停止，可继续核对原记录",
+			"feedbackReadIncomplete": "课堂记录尚未完整读取，暂时保留当前进度",
+			"partialLearningRecords": "部分学习记录还需核对，当前题目和草稿已保留",
+			"continueWaiting": "正在核对下一步，已保留当前题目和草稿",
+			"confirmLearningScope": "请家长确认范围",
+			"resumeRound": "继续这一轮",
+			"requestTeaching": "先讲一讲方法",
+			"retryFeedbackSync": "核对课堂记录",
+			"moreReview": "再复习一小轮",
+			"roundActive": "本轮进行中",
+			"roundPaused": "本轮已暂停",
+			"roundEnded": "本轮已结束",
+			"roundCheckRemaining": "本轮还可检验 {count} 道新题",
+			"roundReviewRemaining": "本轮还可进入 {count} 类复习",
+			"feedbackSyncQueued": "已请求核对课堂记录，保存结果稍后显示",
+			"feedbackSyncCoalesced": "已合并到现有核对请求；结果显示后可再点继续",
+			"feedbackSyncPaused": "已暂停课堂记录核对",
+			"feedbackSyncUnavailable": "暂时无法核对课堂记录，可稍后再试",
+			"feedbackOwnerUnknown": "课堂记录尚未确认归属，当前题目已保留",
+			"feedbackSourceUnavailable": "暂时读不到原课堂记录，核对后再继续",
+			"feedbackSavePending": "课堂记录尚未核对保存完成，当前题目已保留",
 			"legacyFilesHelp": "正在查看旧版学习档案，原记录保持不变；继续保存前，请在辅导对话中让助手检查迁移方案，再由家长确认",
 			"unavailableFilesHelp": "当前学期档案尚无法完整读取，请在辅导对话中检查档案状态并修复",
 			"workbenchHelp": "选择孩子的工作区，学习记录和辅导对话一起打开",
@@ -100,7 +123,9 @@ window.__ModuleLoader__.load({
 			"answerDayHelp": "填写家长确认的实际日期；留空表示日期待核对，不使用照片接收或评分日期",
 			"workedExampleHelp": "看过示范",
 			"assistanceUnknown": "帮助情况待核对",
-			"staleData": "当前档案无法核验，保留的内容可能已过期；请通过对话检查并修复",
+			"readyToContinue": "可以继续学习",
+			"continueSavedLearning": "点击继续，查看已有档案和当前学习。",
+			"staleData": "暂时无法更新学习记录，当前题目和草稿已保留；连接恢复后会重新核对",
 			"submissionStatus": "发送与保存进度",
 			"messageAdmitted": "原生消息已接收",
 			"messageUnknown": "消息是否接收尚不确定，请先检查",
@@ -221,6 +246,44 @@ window.__ModuleLoader__.load({
 			"sheetNameDate": "姓名：____________　　日期：____________",
 			"tutorWorking": "助手正在处理，请等待对话回复",
 			"prepareTask": "请助手出题",
+			"openTeachingAid": "打开教学内容",
+			"teachingAids": "一起试一试",
+			"teachingAidsHelp": "操作帮助理解；请在原生对话中说出你的想法，操作得分不计作答",
+			"learningOptions": "学习选项",
+			"morePractice": "更多练习",
+			"originalClassroomAnswers": "课堂原始作答",
+			"officialAssessment": "原官方批改与历史",
+			"effectiveAssessment": "有效评价",
+			"verifiedAnswerSource": "已核对原作答来源",
+			"officialFeedbackHelp": "原回答和原批改均保留；有效评价依据冻结题面核对，批改时间不代表作答日期",
+			"readAnswerHistory": "查看完整作答历史",
+			"archiveEvidencePending": "历史学期证据待核对",
+			"archiveEvidenceHelp": "原档案缺失或授权未恢复时保留引用，恢复后继续核对",
+			"learningEntry": "学习",
+			"parentEntry": "家长",
+			"lessonHistory": "课堂记录",
+			"classroomLoginRequired": "请家长完成已打开的官方登录，再继续原课堂",
+			"classroomIdentityMismatch": "当前课堂账号与学生归属不符，请家长核对",
+			"classroomUnavailable": "暂时无法打开原课堂，请恢复服务后继续学习",
+			"continueLearning": "继续学习",
+			"continueCurrentQuestion": "先继续当前这一题",
+			"continueAfterFeedback": "根据已保存的反馈继续下一步",
+			"continuePendingAnswer": "先核对当前回答，保留原题",
+			"continueConfirmedGoal": "在已确认的学习范围内继续",
+			"independentDates": "本范围的独立作答日",
+			"firstMasteredOn": "首次掌握日",
+			"recoveredOn": "重新达到日",
+			"referencedEvidence": "包含已核对的旧学期证据",
+			"continueSourceUnavailable": "先恢复读取这次学习的原始记录",
+			"continueSourcePending": "先保存并核对这次学习的反馈",
+			"continueCheckEnded": "本轮检验已结束，可以补讲、换内容或休息",
+			"continueRoundPaused": "继续已保存的这一轮，或先休息",
+			"continueNoGoal": "确认范围内暂无新目标，可以休息或再复习一轮",
+			"continueMissingEvidence": "只补当前还缺的检验",
+			"continueCurrentGap": "根据当前反馈补学",
+			"continuePrerequisiteGap": "先补上这一步需要的基础",
+			"continueDueReview": "复习这一轮到期的母题",
+			"continueScopeRequired": "请家长确认下一步的学习范围",
 			"nextTask": "下一题",
 			"retryFeedback": "重新请求反馈",
 			"retryHint": "重新请求提示",
@@ -601,7 +664,7 @@ window.__ModuleLoader__.load({
 			"interestCount": "请填写 3 到 8 个不重复的标签",
 			"interestShape": "每个标签用 2 到 16 个汉字、字母或数字",
 			"openmaicTitle": "互动课",
-			"openmaicHelp": "按今天的目标，用本机 OpenMAIC 生成一节互动课。生成由学习助手完成，这里列出记录并在浏览器打开",
+			"openmaicHelp": "原课堂与学习记录保留在这里；继续学习会处理生成、恢复和课后反馈",
 			"openmaicEmpty": "还没有互动课",
 			"openmaicGenerate": "请助手生成",
 			"openmaicOpen": "在浏览器打开",
@@ -616,12 +679,34 @@ window.__ModuleLoader__.load({
 			"openmaicWarning": "生成提示",
 			"openmaicOutline": "课后摘要",
 			"openmaicBase": "OpenMAIC 地址",
-			"openmaicBaseHelp": "留空则使用环境变量 OPENMAIC_BASE，否则默认为 http://localhost:3000",
-			"openmaicAccessHint": "若服务要求访问码，在运行 DSH 的环境里设置 OPENMAIC_ACCESS_CODE。访问码不写入学习档案",
+			"openmaicBaseHelp": "留空使用官方 https://open.maic.chat；自建服务可填原地址",
+			"openmaicAccessHint": "账号和访问码由家长配置到 DSH 受限凭据，不写入学习档案",
 			"openmaicConfirm": "家长确认 OpenMAIC 地址",
 			"openmaicEffective": "当前使用"
 		};
 		const en = {
+			"feedbackAuthorizationRequired": "Ask a parent to restore classroom access, then check the records",
+			"feedbackReadInterrupted": "The classroom record read stopped; retry the original records",
+			"feedbackReadIncomplete": "The classroom records are incomplete; your current progress is retained",
+			"partialLearningRecords": "Some learning records need verification; your question and drafts are retained",
+			"continueWaiting": "Checking the next step; your question and drafts are retained",
+			"confirmLearningScope": "Confirm learning range",
+			"resumeRound": "Resume this round",
+			"requestTeaching": "Teach the method",
+			"retryFeedbackSync": "Check learning records",
+			"moreReview": "Review a little more",
+			"roundActive": "Round in progress",
+			"roundPaused": "Round paused",
+			"roundEnded": "Round ended",
+			"roundCheckRemaining": "New checks remaining in this round: {count}",
+			"roundReviewRemaining": "Review families remaining in this round: {count}",
+			"feedbackSyncQueued": "Classroom record check queued; saved results will appear after verification",
+			"feedbackSyncCoalesced": "Joined the existing classroom record request; continue again after its result appears",
+			"feedbackSyncPaused": "Classroom record check paused",
+			"feedbackSyncUnavailable": "Classroom records cannot be checked yet; try again later",
+			"feedbackOwnerUnknown": "The classroom record owner needs verification; your question is retained",
+			"feedbackSourceUnavailable": "The original classroom records are unavailable; check them before continuing",
+			"feedbackSavePending": "Classroom records are still being verified and saved; your question is retained",
 			"legacyFilesHelp": "Viewing previous-format learning records with the originals preserved. Before saving, ask the tutor to inspect a migration plan and let a parent confirm it",
 			"unavailableFilesHelp": "The current term records cannot be read in full. Ask the tutor to check the record status and repair it",
 			"workbenchHelp": "Choose the learner’s workspace to open study records and tutoring together",
@@ -657,7 +742,9 @@ window.__ModuleLoader__.load({
 			"answerDayHelp": "Enter the parent-confirmed actual day. An empty field means unknown; receipt and assessment dates do not supply it",
 			"workedExampleHelp": "Used a worked example",
 			"assistanceUnknown": "Assistance awaiting verification",
-			"staleData": "Current records could not be verified. Retained content may be stale; inspect and repair through chat",
+			"readyToContinue": "Ready to continue",
+			"continueSavedLearning": "Continue to view saved records and current learning.",
+			"staleData": "Learning records could not be refreshed. Your question and drafts are retained and will be checked when the connection returns",
 			"submissionStatus": "Message and saving status",
 			"messageAdmitted": "Native message admitted",
 			"messageUnknown": "Message admission is uncertain; inspect first",
@@ -778,6 +865,44 @@ window.__ModuleLoader__.load({
 			"sheetNameDate": "Name ______________    Date ______________",
 			"tutorWorking": "The tutor is working. Wait for the conversation reply",
 			"prepareTask": "Ask for a question",
+			"openTeachingAid": "Open teaching aid",
+			"teachingAids": "Try it together",
+			"teachingAidsHelp": "Explore the idea, then answer in the conversation; widget scores are teaching aids",
+			"learningOptions": "Learning options",
+			"morePractice": "More practice",
+			"originalClassroomAnswers": "Original classroom answers",
+			"officialAssessment": "Original official grades and history",
+			"effectiveAssessment": "Effective assessment",
+			"verifiedAnswerSource": "Original answer source checked",
+			"officialFeedbackHelp": "Original answers and grades remain intact; effective assessments use frozen questions, and grading time is not the answer day",
+			"readAnswerHistory": "Read complete answer history",
+			"archiveEvidencePending": "Historical term evidence needs checking",
+			"archiveEvidenceHelp": "References stay intact while the original archive or its authorization is unavailable",
+			"learningEntry": "Learning",
+			"parentEntry": "Parent",
+			"lessonHistory": "Lesson history",
+			"classroomLoginRequired": "Complete the official sign-in window, then continue the original classroom",
+			"classroomIdentityMismatch": "The classroom account differs from the learner; a parent needs to check it",
+			"classroomUnavailable": "The original classroom cannot open yet; restore the service and continue learning",
+			"continueLearning": "Continue learning",
+			"continueCurrentQuestion": "Continue the current question first",
+			"continueAfterFeedback": "Use the saved feedback for the next step",
+			"continuePendingAnswer": "Check the current answer and keep its question",
+			"continueConfirmedGoal": "Continue within the confirmed learning range",
+			"independentDates": "Independent days in this range",
+			"firstMasteredOn": "First mastery day",
+			"recoveredOn": "Recovered mastery day",
+			"referencedEvidence": "Includes verified evidence from an earlier term",
+			"continueSourceUnavailable": "Restore access to this activity’s original records first",
+			"continueSourcePending": "Save and verify this activity’s feedback first",
+			"continueCheckEnded": "This check has ended. Review the explanation, change content or rest",
+			"continueRoundPaused": "Resume the saved round or rest",
+			"continueNoGoal": "No new goal is available in this range. Rest or request another review",
+			"continueMissingEvidence": "Check only the evidence still missing",
+			"continueCurrentGap": "Learn what the current feedback shows is missing",
+			"continuePrerequisiteGap": "Build the foundation needed for this step",
+			"continueDueReview": "Review the due question families in this round",
+			"continueScopeRequired": "Ask a parent to confirm the next learning range",
 			"nextTask": "Next question",
 			"retryFeedback": "Request feedback again",
 			"retryHint": "Request hint again",
@@ -1158,7 +1283,7 @@ window.__ModuleLoader__.load({
 			"interestCount": "Enter 3 to 8 different tags",
 			"interestShape": "Use 2 to 16 Chinese characters, letters or digits for each tag",
 			"openmaicTitle": "Interactive lesson",
-			"openmaicHelp": "Generate one lesson on this computer with OpenMAIC from today's goal. The tutor runs generation; this list opens the link in the browser",
+			"openmaicHelp": "Original classrooms stay here; continue learning handles generation, recovery and feedback",
 			"openmaicEmpty": "No interactive lessons yet",
 			"openmaicGenerate": "Ask the tutor to generate",
 			"openmaicOpen": "Open in browser",
@@ -1173,8 +1298,8 @@ window.__ModuleLoader__.load({
 			"openmaicWarning": "Notice",
 			"openmaicOutline": "After-class summary",
 			"openmaicBase": "OpenMAIC address",
-			"openmaicBaseHelp": "Leave blank to use OPENMAIC_BASE, or http://localhost:3000 when that variable is unset",
-			"openmaicAccessHint": "If the service asks for an access code, set OPENMAIC_ACCESS_CODE in the environment that runs DSH. The code is not saved in the learning profile",
+			"openmaicBaseHelp": "Leave blank for https://open.maic.chat; enter the original address for a self-hosted service",
+			"openmaicAccessHint": "A parent configures the account and access code in protected DSH credentials; learning files contain no credentials",
 			"openmaicConfirm": "Parent confirms the OpenMAIC address",
 			"openmaicEffective": "In use"
 		};
@@ -1222,6 +1347,31 @@ window.__ModuleLoader__.load({
 				} catch (error) {
 					submission.abandon();
 					throw new StudySubmissionError(submission.requestId, error);
+				}
+			};
+		}
+		/**
+		* Bind original-session controls without creating a user submission or changing the composer.
+		* @param context - Client context with native Session bindings and the Student Remote namespace.
+		* @param sessionId - original native Session to synchronize or cancel.
+		* @param unavailable - localized error when the original Session is no longer available.
+		* @returns controls whose rejected calls preserve the remote/native error; synchronization reports admission only.
+		*/
+		function studentSessionBridge(context, sessionId, unavailable) {
+			return {
+				async syncFeedback(lessonId, trigger) {
+					const result = await context.remote.student.syncFeedback(sessionId, {
+						lessonId,
+						trigger
+					}, new AbortController().signal);
+					if (!result.ok) throw new Error(result.error.message);
+					return result.value;
+				},
+				async cancel() {
+					const session = context.sessions.binding(sessionId)?.session;
+					if (!session) throw new Error(unavailable);
+					const result = await session.cancel();
+					if (!result.ok) throw new Error(result.error.message);
 				}
 			};
 		}
@@ -1433,6 +1583,16 @@ window.__ModuleLoader__.load({
 			zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5())),
 			zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5()))
 		]);
+		let StudentJsonValueRemoteCodec$schema6$value;
+		const StudentJsonValueRemoteCodec$schema6 = () => StudentJsonValueRemoteCodec$schema6$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema6())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema6()))
+		]);
 		let _winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema$value;
 		const _winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema = () => _winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema$value ??= zod.z.string();
 		let _winterhuan_dsh_student_student_inspectSubmission_parameter_1$schema$value;
@@ -1460,7 +1620,7 @@ window.__ModuleLoader__.load({
 				zod.z.literal("claimed"),
 				zod.z.literal("removed")
 			])),
-			"nativeSourceStatus": zod.z.union([zod.z.literal("available"), zod.z.literal("unavailable")]),
+			"nativeSourceStatus": zod.z.union([zod.z.literal("unavailable"), zod.z.literal("available")]),
 			"cut": zod.z.union([zod.z.undefined(), zod.z.object({
 				"sessionId": zod.z.string(),
 				"cursor": zod.z.number(),
@@ -1475,8 +1635,8 @@ window.__ModuleLoader__.load({
 				zod.z.literal("not-requested")
 			]),
 			"assessment": zod.z.union([
-				zod.z.literal("pending"),
 				zod.z.literal("unavailable"),
+				zod.z.literal("pending"),
 				zod.z.literal("valid"),
 				zod.z.literal("not-requested")
 			]),
@@ -1636,6 +1796,17 @@ window.__ModuleLoader__.load({
 					"answerEvidence": zod.z.string(),
 					"assessedAt": zod.z.number(),
 					"correctedAt": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+					"criteria": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.union([
+						zod.z.literal("method"),
+						zod.z.literal("basic"),
+						zod.z.literal("variation")
+					]))]).optional(),
+					"criterionCorrection": zod.z.union([zod.z.undefined(), zod.z.object({
+						"sessionId": zod.z.string(),
+						"messageId": zod.z.string(),
+						"inputVersion": zod.z.string(),
+						"rawResponse": zod.z.string()
+					})]).optional(),
 					"userConfirmation": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
 					"errorType": zod.z.union([
 						zod.z.undefined(),
@@ -1664,6 +1835,61 @@ window.__ModuleLoader__.load({
 						zod.z.literal("usage-context"),
 						zod.z.literal("spoken-response"),
 						zod.z.literal("writing-complete")
+					]).optional(),
+					"official": zod.z.union([zod.z.undefined(), zod.z.object({
+						"recordId": zod.z.string(),
+						"seq": zod.z.number(),
+						"createdAt": zod.z.string(),
+						"result": zod.z.union([zod.z.literal(null), zod.z.intersection(zod.z.object({
+							"questionId": zod.z.string(),
+							"correct": zod.z.union([
+								zod.z.literal(null),
+								zod.z.literal(false),
+								zod.z.literal(true)
+							]),
+							"status": zod.z.union([zod.z.literal("correct"), zod.z.literal("incorrect")]),
+							"earned": zod.z.number(),
+							"aiComment": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+						}), zod.z.record(zod.z.string(), zod.z.union([
+							zod.z.literal(null),
+							zod.z.string(),
+							zod.z.number(),
+							zod.z.literal(false),
+							zod.z.literal(true),
+							zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2())),
+							zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2()))
+						])))])
+					})]).optional(),
+					"officialHistory": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+						"recordId": zod.z.string(),
+						"seq": zod.z.number(),
+						"createdAt": zod.z.string(),
+						"result": zod.z.union([zod.z.literal(null), zod.z.intersection(zod.z.object({
+							"questionId": zod.z.string(),
+							"correct": zod.z.union([
+								zod.z.literal(null),
+								zod.z.literal(false),
+								zod.z.literal(true)
+							]),
+							"status": zod.z.union([zod.z.literal("correct"), zod.z.literal("incorrect")]),
+							"earned": zod.z.number(),
+							"aiComment": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+						}), zod.z.record(zod.z.string(), zod.z.union([
+							zod.z.literal(null),
+							zod.z.string(),
+							zod.z.number(),
+							zod.z.literal(false),
+							zod.z.literal(true),
+							zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2())),
+							zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2()))
+						])))])
+					}))]).optional(),
+					"grading": zod.z.union([
+						zod.z.undefined(),
+						zod.z.literal("pending"),
+						zod.z.literal("aligned"),
+						zod.z.literal("equivalent"),
+						zod.z.literal("conflict")
 					]).optional()
 				})),
 				"answerDate": zod.z.union([
@@ -1720,8 +1946,8 @@ window.__ModuleLoader__.load({
 				zod.z.number(),
 				zod.z.literal(false),
 				zod.z.literal(true),
-				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5())),
-				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5()))
+				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema()))
 			])),
 			"issues": zod.z.array(zod.z.object({
 				"path": zod.z.string(),
@@ -1741,6 +1967,10 @@ window.__ModuleLoader__.load({
 		let _winterhuan_dsh_student_student_query_parameter_1$schema$value;
 		const _winterhuan_dsh_student_student_query_parameter_1$schema = () => _winterhuan_dsh_student_student_query_parameter_1$schema$value ??= zod.z.union([zod.z.object({
 			"kind": zod.z.union([
+				zod.z.literal("capabilities"),
+				zod.z.literal("families"),
+				zod.z.literal("knowledge-sources"),
+				zod.z.literal("legacy-references"),
 				zod.z.literal("learning-context"),
 				zod.z.literal("summary"),
 				zod.z.literal("files"),
@@ -1827,14 +2057,14 @@ window.__ModuleLoader__.load({
 				zod.z.number(),
 				zod.z.literal(false),
 				zod.z.literal(true),
-				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema3())),
-				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema3()))
+				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema5()))
 			]),
 			"readAt": zod.z.number(),
 			"refreshAfter": zod.z.number(),
 			"token": zod.z.string(),
 			"native": zod.z.object({
-				"status": zod.z.union([zod.z.literal("available"), zod.z.literal("unavailable")]),
+				"status": zod.z.union([zod.z.literal("unavailable"), zod.z.literal("available")]),
 				"cut": zod.z.union([zod.z.undefined(), zod.z.object({
 					"sessionId": zod.z.string(),
 					"cursor": zod.z.number(),
@@ -1858,6 +2088,13 @@ window.__ModuleLoader__.load({
 						"kind": zod.z.literal("unknown"),
 						"reason": zod.z.string()
 					})]),
+					"learningScope": zod.z.union([zod.z.undefined(), zod.z.object({
+						"learnerId": zod.z.string(),
+						"termId": zod.z.string(),
+						"blockId": zod.z.string(),
+						"questionId": zod.z.string(),
+						"responseId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+					})]).optional(),
 					"attachments": zod.z.array(zod.z.object({
 						"kind": zod.z.union([zod.z.literal("file"), zod.z.literal("image")]),
 						"attachmentId": zod.z.string()
@@ -1916,8 +2153,8 @@ window.__ModuleLoader__.load({
 				zod.z.number(),
 				zod.z.literal(false),
 				zod.z.literal(true),
-				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2())),
-				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema2()))
+				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4()))
 			])),
 			"intent": zod.z.union([
 				zod.z.object({
@@ -2045,6 +2282,17 @@ window.__ModuleLoader__.load({
 						"answerEvidence": zod.z.string(),
 						"assessedAt": zod.z.number(),
 						"correctedAt": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+						"criteria": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.union([
+							zod.z.literal("method"),
+							zod.z.literal("basic"),
+							zod.z.literal("variation")
+						]))]).optional(),
+						"criterionCorrection": zod.z.union([zod.z.undefined(), zod.z.object({
+							"sessionId": zod.z.string(),
+							"messageId": zod.z.string(),
+							"inputVersion": zod.z.string(),
+							"rawResponse": zod.z.string()
+						})]).optional(),
 						"userConfirmation": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
 						"errorType": zod.z.union([
 							zod.z.undefined(),
@@ -2073,6 +2321,61 @@ window.__ModuleLoader__.load({
 							zod.z.literal("usage-context"),
 							zod.z.literal("spoken-response"),
 							zod.z.literal("writing-complete")
+						]).optional(),
+						"official": zod.z.union([zod.z.undefined(), zod.z.object({
+							"recordId": zod.z.string(),
+							"seq": zod.z.number(),
+							"createdAt": zod.z.string(),
+							"result": zod.z.union([zod.z.literal(null), zod.z.intersection(zod.z.object({
+								"questionId": zod.z.string(),
+								"correct": zod.z.union([
+									zod.z.literal(null),
+									zod.z.literal(false),
+									zod.z.literal(true)
+								]),
+								"status": zod.z.union([zod.z.literal("correct"), zod.z.literal("incorrect")]),
+								"earned": zod.z.number(),
+								"aiComment": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+							}), zod.z.record(zod.z.string(), zod.z.union([
+								zod.z.literal(null),
+								zod.z.string(),
+								zod.z.number(),
+								zod.z.literal(false),
+								zod.z.literal(true),
+								zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4())),
+								zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4()))
+							])))])
+						})]).optional(),
+						"officialHistory": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.object({
+							"recordId": zod.z.string(),
+							"seq": zod.z.number(),
+							"createdAt": zod.z.string(),
+							"result": zod.z.union([zod.z.literal(null), zod.z.intersection(zod.z.object({
+								"questionId": zod.z.string(),
+								"correct": zod.z.union([
+									zod.z.literal(null),
+									zod.z.literal(false),
+									zod.z.literal(true)
+								]),
+								"status": zod.z.union([zod.z.literal("correct"), zod.z.literal("incorrect")]),
+								"earned": zod.z.number(),
+								"aiComment": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+							}), zod.z.record(zod.z.string(), zod.z.union([
+								zod.z.literal(null),
+								zod.z.string(),
+								zod.z.number(),
+								zod.z.literal(false),
+								zod.z.literal(true),
+								zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4())),
+								zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4()))
+							])))])
+						}))]).optional(),
+						"grading": zod.z.union([
+							zod.z.undefined(),
+							zod.z.literal("pending"),
+							zod.z.literal("aligned"),
+							zod.z.literal("equivalent"),
+							zod.z.literal("conflict")
 						]).optional()
 					})),
 					"answerDate": zod.z.union([
@@ -2117,9 +2420,9 @@ window.__ModuleLoader__.load({
 			"status": zod.z.union([
 				zod.z.literal("unknown"),
 				zod.z.literal("invalid"),
+				zod.z.literal("conflict"),
 				zod.z.literal("saved"),
 				zod.z.literal("unchanged"),
-				zod.z.literal("conflict"),
 				zod.z.literal("old-term")
 			]),
 			"current": zod.z.record(zod.z.string(), zod.z.union([
@@ -2128,8 +2431,8 @@ window.__ModuleLoader__.load({
 				zod.z.number(),
 				zod.z.literal(false),
 				zod.z.literal(true),
-				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema())),
-				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema()))
+				zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema3())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema3()))
 			])),
 			"termId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
 			"versions": zod.z.array(zod.z.object({
@@ -2160,11 +2463,38 @@ window.__ModuleLoader__.load({
 			}))]).optional(),
 			"reason": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
 		});
+		let _winterhuan_dsh_student_student_syncFeedback_parameter_0$schema$value;
+		const _winterhuan_dsh_student_student_syncFeedback_parameter_0$schema = () => _winterhuan_dsh_student_student_syncFeedback_parameter_0$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_syncFeedback_parameter_1$schema$value;
+		const _winterhuan_dsh_student_student_syncFeedback_parameter_1$schema = () => _winterhuan_dsh_student_student_syncFeedback_parameter_1$schema$value ??= zod.z.object({
+			"lessonId": zod.z.string(),
+			"trigger": zod.z.union([
+				zod.z.literal("return"),
+				zod.z.literal("continue"),
+				zod.z.literal("resume"),
+				zod.z.literal("pause")
+			])
+		});
+		let _winterhuan_dsh_student_student_syncFeedback_result$schema$value;
+		const _winterhuan_dsh_student_student_syncFeedback_result$schema = () => _winterhuan_dsh_student_student_syncFeedback_result$schema$value ??= zod.z.object({
+			"lessonId": zod.z.string(),
+			"status": zod.z.union([
+				zod.z.literal("unavailable"),
+				zod.z.literal("queued"),
+				zod.z.literal("coalesced"),
+				zod.z.literal("paused")
+			]),
+			"messageId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+		});
 		let _winterhuan_dsh_student_student_watch_parameter_0$schema$value;
 		const _winterhuan_dsh_student_student_watch_parameter_0$schema = () => _winterhuan_dsh_student_student_watch_parameter_0$schema$value ??= zod.z.string();
 		let _winterhuan_dsh_student_student_watch_parameter_1$schema$value;
 		const _winterhuan_dsh_student_student_watch_parameter_1$schema = () => _winterhuan_dsh_student_student_watch_parameter_1$schema$value ??= zod.z.union([zod.z.object({
 			"kind": zod.z.union([
+				zod.z.literal("capabilities"),
+				zod.z.literal("families"),
+				zod.z.literal("knowledge-sources"),
+				zod.z.literal("legacy-references"),
 				zod.z.literal("learning-context"),
 				zod.z.literal("summary"),
 				zod.z.literal("files"),
@@ -2253,14 +2583,14 @@ window.__ModuleLoader__.load({
 					zod.z.number(),
 					zod.z.literal(false),
 					zod.z.literal(true),
-					zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4())),
-					zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema4()))
+					zod.z.array(zod.z.lazy(() => StudentJsonValueRemoteCodec$schema6())),
+					zod.z.record(zod.z.string(), zod.z.lazy(() => StudentJsonValueRemoteCodec$schema6()))
 				]),
 				"readAt": zod.z.number(),
 				"refreshAfter": zod.z.number(),
 				"token": zod.z.string(),
 				"native": zod.z.object({
-					"status": zod.z.union([zod.z.literal("available"), zod.z.literal("unavailable")]),
+					"status": zod.z.union([zod.z.literal("unavailable"), zod.z.literal("available")]),
 					"cut": zod.z.union([zod.z.undefined(), zod.z.object({
 						"sessionId": zod.z.string(),
 						"cursor": zod.z.number(),
@@ -2284,6 +2614,13 @@ window.__ModuleLoader__.load({
 							"kind": zod.z.literal("unknown"),
 							"reason": zod.z.string()
 						})]),
+						"learningScope": zod.z.union([zod.z.undefined(), zod.z.object({
+							"learnerId": zod.z.string(),
+							"termId": zod.z.string(),
+							"blockId": zod.z.string(),
+							"questionId": zod.z.string(),
+							"responseId": zod.z.union([zod.z.undefined(), zod.z.string()]).optional()
+						})]).optional(),
 						"attachments": zod.z.array(zod.z.object({
 							"kind": zod.z.union([zod.z.literal("file"), zod.z.literal("image")]),
 							"attachmentId": zod.z.string()
@@ -2334,7 +2671,32 @@ window.__ModuleLoader__.load({
 			})
 		}), zod.z.object({
 			"kind": zod.z.literal("failure"),
-			"message": zod.z.string()
+			"message": zod.z.string(),
+			"reason": zod.z.union([zod.z.undefined(), zod.z.literal("main-session-required")]).optional()
+		})]);
+		let _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0$schema$value;
+		const _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0$schema = () => _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1$schema$value;
+		const _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1$schema = () => _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_studentOpenmaicPlayback_open_result$schema$value;
+		const _winterhuan_dsh_student_studentOpenmaicPlayback_open_result$schema = () => _winterhuan_dsh_student_studentOpenmaicPlayback_open_result$schema$value ??= zod.z.union([zod.z.object({
+			"status": zod.z.union([
+				zod.z.literal("opened"),
+				zod.z.literal("login-required"),
+				zod.z.literal("identity-mismatch")
+			]),
+			"browser": zod.z.literal("dedicated-chrome"),
+			"classroomUrl": zod.z.string(),
+			"loginUrl": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
+			"reason": zod.z.union([
+				zod.z.undefined(),
+				zod.z.literal("credentials-missing"),
+				zod.z.literal("form-unavailable"),
+				zod.z.literal("callback-pending")
+			]).optional()
+		}), zod.z.object({
+			"status": zod.z.union([zod.z.literal("unavailable"), zod.z.literal("ownership-unresolved")]),
+			"reason": zod.z.string()
 		})]);
 		let closed$StudentJsonValueRemoteCodec$schema$value;
 		const closed$StudentJsonValueRemoteCodec$schema = () => closed$StudentJsonValueRemoteCodec$schema$value ??= zod.z.union([
@@ -2345,6 +2707,16 @@ window.__ModuleLoader__.load({
 			zod.z.literal(true),
 			zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())),
 			zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))
+		]);
+		let closed$StudentJsonValueRemoteCodec$schema2$value;
+		const closed$StudentJsonValueRemoteCodec$schema2 = () => closed$StudentJsonValueRemoteCodec$schema2$value ??= zod.z.union([
+			zod.z.literal(null),
+			zod.z.string(),
+			zod.z.number(),
+			zod.z.literal(false),
+			zod.z.literal(true),
+			zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())),
+			zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))
 		]);
 		let _winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema$value;
 		const _winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema = () => _winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema$value ??= zod.z.string();
@@ -2492,6 +2864,17 @@ window.__ModuleLoader__.load({
 					"answerEvidence": zod.z.string(),
 					"assessedAt": zod.z.number(),
 					"correctedAt": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+					"criteria": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.union([
+						zod.z.literal("method"),
+						zod.z.literal("basic"),
+						zod.z.literal("variation")
+					]))]).optional(),
+					"criterionCorrection": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+						"sessionId": zod.z.string(),
+						"messageId": zod.z.string(),
+						"inputVersion": zod.z.string(),
+						"rawResponse": zod.z.string()
+					})]).optional(),
 					"userConfirmation": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
 					"errorType": zod.z.union([
 						zod.z.undefined(),
@@ -2520,6 +2903,205 @@ window.__ModuleLoader__.load({
 						zod.z.literal("usage-context"),
 						zod.z.literal("spoken-response"),
 						zod.z.literal("writing-complete")
+					]).optional(),
+					"official": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+						"recordId": zod.z.string(),
+						"seq": zod.z.number(),
+						"createdAt": zod.z.string(),
+						"result": zod.z.union([zod.z.literal(null), zod.z.object({
+							"questionId": zod.z.union([
+								zod.z.intersection(zod.z.string(), zod.z.literal(null)),
+								zod.z.string(),
+								zod.z.intersection(zod.z.string(), zod.z.number()),
+								zod.z.intersection(zod.z.string(), zod.z.literal(false)),
+								zod.z.intersection(zod.z.string(), zod.z.literal(true)),
+								zod.z.intersection(zod.z.string(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+								zod.z.intersection(zod.z.string(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+							]),
+							"correct": zod.z.union([
+								zod.z.union([
+									zod.z.literal(null),
+									zod.z.intersection(zod.z.literal(null), zod.z.string()),
+									zod.z.intersection(zod.z.literal(null), zod.z.number()),
+									zod.z.intersection(zod.z.literal(null), zod.z.literal(false)),
+									zod.z.intersection(zod.z.literal(null), zod.z.literal(true)),
+									zod.z.intersection(zod.z.literal(null), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+									zod.z.intersection(zod.z.literal(null), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+								]),
+								zod.z.union([
+									zod.z.intersection(zod.z.literal(false), zod.z.literal(null)),
+									zod.z.intersection(zod.z.literal(false), zod.z.string()),
+									zod.z.intersection(zod.z.literal(false), zod.z.number()),
+									zod.z.literal(false),
+									zod.z.intersection(zod.z.literal(false), zod.z.literal(true)),
+									zod.z.intersection(zod.z.literal(false), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+									zod.z.intersection(zod.z.literal(false), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+								]),
+								zod.z.union([
+									zod.z.intersection(zod.z.literal(true), zod.z.literal(null)),
+									zod.z.intersection(zod.z.literal(true), zod.z.string()),
+									zod.z.intersection(zod.z.literal(true), zod.z.number()),
+									zod.z.intersection(zod.z.literal(true), zod.z.literal(false)),
+									zod.z.literal(true),
+									zod.z.intersection(zod.z.literal(true), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+									zod.z.intersection(zod.z.literal(true), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+								])
+							]),
+							"status": zod.z.union([zod.z.union([
+								zod.z.intersection(zod.z.literal("correct"), zod.z.literal(null)),
+								zod.z.intersection(zod.z.literal("correct"), zod.z.string()),
+								zod.z.intersection(zod.z.literal("correct"), zod.z.number()),
+								zod.z.intersection(zod.z.literal("correct"), zod.z.literal(false)),
+								zod.z.intersection(zod.z.literal("correct"), zod.z.literal(true)),
+								zod.z.intersection(zod.z.literal("correct"), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+								zod.z.intersection(zod.z.literal("correct"), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+							]), zod.z.union([
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.literal(null)),
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.string()),
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.number()),
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.literal(false)),
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.literal(true)),
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+							])]),
+							"earned": zod.z.union([
+								zod.z.intersection(zod.z.number(), zod.z.literal(null)),
+								zod.z.intersection(zod.z.number(), zod.z.string()),
+								zod.z.number(),
+								zod.z.intersection(zod.z.number(), zod.z.literal(false)),
+								zod.z.intersection(zod.z.number(), zod.z.literal(true)),
+								zod.z.intersection(zod.z.number(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+								zod.z.intersection(zod.z.number(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+							]),
+							"aiComment": zod.z.union([zod.z.union([
+								zod.z.intersection(zod.z.undefined(), zod.z.literal(null)),
+								zod.z.intersection(zod.z.undefined(), zod.z.string()),
+								zod.z.intersection(zod.z.undefined(), zod.z.number()),
+								zod.z.intersection(zod.z.undefined(), zod.z.literal(false)),
+								zod.z.intersection(zod.z.undefined(), zod.z.literal(true)),
+								zod.z.intersection(zod.z.undefined(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+								zod.z.intersection(zod.z.undefined(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+							]), zod.z.union([
+								zod.z.intersection(zod.z.string(), zod.z.literal(null)),
+								zod.z.string(),
+								zod.z.intersection(zod.z.string(), zod.z.number()),
+								zod.z.intersection(zod.z.string(), zod.z.literal(false)),
+								zod.z.intersection(zod.z.string(), zod.z.literal(true)),
+								zod.z.intersection(zod.z.string(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+								zod.z.intersection(zod.z.string(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+							])]).optional()
+						}).catchall(zod.z.union([
+							zod.z.literal(null),
+							zod.z.string(),
+							zod.z.number(),
+							zod.z.literal(false),
+							zod.z.literal(true),
+							zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())),
+							zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))
+						]))])
+					})]).optional(),
+					"officialHistory": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.strictObject({
+						"recordId": zod.z.string(),
+						"seq": zod.z.number(),
+						"createdAt": zod.z.string(),
+						"result": zod.z.union([zod.z.literal(null), zod.z.object({
+							"questionId": zod.z.union([
+								zod.z.intersection(zod.z.string(), zod.z.literal(null)),
+								zod.z.string(),
+								zod.z.intersection(zod.z.string(), zod.z.number()),
+								zod.z.intersection(zod.z.string(), zod.z.literal(false)),
+								zod.z.intersection(zod.z.string(), zod.z.literal(true)),
+								zod.z.intersection(zod.z.string(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+								zod.z.intersection(zod.z.string(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+							]),
+							"correct": zod.z.union([
+								zod.z.union([
+									zod.z.literal(null),
+									zod.z.intersection(zod.z.literal(null), zod.z.string()),
+									zod.z.intersection(zod.z.literal(null), zod.z.number()),
+									zod.z.intersection(zod.z.literal(null), zod.z.literal(false)),
+									zod.z.intersection(zod.z.literal(null), zod.z.literal(true)),
+									zod.z.intersection(zod.z.literal(null), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+									zod.z.intersection(zod.z.literal(null), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+								]),
+								zod.z.union([
+									zod.z.intersection(zod.z.literal(false), zod.z.literal(null)),
+									zod.z.intersection(zod.z.literal(false), zod.z.string()),
+									zod.z.intersection(zod.z.literal(false), zod.z.number()),
+									zod.z.literal(false),
+									zod.z.intersection(zod.z.literal(false), zod.z.literal(true)),
+									zod.z.intersection(zod.z.literal(false), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+									zod.z.intersection(zod.z.literal(false), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+								]),
+								zod.z.union([
+									zod.z.intersection(zod.z.literal(true), zod.z.literal(null)),
+									zod.z.intersection(zod.z.literal(true), zod.z.string()),
+									zod.z.intersection(zod.z.literal(true), zod.z.number()),
+									zod.z.intersection(zod.z.literal(true), zod.z.literal(false)),
+									zod.z.literal(true),
+									zod.z.intersection(zod.z.literal(true), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+									zod.z.intersection(zod.z.literal(true), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+								])
+							]),
+							"status": zod.z.union([zod.z.union([
+								zod.z.intersection(zod.z.literal("correct"), zod.z.literal(null)),
+								zod.z.intersection(zod.z.literal("correct"), zod.z.string()),
+								zod.z.intersection(zod.z.literal("correct"), zod.z.number()),
+								zod.z.intersection(zod.z.literal("correct"), zod.z.literal(false)),
+								zod.z.intersection(zod.z.literal("correct"), zod.z.literal(true)),
+								zod.z.intersection(zod.z.literal("correct"), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+								zod.z.intersection(zod.z.literal("correct"), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+							]), zod.z.union([
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.literal(null)),
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.string()),
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.number()),
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.literal(false)),
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.literal(true)),
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+								zod.z.intersection(zod.z.literal("incorrect"), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+							])]),
+							"earned": zod.z.union([
+								zod.z.intersection(zod.z.number(), zod.z.literal(null)),
+								zod.z.intersection(zod.z.number(), zod.z.string()),
+								zod.z.number(),
+								zod.z.intersection(zod.z.number(), zod.z.literal(false)),
+								zod.z.intersection(zod.z.number(), zod.z.literal(true)),
+								zod.z.intersection(zod.z.number(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+								zod.z.intersection(zod.z.number(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+							]),
+							"aiComment": zod.z.union([zod.z.union([
+								zod.z.intersection(zod.z.undefined(), zod.z.literal(null)),
+								zod.z.intersection(zod.z.undefined(), zod.z.string()),
+								zod.z.intersection(zod.z.undefined(), zod.z.number()),
+								zod.z.intersection(zod.z.undefined(), zod.z.literal(false)),
+								zod.z.intersection(zod.z.undefined(), zod.z.literal(true)),
+								zod.z.intersection(zod.z.undefined(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+								zod.z.intersection(zod.z.undefined(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+							]), zod.z.union([
+								zod.z.intersection(zod.z.string(), zod.z.literal(null)),
+								zod.z.string(),
+								zod.z.intersection(zod.z.string(), zod.z.number()),
+								zod.z.intersection(zod.z.string(), zod.z.literal(false)),
+								zod.z.intersection(zod.z.string(), zod.z.literal(true)),
+								zod.z.intersection(zod.z.string(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))),
+								zod.z.intersection(zod.z.string(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))
+							])]).optional()
+						}).catchall(zod.z.union([
+							zod.z.literal(null),
+							zod.z.string(),
+							zod.z.number(),
+							zod.z.literal(false),
+							zod.z.literal(true),
+							zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())),
+							zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))
+						]))])
+					}))]).optional(),
+					"grading": zod.z.union([
+						zod.z.undefined(),
+						zod.z.literal("pending"),
+						zod.z.literal("aligned"),
+						zod.z.literal("equivalent"),
+						zod.z.literal("conflict")
 					]).optional()
 				})),
 				"answerDate": zod.z.union([
@@ -2558,6 +3140,10 @@ window.__ModuleLoader__.load({
 		let _winterhuan_dsh_student_student_query_parameter_1_strict$schema$value;
 		const _winterhuan_dsh_student_student_query_parameter_1_strict$schema = () => _winterhuan_dsh_student_student_query_parameter_1_strict$schema$value ??= zod.z.union([zod.z.strictObject({
 			"kind": zod.z.union([
+				zod.z.literal("capabilities"),
+				zod.z.literal("families"),
+				zod.z.literal("knowledge-sources"),
+				zod.z.literal("legacy-references"),
 				zod.z.literal("learning-context"),
 				zod.z.literal("summary"),
 				zod.z.literal("files"),
@@ -2646,8 +3232,8 @@ window.__ModuleLoader__.load({
 				zod.z.number(),
 				zod.z.literal(false),
 				zod.z.literal(true),
-				zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())),
-				zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))
+				zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())),
+				zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))
 			])),
 			"intent": zod.z.union([
 				zod.z.strictObject({
@@ -2775,6 +3361,17 @@ window.__ModuleLoader__.load({
 						"answerEvidence": zod.z.string(),
 						"assessedAt": zod.z.number(),
 						"correctedAt": zod.z.union([zod.z.undefined(), zod.z.number()]).optional(),
+						"criteria": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.union([
+							zod.z.literal("method"),
+							zod.z.literal("basic"),
+							zod.z.literal("variation")
+						]))]).optional(),
+						"criterionCorrection": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+							"sessionId": zod.z.string(),
+							"messageId": zod.z.string(),
+							"inputVersion": zod.z.string(),
+							"rawResponse": zod.z.string()
+						})]).optional(),
 						"userConfirmation": zod.z.union([zod.z.undefined(), zod.z.string()]).optional(),
 						"errorType": zod.z.union([
 							zod.z.undefined(),
@@ -2803,6 +3400,205 @@ window.__ModuleLoader__.load({
 							zod.z.literal("usage-context"),
 							zod.z.literal("spoken-response"),
 							zod.z.literal("writing-complete")
+						]).optional(),
+						"official": zod.z.union([zod.z.undefined(), zod.z.strictObject({
+							"recordId": zod.z.string(),
+							"seq": zod.z.number(),
+							"createdAt": zod.z.string(),
+							"result": zod.z.union([zod.z.literal(null), zod.z.object({
+								"questionId": zod.z.union([
+									zod.z.intersection(zod.z.string(), zod.z.literal(null)),
+									zod.z.string(),
+									zod.z.intersection(zod.z.string(), zod.z.number()),
+									zod.z.intersection(zod.z.string(), zod.z.literal(false)),
+									zod.z.intersection(zod.z.string(), zod.z.literal(true)),
+									zod.z.intersection(zod.z.string(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+									zod.z.intersection(zod.z.string(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+								]),
+								"correct": zod.z.union([
+									zod.z.union([
+										zod.z.literal(null),
+										zod.z.intersection(zod.z.literal(null), zod.z.string()),
+										zod.z.intersection(zod.z.literal(null), zod.z.number()),
+										zod.z.intersection(zod.z.literal(null), zod.z.literal(false)),
+										zod.z.intersection(zod.z.literal(null), zod.z.literal(true)),
+										zod.z.intersection(zod.z.literal(null), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+										zod.z.intersection(zod.z.literal(null), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+									]),
+									zod.z.union([
+										zod.z.intersection(zod.z.literal(false), zod.z.literal(null)),
+										zod.z.intersection(zod.z.literal(false), zod.z.string()),
+										zod.z.intersection(zod.z.literal(false), zod.z.number()),
+										zod.z.literal(false),
+										zod.z.intersection(zod.z.literal(false), zod.z.literal(true)),
+										zod.z.intersection(zod.z.literal(false), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+										zod.z.intersection(zod.z.literal(false), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+									]),
+									zod.z.union([
+										zod.z.intersection(zod.z.literal(true), zod.z.literal(null)),
+										zod.z.intersection(zod.z.literal(true), zod.z.string()),
+										zod.z.intersection(zod.z.literal(true), zod.z.number()),
+										zod.z.intersection(zod.z.literal(true), zod.z.literal(false)),
+										zod.z.literal(true),
+										zod.z.intersection(zod.z.literal(true), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+										zod.z.intersection(zod.z.literal(true), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+									])
+								]),
+								"status": zod.z.union([zod.z.union([
+									zod.z.intersection(zod.z.literal("correct"), zod.z.literal(null)),
+									zod.z.intersection(zod.z.literal("correct"), zod.z.string()),
+									zod.z.intersection(zod.z.literal("correct"), zod.z.number()),
+									zod.z.intersection(zod.z.literal("correct"), zod.z.literal(false)),
+									zod.z.intersection(zod.z.literal("correct"), zod.z.literal(true)),
+									zod.z.intersection(zod.z.literal("correct"), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+									zod.z.intersection(zod.z.literal("correct"), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+								]), zod.z.union([
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.literal(null)),
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.string()),
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.number()),
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.literal(false)),
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.literal(true)),
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+								])]),
+								"earned": zod.z.union([
+									zod.z.intersection(zod.z.number(), zod.z.literal(null)),
+									zod.z.intersection(zod.z.number(), zod.z.string()),
+									zod.z.number(),
+									zod.z.intersection(zod.z.number(), zod.z.literal(false)),
+									zod.z.intersection(zod.z.number(), zod.z.literal(true)),
+									zod.z.intersection(zod.z.number(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+									zod.z.intersection(zod.z.number(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+								]),
+								"aiComment": zod.z.union([zod.z.union([
+									zod.z.intersection(zod.z.undefined(), zod.z.literal(null)),
+									zod.z.intersection(zod.z.undefined(), zod.z.string()),
+									zod.z.intersection(zod.z.undefined(), zod.z.number()),
+									zod.z.intersection(zod.z.undefined(), zod.z.literal(false)),
+									zod.z.intersection(zod.z.undefined(), zod.z.literal(true)),
+									zod.z.intersection(zod.z.undefined(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+									zod.z.intersection(zod.z.undefined(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+								]), zod.z.union([
+									zod.z.intersection(zod.z.string(), zod.z.literal(null)),
+									zod.z.string(),
+									zod.z.intersection(zod.z.string(), zod.z.number()),
+									zod.z.intersection(zod.z.string(), zod.z.literal(false)),
+									zod.z.intersection(zod.z.string(), zod.z.literal(true)),
+									zod.z.intersection(zod.z.string(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+									zod.z.intersection(zod.z.string(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+								])]).optional()
+							}).catchall(zod.z.union([
+								zod.z.literal(null),
+								zod.z.string(),
+								zod.z.number(),
+								zod.z.literal(false),
+								zod.z.literal(true),
+								zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())),
+								zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))
+							]))])
+						})]).optional(),
+						"officialHistory": zod.z.union([zod.z.undefined(), zod.z.array(zod.z.strictObject({
+							"recordId": zod.z.string(),
+							"seq": zod.z.number(),
+							"createdAt": zod.z.string(),
+							"result": zod.z.union([zod.z.literal(null), zod.z.object({
+								"questionId": zod.z.union([
+									zod.z.intersection(zod.z.string(), zod.z.literal(null)),
+									zod.z.string(),
+									zod.z.intersection(zod.z.string(), zod.z.number()),
+									zod.z.intersection(zod.z.string(), zod.z.literal(false)),
+									zod.z.intersection(zod.z.string(), zod.z.literal(true)),
+									zod.z.intersection(zod.z.string(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+									zod.z.intersection(zod.z.string(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+								]),
+								"correct": zod.z.union([
+									zod.z.union([
+										zod.z.literal(null),
+										zod.z.intersection(zod.z.literal(null), zod.z.string()),
+										zod.z.intersection(zod.z.literal(null), zod.z.number()),
+										zod.z.intersection(zod.z.literal(null), zod.z.literal(false)),
+										zod.z.intersection(zod.z.literal(null), zod.z.literal(true)),
+										zod.z.intersection(zod.z.literal(null), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+										zod.z.intersection(zod.z.literal(null), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+									]),
+									zod.z.union([
+										zod.z.intersection(zod.z.literal(false), zod.z.literal(null)),
+										zod.z.intersection(zod.z.literal(false), zod.z.string()),
+										zod.z.intersection(zod.z.literal(false), zod.z.number()),
+										zod.z.literal(false),
+										zod.z.intersection(zod.z.literal(false), zod.z.literal(true)),
+										zod.z.intersection(zod.z.literal(false), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+										zod.z.intersection(zod.z.literal(false), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+									]),
+									zod.z.union([
+										zod.z.intersection(zod.z.literal(true), zod.z.literal(null)),
+										zod.z.intersection(zod.z.literal(true), zod.z.string()),
+										zod.z.intersection(zod.z.literal(true), zod.z.number()),
+										zod.z.intersection(zod.z.literal(true), zod.z.literal(false)),
+										zod.z.literal(true),
+										zod.z.intersection(zod.z.literal(true), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+										zod.z.intersection(zod.z.literal(true), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+									])
+								]),
+								"status": zod.z.union([zod.z.union([
+									zod.z.intersection(zod.z.literal("correct"), zod.z.literal(null)),
+									zod.z.intersection(zod.z.literal("correct"), zod.z.string()),
+									zod.z.intersection(zod.z.literal("correct"), zod.z.number()),
+									zod.z.intersection(zod.z.literal("correct"), zod.z.literal(false)),
+									zod.z.intersection(zod.z.literal("correct"), zod.z.literal(true)),
+									zod.z.intersection(zod.z.literal("correct"), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+									zod.z.intersection(zod.z.literal("correct"), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+								]), zod.z.union([
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.literal(null)),
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.string()),
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.number()),
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.literal(false)),
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.literal(true)),
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+									zod.z.intersection(zod.z.literal("incorrect"), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+								])]),
+								"earned": zod.z.union([
+									zod.z.intersection(zod.z.number(), zod.z.literal(null)),
+									zod.z.intersection(zod.z.number(), zod.z.string()),
+									zod.z.number(),
+									zod.z.intersection(zod.z.number(), zod.z.literal(false)),
+									zod.z.intersection(zod.z.number(), zod.z.literal(true)),
+									zod.z.intersection(zod.z.number(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+									zod.z.intersection(zod.z.number(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+								]),
+								"aiComment": zod.z.union([zod.z.union([
+									zod.z.intersection(zod.z.undefined(), zod.z.literal(null)),
+									zod.z.intersection(zod.z.undefined(), zod.z.string()),
+									zod.z.intersection(zod.z.undefined(), zod.z.number()),
+									zod.z.intersection(zod.z.undefined(), zod.z.literal(false)),
+									zod.z.intersection(zod.z.undefined(), zod.z.literal(true)),
+									zod.z.intersection(zod.z.undefined(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+									zod.z.intersection(zod.z.undefined(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+								]), zod.z.union([
+									zod.z.intersection(zod.z.string(), zod.z.literal(null)),
+									zod.z.string(),
+									zod.z.intersection(zod.z.string(), zod.z.number()),
+									zod.z.intersection(zod.z.string(), zod.z.literal(false)),
+									zod.z.intersection(zod.z.string(), zod.z.literal(true)),
+									zod.z.intersection(zod.z.string(), zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))),
+									zod.z.intersection(zod.z.string(), zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))
+								])]).optional()
+							}).catchall(zod.z.union([
+								zod.z.literal(null),
+								zod.z.string(),
+								zod.z.number(),
+								zod.z.literal(false),
+								zod.z.literal(true),
+								zod.z.array(zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())),
+								zod.z.record(zod.z.string(), zod.z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))
+							]))])
+						}))]).optional(),
+						"grading": zod.z.union([
+							zod.z.undefined(),
+							zod.z.literal("pending"),
+							zod.z.literal("aligned"),
+							zod.z.literal("equivalent"),
+							zod.z.literal("conflict")
 						]).optional()
 					})),
 					"answerDate": zod.z.union([
@@ -2842,11 +3638,27 @@ window.__ModuleLoader__.load({
 				"version": zod.z.string()
 			}))
 		});
+		let _winterhuan_dsh_student_student_syncFeedback_parameter_0_strict$schema$value;
+		const _winterhuan_dsh_student_student_syncFeedback_parameter_0_strict$schema = () => _winterhuan_dsh_student_student_syncFeedback_parameter_0_strict$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_student_syncFeedback_parameter_1_strict$schema$value;
+		const _winterhuan_dsh_student_student_syncFeedback_parameter_1_strict$schema = () => _winterhuan_dsh_student_student_syncFeedback_parameter_1_strict$schema$value ??= zod.z.strictObject({
+			"lessonId": zod.z.string(),
+			"trigger": zod.z.union([
+				zod.z.literal("return"),
+				zod.z.literal("continue"),
+				zod.z.literal("resume"),
+				zod.z.literal("pause")
+			])
+		});
 		let _winterhuan_dsh_student_student_watch_parameter_0_strict$schema$value;
 		const _winterhuan_dsh_student_student_watch_parameter_0_strict$schema = () => _winterhuan_dsh_student_student_watch_parameter_0_strict$schema$value ??= zod.z.string();
 		let _winterhuan_dsh_student_student_watch_parameter_1_strict$schema$value;
 		const _winterhuan_dsh_student_student_watch_parameter_1_strict$schema = () => _winterhuan_dsh_student_student_watch_parameter_1_strict$schema$value ??= zod.z.union([zod.z.strictObject({
 			"kind": zod.z.union([
+				zod.z.literal("capabilities"),
+				zod.z.literal("families"),
+				zod.z.literal("knowledge-sources"),
+				zod.z.literal("legacy-references"),
 				zod.z.literal("learning-context"),
 				zod.z.literal("summary"),
 				zod.z.literal("files"),
@@ -2925,6 +3737,10 @@ window.__ModuleLoader__.load({
 				]).optional()
 			})]).optional()
 		})]);
+		let _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0_strict$schema$value;
+		const _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0_strict$schema = () => _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0_strict$schema$value ??= zod.z.string();
+		let _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1_strict$schema$value;
+		const _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1_strict$schema = () => _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1_strict$schema$value ??= zod.z.string();
 		const TYPERT_REMOTE = createTypertRemoteInfo({
 			package: "@winterhuan/dsh-student",
 			methods: {
@@ -3079,7 +3895,7 @@ window.__ModuleLoader__.load({
 								},
 								"nativeSourceStatus": {
 									"type": "string",
-									"enum": ["available", "unavailable"]
+									"enum": ["unavailable", "available"]
 								},
 								"cut": {
 									"type": "object",
@@ -3113,8 +3929,8 @@ window.__ModuleLoader__.load({
 								"assessment": {
 									"type": "string",
 									"enum": [
-										"pending",
 										"unavailable",
+										"pending",
 										"valid",
 										"not-requested"
 									]
@@ -3203,7 +4019,7 @@ window.__ModuleLoader__.load({
 					},
 					sourceLocation: {
 						"file": "packages/winterhuan/student/src/remote-service.ts",
-						"line": 129,
+						"line": 141,
 						"column": 9
 					}
 				},
@@ -3254,7 +4070,7 @@ window.__ModuleLoader__.load({
 					},
 					sourceLocation: {
 						"file": "packages/winterhuan/student/src/remote-service.ts",
-						"line": 99,
+						"line": 111,
 						"column": 9
 					}
 				},
@@ -3292,6 +4108,10 @@ window.__ModuleLoader__.load({
 									"kind": {
 										"type": "string",
 										"enum": [
+											"capabilities",
+											"families",
+											"knowledge-sources",
+											"legacy-references",
 											"learning-context",
 											"summary",
 											"files",
@@ -3403,6 +4223,10 @@ window.__ModuleLoader__.load({
 									"kind": {
 										"type": "string",
 										"enum": [
+											"capabilities",
+											"families",
+											"knowledge-sources",
+											"legacy-references",
 											"learning-context",
 											"summary",
 											"files",
@@ -3515,7 +4339,7 @@ window.__ModuleLoader__.load({
 					},
 					sourceLocation: {
 						"file": "packages/winterhuan/student/src/remote-service.ts",
-						"line": 48,
+						"line": 61,
 						"column": 9
 					}
 				},
@@ -3566,7 +4390,107 @@ window.__ModuleLoader__.load({
 					},
 					sourceLocation: {
 						"file": "packages/winterhuan/student/src/remote-service.ts",
-						"line": 114,
+						"line": 126,
+						"column": 9
+					}
+				},
+				"student/syncFeedback": {
+					service: "student",
+					description: "Queue one authorized feedback intent behind existing native input, or withdraw its pending system message.",
+					invocation: { kind: "direct" },
+					parameters: [{
+						name: "sessionId",
+						description: "Registered main Student Session; Remote authorization is required.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_syncFeedback_parameter_0$schema,
+							jsonSchema: { "type": "string" }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_student_syncFeedback_parameter_0_strict$schema,
+							jsonSchema: { "type": "string" }
+						}
+					}, {
+						name: "request",
+						description: "Explicit return, continue or resume trigger; pause removes only this lesson's queued system intent before caller-owned native cancellation.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentFeedbackSyncRequest",
+							create: _winterhuan_dsh_student_student_syncFeedback_parameter_1$schema,
+							jsonSchema: {
+								"type": "object",
+								"properties": {
+									"lessonId": { "type": "string" },
+									"trigger": {
+										"type": "string",
+										"enum": [
+											"return",
+											"continue",
+											"resume",
+											"pause"
+										]
+									}
+								},
+								"required": ["lessonId", "trigger"],
+								"additionalProperties": true
+							}
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentFeedbackSyncRequest",
+							create: _winterhuan_dsh_student_student_syncFeedback_parameter_1_strict$schema,
+							jsonSchema: {
+								"type": "object",
+								"properties": {
+									"lessonId": { "type": "string" },
+									"trigger": {
+										"type": "string",
+										"enum": [
+											"return",
+											"continue",
+											"resume",
+											"pause"
+										]
+									}
+								},
+								"required": ["lessonId", "trigger"],
+								"additionalProperties": false
+							}
+						}
+					}],
+					cancellation: { parameter: "signal" },
+					result: {
+						mode: "strict",
+						typeSymbol: "@winterhuan/dsh-student/types#StudentFeedbackSyncReply",
+						create: _winterhuan_dsh_student_student_syncFeedback_result$schema,
+						description: "Queue state only. Failure, cancellation and completion allow a later explicit retry; no automatic wake loop or academic write occurs.",
+						jsonSchema: {
+							"type": "object",
+							"properties": {
+								"lessonId": { "type": "string" },
+								"status": {
+									"type": "string",
+									"enum": [
+										"unavailable",
+										"queued",
+										"coalesced",
+										"paused"
+									]
+								},
+								"messageId": { "type": "string" }
+							},
+							"required": ["lessonId", "status"],
+							"additionalProperties": true
+						}
+					},
+					sourceLocation: {
+						"file": "packages/winterhuan/student/src/remote-service.ts",
+						"line": 168,
 						"column": 9
 					}
 				},
@@ -3577,7 +4501,7 @@ window.__ModuleLoader__.load({
 					invocation: { kind: "direct" },
 					parameters: [{
 						name: "sessionId",
-						description: "registered main native Session identity, authorized before the stream opens.",
+						description: "native Session identity; every read requires a registered main Agent.",
 						source: "json",
 						codec: {
 							mode: "strict",
@@ -3605,6 +4529,10 @@ window.__ModuleLoader__.load({
 									"kind": {
 										"type": "string",
 										"enum": [
+											"capabilities",
+											"families",
+											"knowledge-sources",
+											"legacy-references",
 											"learning-context",
 											"summary",
 											"files",
@@ -3716,6 +4644,10 @@ window.__ModuleLoader__.load({
 									"kind": {
 										"type": "string",
 										"enum": [
+											"capabilities",
+											"families",
+											"knowledge-sources",
+											"legacy-references",
 											"learning-context",
 											"summary",
 											"files",
@@ -3828,8 +4760,102 @@ window.__ModuleLoader__.load({
 					},
 					sourceLocation: {
 						"file": "packages/winterhuan/student/src/remote-service.ts",
-						"line": 72,
+						"line": 85,
 						"column": 10
+					}
+				},
+				"studentOpenmaicPlayback/open": {
+					service: "studentOpenmaicPlayback",
+					description: "Open one independently read lesson after checking original learner, term and block.",
+					invocation: { kind: "direct" },
+					parameters: [{
+						name: "sessionId",
+						description: "Registered main Student conversation identity.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0$schema,
+							jsonSchema: { "type": "string" }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student/types#StudentSessionId",
+							create: _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0_strict$schema,
+							jsonSchema: { "type": "string" }
+						}
+					}, {
+						name: "lessonId",
+						description: "Original agent-authored lesson-log entry.",
+						source: "json",
+						codec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student#studentOpenmaicPlayback/open:lessonId",
+							create: _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1$schema,
+							jsonSchema: { "type": "string" }
+						},
+						strictCodec: {
+							mode: "strict",
+							typeSymbol: "@winterhuan/dsh-student#studentOpenmaicPlayback/open:lessonId",
+							create: _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1_strict$schema,
+							jsonSchema: { "type": "string" }
+						}
+					}],
+					cancellation: { parameter: "signal" },
+					result: {
+						mode: "strict",
+						typeSymbol: "@winterhuan/dsh-student/openmaic#OpenmaicPlaybackResult",
+						create: _winterhuan_dsh_student_studentOpenmaicPlayback_open_result$schema,
+						description: "Safe playback, unresolved ownership or recovery outcome.",
+						jsonSchema: { "oneOf": [{
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string",
+									"enum": [
+										"opened",
+										"login-required",
+										"identity-mismatch"
+									]
+								},
+								"browser": {
+									"type": "string",
+									"const": "dedicated-chrome"
+								},
+								"classroomUrl": { "type": "string" },
+								"loginUrl": { "type": "string" },
+								"reason": {
+									"type": "string",
+									"enum": [
+										"credentials-missing",
+										"form-unavailable",
+										"callback-pending"
+									]
+								}
+							},
+							"required": [
+								"status",
+								"browser",
+								"classroomUrl"
+							],
+							"additionalProperties": true
+						}, {
+							"type": "object",
+							"properties": {
+								"status": {
+									"type": "string",
+									"enum": ["unavailable", "ownership-unresolved"]
+								},
+								"reason": { "type": "string" }
+							},
+							"required": ["status", "reason"],
+							"additionalProperties": true
+						}] }
+					},
+					sourceLocation: {
+						"file": "packages/winterhuan/student/src/openmaic/playback.ts",
+						"line": 30,
+						"column": 9
 					}
 				}
 			}
@@ -3899,6 +4925,332 @@ window.__ModuleLoader__.load({
 		function formDraftKey(entity, namespace = "student:standalone") {
 			return `${namespace}:${entity}`;
 		}
+		//#endregion
+		//#region lib/types/capabilities.js
+		/** Learning content and legacy reference routing; learner responses never belong to this catalog. */
+		/** Stable capability, family and source IDs admit dots; entity filenames retain their existing alphabet. */
+		const knowledgeIdSchema = zod.z.string().regex(/^[a-zA-Z0-9_.-]{1,80}$/u);
+		const text$2 = zod.z.string().trim().min(1).max(4e3);
+		const ids = zod.z.array(knowledgeIdSchema).max(500);
+		const subject$2 = zod.z.enum([
+			"chinese",
+			"math",
+			"english"
+		]);
+		/** The tested range is explicit; a broader range never inherits merely by goal name. */
+		const capabilityScopeSchema = zod.z.object({
+			id: knowledgeIdSchema,
+			description: text$2,
+			modality: zod.z.enum([
+				"written",
+				"oral",
+				"listening",
+				"audiovisual",
+				"performed"
+			]),
+			numberMax: zod.z.number().int().positive().max(1e4).optional(),
+			vocabulary: zod.z.array(text$2.max(240)).max(2e3).optional()
+		}).strict();
+		/** Source-backed capability with criteria, prerequisites and independent course associations. */
+		const capabilityGoalSchema = zod.z.object({
+			id: knowledgeIdSchema,
+			subject: subject$2,
+			domain: knowledgeIdSchema,
+			title: text$2,
+			scope: text$2,
+			criterion: text$2,
+			prerequisites: ids,
+			familyIds: ids,
+			sourceIds: ids,
+			curriculumAssociationIds: ids,
+			titleEn: text$2.optional(),
+			criterionEn: text$2.optional(),
+			curriculumAssociationGap: text$2.optional(),
+			coverageStatus: text$2.optional(),
+			activation: text$2.optional(),
+			evidenceRequirements: zod.z.array(text$2).max(20).optional(),
+			progressKind: text$2.optional(),
+			prerequisitePolicy: text$2.optional(),
+			requirementIds: ids.optional(),
+			sourceLocators: zod.z.array(zod.z.object({
+				sourceId: knowledgeIdSchema,
+				pdfPages: zod.z.array(zod.z.number().int().positive()).max(120).optional(),
+				section: text$2
+			}).strict()).max(20).optional()
+		}).strict();
+		/** One method/structure family owns exactly one representative exercise. Stimuli are blueprints, not completed media evidence. */
+		const questionFamilySchema = zod.z.object({
+			id: knowledgeIdSchema,
+			subject: subject$2,
+			coreMethod: text$2,
+			structure: text$2,
+			goalIds: ids.min(1),
+			variationAxes: zod.z.array(text$2).min(1).max(20),
+			boundary: text$2,
+			representative: zod.z.object({
+				id: knowledgeIdSchema,
+				prompt: text$2,
+				rubric: text$2,
+				stimulus: zod.z.json().optional()
+			}).strict(),
+			signature: zod.z.object({
+				capabilityIds: ids.min(1),
+				coreMethod: text$2,
+				problemStructure: text$2
+			}).strict()
+		}).strict();
+		/** Workspace content extensions stay in the existing collection; this is not a second question bank. */
+		const knowledgeExtensionSchema = zod.z.object({
+			goals: zod.z.array(capabilityGoalSchema).max(1e3),
+			families: zod.z.array(questionFamilySchema).max(1e3)
+		}).strict();
+		const catalogSchema = knowledgeExtensionSchema.extend({
+			formatVersion: zod.z.literal(1),
+			status: text$2,
+			reconstructedOn: text$2,
+			subjects: zod.z.array(subject$2),
+			gradeScope: zod.z.array(zod.z.number().int()),
+			termScope: zod.z.array(zod.z.enum(["first", "second"]))
+		}).strict();
+		const routeSchema = zod.z.object({
+			goalId: knowledgeIdSchema,
+			familyId: knowledgeIdSchema,
+			evidenceGates: zod.z.array(text$2),
+			creditPolicy: text$2,
+			evidenceUse: text$2
+		}).strict();
+		const legacySchema = zod.z.object({
+			status: text$2,
+			workspaceBanks: text$2,
+			objectives: zod.z.array(zod.z.object({
+				oldObjectiveId: knowledgeIdSchema,
+				oldTitle: text$2,
+				subject: subject$2,
+				grade: zod.z.number().int(),
+				term: zod.z.enum(["first", "second"]),
+				unitIds: ids,
+				classification: text$2,
+				candidateGoalIds: ids,
+				scopeStatus: text$2,
+				inheritance: text$2
+			}).strict()),
+			exercises: zod.z.array(zod.z.object({
+				oldExerciseId: knowledgeIdSchema,
+				oldObjectiveId: knowledgeIdSchema,
+				subject: subject$2,
+				originalPrompt: text$2,
+				originalRecordPolicy: text$2,
+				routes: zod.z.array(routeSchema),
+				pendingReasons: zod.z.array(text$2),
+				automationStatus: text$2,
+				routePolicy: text$2.optional()
+			}).strict()),
+			sourceFingerprints: zod.z.array(zod.z.object({
+				path: text$2,
+				sha256: zod.z.string().regex(/^[a-f0-9]{64}$/u)
+			}).strict())
+		}).strict();
+		const moduleUrl = require("url").pathToFileURL(__filename).href;
+		function immutable(value) {
+			if (value && typeof value === "object" && !Object.isFrozen(value)) {
+				for (const child of Object.values(value)) immutable(child);
+				Object.freeze(value);
+			}
+			return value;
+		}
+		const read$1 = (name) => JSON.parse((0, node_fs.readFileSync)(new URL(`../knowledge/curriculum/capabilities/${name}.json`, moduleUrl), "utf8"));
+		function signature(family) {
+			return JSON.stringify([
+				family.subject,
+				[...family.signature.capabilityIds].sort(),
+				family.signature.coreMethod.trim(),
+				family.signature.problemStructure.trim()
+			]);
+		}
+		function validateCatalog(catalog) {
+			const goals = new Map(catalog.goals.map((goal) => [goal.id, goal]));
+			const families = new Map(catalog.families.map((family) => [family.id, family]));
+			if (goals.size !== catalog.goals.length || families.size !== catalog.families.length) throw new Error("Knowledge IDs must be unique.");
+			const mothers = /* @__PURE__ */ new Set();
+			const signatures = /* @__PURE__ */ new Set();
+			for (const family of catalog.families) {
+				if (mothers.has(family.representative.id) || signatures.has(signature(family))) throw new Error(`Duplicate mother or question family: ${family.id}`);
+				mothers.add(family.representative.id);
+				signatures.add(signature(family));
+				if (family.coreMethod !== family.signature.coreMethod || family.structure !== family.signature.problemStructure || JSON.stringify([...family.goalIds].sort()) !== JSON.stringify([...family.signature.capabilityIds].sort())) throw new Error(`Family signature disagrees with its method, structure or capabilities: ${family.id}`);
+				for (const goalId of family.goalIds) {
+					const goal = goals.get(goalId);
+					if (!goal || goal.subject !== family.subject || !goal.familyIds.includes(family.id)) throw new Error(`Family references an incompatible capability: ${family.id} / ${goalId}`);
+				}
+			}
+			const sourceIds = new Set(knowledgeSources().sources.map((source) => source.id));
+			for (const goal of catalog.goals) for (const id of goal.sourceIds) if (!sourceIds.has(id)) throw new Error(`Missing capability source: ${goal.id} / ${id}`);
+			const active = /* @__PURE__ */ new Set();
+			const visited = /* @__PURE__ */ new Set();
+			const visit = (id) => {
+				if (active.has(id)) throw new Error(`Capability prerequisites contain a cycle: ${id}`);
+				if (visited.has(id)) return;
+				const goal = goals.get(id);
+				if (!goal) throw new Error(`Missing prerequisite capability: ${id}`);
+				active.add(id);
+				for (const prerequisite of goal.prerequisites) visit(prerequisite);
+				active.delete(id);
+				visited.add(id);
+			};
+			for (const goal of catalog.goals) {
+				for (const id of goal.familyIds) if (!families.get(id)?.goalIds.includes(goal.id)) throw new Error(`Capability references an incompatible family: ${goal.id} / ${id}`);
+				visit(goal.id);
+			}
+		}
+		const sources = immutable(zod.z.object({
+			retrievedOn: text$2,
+			sources: zod.z.array(zod.z.object({
+				id: knowledgeIdSchema,
+				label: text$2,
+				url: text$2.optional(),
+				sha256: text$2.optional(),
+				pdfPages: zod.z.number().int().positive().optional(),
+				retrievedOn: text$2.optional(),
+				paths: zod.z.array(text$2).optional(),
+				status: text$2.optional()
+			}).strict()),
+			coverage: zod.z.array(zod.z.json()),
+			quantitativeCoverageLedgers: zod.z.array(zod.z.json()),
+			scopeCaveats: zod.z.array(text$2)
+		}).strict().parse(read$1("sources")));
+		immutable(legacySchema.parse(read$1("legacy-map")));
+		validateCatalog(immutable(catalogSchema.parse(read$1("catalog"))));
+		/**
+		* Read immutable packaged curriculum sources, capability decomposition and quantitative activity limits.
+		* @returns deeply frozen borrowed source locators and coverage policies, never learner evidence.
+		*/
+		function knowledgeSources() {
+			return sources;
+		}
+		//#endregion
+		//#region lib/types/openmaic/feedback-schema.js
+		/** Official source identities and frozen snapshots shared by files and authorized readers. */
+		const sourceId = zod.z.string().min(1).max(500).refine((value) => value !== "." && value !== ".." && !/[\u0000-\u001f]/u.test(value), "Use one opaque source identifier.");
+		const stamp = zod.z.string().min(1).max(80).refine((value) => Number.isFinite(Date.parse(value)), "Preserve a valid source timestamp.");
+		const sourceJsonSchema = zod.z.json();
+		/** Quiz answer representation is preserved without label or option substitution. */
+		const officialAnswerSchema = zod.z.union([zod.z.string().max(2e3), zod.z.array(zod.z.string().max(2e3)).max(100)]);
+		/** Original official browser grading, separate from Student effective grading. */
+		const officialResultSchema = zod.z.object({
+			questionId: sourceId,
+			correct: zod.z.boolean().nullable(),
+			status: zod.z.enum(["correct", "incorrect"]),
+			earned: zod.z.number().finite().nonnegative(),
+			aiComment: zod.z.string().max(2e3).optional()
+		}).catchall(sourceJsonSchema);
+		/** Current official grading record; a correction retains the original response identity. */
+		const officialReviewSchema = zod.z.object({
+			recordId: sourceId,
+			seq: zod.z.number().int().nonnegative(),
+			createdAt: stamp,
+			result: officialResultSchema.nullable()
+		}).strict();
+		/** An immutable submitted answer; reviewed records belong to its assessment. */
+		const openmaicResponseSourceSchema = zod.z.object({
+			kind: zod.z.literal("openmaic"),
+			bindingId: sourceId,
+			attemptId: sourceId,
+			sceneId: sourceId,
+			questionId: sourceId,
+			submission: zod.z.object({
+				id: sourceId,
+				seq: zod.z.number().int().nonnegative(),
+				createdAt: stamp
+			}).strict(),
+			submittedAnswer: officialAnswerSchema
+		}).strict();
+		/** Original runtime payload and extension fields retained for unresolved source associations. */
+		const officialRuntimePayloadSchema = zod.z.object({
+			payloadVersion: zod.z.literal(1),
+			phase: zod.z.enum([
+				"draft",
+				"submitted",
+				"reviewed"
+			]),
+			answers: zod.z.record(sourceId, officialAnswerSchema),
+			results: zod.z.array(officialResultSchema).max(200).optional()
+		}).catchall(zod.z.json());
+		/** Complete source event; its ID identifies an event, never a Student answer. */
+		const officialRuntimeRecordSchema = zod.z.object({
+			id: sourceId,
+			sessionId: sourceId,
+			seq: zod.z.number().int().nonnegative(),
+			createdAt: stamp,
+			sceneId: sourceId.optional(),
+			payload: officialRuntimePayloadSchema
+		}).catchall(zod.z.json());
+		/** Content freshness is a revision observation, never an answer date. */
+		const snapshotRevisionSchema = zod.z.discriminatedUnion("kind", [zod.z.object({
+			kind: zod.z.literal("manifest"),
+			stageRev: zod.z.number().int().nonnegative(),
+			sceneRev: zod.z.number().int().nonnegative()
+		}).strict(), zod.z.object({ kind: zod.z.literal("unavailable") }).strict()]);
+		/** Exact source question bytes remain frozen when today's content changes. */
+		const openmaicQuestionSchema = zod.z.object({
+			bindingId: sourceId,
+			sceneId: sourceId,
+			questionId: sourceId,
+			snapshot: zod.z.json(),
+			snapshotHash: zod.z.string().regex(/^[a-f0-9]{64}$/u),
+			revision: snapshotRevisionSchema
+		}).strict();
+		/** Original explicit Student ownership returned by the protected source preparation. */
+		const feedbackBindingSchema = zod.z.object({
+			bindingId: sourceId,
+			learnerId: knowledgeIdSchema,
+			termId: knowledgeIdSchema,
+			blockId: knowledgeIdSchema,
+			goalId: knowledgeIdSchema,
+			familyId: knowledgeIdSchema,
+			scope: capabilityScopeSchema
+		}).strict();
+		/** Unassociated source facts stay within their original academic owner and never become response evidence. */
+		const pendingOpenmaicSchema = zod.z.object({
+			binding: feedbackBindingSchema,
+			record: officialRuntimeRecordSchema,
+			reason: zod.z.enum([
+				"missing-submission",
+				"conflicting-submissions",
+				"ambiguous-session",
+				"unresolved-question"
+			])
+		}).strict();
+		zod.z.object({
+			bindingId: sourceId,
+			attempts: zod.z.array(zod.z.object({
+				attemptId: sourceId,
+				seq: zod.z.number().int().min(-1)
+			}).strict()).max(100)
+		}).strict().superRefine((checkpoint, ctx) => {
+			if (new Set(checkpoint.attempts.map((attempt) => attempt.attemptId)).size !== checkpoint.attempts.length) ctx.addIssue({
+				code: "custom",
+				path: ["attempts"],
+				message: "Keep one checkpoint head per original attempt."
+			});
+		});
+		zod.z.object({
+			id: sourceId,
+			type: zod.z.enum([
+				"single",
+				"multiple",
+				"short_answer"
+			]),
+			question: zod.z.string().min(1).max(2e3),
+			options: zod.z.array(zod.z.object({
+				value: zod.z.string().max(2e3),
+				label: zod.z.string().max(2e3)
+			}).passthrough()).max(100).optional(),
+			answer: officialAnswerSchema.optional(),
+			analysis: zod.z.string().max(2e3).optional(),
+			commentPrompt: zod.z.string().max(2e3).optional(),
+			hasAnswer: zod.z.boolean().optional(),
+			points: zod.z.number().finite().nonnegative().optional()
+		}).passthrough();
 		//#endregion
 		//#region lib/types/interests.js
 		/** One saved tag: 2–16 Han characters, letters or digits, with no spaces. */
@@ -4089,7 +5441,7 @@ window.__ModuleLoader__.load({
 			imagePath: text$1.optional(),
 			uncertainties: zod.z.string().max(2e3),
 			materialId: id$1.optional(),
-			objectiveId: id$1.optional(),
+			objectiveId: knowledgeIdSchema.optional(),
 			errorType: errorTypeSchema.optional()
 		}).strict();
 		const concept = zod.z.object({
@@ -4443,7 +5795,7 @@ window.__ModuleLoader__.load({
 		const exerciseItemSchema = zod.z.object({
 			id: id$1,
 			subject: subject$1,
-			objectiveId: id$1,
+			objectiveId: knowledgeIdSchema,
 			role: exerciseRoleSchema,
 			variant: variantSchema,
 			prompt: text$1,
@@ -4458,7 +5810,7 @@ window.__ModuleLoader__.load({
 		const workspaceExerciseInput = zod.z.object({
 			id: id$1,
 			subject: subject$1,
-			objectiveId: id$1,
+			objectiveId: knowledgeIdSchema,
 			role: exerciseRoleSchema.default("try"),
 			variant: variantSchema.default("numeric"),
 			prompt: text$1,
@@ -4500,7 +5852,7 @@ window.__ModuleLoader__.load({
 			feedback: text$1,
 			answerEvidence: text$1,
 			mistakeId: id$1.optional(),
-			objectiveId: id$1.optional(),
+			objectiveId: knowledgeIdSchema.optional(),
 			variant: variantSchema.optional(),
 			figure: figure.optional()
 		};
@@ -4526,7 +5878,7 @@ window.__ModuleLoader__.load({
 			phase: phaseSchema.optional(),
 			variant: variantSchema.optional(),
 			mistakeId: id$1.optional(),
-			objectiveId: id$1.optional(),
+			objectiveId: knowledgeIdSchema.optional(),
 			figure: figure.optional()
 		}).strict();
 		const answerSpace = zod.z.enum([
@@ -4537,7 +5889,7 @@ window.__ModuleLoader__.load({
 		]);
 		const worksheetItem = zod.z.object({
 			id: id$1,
-			objectiveId: id$1.optional(),
+			objectiveId: knowledgeIdSchema.optional(),
 			mistakeId: id$1.optional(),
 			variant: variantSchema.optional(),
 			prompt: text$1,
@@ -4551,7 +5903,7 @@ window.__ModuleLoader__.load({
 			id: id$1,
 			subject: subject$1,
 			kind: sheetKindSchema.optional(),
-			objectiveId: id$1.optional(),
+			objectiveId: knowledgeIdSchema.optional(),
 			items: zod.z.array(worksheetItem).min(1).max(8)
 		}).strict();
 		const result = zod.z.enum([
@@ -4607,7 +5959,7 @@ window.__ModuleLoader__.load({
 			prompt: text$1,
 			response: text$1.optional(),
 			outcome: workbookOutcome,
-			objectiveId: id$1.optional(),
+			objectiveId: knowledgeIdSchema.optional(),
 			uncertainties: zod.z.string().max(2e3),
 			imagePath: text$1.optional()
 		}).strict();
@@ -4615,7 +5967,7 @@ window.__ModuleLoader__.load({
 			id: id$1,
 			subject: subject$1,
 			prompt: text$1,
-			objectiveId: id$1.optional(),
+			objectiveId: knowledgeIdSchema.optional(),
 			confirmedAt: time$1,
 			sourceDraftId: id$1.optional()
 		}).strict();
@@ -4659,7 +6011,7 @@ window.__ModuleLoader__.load({
 					grade: zod.z.number().int().min(1).max(6),
 					term: zod.z.enum(["first", "second"]),
 					units: zod.z.array(id$1).max(20).optional(),
-					objectiveIds: zod.z.array(id$1).max(60).optional()
+					objectiveIds: zod.z.array(knowledgeIdSchema).max(60).optional()
 				}).strict().optional()
 			}).strict(),
 			zod.z.object({
@@ -4752,7 +6104,7 @@ window.__ModuleLoader__.load({
 			zod.z.object({
 				action: zod.z.literal("link-mistake"),
 				mistakeId: id$1,
-				objectiveId: id$1
+				objectiveId: knowledgeIdSchema
 			}).strict(),
 			zod.z.object({
 				action: zod.z.literal("classify-mistake"),
@@ -4859,7 +6211,7 @@ window.__ModuleLoader__.load({
 					grade: zod.z.number().int().min(1).max(6),
 					term: zod.z.enum(["first", "second"]),
 					units: zod.z.array(id$1).max(20).optional(),
-					objectiveIds: zod.z.array(id$1).max(60).optional()
+					objectiveIds: zod.z.array(knowledgeIdSchema).max(60).optional()
 				}).strict().optional()
 			}).strict()).max(5e3),
 			attempts: zod.z.array(attempt.extend({
@@ -4942,13 +6294,15 @@ window.__ModuleLoader__.load({
 			"math",
 			"english"
 		]);
+		const learnerId = id.transform((value) => value);
 		const termId = id.transform((value) => value);
 		const blockId = id.transform((value) => value);
 		const worksheetId = id.transform((value) => value);
 		const responseId = id.transform((value) => value);
 		const base = {
 			format: zod.z.literal(2),
-			termId
+			termId,
+			learnerId: learnerId.optional()
 		};
 		const scope = stateSchema.shape.sessions.element.shape.scope.unwrap();
 		/** Known assistance and unknown assistance remain separate from correctness. */
@@ -4979,6 +6333,7 @@ window.__ModuleLoader__.load({
 		]);
 		/** Native input version or preserved source; missing receipt matching is explicitly unknown. */
 		const responseSourceSchema = zod.z.discriminatedUnion("kind", [
+			openmaicResponseSourceSchema,
 			zod.z.object({ kind: zod.z.literal("unknown") }).strict(),
 			zod.z.object({
 				kind: zod.z.literal("native"),
@@ -5004,7 +6359,7 @@ window.__ModuleLoader__.load({
 				row: text
 			}).strict()
 		]);
-		const target = zod.z.union([id, zod.z.object({
+		const target = zod.z.union([knowledgeIdSchema, zod.z.object({
 			kind: zod.z.literal("pending"),
 			reason: text
 		}).strict()]);
@@ -5030,10 +6385,52 @@ window.__ModuleLoader__.load({
 				row: text
 			}).strict()
 		]);
+		/** Exact capability, family and tested scope of this frozen question instance. */
+		const capabilityBindingSchema = zod.z.object({
+			goalId: knowledgeIdSchema,
+			familyId: knowledgeIdSchema,
+			scope: capabilityScopeSchema
+		}).strict();
+		/** A persisted allowance counts entered mothers and presented instances, independently of answer evidence. */
+		const learningRoundSchema = zod.z.object({
+			id,
+			kind: zod.z.enum(["check", "review"]),
+			startedAt: time,
+			members: zod.z.array(capabilityBindingSchema.extend({ mistakeId: id.optional() })).min(1).max(3),
+			enteredFamilyIds: zod.z.array(knowledgeIdSchema).max(3),
+			presentedQuestionIds: zod.z.array(id).max(200),
+			endedAt: time.optional(),
+			endReason: zod.z.enum([
+				"complete",
+				"budget-exhausted",
+				"stopped"
+			]).optional(),
+			moreReview: zod.z.object({
+				afterRoundId: id,
+				request: text
+			}).strict().optional()
+		}).strict();
+		/** References reuse original archived responses without copying or changing their dates. */
+		const archiveEvidenceReferenceSchema = zod.z.object({
+			learnerId,
+			termId,
+			ownerKind: zod.z.enum(["block", "worksheet"]),
+			ownerId: id,
+			responseId,
+			goalId: knowledgeIdSchema,
+			scope: capabilityScopeSchema,
+			review: zod.z.object({
+				mistakeId: id,
+				stage: zod.z.number().int().min(0).max(4),
+				dueAt: time,
+				independentDays: zod.z.array(day$1).max(1e3)
+			}).strict().optional()
+		}).strict();
 		/** Published question content reused by blocks and worksheets, including every supported figure. */
 		const questionSchema = zod.z.object({
 			id,
 			objectiveId: target,
+			capability: capabilityBindingSchema.optional(),
 			mistakeId: id.optional(),
 			source: questionSourceSchema,
 			topic: text,
@@ -5041,7 +6438,9 @@ window.__ModuleLoader__.load({
 			answer: text,
 			explanation: text,
 			answerEvidence: text,
+			openmaic: openmaicQuestionSchema.optional(),
 			basisStatus: zod.z.literal("legacy-pending").optional(),
+			legacyRecord: zod.z.json().optional(),
 			choices: zod.z.array(text).min(2).max(4).optional(),
 			steps: zod.z.array(text.max(240)).min(2).max(5).optional(),
 			figure: figureSchema.optional(),
@@ -5060,6 +6459,7 @@ window.__ModuleLoader__.load({
 			questionId: id,
 			rawResponse: text,
 			response: text.optional(),
+			legacyRecord: zod.z.json().optional(),
 			assistance: assistanceSchema,
 			assistanceConfirmation: text.optional(),
 			answerDateConfirmation: text.optional(),
@@ -5082,8 +6482,27 @@ window.__ModuleLoader__.load({
 			answerEvidence: text,
 			assessedAt: time,
 			correctedAt: time.optional(),
+			criteria: zod.z.array(zod.z.enum([
+				"basic",
+				"method",
+				"variation"
+			])).min(1).max(3).optional(),
+			criterionCorrection: zod.z.object({
+				sessionId: text,
+				messageId: text,
+				inputVersion: text,
+				rawResponse: text
+			}).strict().optional(),
 			userConfirmation: text.optional(),
-			errorType: errorTypeSchema.optional()
+			errorType: errorTypeSchema.optional(),
+			official: officialReviewSchema.optional(),
+			officialHistory: zod.z.array(officialReviewSchema).max(2e3).optional(),
+			grading: zod.z.enum([
+				"aligned",
+				"equivalent",
+				"conflict",
+				"pending"
+			]).optional()
 		}).strict();
 		const pending = zod.z.object({
 			sourcePath: text,
@@ -5099,9 +6518,16 @@ window.__ModuleLoader__.load({
 			profile: stateSchema.shape.profile.extend({ parentConfirmation: text }),
 			materials: stateSchema.shape.materials,
 			courses: zod.z.array(stateSchema.shape.courses.element.extend({ parentConfirmation: text })).max(3),
+			learningScopes: zod.z.array(zod.z.object({
+				subject,
+				goalIds: zod.z.array(knowledgeIdSchema).min(1).max(100).optional(),
+				scope: capabilityScopeSchema,
+				parentConfirmation: text
+			}).strict()).max(30).optional(),
 			interests: stateSchema.shape.interests,
 			openmaic: stateSchema.shape.openmaic,
 			archivedAt: time.optional(),
+			evidenceReferences: zod.z.array(archiveEvidenceReferenceSchema).max(2e4).optional(),
 			migration: zod.z.object({
 				sourcePath: text,
 				sourceSha256: zod.z.string().regex(/^[a-f0-9]{64}$/u),
@@ -5129,6 +6555,11 @@ window.__ModuleLoader__.load({
 			questions: zod.z.array(questionSchema).max(200),
 			responses: zod.z.array(responseSchema).max(500),
 			currentResponseId: responseId.optional(),
+			rounds: zod.z.array(learningRoundSchema).max(100).optional(),
+			answerReveals: zod.z.array(zod.z.object({
+				questionId: id,
+				at: time
+			}).strict()).max(200).optional(),
 			hints: zod.z.array(zod.z.object({
 				questionId: id,
 				responseId: responseId.optional(),
@@ -5140,7 +6571,8 @@ window.__ModuleLoader__.load({
 				at: time
 			}).strict()).max(200).optional(),
 			assessments: zod.z.array(assessmentSchema).max(500),
-			pendingLegacy: zod.z.array(pending).max(500).optional()
+			pendingLegacy: zod.z.array(pending).max(500).optional(),
+			pendingOpenmaic: zod.z.array(pendingOpenmaicSchema).max(2e3).optional()
 		}).strict();
 		/** One worksheet owns frozen question targets, photo drafts and all confirmed workbook outcomes. */
 		const worksheetSchema = zod.z.object({
@@ -5177,6 +6609,23 @@ window.__ModuleLoader__.load({
 		zod.z.object({
 			...base,
 			kind: zod.z.literal("collections"),
+			knowledge: knowledgeExtensionSchema.optional(),
+			legacyHistory: zod.z.array(zod.z.object({
+				sourcePath: text,
+				row: text,
+				record: zod.z.json()
+			}).strict()).max(2e4).optional(),
+			legacyReferences: zod.z.array(zod.z.object({
+				kind: zod.z.enum(["objective", "exercise"]),
+				oldId: knowledgeIdSchema,
+				status: zod.z.enum(["pending", "review-required"]),
+				candidateGoalIds: zod.z.array(knowledgeIdSchema).max(100),
+				routes: zod.z.array(zod.z.object({
+					goalId: knowledgeIdSchema,
+					familyId: knowledgeIdSchema
+				}).strict()).max(100),
+				reason: text
+			}).strict()).max(5e3).optional(),
 			mistakes: zod.z.array(stateSchema.shape.mistakes.element.omit({
 				stage: true,
 				independentDays: true,
@@ -6088,7 +7537,7 @@ window.__ModuleLoader__.load({
 								if (frame.kind === "failure") {
 									yield {
 										ok: false,
-										error: new RemoteError("student/unavailable", frame.message, {})
+										error: new RemoteError(frame.reason === "main-session-required" ? "student/main-session-required" : "student/unavailable", frame.message, {})
 									};
 									continue;
 								}
@@ -6445,17 +7894,53 @@ window.__ModuleLoader__.load({
 				}
 			}) : "");
 			const context = useResource(visible ? studentResourceAddress(sessionId, { kind: "learning-context" }) : "");
-			const data = resource.value && dashboardValue(resource.value.data) ? resource.value.data : void 0;
+			const currentData = resource.value && dashboardValue(resource.value.data) ? resource.value.data : void 0;
+			const currentFacts = context.value?.data;
+			const contextReady = resource.status === "live" && resource.value?.status === "valid" && context.status === "live" && context.value?.status === "valid" && currentData !== void 0 && currentFacts !== null && currentFacts !== void 0 && resource.value.versions.length === context.value.versions.length && resource.value.versions.every((file) => context.value.versions.some((other) => other.path === file.path && other.targetKey === file.targetKey && other.version === file.version));
+			const lastView = (0, react.useRef)();
+			if (contextReady) lastView.current = {
+				sessionId,
+				data: currentData,
+				facts: currentFacts
+			};
+			const retained = lastView.current?.sessionId === sessionId ? lastView.current : void 0;
+			const data = contextReady ? currentData : retained?.data ?? currentData;
+			const facts = contextReady ? currentFacts : retained?.facts ?? currentFacts;
 			const offset = (0, react.useRef)(0);
 			if (data) offset.current = data.serverNow - Date.now();
-			const facts = context.value?.data;
 			const termId = facts && typeof facts === "object" && "termId" in facts && typeof facts.termId === "string" ? facts.termId : void 0;
+			const learnerId = facts && typeof facts === "object" && "learnerId" in facts && typeof facts.learnerId === "string" ? facts.learnerId : void 0;
+			const question = facts && typeof facts === "object" && "currentQuestion" in facts ? facts.currentQuestion : void 0;
+			const source = question && typeof question === "object" && "openmaic" in question ? question.openmaic : void 0;
+			const classroomBindingId = source && typeof source === "object" && "bindingId" in source && typeof source.bindingId === "string" ? source.bindingId : void 0;
+			const nextAction = facts && typeof facts === "object" && "nextAction" in facts ? facts.nextAction : null;
+			const round = facts && typeof facts === "object" && "round" in facts ? facts.round : null;
+			const legalActions = facts && typeof facts === "object" && "legalActions" in facts && Array.isArray(facts.legalActions) ? facts.legalActions.filter((value) => typeof value === "string") : [];
+			const sourceVerification = facts && typeof facts === "object" && "sourceVerification" in facts ? facts.sourceVerification : null;
+			const goalProgress = facts && typeof facts === "object" && "goalProgress" in facts && Array.isArray(facts.goalProgress) ? facts.goalProgress : [];
+			const loadNeeded = !data && (resource.failure?.code === "student/main-session-required" || context.failure?.code === "student/main-session-required");
 			const stale = resource.status === "failed" || context.status === "failed";
 			return {
 				data,
 				context: facts,
+				contextState: {
+					status: context.status,
+					readStatus: context.value?.status,
+					versions: context.value?.versions ?? [],
+					issues: context.value?.issues ?? [],
+					failure: context.failure
+				},
+				contextReady,
 				termId,
+				learnerId,
+				classroomBindingId,
+				nextAction,
+				round,
+				legalActions,
+				sourceVerification,
+				goalProgress,
 				value: resource.value,
+				loadNeeded,
 				stale,
 				error: stale ? networkError : "",
 				offset
@@ -6492,14 +7977,6 @@ window.__ModuleLoader__.load({
 			"school-pace": "reasonSchoolPace",
 			"needs-teaching": "reasonTeaching",
 			"prerequisite-gap": "reasonPrerequisite"
-		};
-		const planKeys = {
-			review: "recommendReview",
-			practice: "recommendPractice",
-			diagnose: "recommendDiagnose",
-			learn: "recommendLearn",
-			preview: "recommendPreview",
-			hold: "recommendHold"
 		};
 		const intensityKeys = {
 			light: "intensityLight",
@@ -7264,7 +8741,9 @@ window.__ModuleLoader__.load({
 		//#endregion
 		//#region lib/types/client/prompts.js
 		/** Natural-language tutor requests. The study skill owns the teaching rules. */
-		const continuePrompt = "请加载 study 技能，查询 study_status，继续当前学习段。先处理未反馈的答案或提示，保留当前题目；只有明确要求下一题时才换题。一次一题。没有时长限制，孩子想继续就继续；想休息就 stop。";
+		const continuePrompt = "请加载 study，读取 references/continuation.md 和独立 learning-context，按 nextAction、round、legalActions 处理明确的下一步。执行身份仅来自 nextAction，保留 previousActivity 的原题和回答；不另排目标或重置轮次。按需选择官方课堂或独立组件，沿 requirement 教学。原生写入后运行随包只读 CLI，再独立读取确认；来源未接受时保留状态。";
+		/** Read initial learning records through the native tutor before the resource can follow them. */
+		const loadLearningPrompt = "请加载 study 技能，只读 study_status kind=status 和 kind=learning-context，核对已有档案与当前 nextAction。仅显示当前学习目标、保留的题目和下一步；无档案时说明可以先在家长页确认资料。此请求只读，不修改学习文件、不建立学习段、不生成课堂或题目、不记录回答或掌握。";
 		/** Verify one saved response without replacing the current learning question. */
 		function pendingRecordPrompt(kind, ownerId, responseId) {
 			return `请加载 study 技能，阅读 references/files.md，核对 ${`.study/${kind === "block" ? "blocks" : "worksheets"}/${ownerId}.json`} 中 responseId=${responseId} 的作答记录。先解释题目、原回答、已有批改和缺少的信息，再依据原始证据或家长明确确认修正。无法核实的信息保留未知；不能把评分或接收时间当作答日期，不能把旧默认值当独立作答证明。保留原题和原回答，不新增一次作答，不更换当前学习题。`;
@@ -7281,24 +8760,8 @@ window.__ModuleLoader__.load({
 			if (task.stuck || task.phase === "demo" || task.phase === "guide" || (task.hintLevel ?? 0) >= 1) return teachHintPrompt;
 			return hintPrompt;
 		}
-		/** Teach one objective before any later lesson. */
-		function teachPrompt(objectiveId) {
-			return `请加载 study 技能，阅读 references/teaching.md 的「不会做时先教」。本段先教学习目标 ${objectiveId}：按 demo、guide、try、vary 四步，task 写 phase 和这个 objectiveId。今天停在这个目标上，不排下一课。`;
-		}
-		/** Teach one confirmed workbook item that is not linked to an objective yet. */
-		function teachQueuePrompt(title) {
-			return `请加载 study 技能，阅读 references/teaching.md 的「不会做时先教」。本段教这道待教的题：${title}。按 demo、guide、try、vary 四步，task 写 phase。`;
-		}
 		const stuckPrompt = "请加载 study 技能，阅读 references/teaching.md 的「不会做时先教」。孩子说不会。先用 demo 示范方法，再进入 guide。摸底段只记下不会，不讲课。";
 		const mistakePhotoPrompt = "请加载 study 技能，读取这张题目照片，用 mistake 保存待确认错题。能对应知识地图时写上 objectiveId。不要替我确认。";
-		/** Practise the current goal inside one interest scene. Facts stay on the knowledge map. */
-		function interestPracticePrompt(objectiveId, tags, focus, unitName) {
-			return `请加载 study 技能，阅读 references/interest-hooks.md 和 references/questions.md。本段用趣味情境练${objectiveId ? `学习目标 ${objectiveId}` : "今日建议的目标"}。${tags.length > 0 ? `兴趣标签：${tags.join("、")}。本题优先用「${focus}」套壳，下一题可以换一个标签。` : "用 study_status 的 interests 套壳。"}${unitName ? `校内单元「${unitName}」。` : ""}事实只核知识地图的 facts，不把兴趣写成知识点。一次一题，task 写 objectiveId。`;
-		}
-		/** Clear only the one or two due mistakes named for today. */
-		function dueClearPrompt(ids) {
-			return `请加载 study 技能，阅读 references/interest-hooks.md。今天只清 dueToday 里的这 ${ids.length} 条到期错题（${ids.join("、")}），其余到期错题留到以后。先做变式，不展示已保存答案。task 写 mistakeId 和 objectiveId。情境用 interests 里的标签套壳，事实只核知识地图。一次一题。`;
-		}
 		/** Problem-based explore: guess, check, revise. */
 		function explorePrompt(question) {
 			return `请加载 study 技能。本段是自主探究（explore）。${question && question.trim() !== "" ? `孩子的疑问是：${question.trim()}。` : "先问孩子想弄清什么。"}按问题导向法引导：我猜什么 → 如何验证（翻课页或做小实验）→ 看到了什么 → 我改变了什么想法。一次只推进一小步，不要直接给出完整答案。`;
@@ -7306,10 +8769,6 @@ window.__ModuleLoader__.load({
 		/** Continue around one shipped or custom learning goal. */
 		function goalPrompt(objectiveId) {
 			return `请加载 study 技能，查询 study_status。本段围绕学习目标 ${objectiveId} 出题，一次一题，task 写上这个 objectiveId。需要看图时写 figure。`;
-		}
-		/** Tell the child the next unit is still ahead of school. */
-		function previewPrompt(objectiveId) {
-			return `${goalPrompt(objectiveId)}先告诉孩子这是预习，学校还没教到这里。`;
 		}
 		/** One short question per sampled check-in goal. */
 		function diagnosePrompt(intensity, ids, t) {
@@ -7339,29 +8798,23 @@ window.__ModuleLoader__.load({
 		function paperPhotoPrompt(worksheetId) {
 			return `请加载 study 技能，读取练习单 ${worksheetId} 的作答照片，按题号用 paper-draft 保存转录草稿。不要直接入库。`;
 		}
-		/** Ask the tutor to generate one local OpenMAIC lesson for the current goal, with interest tags and the school unit. */
-		function openmaicGeneratePrompt(subjectLabel, objectiveId, tags, focus, unitName) {
-			const goal = objectiveId ? `围绕学习目标 ${objectiveId}。` : "围绕今日建议或孩子要点的知识点。";
-			const scene = tags.length > 0 ? `requirement 必须写入兴趣标签（${tags.join("、")}），本题优先套「${focus}」。` : "requirement 必须写入 study_status 的 interests。";
-			return `请加载 study 技能，阅读 references/openmaic.md 和 references/interest-hooks.md。为${subjectLabel}生成一节 OpenMAIC 互动课。${goal}${unitName ? `校内单元「${unitName}」。` : ""}${scene}事实只核知识地图。用 shell 和 curl 调用本机服务，不要用 web_fetch 访问 localhost。成功后把课堂 URL 单独一行原文发给我，并写入 .study/openmaic-lessons.json。`;
-		}
-		/** Ask the tutor to refresh one saved lesson using its original service and poll URL. */
+		/** Recover one original job, prepare its saved questions and continue authorized playback. */
 		function openmaicQueryPrompt(lessonId) {
-			return `请加载 study 技能，阅读 references/openmaic.md。读取 .study/openmaic-lessons.json 中 id 为 ${lessonId} 的记录，用该记录的 base、pollUrl 和同一 cookie jar 继续查询生成状态，按实际响应更新同一条记录并校验。查询超时保留最后已确认状态，不要重新提交 requirement。成功后把课堂 URL 单独一行原文发给我。`;
+			return `请加载 study、openmaic-teach，阅读 references/openmaic.md 和 references/openmaic-feedback.md。继续 .study/openmaic-lessons.json 中 id=${lessonId} 的原课堂。读取原 learnerId/termId/blockId/jobId，调用 openmaic_generate 恢复或查询原 jobId，超时或提交未知不新建任务。ready 后用 openmaic_feedback prepare 读取全部有界页，保存所有原题面、选项、修订及反馈绑定，运行只读 CLI 并独立读取，再打开原课堂。已有作答先读取并保存原记录，接受后才更新 checkpoint；已确认范围内继续教学，无需逐课确认。`;
 		}
-		/** Ask the tutor to verify the failed run before requesting an idempotent retry. */
+		/** Recover a failed original job without creating a replacement requirement. */
 		function openmaicRetryPrompt(runId) {
-			return `请加载 study 技能，阅读 references/openmaic.md。读取 .study/openmaic-lessons.json 中 runId 为 ${runId} 的记录，先用原 base、pollUrl 和同一 cookie jar 查询最新状态。仅在服务确认失败且 retryable 为 true 时，用新 commandId 请求 retry；先保存该 id，同一次请求因网络问题重发时复用。仍在生成就继续查询，同一幕反复失败先检查原因。不要重新提交 requirement。把实际结果写回同一条记录并校验，成功后把课堂 URL 单独一行原文发给我。`;
+			return `请加载 study，阅读 references/openmaic.md。读取 runId=${runId} 对应原课堂的身份，用 openmaic_generate 查询和恢复同一 jobId，按官方实际状态提供恢复步骤，保存同一条课堂记录并校验。提交未知先核对原任务；不得重新提交 requirement 或换课堂。`;
 		}
-		/** Ask the tutor to pull the stage outline and write a few consolidation questions. */
+		/** Import original answers and supplement only criteria still missing. */
 		function openmaicReviewPrompt(classroomId) {
-			return `请加载 study 技能，阅读 references/openmaic.md 和 references/questions.md。孩子上完互动课 ${classroomId}。用同一 cookie jar GET /api/stages/${classroomId}，把大纲和场景摘要写回 .study/openmaic-lessons.json 的 summary。再按摘要出 2 到 5 道巩固题，走现有出题和作答，不要嵌播放器。`;
+			return `请加载 study、openmaic-teach，阅读 references/openmaic-feedback.md。继续课堂 ${classroomId} 的原 learnerId/termId/blockId，用 openmaic_feedback 读取全部有界来源页，逐页通过原生文件工具保存原回答和官方/有效评分。运行随包只读 CLI，并用 study_status 独立读取核对接受后才更新原 checkpoint。读取 references/continuation.md，按 learning-context 的 nextAction、round 和 legalActions 沿原轮次只补缺少判据，一次一题，不要求已有效覆盖的题重做；未知日期和帮助保持未知。`;
 		}
 		/** Transcribe a workbook photo that is not tied to a saved worksheet. */
 		const workbookPhotoPrompt = "请加载 study 技能。这是练习册照片，事先没有练习单。用 workbook-draft 按题保存草稿：不会用 stuck，提示后才对用 hinted，独立做错用 independent-wrong，独立做对用 independent-correct。能对应目标就写 objectiveId。不要直接入库，等家长确认。";
 		/** Complete panel intention; official file validation determines business completion. */
 		function nativeIntentPrompt(intent, request) {
-			return `请加载 study 技能。在当前原生会话处理下面的意图，先核对学期和实体身份。通过原生文件工具读写正式业务文件，再运行安装包中的只读校验 CLI；保留学生原话、回答身份和附件关联。未完成的回答先保存再评估；结束或切换时保留待评估回答，迟到的反馈仍属于原题。不要自动换题或重发不确定的回答。\nStudent intention:\n${JSON.stringify(intent)}\n${request}`;
+			return `请加载 study 技能。在当前原生会话处理下面的意图，先核对 learnerId、termId、blockId、questionId 和 nextAction。通过原生文件工具读写正式业务文件，再运行安装包中的只读校验 CLI，随后独立 study_status 读取确认实际保存结果；保留学生原话、回答身份和附件关联。未完成的回答先保存再评估；结束或切换时保留待评估回答，迟到的反馈仍属于原题。不要自动换题或重发不确定的回答。\nStudent intention:\n${JSON.stringify(intent)}\n${request}`;
 		}
 		//#endregion
 		//#region lib/types/client/figure-view.js
@@ -8417,8 +9870,8 @@ window.__ModuleLoader__.load({
 			}), document.body);
 		}
 		//#endregion
-		//#region \0dsh-css:/home/maiscrm/projects/dsh-creative/plugins/dsh-student/packages/winterhuan/student/src/client/desk.module.css.mjs
-		const css$1 = ".whRc1W_desk{container-type:inline-size}.whRc1W_taskLayout{gap:20px;min-width:0;display:grid}.whRc1W_taskPrompt{min-width:0}.whRc1W_answerArea{border-radius:var(--dsw-radius-lg);background:var(--dsw-alias-interactive-bg-hover);flex-direction:column;gap:8px;min-width:0;padding:16px;display:flex}.whRc1W_answerArea form fieldset{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;display:grid}.whRc1W_answerArea form label,.whRc1W_answerArea form button[type=submit]{grid-column:1/-1}.whRc1W_taskLayout.whRc1W_withFigure{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.whRc1W_taskPrompt .student-figure{max-width:320px;margin:16px auto 0}.whRc1W_desk .whRc1W_taskDetails{border-top:.5px solid var(--dsw-alias-border-l2);background:0 0;border-radius:0;margin-top:12px;padding:12px 0 0}.whRc1W_taskDetails>p{margin-top:8px}.whRc1W_statusHeading{flex-wrap:wrap;justify-content:space-between;gap:8px;display:flex}.whRc1W_practiceActions{flex-wrap:wrap;gap:8px;display:flex}.whRc1W_practiceActions button{flex:160px}@container (width<=460px){.whRc1W_desk .whRc1W_navigation{box-sizing:border-box;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;display:grid}}@container (width<=620px){.whRc1W_taskLayout.whRc1W_withFigure{grid-template-columns:minmax(0,1fr)}.whRc1W_taskPrompt .student-figure svg{max-height:160px}}";
+		//#region \0dsh-css:/Users/winter/dsh-creative/.worktrees/student-openmaic-integration/packages/winterhuan/student/src/client/desk.module.css.mjs
+		const css$1 = ".-\\35 LDPq_desk{container-type:inline-size}.-\\35 LDPq_taskLayout{gap:20px;min-width:0;display:grid}.-\\35 LDPq_taskPrompt{min-width:0}.-\\35 LDPq_answerArea{border-radius:var(--dsw-radius-lg);background:var(--dsw-alias-interactive-bg-hover);flex-direction:column;gap:8px;min-width:0;padding:16px;display:flex}.-\\35 LDPq_answerArea form fieldset{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;display:grid}.-\\35 LDPq_answerArea form label,.-\\35 LDPq_answerArea form button[type=submit]{grid-column:1/-1}.-\\35 LDPq_taskLayout.-\\35 LDPq_withFigure{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.-\\35 LDPq_taskPrompt .student-figure{max-width:320px;margin:16px auto 0}.-\\35 LDPq_desk .-\\35 LDPq_taskDetails{border-top:.5px solid var(--dsw-alias-border-l2);background:0 0;border-radius:0;margin-top:12px;padding:12px 0 0}.-\\35 LDPq_taskDetails>p{margin-top:8px}.-\\35 LDPq_statusHeading{flex-wrap:wrap;justify-content:space-between;gap:8px;display:flex}.-\\35 LDPq_practiceActions{flex-wrap:wrap;gap:8px;display:flex}.-\\35 LDPq_practiceActions button{flex:160px}@container (width<=460px){.-\\35 LDPq_desk .-\\35 LDPq_navigation{box-sizing:border-box;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;display:grid}}@container (width<=620px){.-\\35 LDPq_taskLayout.-\\35 LDPq_withFigure{grid-template-columns:minmax(0,1fr)}.-\\35 LDPq_taskPrompt .student-figure svg{max-height:160px}}";
 		const tagId$1 = "@winterhuan/dsh-student/desk.module.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId$1) + "]") === null) {
 			const tag = document.createElement("style");
@@ -8428,15 +9881,15 @@ window.__ModuleLoader__.load({
 			document.head.appendChild(tag);
 		}
 		var desk_module_css_default = {
-			"answerArea": "whRc1W_answerArea",
-			"desk": "whRc1W_desk",
-			"navigation": "whRc1W_navigation",
-			"practiceActions": "whRc1W_practiceActions",
-			"statusHeading": "whRc1W_statusHeading",
-			"taskDetails": "whRc1W_taskDetails",
-			"taskLayout": "whRc1W_taskLayout",
-			"taskPrompt": "whRc1W_taskPrompt",
-			"withFigure": "whRc1W_withFigure"
+			"answerArea": "-5LDPq_answerArea",
+			"desk": "-5LDPq_desk",
+			"navigation": "-5LDPq_navigation",
+			"practiceActions": "-5LDPq_practiceActions",
+			"statusHeading": "-5LDPq_statusHeading",
+			"taskDetails": "-5LDPq_taskDetails",
+			"taskLayout": "-5LDPq_taskLayout",
+			"taskPrompt": "-5LDPq_taskPrompt",
+			"withFigure": "-5LDPq_withFigure"
 		};
 		//#endregion
 		//#region lib/types/client/practice-view.js
@@ -9606,11 +11059,6 @@ window.__ModuleLoader__.load({
 			ready: "openmaicReady",
 			failed: "openmaicFailed"
 		};
-		/**
-		* Open a classroom URL in another browser tab.
-		* The desk does not embed the classroom: a cross-origin frame would not carry the OpenMAIC cookie,
-		* and a static export player is intentionally absent.
-		*/
 		/** http(s) URL without credentials, or undefined when the desk must not offer it. */
 		function classroomUrl(value) {
 			if (value === void 0 || value === "") return void 0;
@@ -9633,7 +11081,7 @@ window.__ModuleLoader__.load({
 			return lessons.filter((lesson) => lesson.subject === void 0 || lesson.subject === subject);
 		}
 		/** Recent OpenMAIC lessons: open or copy the URL, and ask the tutor to generate, retry or review. */
-		function LessonsPanel({ lessons, error, disabled, running, t, onGenerate, onQuery, onRetry, onReview }) {
+		function LessonsPanel({ lessons, error, disabled, running, t, onGenerate, onOpen, onQuery, onRetry, onReview }) {
 			const [copiedId, setCopiedId] = (0, react.useState)("");
 			const busy = disabled || running;
 			return (0, react_jsx_runtime.jsxs)("section", {
@@ -9682,7 +11130,8 @@ window.__ModuleLoader__.load({
 								className: "student-segments",
 								children: [(0, react_jsx_runtime.jsx)("button", {
 									type: "button",
-									onClick: () => openClassroom(lesson.url ?? ""),
+									disabled: busy,
+									onClick: () => onOpen ? onOpen(lesson.id) : openClassroom(lesson.url ?? ""),
 									children: t("openmaicOpen")
 								}), (0, react_jsx_runtime.jsx)("button", {
 									type: "button",
@@ -9728,47 +11177,74 @@ window.__ModuleLoader__.load({
 		//#endregion
 		//#region lib/types/client/today-view.js
 		/** The learner's page: one recommended next step, the current question, and a folded set of other ways to practise. */
-		function TodayView({ study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom, draftScope, useStore, actions }) {
+		function TodayView({ nextAction, round, legalActions, onAction, learnerId, termId, classroomBindingId, onContinue, study, subject, activity, setActivity, goal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startDiagnosis, chosenIntensity, disabled, pending, running, act, tutor, t, prompts, lessons, onOpenClassroom, draftScope, useStore, actions }) {
 			const active = study.active;
+			const reflectionKey = formDraftKey(`reflection:${active?.id ?? "none"}`, draftScope);
+			const reflection = useStore((state) => state.drafts[reflectionKey]) ?? "";
 			const ownSession = !!active;
 			const task = ownSession && study.task?.sessionId === active.id ? study.task : void 0;
-			const available = ownSession;
-			const recommendation = study.recommendation;
 			const progress = curriculum?.scope.current ? study.courses.find((item) => item.subject === subject)?.progress : void 0;
 			const frontierIndex = progress ? curriculum?.units.findIndex((unit) => unit.id === progress.unitId) ?? -1 : -1;
 			const schoolUnit = frontierIndex >= 0 ? curriculum?.units[frontierIndex] : void 0;
 			const homeUnit = curriculum?.scope.current ? [...curriculum.units].reverse().find((unit) => curriculum.concepts.some((concept) => concept.unit === unit.id && concept.level !== "untouched")) : void 0;
 			const objectiveMeta = curriculum?.scope.current ? curriculum.objectives.find((item) => item.id === task?.objectiveId) : void 0;
-			const recommendGoal = curriculum?.scope.current && recommendation?.objectiveId ? curriculum.objectives.find((item) => item.id === recommendation.objectiveId) : void 0;
 			const explain = study.understandingReminders[0];
-			const generating = lessons.find((item) => item.status === "generating");
-			const ready = lessons.find((item) => item.status === "ready" && item.objectiveId !== void 0 && item.objectiveId === recommendation?.objectiveId && classroomUrl(item.url)) ?? lessons.find((item) => item.status === "ready" && classroomUrl(item.url));
+			const matchesCurrent = (item) => !!active && !!learnerId && !!termId && item.learnerId === learnerId && item.termId === termId && item.blockId === active.id && (item.subject === void 0 || item.subject === (nextAction?.subject ?? active.subject));
+			const generating = lessons.find((item) => item.status === "generating" && matchesCurrent(item));
+			const ready = lessons.find((item) => item.status === "ready" && matchesCurrent(item) && classroomUrl(item.url) && nextAction?.goalId !== void 0 && item.feedback?.goalId === nextAction.goalId && nextAction.scope !== void 0 && JSON.stringify(item.feedback.scope) === JSON.stringify(nextAction.scope) && (nextAction.kind === "answer" && nextAction.blockId === active?.id && nextAction.questionId === task?.id && classroomBindingId !== void 0 && item.feedback.bindingId === classroomBindingId || nextAction.kind === "learn" && !task));
 			const readyUrl = classroomUrl(ready?.url);
-			const goalPractice = recommendation?.kind === "practice" || recommendation?.kind === "learn" || recommendation?.kind === "preview" || recommendation?.kind === "review" && recommendation.objectiveId !== void 0;
+			const shownReady = ready ?? (!nextAction ? lessons.find((item) => item.status === "ready" && matchesCurrent(item) && classroomUrl(item.url)) : void 0);
+			const chosen = nextAction;
+			const nextTitle = chosen?.title ?? goalTitle(study, task?.objectiveId) ?? task?.topic ?? t("todayPlan");
+			const chosenReason = chosen ? continuationReasons[chosen.reason] : void 0;
+			const primaryAction = chosen?.kind === "hold" ? legalActions.includes("resume-round") ? "resume-round" : legalActions.includes("request-teaching") ? "request-teaching" : legalActions.includes("sync-feedback") ? "sync-feedback" : legalActions.includes("verify-source") ? "verify-source" : void 0 : void 0;
+			const needsParent = chosen?.reason === "confirmed-scope-required";
+			const primaryLabelKey = needsParent ? "confirmLearningScope" : primaryAction === "resume-round" ? "resumeRound" : primaryAction === "request-teaching" ? "requestTeaching" : primaryAction === "sync-feedback" || primaryAction === "verify-source" ? "retryFeedbackSync" : "continueLearning";
+			const playable = !!readyUrl && !lessons.some((item) => item.status === "generating" && matchesCurrent(item));
 			return (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
-				(generating || readyUrl) && (0, react_jsx_runtime.jsxs)("section", { children: [
-					generating && (0, react_jsx_runtime.jsxs)("p", {
-						role: "status",
-						children: [
-							t("openmaicGenerating"),
-							" · ",
-							generating.title
-						]
-					}),
-					readyUrl && (0, react_jsx_runtime.jsx)("div", {
-						className: "student-segments",
-						children: (0, react_jsx_runtime.jsx)("button", {
+				(0, react_jsx_runtime.jsxs)("section", {
+					className: "student-plan",
+					children: [
+						(0, react_jsx_runtime.jsx)("h3", { children: nextTitle }),
+						(0, react_jsx_runtime.jsx)("p", {
+							className: "student-muted",
+							children: t(chosenReason ?? "continueWaiting")
+						}),
+						(0, react_jsx_runtime.jsx)("button", {
 							type: "button",
 							className: "student-primary",
-							onClick: () => onOpenClassroom(readyUrl),
-							children: t("goToClass")
+							disabled: disabled || running || pending || !chosen || chosen.kind === "hold" && !needsParent && !primaryAction,
+							onClick: needsParent ? openParent : primaryAction ? () => onAction(primaryAction) : playable ? () => onOpenClassroom(ready.id) : onContinue,
+							children: t(playable ? "goToClass" : primaryLabelKey)
 						})
-					}),
-					ready && (0, react_jsx_runtime.jsx)("p", {
-						className: "student-muted",
-						children: ready.title
+					]
+				}),
+				round && (0, react_jsx_runtime.jsx)("section", {
+					className: "student-status",
+					children: (0, react_jsx_runtime.jsxs)("p", {
+						role: "status",
+						children: [
+							(0, react_jsx_runtime.jsx)("span", { children: t(round.status === "paused" ? "roundPaused" : round.status === "ended" ? "roundEnded" : "roundActive") }),
+							" · ",
+							(0, react_jsx_runtime.jsx)("span", { children: t(round.kind === "check" ? "roundCheckRemaining" : "roundReviewRemaining").replace("{count}", String(round.remaining)) })
+						]
 					})
-				] }),
+				}),
+				chosen?.source?.kind === "openmaic" && (0, react_jsx_runtime.jsx)("p", {
+					role: "status",
+					children: t(sourceNotice(chosen.source.verification))
+				}),
+				(generating || shownReady) && (0, react_jsx_runtime.jsxs)("section", { children: [generating && (0, react_jsx_runtime.jsxs)("p", {
+					role: "status",
+					children: [
+						t("openmaicGenerating"),
+						" · ",
+						generating.title
+					]
+				}), shownReady && (0, react_jsx_runtime.jsx)("p", {
+					className: "student-muted",
+					children: shownReady.title
+				})] }),
 				(0, react_jsx_runtime.jsxs)("section", {
 					className: "student-status",
 					children: [(0, react_jsx_runtime.jsxs)("div", {
@@ -9821,7 +11297,7 @@ window.__ModuleLoader__.load({
 							goalTitle: goalTitle(study, task.objectiveId),
 							goalText: objectiveMeta?.goal,
 							days: objectiveMeta?.independentDays,
-							disabled: disabled || running,
+							disabled: disabled || running || pending || chosen?.kind === "hold",
 							t,
 							act,
 							tutor
@@ -9830,17 +11306,10 @@ window.__ModuleLoader__.load({
 							className: "student-muted",
 							children: t("chatHelp")
 						}),
-						available && (running ? (0, react_jsx_runtime.jsx)("p", {
+						running && (0, react_jsx_runtime.jsx)("p", {
 							role: "status",
 							children: t("tutorWorking")
-						}) : (!task || study.feedback || task.response !== void 0 || task.hintLevel > 0) && (0, react_jsx_runtime.jsx)("button", {
-							className: "student-primary",
-							disabled,
-							onClick: () => {
-								tutor(study.feedback ? "明确请求下一题。先保留上一题的原回答和有效反馈，再准备下一题。" : "检查当前题的未完成答案或提示，不换题，不自动重发原回答。", true).catch(() => {});
-							},
-							children: t(!task ? "prepareTask" : study.feedback ? "nextTask" : task.response !== void 0 ? "retryFeedback" : "retryHint")
-						}))
+						})
 					]
 				}), (0, react_jsx_runtime.jsxs)("form", {
 					onSubmit: (event) => {
@@ -9860,7 +11329,7 @@ window.__ModuleLoader__.load({
 							children: t("stop")
 						}), (explain || task?.objectiveId) && (0, react_jsx_runtime.jsx)("button", {
 							type: "button",
-							disabled: disabled || running,
+							disabled: disabled || running || pending,
 							onClick: () => {
 								tutor(feynmanPrompt(explain?.title ?? goalTitle(study, task?.objectiveId)), true).catch(() => {});
 							},
@@ -9874,164 +11343,35 @@ window.__ModuleLoader__.load({
 							(0, react_jsx_runtime.jsxs)("label", { children: [t("reflection"), (0, react_jsx_runtime.jsx)("textarea", {
 								"aria-label": t("reflection"),
 								name: "reflection",
+								value: reflection,
+								onChange: (event) => actions.setDraft(reflectionKey, event.target.value),
 								maxLength: 2e3,
 								placeholder: t("explainPrompt")
 							})] })
 						]
 					})]
 				})] }),
-				!ownSession && (0, react_jsx_runtime.jsxs)("section", {
-					className: "student-plan",
-					children: [
-						(0, react_jsx_runtime.jsx)("h3", { children: t("todayPlan") }),
-						recommendation ? (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
-							(0, react_jsx_runtime.jsxs)("p", { children: [
-								t(planKeys[recommendation.kind]),
-								" · ",
-								t(recommendation.subject),
-								recommendation.title ? ` · ${recommendation.title}` : ""
-							] }),
-							recommendGoal?.goal && (0, react_jsx_runtime.jsxs)("p", { children: [
-								t("objectiveGoal"),
-								": ",
-								recommendGoal.goal
-							] }),
-							recommendGoal && (0, react_jsx_runtime.jsx)(MasteryDots, {
-								days: recommendGoal.independentDays,
-								t
-							}),
-							(0, react_jsx_runtime.jsx)("p", {
-								className: "student-muted",
-								children: reasonText([recommendation.reason], t)
-							}),
-							study.interestFocus && (0, react_jsx_runtime.jsxs)("p", {
-								className: "student-muted",
-								children: [
-									t("interestFocusLabel"),
-									": ",
-									study.interestFocus
-								]
-							}),
-							recommendation.redirectedFrom && (0, react_jsx_runtime.jsxs)("p", {
-								className: "student-muted",
-								children: [
-									t("prerequisiteFor"),
-									": ",
-									recommendation.redirectedFrom.title
-								]
-							}),
-							recommendation.kind === "hold" ? (0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								onClick: openParent,
-								children: t("updateSchoolProgress")
-							}) : (0, react_jsx_runtime.jsxs)("div", {
-								className: "student-segments",
-								children: [
-									goalPractice && (0, react_jsx_runtime.jsx)("button", {
-										type: "button",
-										className: "student-primary",
-										disabled: disabled || running,
-										onClick: onInterestPractice,
-										children: t("interestPractice")
-									}),
-									recommendation.kind === "diagnose" && (0, react_jsx_runtime.jsx)("button", {
-										type: "button",
-										className: "student-primary",
-										disabled: disabled || running,
-										onClick: startRecommended,
-										children: t("startNow")
-									}),
-									recommendation.kind === "review" && study.dueToday.length === 0 && (0, react_jsx_runtime.jsx)("button", {
-										type: "button",
-										className: "student-primary",
-										disabled: disabled || running,
-										onClick: startRecommended,
-										children: t("startNow")
-									}),
-									(0, react_jsx_runtime.jsx)("button", {
-										type: "button",
-										disabled: disabled || running || generating !== void 0,
-										onClick: onOpenLesson,
-										children: t("openLesson")
-									})
-								]
-							})
-						] }) : (0, react_jsx_runtime.jsx)("p", { children: t("allDone") }),
-						goal && (0, react_jsx_runtime.jsxs)("p", { children: [
-							t("learningGoal"),
-							": ",
-							goal.title,
-							" ",
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								onClick: clearGoal,
-								children: t("clearGoal")
-							})
-						] }),
-						study.weakPoints.length > 0 && (0, react_jsx_runtime.jsxs)("details", { children: [
-							(0, react_jsx_runtime.jsxs)("summary", { children: [
-								t("weakPoints"),
-								" · ",
-								study.weakPoints.length
-							] }),
-							(0, react_jsx_runtime.jsx)("p", {
-								className: "student-muted",
-								children: t("weakHint")
-							}),
-							study.weakPoints.map((item) => (0, react_jsx_runtime.jsxs)("div", { children: [
-								(0, react_jsx_runtime.jsxs)("p", { children: [
-									t(item.subject),
-									" · ",
-									item.title,
-									" · ",
-									t(levelKey(item.level))
-								] }),
-								(0, react_jsx_runtime.jsx)("p", {
-									className: "student-muted",
-									children: reasonText(item.reasons, t)
-								}),
-								(0, react_jsx_runtime.jsxs)("button", {
-									type: "button",
-									disabled: disabled || running,
-									"aria-pressed": selectedObjectiveId === item.id,
-									onClick: () => chooseGoal(item),
-									children: [
-										t("chooseGoal"),
-										" · ",
-										item.title
-									]
-								})
-							] }, item.id))
-						] })
-					]
+				chosen && legalActions.includes("more-review") && (0, react_jsx_runtime.jsx)("button", {
+					type: "button",
+					disabled: disabled || running || pending,
+					onClick: () => onAction("more-review"),
+					children: t("moreReview")
 				}),
-				!ownSession && study.dueToday.length > 0 && (0, react_jsx_runtime.jsxs)("section", { children: [
-					(0, react_jsx_runtime.jsx)("h3", { children: t("dueTodayTitle") }),
-					(0, react_jsx_runtime.jsx)("p", {
-						className: "student-muted",
-						children: t("dueTodayHelp")
-					}),
-					study.dueToday.map((item) => (0, react_jsx_runtime.jsxs)("p", { children: [
-						t(item.subject),
-						" · ",
-						item.topic
-					] }, item.id)),
-					(0, react_jsx_runtime.jsx)("button", {
-						type: "button",
-						disabled: disabled || running,
-						onClick: onClearDue,
-						children: t("clearDue").replace("{count}", String(study.dueToday.length))
-					}),
-					study.dueBacklog > study.dueToday.length && (0, react_jsx_runtime.jsx)("p", {
-						className: "student-muted",
-						children: t("dueLater").replace("{count}", String(study.dueBacklog - study.dueToday.length))
-					})
-				] }),
+				chosen && !ownSession && legalActions.includes("rest") && (0, react_jsx_runtime.jsx)("button", {
+					type: "button",
+					disabled: disabled || running || pending,
+					onClick: () => onAction("rest"),
+					children: t("stop")
+				}),
 				(0, react_jsx_runtime.jsx)(Alternate, {
+					useStore,
+					actions,
+					draftScope,
 					study,
+					subject,
 					activity,
 					setActivity,
-					disabled: disabled || running,
+					disabled: disabled || running || pending,
 					t,
 					goal,
 					intensityLabel,
@@ -10041,184 +11381,211 @@ window.__ModuleLoader__.load({
 					scopeUnits,
 					start
 				}),
-				!ownSession && (() => {
-					const unit = progress && curriculum ? curriculum.units.find((item) => item.id === progress.unitId) : void 0;
-					const causes = study.errorProfile.filter((item) => item.subject === subject).slice(0, 3);
-					if (unit?.focus === void 0 && causes.length === 0) return null;
-					return (0, react_jsx_runtime.jsxs)("section", { children: [
-						(0, react_jsx_runtime.jsxs)("h3", { children: [
-							t("routineTitle"),
-							" · ",
-							t(subject)
-						] }),
-						(0, react_jsx_runtime.jsx)("p", {
-							className: "student-muted",
-							children: t("routineHelp")
-						}),
-						unit?.focus !== void 0 && (0, react_jsx_runtime.jsxs)("p", { children: [
-							unit.name,
-							"：",
-							t(focusKeys[unit.focus])
-						] }),
-						causes.length > 0 && (0, react_jsx_runtime.jsxs)("p", {
-							className: "student-muted",
-							children: [
-								t("topCauses"),
-								"：",
-								causes.map((item) => `${t(item.type)} ×${item.count}`).join("、")
-							]
-						}),
-						(0, react_jsx_runtime.jsxs)("div", {
-							className: "student-segments",
-							children: [(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								disabled: disabled || running,
-								onClick: () => {
-									tutor(prompts.daily).catch(() => {});
-								},
-								children: t("printDailySheet")
-							}), (0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								disabled: disabled || running,
-								onClick: () => {
-									tutor(prompts.dictation).catch(() => {});
-								},
-								children: t("dictation")
-							})]
-						})
-					] });
-				})(),
-				!ownSession && study.understandingReminders.length > 0 && (0, react_jsx_runtime.jsxs)("section", { children: [
-					(0, react_jsx_runtime.jsx)("h3", { children: t("remindersTitle") }),
-					(0, react_jsx_runtime.jsx)("p", {
-						className: "student-muted",
-						children: t("remindersHint")
-					}),
-					study.understandingReminders.map((item) => (0, react_jsx_runtime.jsxs)("div", { children: [(0, react_jsx_runtime.jsxs)("p", { children: [
-						t(reminderKeys[item.code]),
-						" · ",
-						item.title
-					] }), (0, react_jsx_runtime.jsx)("button", {
-						type: "button",
-						disabled: disabled || running,
-						onClick: () => {
-							tutor(feynmanPrompt(item.title)).catch(() => {});
-						},
-						children: t("feynmanTeach")
-					})] }, `${item.code}-${item.objectiveId ?? item.title}`))
-				] }),
-				!ownSession && study.diagnostic && (0, react_jsx_runtime.jsxs)("section", { children: [
-					(0, react_jsx_runtime.jsxs)("h3", { children: [
-						t("diagnosisTitle"),
-						" · ",
-						t(subject)
-					] }),
-					(0, react_jsx_runtime.jsxs)("p", { children: [
-						study.diagnostic.lastAt !== void 0 ? `${t("diagnosisLast")}: ${day(study.diagnostic.lastAt)} · ${t("nextCheck")}: ${day(study.diagnostic.nextAt)}` : t("diagnosisNever"),
-						" · ",
-						t("coverage"),
-						": ",
-						study.diagnostic.coverage.probed,
-						" / ",
-						study.diagnostic.coverage.total
-					] }),
-					(0, react_jsx_runtime.jsxs)("p", {
-						className: "student-muted",
-						children: [t(study.diagnostic.due ? "diagnosisDue" : "diagnosisNotDue"), study.diagnostic.samples[chosenIntensity].length > 0 ? ` · ${t("diagnosisSample")}: ${study.diagnostic.samples[chosenIntensity].map((item) => item.title).join(" · ")}` : ""]
-					}),
-					(0, react_jsx_runtime.jsxs)("p", {
-						className: "student-muted",
-						children: [
-							t("intensity"),
-							": ",
-							t(intensityKeys[chosenIntensity]),
-							" · ",
-							t(intensityHelpKeys[chosenIntensity]),
-							" ",
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								onClick: openCheckins,
-								children: t("chooseIntensity")
-							})
-						]
-					}),
-					study.diagnostic.samples[chosenIntensity].length > 0 && (0, react_jsx_runtime.jsx)("button", {
-						type: "button",
-						disabled: disabled || running,
-						onClick: () => {
-							startDiagnosis(subject, chosenIntensity);
-						},
-						children: t(study.diagnostic.due ? "startDiagnosis" : "repeatDiagnosis")
-					}),
-					(() => {
-						const last = study.checkIns.find((item) => item.subject === subject);
-						return last && last.results.length > 0 ? (0, react_jsx_runtime.jsxs)("details", {
-							open: !study.diagnostic.due,
-							children: [
-								(0, react_jsx_runtime.jsxs)("summary", { children: [
-									t("diagnosisResults"),
+				!ownSession && (0, react_jsx_runtime.jsxs)("details", {
+					className: "student-fold",
+					children: [
+						(0, react_jsx_runtime.jsx)("summary", { children: t("morePractice") }),
+						!ownSession && (() => {
+							const unit = progress && curriculum ? curriculum.units.find((item) => item.id === progress.unitId) : void 0;
+							const causes = study.errorProfile.filter((item) => item.subject === subject).slice(0, 3);
+							if (unit?.focus === void 0 && causes.length === 0) return null;
+							return (0, react_jsx_runtime.jsxs)("section", { children: [
+								(0, react_jsx_runtime.jsxs)("h3", { children: [
+									t("routineTitle"),
 									" · ",
-									day(last.startedAt),
-									" · ",
-									t(intensityKeys[last.intensity])
+									t(subject)
 								] }),
-								(0, react_jsx_runtime.jsxs)("p", {
+								(0, react_jsx_runtime.jsx)("p", {
+									className: "student-muted",
+									children: t("routineHelp")
+								}),
+								unit?.focus !== void 0 && (0, react_jsx_runtime.jsxs)("p", { children: [
+									unit.name,
+									"：",
+									t(focusKeys[unit.focus])
+								] }),
+								causes.length > 0 && (0, react_jsx_runtime.jsxs)("p", {
 									className: "student-muted",
 									children: [
-										t("assistIndependent"),
-										" ",
-										last.counts.independent,
-										" · ",
-										t("assistHint"),
-										" ",
-										last.counts.helped,
-										" · ",
-										t("wrong"),
-										" ",
-										last.counts.wrong
+										t("topCauses"),
+										"：",
+										causes.map((item) => `${t(item.type)} ×${item.count}`).join("、")
 									]
 								}),
-								last.results.map((item) => (0, react_jsx_runtime.jsxs)("div", { children: [(0, react_jsx_runtime.jsxs)("p", { children: [
-									item.title,
+								(0, react_jsx_runtime.jsxs)("div", {
+									className: "student-segments",
+									children: [(0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										disabled: disabled || running || pending,
+										onClick: () => {
+											tutor(prompts.daily).catch(() => {});
+										},
+										children: t("printDailySheet")
+									}), (0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										disabled: disabled || running || pending,
+										onClick: () => {
+											tutor(prompts.dictation).catch(() => {});
+										},
+										children: t("dictation")
+									})]
+								})
+							] });
+						})(),
+						!ownSession && study.understandingReminders.length > 0 && (0, react_jsx_runtime.jsxs)("section", { children: [
+							(0, react_jsx_runtime.jsx)("h3", { children: t("remindersTitle") }),
+							(0, react_jsx_runtime.jsx)("p", {
+								className: "student-muted",
+								children: t("remindersHint")
+							}),
+							study.understandingReminders.map((item) => (0, react_jsx_runtime.jsxs)("div", { children: [(0, react_jsx_runtime.jsxs)("p", { children: [
+								t(reminderKeys[item.code]),
+								" · ",
+								item.title
+							] }), (0, react_jsx_runtime.jsx)("button", {
+								type: "button",
+								disabled: disabled || running || pending,
+								onClick: () => {
+									tutor(feynmanPrompt(item.title)).catch(() => {});
+								},
+								children: t("feynmanTeach")
+							})] }, `${item.code}-${item.objectiveId ?? item.title}`))
+						] }),
+						!ownSession && study.diagnostic && (0, react_jsx_runtime.jsxs)("section", { children: [
+							(0, react_jsx_runtime.jsxs)("h3", { children: [
+								t("diagnosisTitle"),
+								" · ",
+								t(subject)
+							] }),
+							(0, react_jsx_runtime.jsxs)("p", { children: [
+								study.diagnostic.lastAt !== void 0 ? `${t("diagnosisLast")}: ${day(study.diagnostic.lastAt)} · ${t("nextCheck")}: ${day(study.diagnostic.nextAt)}` : t("diagnosisNever"),
+								" · ",
+								t("coverage"),
+								": ",
+								study.diagnostic.coverage.probed,
+								" / ",
+								study.diagnostic.coverage.total
+							] }),
+							(0, react_jsx_runtime.jsxs)("p", {
+								className: "student-muted",
+								children: [t(study.diagnostic.due ? "diagnosisDue" : "diagnosisNotDue"), study.diagnostic.samples[chosenIntensity].length > 0 ? ` · ${t("diagnosisSample")}: ${study.diagnostic.samples[chosenIntensity].map((item) => item.title).join(" · ")}` : ""]
+							}),
+							(0, react_jsx_runtime.jsxs)("p", {
+								className: "student-muted",
+								children: [
+									t("intensity"),
+									": ",
+									t(intensityKeys[chosenIntensity]),
 									" · ",
-									t(item.result),
-									" · ",
-									t(assistKeys[item.assistance])
-								] }), item.objectiveId !== null && (item.result !== "correct" || item.assistance !== "independent") && (0, react_jsx_runtime.jsxs)("button", {
-									type: "button",
-									disabled: disabled || running,
-									"aria-pressed": selectedObjectiveId === item.objectiveId,
-									onClick: () => chooseGoal({
-										id: item.objectiveId ?? "",
-										subject
-									}),
+									t(intensityHelpKeys[chosenIntensity]),
+									" ",
+									(0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										onClick: openCheckins,
+										children: t("chooseIntensity")
+									})
+								]
+							}),
+							study.diagnostic.samples[chosenIntensity].length > 0 && (0, react_jsx_runtime.jsx)("button", {
+								type: "button",
+								disabled: disabled || running || pending,
+								onClick: () => {
+									startDiagnosis(subject, chosenIntensity);
+								},
+								children: t(study.diagnostic.due ? "startDiagnosis" : "repeatDiagnosis")
+							}),
+							(() => {
+								const last = study.checkIns.find((item) => item.subject === subject);
+								return last && last.results.length > 0 ? (0, react_jsx_runtime.jsxs)("details", {
+									open: !study.diagnostic.due,
 									children: [
-										t("chooseGoal"),
-										" · ",
-										item.title
+										(0, react_jsx_runtime.jsxs)("summary", { children: [
+											t("diagnosisResults"),
+											" · ",
+											day(last.startedAt),
+											" · ",
+											t(intensityKeys[last.intensity])
+										] }),
+										(0, react_jsx_runtime.jsxs)("p", {
+											className: "student-muted",
+											children: [
+												t("assistIndependent"),
+												" ",
+												last.counts.independent,
+												" · ",
+												t("assistHint"),
+												" ",
+												last.counts.helped,
+												" · ",
+												t("wrong"),
+												" ",
+												last.counts.wrong
+											]
+										}),
+										last.results.map((item) => (0, react_jsx_runtime.jsxs)("div", { children: [(0, react_jsx_runtime.jsxs)("p", { children: [
+											item.title,
+											" · ",
+											t(item.result),
+											" · ",
+											t(assistKeys[item.assistance])
+										] }), item.objectiveId !== null && (item.result !== "correct" || item.assistance !== "independent") && (0, react_jsx_runtime.jsxs)("button", {
+											type: "button",
+											disabled: disabled || running || pending,
+											"aria-pressed": selectedObjectiveId === item.objectiveId,
+											onClick: () => chooseGoal({
+												id: item.objectiveId ?? "",
+												subject
+											}),
+											children: [
+												t("chooseGoal"),
+												" · ",
+												item.title
+											]
+										})] }, item.id))
 									]
-								})] }, item.id))
-							]
-						}) : null;
-					})()
-				] })
+								}) : null;
+							})()
+						] })
+					]
+				})
 			] });
 		}
-		function levelKey(level) {
-			return level === "due" ? "levelDue" : level === "weak" ? "levelWeak" : level === "stalled" ? "levelStalled" : level === "mastered" ? "levelMastered" : level === "practising" ? "levelPractising" : "levelUntouched";
+		const continuationReasons = {
+			"unfinished-question": "continueCurrentQuestion",
+			"pending-assessment": "continuePendingAnswer",
+			"missing-evidence": "continueMissingEvidence",
+			"current-gap": "continueCurrentGap",
+			"prerequisite-gap": "continuePrerequisiteGap",
+			"due-review": "continueDueReview",
+			"new-goal": "continueConfirmedGoal",
+			"confirmed-scope-required": "continueScopeRequired",
+			"check-budget-exhausted": "continueCheckEnded",
+			"round-paused": "continueRoundPaused",
+			"no-learnable-goal": "continueNoGoal",
+			"source-unavailable": "continueSourceUnavailable",
+			"source-pending": "continueSourcePending"
+		};
+		function sourceNotice(source) {
+			if (source.status === "ownership-unresolved") return "feedbackOwnerUnknown";
+			if (source.failure === "login-required" || source.failure === "login-challenge" || source.failure === "permission-denied") return "feedbackAuthorizationRequired";
+			if (source.failure === "identity-changed") return "classroomIdentityMismatch";
+			if (source.failure === "operation-timeout" || source.failure === "operation-canceled") return "feedbackReadInterrupted";
+			if (source.failure === "response-too-large" || source.failure === "read-limit" || source.failure === "incomplete-read" || source.failure === "unsupported-version") return "feedbackReadIncomplete";
+			return source.status === "unavailable" ? "feedbackSourceUnavailable" : "feedbackSavePending";
 		}
 		function goalTitle(study, objectiveId) {
 			if (!objectiveId) return void 0;
 			return study.curriculum?.objectives.find((item) => item.id === objectiveId)?.title ?? study.objectives.find((item) => item.id === objectiveId)?.title;
 		}
-		function Alternate({ study, activity, setActivity, disabled, start, goal, intensityLabel, openCheckins, scope, setScope, scopeUnits, t }) {
-			const { subject, mode } = activity;
+		function Alternate({ study, subject, activity, setActivity, disabled, start, goal, intensityLabel, openCheckins, scope, setScope, scopeUnits, t, draftScope, useStore, actions }) {
+			const { mode } = activity;
 			const confirmed = study.courses.some((item) => item.subject === subject);
 			const due = study.dueSubjects.includes(subject);
 			const uiMode = mode === "review" || mode === "explore" || mode === "diagnose" ? mode : "sync";
 			const alternate = uiMode !== "sync" || goal !== void 0;
 			const [open, setOpen] = (0, react.useState)(alternate);
-			const [inquiry, setInquiry] = (0, react.useState)("");
+			const inquiryKey = formDraftKey(`inquiry:${subject}`, draftScope);
+			const inquiry = useStore((state) => state.drafts[inquiryKey]) ?? "";
 			(0, react.useEffect)(() => {
 				if (alternate) setOpen(true);
 			}, [alternate]);
@@ -10227,122 +11594,130 @@ window.__ModuleLoader__.load({
 				className: "student-fold",
 				open,
 				onToggle: (event) => setOpen(event.currentTarget.open),
-				children: [(0, react_jsx_runtime.jsx)("summary", { children: t("otherWays") }), (0, react_jsx_runtime.jsx)("form", {
-					onSubmit: (event) => {
-						event.preventDefault();
-						start(subject, mode, uiMode === "explore" ? inquiry.trim() : void 0);
-					},
-					children: (0, react_jsx_runtime.jsxs)("fieldset", {
-						disabled,
-						children: [
-							(0, react_jsx_runtime.jsxs)("label", { children: [t("mode"), (0, react_jsx_runtime.jsxs)("select", {
-								"aria-label": t("mode"),
-								value: uiMode,
-								onChange: (event) => {
-									const value = event.target.value;
-									setActivity({
-										subject,
-										mode: value === "review" || value === "explore" || value === "diagnose" ? value : confirmed ? "school" : "foundation"
-									});
-								},
-								children: [
-									(0, react_jsx_runtime.jsx)("option", {
-										value: "sync",
-										children: t("sync")
-									}),
-									(0, react_jsx_runtime.jsx)("option", {
-										value: "review",
-										disabled: !due,
-										children: t("review")
-									}),
-									(0, react_jsx_runtime.jsx)("option", {
-										value: "diagnose",
-										children: t("diagnose")
-									}),
-									(0, react_jsx_runtime.jsx)("option", {
-										value: "explore",
-										children: t("explore")
-									})
-								]
-							})] }),
-							(0, react_jsx_runtime.jsx)("p", { children: t(uiMode === "sync" ? "syncHelp" : uiMode === "review" ? "reviewHelp" : uiMode === "diagnose" ? "diagnoseHelp" : "exploreHelp") }),
-							uiMode === "explore" && (0, react_jsx_runtime.jsxs)("label", { children: [t("inquiryQuestion"), (0, react_jsx_runtime.jsx)("textarea", {
-								"aria-label": t("inquiryQuestion"),
-								value: inquiry,
-								onChange: (event) => setInquiry(event.target.value),
-								maxLength: 2e3,
-								placeholder: t("inquiryPlaceholder")
-							})] }),
-							(uiMode === "sync" || uiMode === "diagnose") && (0, react_jsx_runtime.jsxs)("p", { children: [(0, react_jsx_runtime.jsxs)("label", { children: [t("scopeLabel"), (0, react_jsx_runtime.jsxs)("select", {
-								"aria-label": t("scopeLabel"),
-								value: scoped ? `${scope.grade ?? study.profile.grade}-${scope.term ?? study.profile.term}` : "current",
-								onChange: (event) => {
-									const value = event.target.value;
-									if (value === "current") {
-										setScope({});
-										return;
-									}
-									const [grade, term] = value.split("-");
-									setScope({
-										grade: Number(grade),
-										term
-									});
-								},
-								children: [(0, react_jsx_runtime.jsx)("option", {
-									value: "current",
-									children: t("scopeCurrent")
-								}), [
-									[1, "first"],
-									[1, "second"],
-									[2, "first"],
-									[2, "second"]
-								].filter(([grade, term]) => !(grade === study.profile.grade && term === study.profile.term)).map(([grade, term]) => (0, react_jsx_runtime.jsxs)("option", {
-									value: `${grade}-${term}`,
+				children: [
+					(0, react_jsx_runtime.jsx)("summary", { children: t("otherWays") }),
+					goal && (0, react_jsx_runtime.jsxs)("p", { children: [
+						t("learningGoal"),
+						": ",
+						goal.title
+					] }),
+					(0, react_jsx_runtime.jsx)("form", {
+						onSubmit: (event) => {
+							event.preventDefault();
+							start(subject, mode, uiMode === "explore" ? inquiry.trim() : void 0);
+						},
+						children: (0, react_jsx_runtime.jsxs)("fieldset", {
+							disabled,
+							children: [
+								(0, react_jsx_runtime.jsxs)("label", { children: [t("mode"), (0, react_jsx_runtime.jsxs)("select", {
+									"aria-label": t("mode"),
+									value: uiMode,
+									onChange: (event) => {
+										const value = event.target.value;
+										setActivity({
+											subject,
+											mode: value === "review" || value === "explore" || value === "diagnose" ? value : confirmed ? "school" : "foundation"
+										});
+									},
 									children: [
-										t(grade === 1 ? "gradeOne" : "gradeTwo"),
-										" · ",
-										t(term)
+										(0, react_jsx_runtime.jsx)("option", {
+											value: "sync",
+											children: t("sync")
+										}),
+										(0, react_jsx_runtime.jsx)("option", {
+											value: "review",
+											disabled: !due,
+											children: t("review")
+										}),
+										(0, react_jsx_runtime.jsx)("option", {
+											value: "diagnose",
+											children: t("diagnose")
+										}),
+										(0, react_jsx_runtime.jsx)("option", {
+											value: "explore",
+											children: t("explore")
+										})
 									]
-								}, `${grade}-${term}`))]
-							})] }), scoped && (0, react_jsx_runtime.jsxs)("label", { children: [t("scopeUnit"), (0, react_jsx_runtime.jsxs)("select", {
-								"aria-label": t("scopeUnit"),
-								value: scope.unit ?? "",
-								onChange: (event) => {
-									const { unit: _unit, ...book } = scope;
-									setScope({
-										...book,
-										...event.target.value ? { unit: event.target.value } : {}
-									});
-								},
-								children: [(0, react_jsx_runtime.jsx)("option", {
-									value: "",
-									children: t("scopeWholeMap")
-								}), scopeUnits.map((unit) => (0, react_jsx_runtime.jsx)("option", {
-									value: unit.id,
-									children: unit.name
-								}, unit.id))]
-							})] })] }),
-							uiMode === "diagnose" && (0, react_jsx_runtime.jsxs)("p", { children: [
-								t("intensity"),
-								": ",
-								intensityLabel,
-								" ",
+								})] }),
+								(0, react_jsx_runtime.jsx)("p", { children: t(uiMode === "sync" ? "syncHelp" : uiMode === "review" ? "reviewHelp" : uiMode === "diagnose" ? "diagnoseHelp" : "exploreHelp") }),
+								uiMode === "explore" && (0, react_jsx_runtime.jsxs)("label", { children: [t("inquiryQuestion"), (0, react_jsx_runtime.jsx)("textarea", {
+									"aria-label": t("inquiryQuestion"),
+									value: inquiry,
+									onChange: (event) => actions.setDraft(inquiryKey, event.target.value),
+									maxLength: 2e3,
+									placeholder: t("inquiryPlaceholder")
+								})] }),
+								(uiMode === "sync" || uiMode === "diagnose") && (0, react_jsx_runtime.jsxs)("p", { children: [(0, react_jsx_runtime.jsxs)("label", { children: [t("scopeLabel"), (0, react_jsx_runtime.jsxs)("select", {
+									"aria-label": t("scopeLabel"),
+									value: scoped ? `${scope.grade ?? study.profile.grade}-${scope.term ?? study.profile.term}` : "current",
+									onChange: (event) => {
+										const value = event.target.value;
+										if (value === "current") {
+											setScope({});
+											return;
+										}
+										const [grade, term] = value.split("-");
+										setScope({
+											grade: Number(grade),
+											term
+										});
+									},
+									children: [(0, react_jsx_runtime.jsx)("option", {
+										value: "current",
+										children: t("scopeCurrent")
+									}), [
+										[1, "first"],
+										[1, "second"],
+										[2, "first"],
+										[2, "second"]
+									].filter(([grade, term]) => !(grade === study.profile.grade && term === study.profile.term)).map(([grade, term]) => (0, react_jsx_runtime.jsxs)("option", {
+										value: `${grade}-${term}`,
+										children: [
+											t(grade === 1 ? "gradeOne" : "gradeTwo"),
+											" · ",
+											t(term)
+										]
+									}, `${grade}-${term}`))]
+								})] }), scoped && (0, react_jsx_runtime.jsxs)("label", { children: [t("scopeUnit"), (0, react_jsx_runtime.jsxs)("select", {
+									"aria-label": t("scopeUnit"),
+									value: scope.unit ?? "",
+									onChange: (event) => {
+										const { unit: _unit, ...book } = scope;
+										setScope({
+											...book,
+											...event.target.value ? { unit: event.target.value } : {}
+										});
+									},
+									children: [(0, react_jsx_runtime.jsx)("option", {
+										value: "",
+										children: t("scopeWholeMap")
+									}), scopeUnits.map((unit) => (0, react_jsx_runtime.jsx)("option", {
+										value: unit.id,
+										children: unit.name
+									}, unit.id))]
+								})] })] }),
+								uiMode === "diagnose" && (0, react_jsx_runtime.jsxs)("p", { children: [
+									t("intensity"),
+									": ",
+									intensityLabel,
+									" ",
+									(0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										onClick: openCheckins,
+										children: t("chooseIntensity")
+									})
+								] }),
+								!confirmed && uiMode === "sync" && (0, react_jsx_runtime.jsx)("p", { children: t("unconfirmed") }),
 								(0, react_jsx_runtime.jsx)("button", {
-									type: "button",
-									onClick: openCheckins,
-									children: t("chooseIntensity")
+									type: "submit",
+									className: "student-primary",
+									disabled: uiMode === "review" && !due,
+									children: t(study.active ? "switchLearning" : "start")
 								})
-							] }),
-							!confirmed && uiMode === "sync" && (0, react_jsx_runtime.jsx)("p", { children: t("unconfirmed") }),
-							(0, react_jsx_runtime.jsx)("button", {
-								type: "submit",
-								className: "student-primary",
-								disabled: uiMode === "review" && !due,
-								children: t(study.active ? "switchLearning" : "start")
-							})
-						]
+							]
+						})
 					})
-				})]
+				]
 			});
 		}
 		const phaseOrder = [
@@ -10563,6 +11938,32 @@ window.__ModuleLoader__.load({
 			] });
 		}
 		//#endregion
+		//#region \0dsh-css:/Users/winter/dsh-creative/.worktrees/student-openmaic-integration/packages/winterhuan/student/src/client/workbench.module.css.mjs
+		const css = ".mC5xpG_workbench{height:100%;min-height:0;color:var(--dsw-alias-label-primary);background:radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, transparent), transparent 55%), radial-gradient(ellipse at 100% 90%, color-mix(in srgb, var(--dsw-alias-state-success-primary) 5%, transparent), transparent 50%), color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));font:14px/22px var(--dsw-font-family);flex-direction:column;display:flex;container-type:inline-size}.mC5xpG_header{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;padding:28px 28px 12px;display:flex}[data-platform=darwin] .mC5xpG_header{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}.mC5xpG_heading h1{letter-spacing:-.015em;margin:0;font-size:34px;font-weight:300;line-height:44px}.mC5xpG_heading p{color:var(--dsw-alias-label-secondary);margin:4px 0 0;font-size:13px;line-height:20px}.mC5xpG_controls{flex-wrap:wrap;align-items:center;gap:8px;min-width:0;max-width:100%;display:flex}.mC5xpG_controls label{min-width:0;max-width:300px;color:var(--dsw-alias-label-secondary);align-items:center;gap:8px;font-size:12px;display:flex}.mC5xpG_controls select,.mC5xpG_controls button,.mC5xpG_empty button{font:13px/20px var(--dsw-font-family);color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);min-width:0;max-width:100%;padding:8px 12px}.mC5xpG_controls button,.mC5xpG_empty button{cursor:pointer}.mC5xpG_controls button:hover:enabled,.mC5xpG_empty button:hover:enabled{background:var(--dsw-alias-interactive-bg-hover)}.mC5xpG_controls button[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-active)}.mC5xpG_controls :disabled{opacity:.5;cursor:default}.mC5xpG_conversationControls{min-width:0;max-width:240px}.mC5xpG_conversationControls summary{cursor:pointer;color:var(--dsw-alias-label-secondary);border-radius:var(--dsw-radius-md);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);box-shadow:var(--dsw-elevation-soft);text-overflow:ellipsis;white-space:nowrap;padding:8px 12px;font-size:13px;line-height:20px;overflow:hidden}.mC5xpG_conversationControls[open]{flex-basis:100%;max-width:100%}.mC5xpG_conversationControls[open]>.mC5xpG_controls{padding-top:12px}.mC5xpG_body{flex:1;gap:12px;min-width:0;min-height:0;padding:0 16px 16px;display:grid}.mC5xpG_withChat{grid-template-columns:minmax(0,1fr) 336px}.mC5xpG_panes{display:none}.mC5xpG_study{min-width:0;min-height:0}.mC5xpG_study .student-desk{background:0 0}.mC5xpG_chat{border-radius:var(--dsw-radius-panel);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 92%, transparent);min-width:0;min-height:0;box-shadow:var(--dsw-elevation-soft);flex-direction:column;margin-top:12px;display:flex;overflow:hidden}.mC5xpG_chat h2{border-bottom:.5px solid var(--dsw-alias-border-l2);margin:0;padding:16px 18px 12px;font-size:15px;font-weight:500;line-height:22px}.mC5xpG_empty{text-align:center;flex-direction:column;flex:1;justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}.mC5xpG_empty h2{margin:0;font-size:16px;font-weight:500}.mC5xpG_empty p{margin:0}.mC5xpG_spinner{border:2px solid var(--dsw-alias-border-l2);border-top-color:var(--dsw-alias-label-primary);border-radius:50%;width:24px;height:24px;animation:.8s linear infinite mC5xpG_spin}.mC5xpG_controls :focus-visible,.mC5xpG_panes button:focus-visible,.mC5xpG_conversationControls summary:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}@keyframes mC5xpG_spin{to{transform:rotate(360deg)}}@container (width<=900px){.mC5xpG_header{padding-left:24px;padding-right:24px}.mC5xpG_heading p{display:none}.mC5xpG_heading{flex:180px}.mC5xpG_header>.mC5xpG_controls{flex:360px}.mC5xpG_controls{align-items:center}.mC5xpG_controls label{flex-direction:row;align-items:center}.mC5xpG_body,.mC5xpG_withChat{grid-template-rows:auto minmax(0,1fr);grid-template-columns:minmax(0,1fr);gap:0;padding:0 12px 12px}.mC5xpG_panes{border-radius:var(--dsw-radius-lg);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);box-shadow:var(--dsw-elevation-soft);gap:2px;margin:4px 12px 8px;padding:4px;display:flex}.mC5xpG_panes button{font:13px/20px var(--dsw-font-family);border-radius:var(--dsw-radius-md);color:var(--dsw-alias-label-secondary);cursor:pointer;background:0 0;border:0;flex:1;padding:6px 12px}.mC5xpG_panes button[aria-pressed=true]{color:var(--dsw-alias-label-primary-inverted);background:var(--dsw-alias-button-primary-fill)}.mC5xpG_body[data-pane=chat] .mC5xpG_study,.mC5xpG_body[data-pane=study] .mC5xpG_chat{display:none}.mC5xpG_chat{margin-top:0}}@container (width<=460px){.mC5xpG_heading h1{font-size:25px;line-height:35px}.mC5xpG_controls label,.mC5xpG_conversationControls{max-width:100%}}";
+		const tagId = "@winterhuan/dsh-student/workbench.module.css";
+		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
+			const tag = document.createElement("style");
+			tag.dataset.plugin = "@winterhuan/dsh-student";
+			tag.dataset.pluginCss = tagId;
+			tag.textContent = css;
+			document.head.appendChild(tag);
+		}
+		var workbench_module_css_default = {
+			"body": "mC5xpG_body",
+			"chat": "mC5xpG_chat",
+			"controls": "mC5xpG_controls",
+			"conversationControls": "mC5xpG_conversationControls",
+			"empty": "mC5xpG_empty",
+			"header": "mC5xpG_header",
+			"heading": "mC5xpG_heading",
+			"panes": "mC5xpG_panes",
+			"spin": "mC5xpG_spin",
+			"spinner": "mC5xpG_spinner",
+			"study": "mC5xpG_study",
+			"withChat": "mC5xpG_withChat",
+			"workbench": "mC5xpG_workbench"
+		};
+		//#endregion
 		//#region lib/types/client/desk.js
 		const subjectPreference = "student-desk:subject";
 		function storedSubject() {
@@ -10579,7 +11980,7 @@ window.__ModuleLoader__.load({
 			} catch {}
 		}
 		/** Workbench actions share the same persisted state as the native tutoring tools. */
-		function StudyDesk({ sessionId, visible, ask, running, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, inspectSubmission, useStore, actions }) {
+		function StudyDesk({ sessionId, visible, ask, running, pending = false, syncFeedback, cancel, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, inspectSubmission, openLesson, useStore, actions }) {
 			const [subject, setSubject] = (0, react.useState)(storedSubject);
 			const [mistakeOffset, setMistakeOffset] = (0, react.useState)(0);
 			const [mistakeStatus, setMistakeStatus] = (0, react.useState)("all");
@@ -10595,7 +11996,7 @@ window.__ModuleLoader__.load({
 			const showMap = tab === "map" && knowledgeView === "map";
 			const showBook = tab === "map";
 			const workspace = useStudy(sessionId, visible, t("networkError"), {
-				tab,
+				tab: tab === "lessons" ? "parent" : tab,
 				offset: mistakeOffset,
 				subject,
 				status: mistakeStatus,
@@ -10615,6 +12016,8 @@ window.__ModuleLoader__.load({
 			const [localNow, setLocalNow] = (0, react.useState)(Date.now());
 			const [sending, setSending] = (0, react.useState)(false);
 			const [sendError, setSendError] = (0, react.useState)("");
+			const [syncStatus, setSyncStatus] = (0, react.useState)();
+			const paused = (0, react.useRef)(false);
 			(0, react.useEffect)(() => {
 				if (!visible) return;
 				const timer = window.setInterval(() => setLocalNow(Date.now()), 1e3);
@@ -10664,15 +12067,25 @@ window.__ModuleLoader__.load({
 				if (retained?.response) responseIds.current.set(key, retained.response.responseId);
 				if (command?.action === "answer" && !responseIds.current.has(key)) responseIds.current.set(key, crypto.randomUUID());
 				return {
+					learnerId: workspace.learnerId,
 					termId: workspace.termId,
 					blockId: ownerId,
 					questionId: task?.id,
 					responseId: task?.responseId ?? responseIds.current.get(key)
 				};
 			}
-			async function tutor(text = continuePrompt, photo, command, currentBlock = false) {
+			async function tutor(text = continuePrompt, photo, command, currentBlock = false, continuation = false, continuationAction) {
 				if (readOnly) throw new Error(t("legacyFilesHelp"));
-				const ids = identity(command);
+				const previous = identity(command);
+				const next = continuation ? workspace.nextAction : null;
+				if (continuation && (!workspace.contextReady || !next)) return;
+				const ids = next ? {
+					learnerId: workspace.learnerId,
+					termId: workspace.termId,
+					blockId: next.blockId,
+					questionId: next.questionId,
+					responseId: next.responseId
+				} : previous;
 				if (command?.action === "answer" && submissions.some((item) => item.response?.responseId === ids.responseId && item.admission === "unknown" && !item.inspection)) {
 					setSendError(t("messageUnknown"));
 					throw new Error(t("messageUnknown"));
@@ -10680,7 +12093,12 @@ window.__ModuleLoader__.load({
 				setSending(true);
 				setSendError("");
 				const active = data?.study?.active;
-				const selection = active && (currentBlock || command?.action === "answer" || command?.action === "hint" || command?.action === "stuck" || command?.action === "stop") ? {
+				const retainBlock = active && (currentBlock || command?.action === "answer" || command?.action === "hint" || command?.action === "stuck" || command?.action === "stop");
+				const selection = next ? {
+					subject: next.subject,
+					goalId: next.goalId,
+					scope: next.scope
+				} : retainBlock ? {
 					subject: active.subject,
 					goalId: data?.study?.task?.objectiveId,
 					scope: active.scope
@@ -10693,6 +12111,17 @@ window.__ModuleLoader__.load({
 					nativeSessionId: sessionId,
 					...ids,
 					selection,
+					nextAction: workspace.nextAction,
+					round: workspace.round,
+					legalActions: workspace.legalActions,
+					...continuation ? {
+						previousActivity: {
+							blockId: previous.blockId,
+							questionId: previous.questionId,
+							responseId: previous.responseId
+						},
+						continuationAction
+					} : {},
 					...command ? { operation: command } : {},
 					request: text.trim() === "" ? continuePrompt : text
 				};
@@ -10720,6 +12149,25 @@ window.__ModuleLoader__.load({
 					setSending(false);
 				}
 			}
+			async function openSavedLesson(lessonId) {
+				if (!openLesson) {
+					await tutor(openmaicQueryPrompt(lessonId), void 0, void 0, true);
+					return;
+				}
+				setSending(true);
+				setSendError("");
+				try {
+					const result = await openLesson(lessonId);
+					if (result.status === "ownership-unresolved") {
+						setSending(false);
+						await tutor(openmaicQueryPrompt(lessonId), void 0, void 0, true);
+					} else if (result.status !== "opened") setSendError(t(result.status === "login-required" ? "classroomLoginRequired" : result.status === "identity-mismatch" ? "classroomIdentityMismatch" : "classroomUnavailable"));
+				} catch (_error) {
+					setSendError(t("classroomUnavailable"));
+				} finally {
+					setSending(false);
+				}
+			}
 			async function change(command, _revision, _baseline) {
 				await tutor(continuePrompt, void 0, command);
 				if (!data) throw new Error(t("networkError"));
@@ -10735,8 +12183,15 @@ window.__ModuleLoader__.load({
 			}
 			async function act(command, _withTutor = false, prompt = continuePrompt) {
 				try {
+					if (command.action === "stop") {
+						paused.current = true;
+						if (currentLesson && syncFeedback) await requestSync(currentLesson.id, "pause");
+						await cancel?.();
+					}
 					await tutor(prompt, void 0, command);
-				} catch {}
+				} catch (reason) {
+					setSendError(reason instanceof Error ? reason.message : t("sendError"));
+				}
 			}
 			function selectSubject(item) {
 				setSubject(item);
@@ -10744,7 +12199,7 @@ window.__ModuleLoader__.load({
 			}
 			const now = Math.max(localNow + workspace.offset.current, data?.serverNow ?? 0);
 			const study = data?.study;
-			const subjectLoading = !!study && study.confirmedSubject !== subject;
+			const nativePending = pending || !!workspace.value?.native.admissions.some((item) => item.status === "pending" || item.status === "claimed");
 			const disabled = sending || workspace.stale || readOnly;
 			const active = study?.active;
 			const followedActive = (0, react.useRef)();
@@ -10761,6 +12216,80 @@ window.__ModuleLoader__.load({
 					});
 				}
 			}, [active?.id, sessionId]);
+			const ownerBlockId = active?.id ?? workspace.round?.blockId;
+			const currentLesson = workspace.learnerId && workspace.termId ? data?.interactiveLessons.lessons.find((item) => item.blockId === ownerBlockId && item.learnerId === workspace.learnerId && item.termId === workspace.termId && item.status !== "failed") : void 0;
+			async function requestSync(lessonId, trigger) {
+				if (!syncFeedback) return;
+				try {
+					const result = await syncFeedback(lessonId, trigger);
+					setSyncStatus(result.status);
+				} catch (reason) {
+					setSyncStatus("unavailable");
+					setSendError(reason instanceof Error ? reason.message : t("classroomUnavailable"));
+					throw reason;
+				}
+			}
+			const returnState = (0, react.useRef)({
+				currentLesson,
+				syncFeedback,
+				round: workspace.round,
+				contextReady: workspace.contextReady,
+				requestSync
+			});
+			returnState.current = {
+				currentLesson,
+				syncFeedback,
+				round: workspace.round,
+				contextReady: workspace.contextReady,
+				requestSync
+			};
+			const resumed = (0, react.useRef)();
+			(0, react.useEffect)(() => {
+				if (!visible || tab !== "today") {
+					resumed.current = void 0;
+					return;
+				}
+				if (!workspace.contextReady || !currentLesson || currentLesson.status !== "ready" || paused.current || workspace.round?.status === "paused") return;
+				const owner = JSON.stringify([sessionId, currentLesson.id]);
+				if (resumed.current === owner) return;
+				resumed.current = owner;
+				requestSync(currentLesson.id, "resume").catch(() => {});
+			}, [
+				visible,
+				tab,
+				currentLesson?.id,
+				sessionId,
+				workspace.contextReady
+			]);
+			(0, react.useEffect)(() => {
+				if (!visible || tab !== "today") return;
+				const returned = () => {
+					const current = returnState.current;
+					if (!current.contextReady || document.visibilityState === "hidden" || paused.current || current.round?.status === "paused" || current.currentLesson?.status !== "ready") return;
+					current.requestSync(current.currentLesson.id, "return").catch(() => {});
+				};
+				window.addEventListener("focus", returned);
+				document.addEventListener("visibilitychange", returned);
+				return () => {
+					window.removeEventListener("focus", returned);
+					document.removeEventListener("visibilitychange", returned);
+				};
+			}, [
+				visible,
+				tab,
+				sessionId
+			]);
+			async function continueLearning(continuationAction) {
+				const next = workspace.nextAction;
+				if (!workspace.contextReady || !next || running || nativePending || sending) return;
+				paused.current = false;
+				const sourceLesson = next.source?.kind === "openmaic" ? next.source.verification.lessonId : void 0;
+				if ((!continuationAction || continuationAction === "sync-feedback") && syncFeedback && (sourceLesson || currentLesson?.status === "ready" && next.blockId === currentLesson.blockId)) {
+					await requestSync(sourceLesson ?? currentLesson.id, "continue");
+					return;
+				}
+				await tutor(continuationAction ? `请按共享 legalActions 执行 ${continuationAction}，保留当前 round 与原作答。${continuePrompt}` : currentLesson?.status === "generating" && next.blockId === currentLesson.blockId ? openmaicQueryPrompt(currentLesson.id) : continuePrompt, void 0, void 0, true, true, continuationAction);
+			}
 			const curriculum = study?.curriculum ?? null;
 			const scopeGrade = curriculum?.scope.grade ?? mapGrade ?? study?.profile.grade ?? 1;
 			const scopeTerm = curriculum?.scope.term ?? mapTerm ?? study?.profile.term ?? "first";
@@ -10830,87 +12359,6 @@ window.__ModuleLoader__.load({
 					...next === "foundation" || next === "school" ? scopeCommand(target) : {}
 				}, true, prompt);
 			}
-			function lessonRequest() {
-				const recommendation = study?.recommendation;
-				const objectiveId = selectedObjectiveId || recommendation?.objectiveId || void 0;
-				const subjectKey = selectedObjectiveId ? subject : recommendation?.objectiveId ? recommendation.subject : subject;
-				const progress = study?.courses.find((item) => item.subject === subjectKey)?.progress;
-				return {
-					objectiveId,
-					unitName: recommendation?.objectiveId ? recommendation.unitName : progress ? curriculum?.units.find((unit) => unit.id === progress.unitId)?.name : void 0,
-					subjectLabel: t(subjectKey),
-					tags: study?.interests ?? [],
-					focus: study?.interestFocus ?? ""
-				};
-			}
-			function startInterest() {
-				const recommendation = study?.recommendation;
-				if (selectedObjectiveId) {
-					start(subject, "foundation");
-					return;
-				}
-				if (!recommendation || recommendation.kind === "hold" || !study) return;
-				const mode = resolveMode(recommendation.subject, "foundation");
-				const request = lessonRequest();
-				selectSubject(recommendation.subject);
-				setActivity({
-					subject: recommendation.subject,
-					mode
-				});
-				setSelectedObjectiveId(recommendation.objectiveId ?? "");
-				setMistakeOffset(0);
-				const teaching = recommendation.reason.code === "needs-teaching" || recommendation.reason.code === "prerequisite-gap";
-				const scene = interestPracticePrompt(request.objectiveId, request.tags, request.focus, request.unitName);
-				const prompt = teaching && recommendation.objectiveId ? `${teachPrompt(recommendation.objectiveId)}${scene}` : scene;
-				act({
-					action: "start",
-					id: crypto.randomUUID(),
-					subject: recommendation.subject,
-					mode
-				}, true, prompt);
-			}
-			function startDue() {
-				const items = study?.dueToday ?? [];
-				const first = items[0];
-				if (!study || !first) return;
-				selectSubject(first.subject);
-				setActivity({
-					subject: first.subject,
-					mode: "review"
-				});
-				setSelectedObjectiveId("");
-				setMistakeOffset(0);
-				act({
-					action: "start",
-					id: crypto.randomUUID(),
-					subject: first.subject,
-					mode: "review"
-				}, true, dueClearPrompt(items.map((item) => item.id)));
-			}
-			function startRecommended() {
-				const recommendation = study?.recommendation;
-				if (!recommendation || recommendation.kind === "hold" || !study) return;
-				if (recommendation.kind === "diagnose") {
-					startDiagnosis(recommendation.subject, chosenIntensity(recommendation.subject));
-					return;
-				}
-				const mode = recommendation.kind === "review" ? "review" : resolveMode(recommendation.subject, "foundation");
-				selectSubject(recommendation.subject);
-				setActivity({
-					subject: recommendation.subject,
-					mode
-				});
-				setSelectedObjectiveId(mode === "review" ? "" : recommendation.objectiveId ?? "");
-				setMistakeOffset(0);
-				const teaching = recommendation.reason.code === "needs-teaching";
-				const prompt = recommendation.kind === "review" ? reviewPrompt : teaching && recommendation.objectiveId ? teachPrompt(recommendation.objectiveId) : teaching ? teachQueuePrompt(recommendation.title ?? "") : recommendation.kind === "preview" && recommendation.objectiveId ? previewPrompt(recommendation.objectiveId) : recommendation.objectiveId ? goalPrompt(recommendation.objectiveId) : continuePrompt;
-				act({
-					action: "start",
-					id: crypto.randomUUID(),
-					subject: recommendation.subject,
-					mode
-				}, true, prompt);
-			}
 			const nativeT = (key) => [
 				"saved",
 				"gradesSaved",
@@ -10919,6 +12367,7 @@ window.__ModuleLoader__.load({
 				"workbookSaved"
 			].includes(key) ? t("intentAdmitted") : t(key);
 			const parentSettings = tab === "parent";
+			const parentVisible = tab !== "today";
 			const draft = {
 				useStore,
 				actions
@@ -10940,73 +12389,93 @@ window.__ModuleLoader__.load({
 				children: [
 					(0, react_jsx_runtime.jsxs)("header", {
 						className: "student-top",
-						children: [(0, react_jsx_runtime.jsxs)("nav", {
-							className: `student-tabs ${desk_module_css_default.navigation}`,
-							"aria-label": t("title"),
-							children: [
-								(0, react_jsx_runtime.jsx)("button", {
+						children: [
+							(0, react_jsx_runtime.jsxs)("nav", {
+								className: `student-tabs ${desk_module_css_default.navigation}`,
+								"aria-label": t("title"),
+								children: [(0, react_jsx_runtime.jsx)("button", {
 									type: "button",
 									"aria-pressed": tab === "today",
 									onClick: () => setTab("today"),
-									children: t("today")
-								}),
-								(0, react_jsx_runtime.jsx)("button", {
+									children: t("learningEntry")
+								}), (0, react_jsx_runtime.jsx)("button", {
 									type: "button",
-									"aria-pressed": tab === "map",
-									onClick: () => setTab("map"),
-									children: t("parentProgress")
-								}),
-								(0, react_jsx_runtime.jsxs)("button", {
-									type: "button",
-									"aria-label": t("parentPractice"),
-									"aria-pressed": tab === "mistakes",
-									onClick: () => setTab("mistakes"),
-									children: [t("parentPractice"), study && study.dueTotal > 0 ? ` · ${study.dueTotal}` : ""]
-								}),
-								(0, react_jsx_runtime.jsx)("button", {
-									type: "button",
-									"aria-pressed": tab === "parent",
+									"aria-pressed": parentVisible,
 									onClick: () => setTab("parent"),
-									children: t("parentProfile")
-								})
-							]
-						}), (0, react_jsx_runtime.jsxs)("div", {
-							className: "student-toolbar",
-							children: [study && !parentSettings && (0, react_jsx_runtime.jsx)("nav", {
-								className: "student-subjects",
-								"aria-label": t("subject"),
-								children: subjects.map((item) => (0, react_jsx_runtime.jsx)("button", {
-									type: "button",
-									"aria-pressed": subject === item,
-									onClick: () => {
-										selectSubject(item);
-										setActivity({
-											subject: item,
-											mode: "foundation"
-										});
-										setSelectedObjectiveId("");
-										setMistakeOffset(0);
-										setMistakeStatus("all");
-									},
-									children: t(item)
-								}, item))
-							}), (0, react_jsx_runtime.jsx)("span", {
-								className: "student-muted",
-								children: t(workspace.stale ? "updatePaused" : "liveUpdates")
-							})]
-						})]
+									children: t("parentEntry")
+								})]
+							}),
+							parentVisible && (0, react_jsx_runtime.jsxs)("nav", {
+								className: "student-segments",
+								"aria-label": t("parentEntry"),
+								children: [
+									(0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										"aria-pressed": tab === "parent",
+										onClick: () => setTab("parent"),
+										children: t("parentProfile")
+									}),
+									(0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										"aria-pressed": tab === "map",
+										onClick: () => setTab("map"),
+										children: t("parentProgress")
+									}),
+									(0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										"aria-pressed": tab === "mistakes",
+										onClick: () => setTab("mistakes"),
+										children: t("parentPractice")
+									}),
+									(0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										"aria-pressed": tab === "lessons",
+										onClick: () => setTab("lessons"),
+										children: t("lessonHistory")
+									})
+								]
+							}),
+							(0, react_jsx_runtime.jsxs)("div", {
+								className: "student-toolbar",
+								children: [study && !parentSettings && (0, react_jsx_runtime.jsx)("nav", {
+									className: "student-subjects",
+									"aria-label": t("subject"),
+									children: subjects.map((item) => (0, react_jsx_runtime.jsx)("button", {
+										type: "button",
+										"aria-pressed": subject === item,
+										onClick: () => {
+											selectSubject(item);
+											setMistakeOffset(0);
+											setMistakeStatus("all");
+										},
+										children: t(item)
+									}, item))
+								}), (0, react_jsx_runtime.jsx)("span", {
+									className: "student-muted",
+									children: t(workspace.loadNeeded ? "readyToContinue" : workspace.stale ? "updatePaused" : "liveUpdates")
+								})]
+							})
+						]
 					}),
 					readOnly && data && (0, react_jsx_runtime.jsx)("p", {
 						role: "status",
 						children: t("legacyFilesHelp")
 					}),
-					workspace.error && (0, react_jsx_runtime.jsx)("p", {
+					workspace.error && !workspace.loadNeeded && (0, react_jsx_runtime.jsx)("p", {
 						role: "alert",
 						children: t("staleData")
+					}),
+					study && !workspace.contextReady && !workspace.stale && (0, react_jsx_runtime.jsx)("p", {
+						role: "status",
+						children: t(workspace.contextState.readStatus === "partial" ? "partialLearningRecords" : "continueWaiting")
 					}),
 					sendError && (0, react_jsx_runtime.jsx)("p", {
 						role: "alert",
 						children: sendError
+					}),
+					syncStatus && (0, react_jsx_runtime.jsx)("p", {
+						role: "status",
+						children: t(syncStatus === "queued" ? "feedbackSyncQueued" : syncStatus === "coalesced" ? "feedbackSyncCoalesced" : syncStatus === "paused" ? "feedbackSyncPaused" : "feedbackSyncUnavailable")
 					}),
 					submissions.length > 0 && (0, react_jsx_runtime.jsxs)("details", {
 						className: "student-fold",
@@ -11036,28 +12505,51 @@ window.__ModuleLoader__.load({
 							})
 						] }, item.requestId))]
 					}),
-					!data ? workspace.value?.status === "missing" ? (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsx)("p", { children: t("setupFirst") }), (0, react_jsx_runtime.jsx)("button", {
+					!data ? workspace.loadNeeded ? (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsx)("p", { children: t("continueSavedLearning") }), (0, react_jsx_runtime.jsx)("button", {
+						type: "button",
+						disabled: sending || running,
+						onClick: () => {
+							tutor(loadLearningPrompt).catch(() => {});
+						},
+						children: t("continueLearning")
+					})] }) : workspace.value?.status === "missing" ? (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsx)("p", { children: t("setupFirst") }), (0, react_jsx_runtime.jsx)("button", {
 						disabled: sending,
 						onClick: () => {
 							tutor(t("setupIntent")).catch(() => {});
 						},
 						children: t("setupConversation")
-					})] }) : workspace.value ? (0, react_jsx_runtime.jsx)("section", { children: (0, react_jsx_runtime.jsx)("p", { children: t(workspace.value.status === "legacy" ? "legacyFilesHelp" : "unavailableFilesHelp") }) }) : !workspace.error && (0, react_jsx_runtime.jsx)("progress", { "aria-label": t("busy") }) : !study && tab === "today" ? (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsx)("p", { children: t("setupFirst") }), (0, react_jsx_runtime.jsx)("button", {
+					})] }) : workspace.value ? (0, react_jsx_runtime.jsx)("section", { children: (0, react_jsx_runtime.jsx)("p", { children: t(workspace.value.status === "legacy" ? "legacyFilesHelp" : "unavailableFilesHelp") }) }) : !workspace.error && (0, react_jsx_runtime.jsx)("div", {
+						className: workbench_module_css_default.empty,
+						"aria-busy": "true",
+						"aria-label": t("busy"),
+						children: (0, react_jsx_runtime.jsx)("span", { className: workbench_module_css_default.spinner })
+					}) : !study && tab === "today" ? (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsx)("p", { children: t("setupFirst") }), (0, react_jsx_runtime.jsx)("button", {
 						disabled: sending,
 						onClick: () => {
 							tutor(t("setupIntent")).catch(() => {});
 						},
 						children: t("setupConversation")
-					})] }) : subjectLoading && !parentSettings ? (0, react_jsx_runtime.jsx)("progress", { "aria-label": t("busy") }) : (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
+					})] }) : (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
 						study && tab === "today" && (0, react_jsx_runtime.jsx)(TodayView, {
 							...draft,
 							draftScope,
+							nextAction: workspace.nextAction,
+							learnerId: workspace.learnerId,
+							termId: workspace.termId,
+							classroomBindingId: workspace.classroomBindingId,
+							onContinue: () => {
+								continueLearning().catch(() => {});
+							},
+							round: workspace.round,
+							legalActions: workspace.legalActions,
+							onAction: (action) => {
+								continueLearning(action).catch(() => {});
+							},
 							study,
 							subject,
 							activity,
 							setActivity,
 							goal: goals.find((item) => item.id === selectedObjectiveId),
-							clearGoal: () => setSelectedObjectiveId(""),
 							curriculum,
 							selectedObjectiveId,
 							chooseGoal,
@@ -11071,10 +12563,10 @@ window.__ModuleLoader__.load({
 							})),
 							scopeUnits: study.scopedUnits ?? [],
 							start,
-							startRecommended,
 							startDiagnosis,
 							chosenIntensity: chosenIntensity(subject),
-							disabled,
+							disabled: disabled || !workspace.contextReady,
+							pending: nativePending,
 							running,
 							act,
 							tutor: (text, currentBlock) => tutor(text, void 0, void 0, currentBlock),
@@ -11083,21 +12575,20 @@ window.__ModuleLoader__.load({
 								daily: dailySheetPrompt(subject),
 								dictation: dictationPrompt(subject)
 							},
-							lessons: lessonsForSubject(data.interactiveLessons?.lessons ?? [], subject),
-							onInterestPractice: startInterest,
-							onOpenLesson: () => {
-								const request = lessonRequest();
-								tutor(openmaicGeneratePrompt(request.subjectLabel, request.objectiveId, request.tags, request.focus, request.unitName)).catch(() => {});
-							},
-							onClearDue: startDue,
-							onOpenClassroom: openClassroom
+							lessons: (data.interactiveLessons?.lessons ?? []).filter((item) => active ? item.blockId === active.id || item.blockId === void 0 && (item.subject === void 0 || item.subject === active.subject) : item.blockId === void 0 && (item.subject === void 0 || item.subject === subject)),
+							onOpenClassroom: (lessonId) => {
+								openSavedLesson(lessonId).catch(() => {});
+							}
 						}),
-						study && tab === "today" && data.interactiveLessons && (0, react_jsx_runtime.jsx)(LessonsPanel, {
+						study && tab === "lessons" && data.interactiveLessons && (0, react_jsx_runtime.jsx)(LessonsPanel, {
 							lessons: lessonsForSubject(data.interactiveLessons.lessons, subject),
 							...data.interactiveLessons.error !== void 0 ? { error: data.interactiveLessons.error } : {},
 							disabled,
 							running,
 							t,
+							onOpen: (lessonId) => {
+								openSavedLesson(lessonId).catch(() => {});
+							},
 							onQuery: (lessonId) => {
 								tutor(openmaicQueryPrompt(lessonId)).catch(() => {});
 							},
@@ -11278,6 +12769,14 @@ window.__ModuleLoader__.load({
 								})
 							]
 						}),
+						study && parentSettings && (0, react_jsx_runtime.jsx)(LearningRecords, {
+							goals: workspace.goalProgress,
+							context: workspace.context,
+							t,
+							onReadMore: () => {
+								tutor("请加载 study，分页读取当前学生及明确引用的历史学期原作答、冻结题面、原官方批改和有效评价。原回答不覆盖，按来源展示差异和未知事实；只读取，不制造新作答或改变当前学习段。").catch(() => {});
+							}
+						}),
 						study && parentSettings && (0, react_jsx_runtime.jsx)(Growth, {
 							study,
 							curriculum,
@@ -11445,6 +12944,156 @@ window.__ModuleLoader__.load({
 				(0, react_jsx_runtime.jsx)("p", { children: t("bounded") })
 			] });
 		}
+		function LearningRecords({ context, goals, t, onReadMore }) {
+			const value = context && typeof context === "object" && !Array.isArray(context) ? context : void 0;
+			const feedback = value && Array.isArray(value.officialFeedback) ? value.officialFeedback : [];
+			const issues = value && Array.isArray(value.archiveIssues) ? value.archiveIssues : [];
+			return (0, react_jsx_runtime.jsxs)(react_jsx_runtime.Fragment, { children: [
+				goals.length > 0 && (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsx)("h3", { children: t("learningGoal") }), goals.map((goal) => (0, react_jsx_runtime.jsxs)("div", { children: [
+					(0, react_jsx_runtime.jsxs)("p", { children: [
+						goal.title,
+						" · ",
+						t(levelKeys[goal.level])
+					] }),
+					goal.scope && (0, react_jsx_runtime.jsx)("p", {
+						className: "student-muted",
+						children: goal.scope.description
+					}),
+					goal.independentDays.length > 0 && (0, react_jsx_runtime.jsxs)("p", { children: [
+						t("independentDates"),
+						": ",
+						goal.independentDays.join(" · ")
+					] }),
+					goal.firstMasteredDay && (0, react_jsx_runtime.jsxs)("p", { children: [
+						t("firstMasteredOn"),
+						": ",
+						goal.firstMasteredDay
+					] }),
+					goal.recoveredDay && (0, react_jsx_runtime.jsxs)("p", { children: [
+						t("recoveredOn"),
+						": ",
+						goal.recoveredDay
+					] }),
+					goal.baseline && (0, react_jsx_runtime.jsx)("p", {
+						className: "student-muted",
+						children: t("referencedEvidence")
+					})
+				] }, goal.id))] }),
+				feedback.length > 0 && (0, react_jsx_runtime.jsxs)("section", { children: [
+					(0, react_jsx_runtime.jsx)("h3", { children: t("originalClassroomAnswers") }),
+					(0, react_jsx_runtime.jsx)("p", {
+						className: "student-muted",
+						children: t("officialFeedbackHelp")
+					}),
+					feedback.map((record, index) => {
+						if (!record || typeof record !== "object" || Array.isArray(record)) return null;
+						const effective = record.result === "correct" || record.result === "partial" || record.result === "incorrect" || record.result === "stuck" ? record.result : "unassessed";
+						const history = Array.isArray(record.officialHistory) ? record.officialHistory : [];
+						const official = record.official && typeof record.official === "object" && !Array.isArray(record.official) ? record.official : void 0;
+						return (0, react_jsx_runtime.jsxs)("details", { children: [
+							(0, react_jsx_runtime.jsxs)("summary", { children: [
+								typeof record.prompt === "string" ? record.prompt : t("learnerAnswer"),
+								" · ",
+								t(effective)
+							] }),
+							(0, react_jsx_runtime.jsx)("p", { children: t("learnerAnswer") }),
+							(0, react_jsx_runtime.jsx)("pre", { children: typeof record.rawResponse === "string" ? record.rawResponse : "" }),
+							(0, react_jsx_runtime.jsxs)("p", { children: [
+								t("effectiveAssessment"),
+								": ",
+								t(effective)
+							] }),
+							(0, react_jsx_runtime.jsx)("p", { children: typeof record.feedback === "string" ? record.feedback : "" }),
+							(0, react_jsx_runtime.jsx)("p", { children: t(record.sourceStatus === "known" ? "verifiedAnswerSource" : "answerSourceUnknown") }),
+							(record.grading === "conflict" || record.grading === "pending") && (0, react_jsx_runtime.jsx)("p", { children: t("assessmentPending") }),
+							(0, react_jsx_runtime.jsx)("p", { children: t(record.assistance === "independent" || record.assistance === "hint" || record.assistance === "worked-example" ? assistKeys[record.assistance] : "assistanceUnknown") }),
+							(0, react_jsx_runtime.jsx)("p", { children: record.answerDate && typeof record.answerDate === "object" && !Array.isArray(record.answerDate) && record.answerDate.kind === "day" && typeof record.answerDate.day === "string" ? record.answerDate.day : record.answerDate && typeof record.answerDate === "object" && !Array.isArray(record.answerDate) && record.answerDate.kind === "instant" && typeof record.answerDate.at === "number" ? day(record.answerDate.at) : t("answerDateUnknown") }),
+							(0, react_jsx_runtime.jsx)("h4", { children: t("officialAssessment") }),
+							[...history, ...official && !history.some((item) => item && typeof item === "object" && !Array.isArray(item) && item.seq === official.seq) ? [official] : []].map((grade, gradeIndex) => {
+								if (!grade || typeof grade !== "object" || Array.isArray(grade)) return null;
+								const result = grade.result && typeof grade.result === "object" && !Array.isArray(grade.result) ? grade.result : void 0;
+								return (0, react_jsx_runtime.jsxs)("div", { children: [(0, react_jsx_runtime.jsxs)("p", { children: [t(result?.status === "correct" ? "correct" : result?.status === "incorrect" ? "incorrect" : "unassessed"), typeof result?.earned === "number" ? ` · ${result.earned}` : ""] }), (0, react_jsx_runtime.jsx)("p", { children: typeof result?.aiComment === "string" ? result.aiComment : "" })] }, typeof grade.seq === "number" ? grade.seq : gradeIndex);
+							})
+						] }, typeof record.responseId === "string" ? record.responseId : index);
+					}),
+					(0, react_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: onReadMore,
+						children: t("readAnswerHistory")
+					})
+				] }),
+				issues.length > 0 && (0, react_jsx_runtime.jsxs)("section", {
+					role: "status",
+					children: [
+						(0, react_jsx_runtime.jsx)("h3", { children: t("archiveEvidencePending") }),
+						(0, react_jsx_runtime.jsx)("p", { children: t("archiveEvidenceHelp") }),
+						(0, react_jsx_runtime.jsx)("button", {
+							type: "button",
+							onClick: onReadMore,
+							children: t("readAnswerHistory")
+						})
+					]
+				})
+			] });
+		}
+		//#endregion
+		//#region lib/types/client/teaching-aids.js
+		const aidNames = /* @__PURE__ */ new Set([
+			"openmaic_widget",
+			"openmaic_slide",
+			"openmaic_render"
+		]);
+		function results(block) {
+			return [..."kind" in block && !block.isError && aidNames.has(block.call?.name ?? block.name) ? [block] : [], ...block.subCalls.flatMap(results)];
+		}
+		function revealAid(button, callId) {
+			const target = [...button.closest("[data-chat-flow]")?.querySelectorAll("[data-chat-call-id]") ?? []].find((element) => element.dataset.chatCallId === callId);
+			if (!target) return;
+			target.dispatchEvent(new Event("beforematch", { bubbles: true }));
+			requestAnimationFrame(() => target.scrollIntoView({
+				block: "center",
+				behavior: "smooth"
+			}));
+		}
+		/**
+		* Find a Turn's official teaching results and link to their original views.
+		* @param props - native Session hooks, Turn identity and original tool dispatch.
+		* @returns no contribution for other presets or Turns without teaching aids.
+		*/
+		function TeachingAids({ turn, useSessions, sessionId, useChat, t }) {
+			const preset = useSessions((state) => state.byId[sessionId]?.projectionValues?.agentPreset);
+			const snapshot = useChat((value) => value);
+			const aids = snapshot.locations.getTurn(turn.turn).flatMap((key) => {
+				const node = snapshot.nodes.get(key);
+				return node?.kind === "tool-call" ? results(node.data.root) : [];
+			});
+			if (preset !== "student" || !aids.length) return null;
+			return (0, react_jsx_runtime.jsxs)("section", {
+				className: "student-teaching-aids",
+				"aria-label": t("teachingAids"),
+				children: [
+					(0, react_jsx_runtime.jsx)("h3", { children: t("teachingAids") }),
+					(0, react_jsx_runtime.jsx)("p", { children: t("teachingAidsHelp") }),
+					aids.map((block, index) => (0, react_jsx_runtime.jsxs)("button", {
+						type: "button",
+						onClick: (event) => revealAid(event.currentTarget, block.callId),
+						children: [t("openTeachingAid"), aids.length > 1 ? ` ${index + 1}` : ""]
+					}, block.callId))
+				]
+			});
+		}
+		/**
+		* Register discovery in the existing completed-reply surface.
+		* @param context - native conversation and slot services.
+		*/
+		function registerTeachingAids(context) {
+			context.slots.inject("conversation.chat.turnTail", () => context.slots.register({
+				name: "conversation.chat.turnTail",
+				id: "student-teaching-aids",
+				order: 24,
+				locale: NS
+			}, TeachingAids));
+		}
 		//#endregion
 		//#region lib/types/client/manual-actions.js
 		/**
@@ -11538,32 +13187,6 @@ window.__ModuleLoader__.load({
 				inspectSubmission
 			};
 		}
-		//#endregion
-		//#region \0dsh-css:/home/maiscrm/projects/dsh-creative/plugins/dsh-student/packages/winterhuan/student/src/client/workbench.module.css.mjs
-		const css = ".pBrdNW_workbench{height:100%;min-height:0;color:var(--dsw-alias-label-primary);background:radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, transparent), transparent 55%), radial-gradient(ellipse at 100% 90%, color-mix(in srgb, var(--dsw-alias-state-success-primary) 5%, transparent), transparent 50%), color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));font:14px/22px var(--dsw-font-family);flex-direction:column;display:flex;container-type:inline-size}.pBrdNW_header{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;padding:28px 28px 12px;display:flex}[data-platform=darwin] .pBrdNW_header{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}.pBrdNW_heading h1{letter-spacing:-.015em;margin:0;font-size:34px;font-weight:300;line-height:44px}.pBrdNW_heading p{color:var(--dsw-alias-label-secondary);margin:4px 0 0;font-size:13px;line-height:20px}.pBrdNW_controls{flex-wrap:wrap;align-items:center;gap:8px;min-width:0;max-width:100%;display:flex}.pBrdNW_controls label{min-width:0;max-width:300px;color:var(--dsw-alias-label-secondary);align-items:center;gap:8px;font-size:12px;display:flex}.pBrdNW_controls select,.pBrdNW_controls button,.pBrdNW_empty button{font:13px/20px var(--dsw-font-family);color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);min-width:0;max-width:100%;padding:8px 12px}.pBrdNW_controls button,.pBrdNW_empty button{cursor:pointer}.pBrdNW_controls button:hover:enabled,.pBrdNW_empty button:hover:enabled{background:var(--dsw-alias-interactive-bg-hover)}.pBrdNW_controls button[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-active)}.pBrdNW_controls :disabled{opacity:.5;cursor:default}.pBrdNW_conversationControls{min-width:0;max-width:240px}.pBrdNW_conversationControls summary{cursor:pointer;color:var(--dsw-alias-label-secondary);border-radius:var(--dsw-radius-md);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);box-shadow:var(--dsw-elevation-soft);text-overflow:ellipsis;white-space:nowrap;padding:8px 12px;font-size:13px;line-height:20px;overflow:hidden}.pBrdNW_conversationControls[open]{flex-basis:100%;max-width:100%}.pBrdNW_conversationControls[open]>.pBrdNW_controls{padding-top:12px}.pBrdNW_body{flex:1;gap:12px;min-width:0;min-height:0;padding:0 16px 16px;display:grid}.pBrdNW_withChat{grid-template-columns:minmax(0,1fr) 336px}.pBrdNW_panes{display:none}.pBrdNW_study{min-width:0;min-height:0}.pBrdNW_study .student-desk{background:0 0}.pBrdNW_chat{border-radius:var(--dsw-radius-panel);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 92%, transparent);min-width:0;min-height:0;box-shadow:var(--dsw-elevation-soft);flex-direction:column;margin-top:12px;display:flex;overflow:hidden}.pBrdNW_chat h2{border-bottom:.5px solid var(--dsw-alias-border-l2);margin:0;padding:16px 18px 12px;font-size:15px;font-weight:500;line-height:22px}.pBrdNW_empty{text-align:center;flex-direction:column;flex:1;justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}.pBrdNW_empty h2{margin:0;font-size:16px;font-weight:500}.pBrdNW_empty p{margin:0}.pBrdNW_spinner{border:2px solid var(--dsw-alias-border-l2);border-top-color:var(--dsw-alias-label-primary);border-radius:50%;width:24px;height:24px;animation:.8s linear infinite pBrdNW_spin}.pBrdNW_controls :focus-visible,.pBrdNW_panes button:focus-visible,.pBrdNW_conversationControls summary:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}@keyframes pBrdNW_spin{to{transform:rotate(360deg)}}@container (width<=900px){.pBrdNW_header{padding-left:24px;padding-right:24px}.pBrdNW_heading p{display:none}.pBrdNW_heading{flex:180px}.pBrdNW_header>.pBrdNW_controls{flex:360px}.pBrdNW_controls{align-items:center}.pBrdNW_controls label{flex-direction:row;align-items:center}.pBrdNW_body,.pBrdNW_withChat{grid-template-rows:auto minmax(0,1fr);grid-template-columns:minmax(0,1fr);gap:0;padding:0 12px 12px}.pBrdNW_panes{border-radius:var(--dsw-radius-lg);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);box-shadow:var(--dsw-elevation-soft);gap:2px;margin:4px 12px 8px;padding:4px;display:flex}.pBrdNW_panes button{font:13px/20px var(--dsw-font-family);border-radius:var(--dsw-radius-md);color:var(--dsw-alias-label-secondary);cursor:pointer;background:0 0;border:0;flex:1;padding:6px 12px}.pBrdNW_panes button[aria-pressed=true]{color:var(--dsw-alias-label-primary-inverted);background:var(--dsw-alias-button-primary-fill)}.pBrdNW_body[data-pane=chat] .pBrdNW_study,.pBrdNW_body[data-pane=study] .pBrdNW_chat{display:none}.pBrdNW_chat{margin-top:0}}@container (width<=460px){.pBrdNW_heading h1{font-size:25px;line-height:35px}.pBrdNW_controls label,.pBrdNW_conversationControls{max-width:100%}}";
-		const tagId = "@winterhuan/dsh-student/workbench.module.css";
-		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
-			const tag = document.createElement("style");
-			tag.dataset.plugin = "@winterhuan/dsh-student";
-			tag.dataset.pluginCss = tagId;
-			tag.textContent = css;
-			document.head.appendChild(tag);
-		}
-		var workbench_module_css_default = {
-			"body": "pBrdNW_body",
-			"chat": "pBrdNW_chat",
-			"controls": "pBrdNW_controls",
-			"conversationControls": "pBrdNW_conversationControls",
-			"empty": "pBrdNW_empty",
-			"header": "pBrdNW_header",
-			"heading": "pBrdNW_heading",
-			"panes": "pBrdNW_panes",
-			"spin": "pBrdNW_spin",
-			"spinner": "pBrdNW_spinner",
-			"study": "pBrdNW_study",
-			"withChat": "pBrdNW_withChat",
-			"workbench": "pBrdNW_workbench"
-		};
 		//#endregion
 		//#region lib/types/client/workbench.js
 		const sessionSlot = "student.workbench.session";
@@ -11772,7 +13395,7 @@ window.__ModuleLoader__.load({
 				})
 			}) : (0, react_jsx_runtime.jsx)(Loading, {});
 		}
-		function LearningSession({ sessionId, chatVisible, pane, showTutor, selectPane, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, t }) {
+		function LearningSession({ sessionId, chatVisible, pane, showTutor, selectPane, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, openLesson, syncFeedback, cancel, t }) {
 			const session = useSession((state) => state);
 			const conversation = useConversation((state) => state);
 			const settling = session.openState === "loading" && !conversation.activeTargets.size;
@@ -11801,12 +13424,16 @@ window.__ModuleLoader__.load({
 							sessionId,
 							visible: true,
 							running: !!session.running,
+							pending: session.pendingSubmissions.length > 0 || session.awaitingFirstTurn,
+							syncFeedback,
+							cancel,
 							ask: (text, photo) => {
 								showTutor();
 								return ask(text, photo);
 							},
 							t,
 							useResource,
+							openLesson,
 							useStore,
 							actions,
 							saveSettings,
@@ -11876,7 +13503,13 @@ window.__ModuleLoader__.load({
 				locale: NS,
 				store: draftStore,
 				inject: (sessionId) => ({
+					...studentSessionBridge(context, sessionId, t("sessionError")),
 					ask: tutorBridge(context, sessionId, t("sessionError"), t("sendError")),
+					openLesson: async (lessonId) => {
+						const result = await context.remote.studentOpenmaicPlayback.open(sessionId, lessonId, new AbortController().signal);
+						if (!result.ok) throw new Error(result.error.message);
+						return result.value;
+					},
 					...createStudentManualActions(context.remote.student)
 				})
 			}, LearningSession));
@@ -11918,24 +13551,33 @@ window.__ModuleLoader__.load({
 			const t = scope.locale.bind(NS);
 			return {
 				...createStudentManualActions(scope.remote.student),
+				sessionActions: (sessionId) => studentSessionBridge(scope, sessionId, t("sessionError")),
+				openLesson: async (sessionId, lessonId) => {
+					const result = await scope.remote.studentOpenmaicPlayback.open(sessionId, lessonId, new AbortController().signal);
+					if (!result.ok) throw new Error(result.error.message);
+					return result.value;
+				},
 				askStudent: (sessionId, text, photo) => tutorBridge(scope, sessionId, t("sessionError"), t("sendError"))(text, photo)
 			};
 		}
-		function Sidebar({ sessionId, useTabInfo, useSession, useSessions, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission }) {
+		function Sidebar({ sessionId, useTabInfo, useSession, useSessions, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission, openLesson, sessionActions }) {
 			const preset = useSessions((state) => state.byId[sessionId]?.projectionValues?.agentPreset);
 			const { tab } = useTabInfo();
 			(0, react.useEffect)(() => {
 				if (typeof preset === "string" && preset !== "student") tab.actions.close();
 			}, [preset, tab.actions]);
-			const running = useSession((snapshot) => snapshot.running);
+			const session = useSession((snapshot) => snapshot);
 			if (preset !== "student") return null;
 			return (0, react_jsx_runtime.jsx)(StudyDesk, {
 				sessionId,
 				visible: tab.visible,
-				running: !!running,
+				running: !!session.running,
+				pending: session.pendingSubmissions.length > 0 || session.awaitingFirstTurn,
+				...sessionActions(sessionId),
 				ask: (text, photo) => askStudent(sessionId, text, photo),
 				t,
 				useResource,
+				openLesson: (lessonId) => openLesson(sessionId, lessonId),
 				useStore,
 				actions,
 				saveSettings,
@@ -11950,6 +13592,7 @@ window.__ModuleLoader__.load({
 				zh,
 				en
 			}), "student: dictionaries");
+			registerTeachingAids(context);
 			const t = context.locale.bind(NS);
 			context.effect(() => registerModeTab(context, {
 				id: "@winterhuan/dsh-student",

@@ -257,7 +257,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                     };
                 })[];
             } | undefined;
-            errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+            errorType?: "pattern" | "listening" | "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
             savedAt?: number | undefined;
         }[];
         workbookDrafts: {
@@ -526,7 +526,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             id: string;
             subject: "chinese" | "math" | "english";
             title: string;
-            level: "due" | "weak" | "stalled" | "mastered" | "practising" | "untouched";
+            level: "untouched" | "practising" | "weak" | "due" | "mastered" | "stalled";
             priority: number;
             reasons: import("./learning/mastery.ts").InsightReason[];
         }[];
@@ -565,7 +565,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             goal: string;
             conceptIds: string[];
             method: "listen" | "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "speak";
-            errorTypes?: ("carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
+            errorTypes?: ("pattern" | "listening" | "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
             questionPoints?: string[] | undefined;
             variationAxes?: ("reverse" | "context" | "numbers" | "representation" | "explain")[] | undefined;
         }[];
@@ -581,7 +581,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             objectiveTitle: string;
             open: boolean;
             results: {
-                errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
+                errorType?: "pattern" | "listening" | "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                 itemId: string;
                 result: "correct" | "partial" | "incorrect" | "unassessed";
                 response: string;
@@ -589,7 +589,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             }[];
             drafts: {
                 confidence?: "high" | "low";
-                errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
+                errorType?: "pattern" | "listening" | "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                 itemId: string;
                 response: string;
                 result: "correct" | "partial" | "incorrect" | "unassessed";
@@ -843,7 +843,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             imagePath?: string | undefined;
             materialId?: string | undefined;
             objectiveId?: string | undefined;
-            errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+            errorType?: "pattern" | "listening" | "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
             confirmedAt?: number | undefined;
             userConfirmation?: string | undefined;
             dueAt?: number | undefined;
@@ -868,7 +868,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             imagePath?: string | undefined;
             materialId?: string | undefined;
             objectiveId?: string | undefined;
-            errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+            errorType?: "pattern" | "listening" | "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
             confirmedAt?: number | undefined;
             userConfirmation?: string | undefined;
             dueAt?: number | undefined;

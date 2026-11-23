@@ -366,13 +366,14 @@ export declare const exerciseCatalogSchema: z.ZodObject<{
         explanation: z.ZodString;
         answerEvidence: z.ZodString;
         errorType: z.ZodOptional<z.ZodEnum<{
+            pattern: "pattern";
+            listening: "listening";
             "carry-borrow": "carry-borrow";
             "place-value": "place-value";
             "operation-choice": "operation-choice";
             calculation: "calculation";
             "unit-quantity": "unit-quantity";
             "reading-task": "reading-task";
-            pattern: "pattern";
             "geometry-feature": "geometry-feature";
             "money-measure": "money-measure";
             "reasoning-incomplete": "reasoning-incomplete";
@@ -384,7 +385,6 @@ export declare const exerciseCatalogSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -459,13 +459,14 @@ export declare const curriculumSchema: z.ZodObject<{
             speak: "speak";
         }>;
         errorTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
+            pattern: "pattern";
+            listening: "listening";
             "carry-borrow": "carry-borrow";
             "place-value": "place-value";
             "operation-choice": "operation-choice";
             calculation: "calculation";
             "unit-quantity": "unit-quantity";
             "reading-task": "reading-task";
-            pattern: "pattern";
             "geometry-feature": "geometry-feature";
             "money-measure": "money-measure";
             "reasoning-incomplete": "reasoning-incomplete";
@@ -477,7 +478,6 @@ export declare const curriculumSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";

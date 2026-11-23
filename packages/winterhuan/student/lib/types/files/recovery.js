@@ -2,10 +2,13 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { stateSchema } from "../schema.js";
+import { builtinObjectiveAnywhere } from "../curriculum.js";
+import { resolveLegacyReference } from "../capabilities.js";
 import { migrateStudyFile } from "./legacy.js";
 import { canonical } from "../learning/shared.js";
 import { officialFileSchemas, termSettingsSchema, blockSchema, worksheetSchema, collectionsSchema } from "./schema.js";
 import { validateStudyFiles } from "./validation.js";
+import { OPENMAIC_LESSONS_PATH } from "../openmaic.js";
 /**
  * Hash original bytes for backup/source verification and recoverable migration identity.
  * @param bytes - exact observed source bytes, before compatibility transformation.
@@ -28,12 +31,14 @@ export function migrationOutputPaths(source) {
  * @param read - freshly observed, non-mutating legacy read.
  * @param backup - independently observed original-byte backup, never an overwritten existing original.
  * @param existing - independently read existing v2 output for interrupted-operation recovery.
+ * @param learner - confirmed child identity, required unless an existing output already records it.
+ * @param recovery - complete classroom-log read and original-byte backups; future formats block all outputs.
  * @returns stable entities, named unsupported facts and explicit partial/conflicting outputs; performs no writes.
  */
-export function describeMigration(read, backup, existing = []) {
+export function describeMigration(read, backup, existing = [], learner, recovery) {
     const source = read.files.find(file => file.path === '.study/state.json');
     const hash = source ? sourceSha256(source.bytes) : '';
-    const plan = { status: 'blocked', sourceSha256: hash, outputs: [], pending: [], issues: [] };
+    const plan = { status: 'blocked', sourceSha256: hash, outputs: [], preservedSources: [], pending: [], issues: [] };
     if (!source || read.status !== 'legacy' || backup.path === source.path || backup.targetKey === source.targetKey || sourceSha256(backup.bytes) !== hash) {
         plan.issues.push({ path: backup.path, field: '', rule: 'original-byte-backup', correction: 'Preserve a distinct original-byte backup and verify it against the currently observed v1 source.' });
         return plan;
@@ -59,8 +64,24 @@ export function describeMigration(read, backup, existing = []) {
         plan.issues.push({ path: source.path, field: 'parentConfirmation', rule: 'legacy-confirmation', correction: 'Keep the verified legacy bytes and obtain explicit statements for reviewed v2 settings before conversion.' });
         return plan;
     }
+    const knownLearner = existing.find(entry => entry.file.kind === 'term-settings' && entry.file.termId === termId)?.file.learnerId;
+    if ((!knownLearner && !learner) || knownLearner && learner && knownLearner !== learner) {
+        plan.issues.push({ path: source.path, field: 'learnerId', rule: 'learner-identity', correction: 'Provide the confirmed Student learner identity and retain it across terms; source bytes and accounts cannot identify a child.' });
+        return plan;
+    }
+    const learnerId = termSettingsSchema.shape.learnerId.unwrap().parse(knownLearner ?? learner);
+    const preserved = migrationSources([source], recovery ? { ...recovery, backups: [backup, ...recovery.backups] } : undefined);
+    plan.preservedSources = preserved.preservedSources;
+    plan.pending.push(...preserved.pending);
+    plan.issues.push(...preserved.issues);
+    if (plan.issues.length)
+        return plan;
+    const target = (objectiveId, subject) => {
+        const goal = objectiveId ? builtinObjectiveAnywhere(objectiveId) ?? state.objectives.find(goal => goal.id === objectiveId) : undefined;
+        return goal?.subject === subject ? objectiveId : { kind: 'pending', reason: 'Original capability target requires source review.' };
+    };
     const files = [];
-    files.push({ path: '.study/settings.json', file: termSettingsSchema.parse({ format: 2, kind: 'term-settings', termId, revision: state.revision, updatedAt: state.updatedAt,
+    files.push({ path: '.study/settings.json', file: termSettingsSchema.parse({ format: 2, kind: 'term-settings', termId, learnerId, revision: state.revision, updatedAt: state.updatedAt,
             profile: state.profile, materials: state.materials, courses: state.courses, ...(state.interests ? { interests: state.interests } : {}), ...(state.openmaic ? { openmaic: state.openmaic } : {}),
             ...(state.archivedAt !== undefined ? { archivedAt: state.archivedAt } : {}), migration: { sourcePath: source.path, sourceSha256: hash, backupPath: backup.path } }) });
     for (const [i, block] of state.sessions.entries()) {
@@ -69,10 +90,39 @@ export function describeMigration(read, backup, existing = []) {
             legacy.push(pending(`attempts[sessionId=${block.id}]`, ['publishedQuestionSource', 'originalResponseSource', 'answerDate', 'assistance'], 'Flattened assessment text and classification are preserved declarations; grading time does not establish answer time.'));
         if (state.task?.sessionId === block.id)
             legacy.push(pending('task', ['referenceAnswerSource', 'nativeSource', 'answerDate', ...(state.task.hintLevel > 0 ? [] : ['assistance'])], 'The current slot retains text and help observations, but lacks a frozen pre-answer basis and consumed native input version.'));
-        files.push({ path: `.study/blocks/${block.id}.json`, file: blockSchema.parse({ format: 2, kind: 'block', termId, id: block.id, subject: block.subject, mode: block.mode,
-                ...(block.intensity ? { intensity: block.intensity } : {}), startedAt: block.startedAt, ...(block.endedAt !== undefined ? { endedAt: block.endedAt } : {}), ...(block.spentMs !== undefined ? { spentMs: block.spentMs } : {}), ...(block.reflection !== undefined ? { reflection: block.reflection } : {}),
-                context: { pendingProfile: 'The legacy source did not retain the historical profile.', ...(block.scope ? { scope: block.scope } : {}), ...(block.materialId && state.materials.find(material => material.id === block.materialId) ? { material: state.materials.find(material => material.id === block.materialId) } : {}) },
-                questions: [], responses: [], hints: [], assessments: [], pendingLegacy: legacy }) });
+        const file = blockSchema.parse({ format: 2, kind: 'block', termId, id: block.id, subject: block.subject, mode: block.mode,
+            ...(block.intensity ? { intensity: block.intensity } : {}), startedAt: block.startedAt, ...(block.endedAt !== undefined ? { endedAt: block.endedAt } : {}), ...(block.spentMs !== undefined ? { spentMs: block.spentMs } : {}), ...(block.reflection !== undefined ? { reflection: block.reflection } : {}),
+            context: { pendingProfile: 'The legacy source did not retain the historical profile.', ...(block.scope ? { scope: block.scope } : {}), ...(block.materialId && state.materials.find(material => material.id === block.materialId) ? { material: state.materials.find(material => material.id === block.materialId) } : {}) },
+            questions: state.attempts.filter(attempt => attempt.sessionId === block.id).map(attempt => ({
+                id: `legacy-q-${sourceSha256(new TextEncoder().encode(attempt.id)).slice(0, 24)}`, objectiveId: target(attempt.objectiveId, block.subject),
+                topic: attempt.topic, prompt: attempt.prompt, answer: 'Original reference answer requires review.', explanation: 'Original explanation requires review.', answerEvidence: attempt.answerEvidence,
+                basisStatus: 'legacy-pending', source: { kind: 'legacy', sourcePath: source.path, row: `attempts.${state.attempts.indexOf(attempt)}` }, legacyRecord: attempt,
+            })),
+            responses: state.attempts.filter(attempt => attempt.sessionId === block.id).map(attempt => ({ id: attempt.id, questionId: `legacy-q-${sourceSha256(new TextEncoder().encode(attempt.id)).slice(0, 24)}`,
+                rawResponse: attempt.rawResponse ?? attempt.response, response: attempt.response, assistance: 'unknown', answerDate: { kind: 'unknown' }, legacyRecord: attempt,
+                source: { kind: 'legacy', sourcePath: source.path, row: `attempts.${state.attempts.indexOf(attempt)}` },
+            })), hints: [],
+            assessments: state.attempts.filter(attempt => attempt.sessionId === block.id).map(attempt => ({ id: `legacy-a-${sourceSha256(new TextEncoder().encode(attempt.id)).slice(0, 24)}`, responseId: attempt.id,
+                result: attempt.result, assistance: 'unknown', feedback: attempt.feedback || 'Original feedback unavailable.', answerEvidence: attempt.answerEvidence, assessedAt: attempt.at,
+            })), pendingLegacy: legacy });
+        const slot = state.task?.sessionId === block.id ? state.task : undefined;
+        if (slot) {
+            file.questions.push(blockSchema.shape.questions.element.parse({ id: slot.id, objectiveId: target(slot.objectiveId, block.subject),
+                topic: slot.topic, prompt: slot.prompt, ...(slot.choices ? { choices: slot.choices } : {}), ...(slot.figure ? { figure: slot.figure } : {}), ...(slot.steps ? { steps: slot.steps } : {}), ...(slot.phase ? { phase: slot.phase } : {}),
+                answer: 'Original live reference answer requires review.', explanation: 'Original live explanation requires review.', answerEvidence: 'Original live answer basis requires review.', basisStatus: 'legacy-pending',
+                legacyRecord: slot, source: { kind: 'legacy', sourcePath: source.path, row: 'task' },
+            }));
+            file.currentQuestionId = slot.id;
+            const submitted = slot.responseId && state.attempts.some(attempt => attempt.sessionId === block.id && attempt.responseId === slot.responseId);
+            if (slot.response && !submitted) {
+                const responseId = blockSchema.shape.responses.element.shape.id.parse(`legacy-slot-${sourceSha256(new TextEncoder().encode(slot.id)).slice(0, 24)}`);
+                file.responses.push({ id: responseId, questionId: slot.id, rawResponse: slot.rawResponse ?? slot.response, response: slot.response,
+                    assistance: slot.phase === 'demo' ? 'worked-example' : slot.hintLevel > 0 ? 'hint' : 'unknown', answerDate: { kind: 'unknown' }, legacyRecord: z.json().parse(JSON.parse(JSON.stringify(slot))),
+                    source: { kind: 'legacy', sourcePath: source.path, row: 'task' } });
+                file.currentResponseId = responseId;
+            }
+        }
+        files.push({ path: `.study/blocks/${block.id}.json`, file });
     }
     for (const [i, sheet] of state.worksheets.entries()) {
         const legacy = [];
@@ -82,7 +132,7 @@ export function describeMigration(read, backup, existing = []) {
                 const goal = item.objectiveId ?? (item.mistakeId ? undefined : sheet.objectiveId);
                 if (!goal)
                     legacy.push(pending(`worksheets.${i}.items.${j}`, ['objectiveId', 'originalPublicationSource'], 'A current mistake classification cannot recover the original worksheet target.'));
-                return { ...item, objectiveId: goal ?? { kind: 'pending', reason: 'Original worksheet target requires source review.' }, topic: item.prompt,
+                return { ...item, objectiveId: target(goal, sheet.subject), legacyRecord: item, topic: item.prompt,
                     source: { kind: 'legacy', sourcePath: source.path, row: `worksheets.${i}.items.${j}` } };
             }), responses: [], assessments: [], drafts: [], pendingLegacy: legacy });
         for (const [j, draft] of state.paperDrafts.entries())
@@ -91,6 +141,14 @@ export function describeMigration(read, backup, existing = []) {
                     result: draft.result, assistance: draft.assistance === 'independent' ? 'unknown' : draft.assistance, confidence: draft.confidence ?? 'low', uncertainties: draft.uncertainties, imagePaths: [], receivedAt: draft.receivedAt });
         for (const [j, result] of state.paperResults.entries())
             if (result.worksheetId === sheet.id) {
+                const item = file.items.find(item => item.id === result.itemId);
+                if (item) {
+                    const responseId = `legacy-paper-${j}`;
+                    file.responses.push({ id: blockSchema.shape.responses.element.shape.id.parse(responseId), questionId: result.itemId, rawResponse: result.response, assistance: result.assistance === 'independent' ? 'unknown' : result.assistance,
+                        answerDate: { kind: 'unknown' }, legacyRecord: result, source: { kind: 'legacy', sourcePath: source.path, row: `paperResults.${j}` } });
+                    file.assessments.push({ id: `legacy-paper-a-${j}`, responseId: blockSchema.shape.responses.element.shape.id.parse(responseId), result: result.result, assistance: result.assistance === 'independent' ? 'unknown' : result.assistance,
+                        feedback: result.feedback || 'Original feedback unavailable.', answerEvidence: result.answerEvidence, assessedAt: result.receivedAt, userConfirmation: result.userConfirmation });
+                }
                 legacy.push(pending(`paperResults.${j}`, ['originalResponseSource', 'assistance', 'answerDate', 'originalContentSource'], 'Legacy confirmations and receipt timestamps remain declarations until their original response, help and publication sources are reviewed.'));
             }
         file.pendingLegacy = legacy;
@@ -103,7 +161,7 @@ export function describeMigration(read, backup, existing = []) {
         const legacy = [pending(row, ['answerDate', 'nativeSource', ...(workbook.objectiveId ? [] : ['objectiveId']), ...(workbook.outcome === 'hinted' ? [] : ['assistance'])], 'Original workbook content and combined outcome declarations are retained; receipt/confirmation time is not answer time.')];
         const assistance = workbook.outcome === 'hinted' && confirmed ? 'hint' : 'unknown';
         const file = worksheetSchema.parse({ format: 2, kind: 'worksheet', termId, id: worksheetId, subject: workbook.subject, origin: 'workbook', createdAt: workbook.receivedAt,
-            context: { pendingProfile: 'The legacy source did not retain the historical profile.' }, items: [{ id: 'q1', objectiveId: workbook.objectiveId ?? { kind: 'pending', reason: 'Workbook target requires confirmation.' }, topic: workbook.prompt, prompt: workbook.prompt,
+            context: { pendingProfile: 'The legacy source did not retain the historical profile.' }, items: [{ id: 'q1', objectiveId: target(workbook.objectiveId, workbook.subject), legacyRecord: workbook, topic: workbook.prompt, prompt: workbook.prompt,
                     ...(!confirmed?.correction || !confirmed.explanation || !confirmed.answerEvidence ? { basisStatus: 'legacy-pending' } : {}),
                     answer: confirmed?.correction ?? 'Legacy reference answer requires confirmation.', explanation: confirmed?.explanation ?? 'Legacy explanation requires confirmation.', answerEvidence: confirmed?.answerEvidence ?? 'Legacy answer basis requires confirmation.', source: { kind: 'legacy', sourcePath: source.path, row } }],
             responses: confirmed && workbook.response ? [{ id: workbook.id, questionId: 'q1', rawResponse: workbook.response, assistance, answerDate: { kind: 'unknown' }, source: { kind: 'legacy', sourcePath: source.path, row } }] : [],
@@ -126,8 +184,18 @@ export function describeMigration(read, backup, existing = []) {
         return true;
     });
     files.push({ path: '.study/collections.json', file: collectionsSchema.parse({ format: 2, kind: 'collections', termId,
+            legacyReferences: [...new Map([
+                    ...state.objectives.map(item => resolveLegacyReference('objective', item.id)),
+                    ...state.exercises.map(item => resolveLegacyReference('exercise', item.id)),
+                    ...(state.task?.objectiveId ? [resolveLegacyReference('objective', state.task.objectiveId)] : []),
+                    ...[...state.attempts, ...state.mistakes, ...state.workbookResults, ...state.workbookDrafts].flatMap(item => item.objectiveId ? [resolveLegacyReference('objective', item.objectiveId)] : []),
+                    ...state.worksheets.flatMap(sheet => [sheet.objectiveId, ...sheet.items.map(item => item.objectiveId)].flatMap(id => id ? [resolveLegacyReference('objective', id)] : [])),
+                ].map(reference => [`${reference.kind}:${reference.oldId}`, reference])).values()].map(reference => ({ kind: reference.kind, oldId: reference.oldId, status: reference.status, candidateGoalIds: reference.candidateGoalIds, routes: reference.routes.map(({ goalId, familyId }) => ({ goalId, familyId })), reason: reference.pendingReasons.join('; ') || 'Original question, tested scope, actual date and help must be reviewed before evidence reuse.' })),
+            legacyHistory: state.attempts.filter(attempt => !state.sessions.some(block => block.id === attempt.sessionId)).map(attempt => ({ sourcePath: source.path, row: `attempts.${state.attempts.indexOf(attempt)}`, record: attempt })),
             mistakes: state.mistakes.map(({ stage: _stage, independentDays: _days, dueAt: _due, ...mistake }) => mistake), exercises: state.exercises, concepts: state.concepts, objectives: state.objectives, relations: state.relations, teachingQueue: state.teachingQueue, rewards,
             pendingLegacy: plan.pending.slice(0, 5000) }) });
+    for (const { file } of files)
+        file.learnerId = learnerId;
     const validation = validateStudyFiles(files.map(({ path, file }) => ({ path, value: file })));
     plan.issues.push(...validation.issues);
     plan.outputs = files.map(({ path, file }) => {
@@ -291,6 +359,8 @@ export function describeRestore(read, chosen) {
         ...read.files.flatMap(({ path, targetKey }) => { const file = read.cache?.files.get(targetKey)?.file; return file ? [{ path, file }] : []; })];
     const issues = source ? validateStudyFiles([...read.files.filter(file => file.path !== source.path && file.file).map(file => ({ path: file.path, value: file.file })), { path: source.path, value: source.file }], prior, read.workspace?.nativeSources).issues
         : [{ path: chosen.path, field: '', rule: 'backup-verification', correction: 'Choose a byte-verified strict official backup.' }];
+    if (read.status === 'future-format')
+        issues.unshift({ path: chosen.backup.sourcePath, field: 'format', rule: 'future-format', correction: 'Use a compatible plugin for this newer format; do not overwrite it with an older backup.' });
     return { status: issues.length === 0 ? 'available' : 'blocked', destinationPath: chosen.backup.sourcePath, backupPath: chosen.path, sourceSha256: chosen.backup.sha256,
         ...(current ? { preserveCurrent: { path: current.path, version: current.version, sha256: sourceSha256(current.bytes) } } : {}), issues };
 }
@@ -311,5 +381,113 @@ export function describeArchive(source, archive, active) {
     const retained = active.workspace?.settings.termId === termId && active.status !== 'archived';
     const activeKnown = ['valid', 'archived', 'missing'].includes(active.status);
     return { termId, archivePath: `.study/archives/${termId}`, status: conflict ? 'conflict' : exported ? !activeKnown ? 'export-valid-active-unknown' : retained ? 'export-valid-active-retained' : 'complete' : 'export-needed', missingPaths, issues: [...archive.issues, ...active.issues] };
+}
+/**
+ * Describe stable learner identity and complete old-ID routing for an isolated format-2 term.
+ * @param read - current independently validated term; agents preserve bytes and publish the returned files.
+ * @param learner - explicitly known identity when joining this term to earlier terms of the same child.
+ * @param recovery - verified per-file originals, complete lesson-log read and optional fresh partial outputs.
+ * @returns repeatable same-identity outputs; unknown custom content stays pending and no learning fact is added.
+ */
+export function describeKnowledgeMigration(read, learner, recovery) {
+    const plan = { status: 'blocked', outputs: [], preservedSources: [], pending: [], issues: [] };
+    if (!['valid', 'archived'].includes(read.status) || !read.workspace) {
+        plan.issues.push({ path: '.study/settings.json', field: '', rule: 'migration-read', correction: 'Read and repair the complete isolated active or archived term before describing knowledge migration.' });
+        return plan;
+    }
+    const { settings, collections, blocks, worksheets } = read.workspace;
+    if (settings.learnerId && learner && learner !== settings.learnerId) {
+        plan.issues.push({ path: '.study/settings.json', field: 'learnerId', rule: 'learner-identity', correction: 'Retain the known stable child identity; account sharing cannot join different learners.' });
+        return plan;
+    }
+    if (!settings.learnerId && !learner) {
+        plan.issues.push({ path: '.study/settings.json', field: 'learnerId', rule: 'learner-identity', correction: 'Provide the explicitly confirmed Student learner identity; a term, workspace or shared service account cannot establish child ownership.' });
+        return plan;
+    }
+    const learnerId = termSettingsSchema.shape.learnerId.unwrap().parse(settings.learnerId ?? learner);
+    plan.learnerId = learnerId;
+    plan.termId = settings.termId;
+    const preserved = migrationSources(read.files, recovery);
+    plan.preservedSources = preserved.preservedSources;
+    plan.pending = preserved.pending;
+    plan.issues = preserved.issues;
+    if (plan.issues.length)
+        return plan;
+    const references = new Map((collections?.legacyReferences ?? []).map(reference => [`${reference.kind}:${reference.oldId}`, reference]));
+    const add = (kind, oldId) => {
+        if (references.has(`${kind}:${oldId}`))
+            return;
+        const reference = resolveLegacyReference(kind, oldId);
+        references.set(`${kind}:${oldId}`, { kind, oldId, status: reference.status, candidateGoalIds: reference.candidateGoalIds,
+            routes: reference.routes.map(({ goalId, familyId }) => ({ goalId, familyId })), reason: reference.pendingReasons.join('; ') || 'Review original subpart, tested scope, actual answer date and help before evidence reuse.' });
+    };
+    for (const goal of collections?.objectives ?? [])
+        add('objective', goal.id);
+    for (const exercise of collections?.exercises ?? []) {
+        add('exercise', exercise.id);
+        add('objective', exercise.objectiveId);
+    }
+    for (const mistake of collections?.mistakes ?? [])
+        if (mistake.objectiveId)
+            add('objective', mistake.objectiveId);
+    for (const file of [...blocks, ...worksheets])
+        for (const question of file.kind === 'block' ? file.questions : file.items) {
+            if (typeof question.objectiveId === 'string' && !question.capability)
+                add('objective', question.objectiveId);
+            if (question.source.kind === 'exercise' && !question.capability)
+                add('exercise', question.source.exerciseId);
+        }
+    const entries = read.files.flatMap(file => file.file ? [{ path: file.path, file: file.file }] : []);
+    const outputs = entries.map(({ path, file }) => ({ path, file: file.kind === 'collections' ? collectionsSchema.parse({ ...file, learnerId, legacyReferences: [...references.values()] }) : officialFileSchemas[file.kind].parse({ ...file, learnerId }) }));
+    if (!collections && references.size)
+        outputs.push({ path: '.study/collections.json', file: collectionsSchema.parse({ format: 2, kind: 'collections', termId: settings.termId, learnerId, mistakes: [], rewards: [], legacyReferences: [...references.values()] }) });
+    const validation = validateStudyFiles(outputs.map(({ path, file }) => ({ path, value: file })), entries);
+    plan.issues = validation.issues;
+    const current = recovery?.current ?? read;
+    plan.outputs = outputs.map(({ path, file }) => {
+        const observed = current.files.find(entry => entry.path === path)?.file;
+        const original = entries.find(entry => entry.path === path)?.file;
+        return { path, file, status: canonical(observed) === canonical(file) ? 'already-valid' : canonical(observed) === canonical(original) ? 'write-needed' : 'conflict' };
+    });
+    plan.outputs.sort((left, right) => Number(left.file.kind === 'term-settings') - Number(right.file.kind === 'term-settings'));
+    if (plan.outputs.some(output => output.status === 'conflict') || current.files.some(file => !outputs.some(output => output.path === file.path)))
+        plan.issues.push({ path: '.study', field: '', rule: 'migration-conflict', correction: 'Preserve concurrent edits and reread the original backups and current outputs before merging by identity.' });
+    plan.status = !validation.valid || plan.issues.length ? 'blocked' : plan.outputs.every(output => output.status === 'already-valid') ? 'complete' : plan.outputs.some(output => output.status === 'already-valid') ? 'partial' : 'ready';
+    return plan;
+}
+function migrationSources(sources, recovery) {
+    const result = { preservedSources: [], pending: [], issues: [] };
+    if (!recovery) {
+        result.issues.push({ path: '.study', field: '', rule: 'original-byte-backup', correction: 'Independently read a distinct exact-byte backup of every original file and the complete classroom log before migration.' });
+        return result;
+    }
+    if (recovery.current?.status === 'future-format' || !['valid', 'missing'].includes(recovery.lessons.status)) {
+        result.issues.push({ path: recovery.current?.status === 'future-format' ? '.study' : OPENMAIC_LESSONS_PATH, field: 'format', rule: 'migration-read', correction: 'Preserve unsupported or incomplete files and use a compatible reader before any migration write.' });
+        return result;
+    }
+    const originals = [...sources];
+    if (recovery.lessons.status === 'valid') {
+        const { bytes, observation, file } = recovery.lessons;
+        if (!bytes || !observation || !file) {
+            result.issues.push({ path: OPENMAIC_LESSONS_PATH, field: '', rule: 'migration-read', correction: 'Read the complete original lesson file and its exact bytes.' });
+            return result;
+        }
+        originals.push({ path: OPENMAIC_LESSONS_PATH, ...observation, bytes });
+        for (const [index, lesson] of file.lessons.entries()) {
+            const fields = ['learnerId', 'termId', 'blockId'].filter(field => !lesson[field]);
+            if (fields.length)
+                result.pending.push({ sourcePath: OPENMAIC_LESSONS_PATH, row: `lessons.${index}`, fields, reason: 'Preserve the original unbound lesson; a URL or shared account cannot establish learning ownership.' });
+        }
+    }
+    const backups = recovery.backups.map(backup => ({ backup, sha256: sourceSha256(backup.bytes) }));
+    for (const source of originals) {
+        const sha256 = sourceSha256(source.bytes);
+        const backup = backups.find(entry => entry.backup.path !== source.path && entry.backup.targetKey !== source.targetKey && entry.sha256 === sha256)?.backup;
+        if (!backup)
+            result.issues.push({ path: source.path, field: '', rule: 'original-byte-backup', correction: 'Preserve and independently verify a distinct backup of these exact original bytes before migration.' });
+        else
+            result.preservedSources.push({ path: source.path, backupPath: backup.path, sha256 });
+    }
+    return result;
 }
 //# sourceMappingURL=recovery.js.map

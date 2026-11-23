@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { type OfficialFile, type TermId } from './schema.ts';
 import { type FileIssue } from './validation.ts';
 import type { ObservedFile, WorkspaceRead, StudyFiles } from './read.ts';
+import type { LessonFileRead } from './lessons.ts';
 /**
  * Hash original bytes for backup/source verification and recoverable migration identity.
  * @param bytes - exact observed source bytes, before compatibility transformation.
@@ -35,6 +36,7 @@ export interface MigrationPlan {
     sourceVersion?: string;
     backupPath?: string;
     outputs: MigrationOutput[];
+    preservedSources: KnowledgeMigrationPlan['preservedSources'];
     pending: PendingLegacyFact[];
     issues: FileIssue[];
 }
@@ -43,12 +45,14 @@ export interface MigrationPlan {
  * @param read - freshly observed, non-mutating legacy read.
  * @param backup - independently observed original-byte backup, never an overwritten existing original.
  * @param existing - independently read existing v2 output for interrupted-operation recovery.
+ * @param learner - confirmed child identity, required unless an existing output already records it.
+ * @param recovery - complete classroom-log read and original-byte backups; future formats block all outputs.
  * @returns stable entities, named unsupported facts and explicit partial/conflicting outputs; performs no writes.
  */
 export declare function describeMigration(read: WorkspaceRead, backup: ObservedFile, existing?: readonly {
     path: string;
     file: OfficialFile;
-}[]): MigrationPlan;
+}[], learner?: import('./schema.ts').LearnerId, recovery?: MigrationRecovery): MigrationPlan;
 /** A validated observed-version backup, separate from business authority. */
 export declare const backupSchema: z.ZodObject<{
     format: z.ZodLiteral<1>;
@@ -135,4 +139,36 @@ export interface ArchiveDescription {
  * @returns stable archive identity, missing outputs and explicit partial outcome.
  */
 export declare function describeArchive(source: WorkspaceRead, archive: WorkspaceRead, active: WorkspaceRead): ArchiveDescription | undefined;
+/** Read-only format-2 identity and reference migration, with no copied or reassessed learner responses. */
+export interface KnowledgeMigrationPlan {
+    status: 'ready' | 'partial' | 'complete' | 'blocked';
+    learnerId?: import('./schema.ts').LearnerId;
+    termId?: TermId;
+    outputs: {
+        path: string;
+        file: OfficialFile;
+        status: 'write-needed' | 'already-valid' | 'conflict';
+    }[];
+    preservedSources: {
+        path: string;
+        backupPath: string;
+        sha256: string;
+    }[];
+    pending: PendingLegacyFact[];
+    issues: FileIssue[];
+}
+/** Independently observed original-byte backups and current outputs for resuming the same migration plan. */
+export interface MigrationRecovery {
+    backups: readonly ObservedFile[];
+    lessons: LessonFileRead;
+    current?: WorkspaceRead;
+}
+/**
+ * Describe stable learner identity and complete old-ID routing for an isolated format-2 term.
+ * @param read - current independently validated term; agents preserve bytes and publish the returned files.
+ * @param learner - explicitly known identity when joining this term to earlier terms of the same child.
+ * @param recovery - verified per-file originals, complete lesson-log read and optional fresh partial outputs.
+ * @returns repeatable same-identity outputs; unknown custom content stays pending and no learning fact is added.
+ */
+export declare function describeKnowledgeMigration(read: WorkspaceRead, learner?: import('./schema.ts').LearnerId, recovery?: MigrationRecovery): KnowledgeMigrationPlan;
 //# sourceMappingURL=recovery.d.ts.map

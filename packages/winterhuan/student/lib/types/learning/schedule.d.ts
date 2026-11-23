@@ -21,7 +21,7 @@ export interface MistakeReplay {
  * @param windowStart - optional seven-day window start for review completion.
  * @returns earned stage, current due date and one review opportunity/completion per mistake.
  */
-export declare function replayMistake(mistake: StudyState['mistakes'][number], index: EvidenceIndex, now: number, windowStart?: number): MistakeReplay;
+export declare function replayMistake(mistake: Pick<StudyState['mistakes'][number], 'id' | 'subject' | 'objectiveId' | 'confirmedAt'>, index: EvidenceIndex, now: number, windowStart?: number): MistakeReplay;
 /**
  * Update display-only review fields through the shared replay owner.
  * @param state - parsed display projection; persisted stages are ignored.

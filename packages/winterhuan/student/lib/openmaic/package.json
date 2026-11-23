@@ -1,0 +1,20 @@
+{
+  "name": "@openmaic/dsh-openmaic",
+  "version": "0.4.0",
+  "type": "module",
+  "license": "MIT",
+  "main": "./client-entry.js",
+  "exports": {
+    ".": "./client-entry.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime"
+      ],
+      "platform": "web"
+    }
+  }
+}

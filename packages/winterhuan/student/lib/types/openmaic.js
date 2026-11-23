@@ -1,7 +1,9 @@
 import { z } from 'zod';
+import { knowledgeIdSchema } from "./capabilities.js";
+import { feedbackBindingSchema, feedbackCheckpointSchema } from "./openmaic/feedback-schema.js";
 import { readLessonFile } from "./files/lessons.js";
 /** Default OpenMAIC origin when the parent has not saved one and OPENMAIC_BASE is unset. */
-export const DEFAULT_OPENMAIC_BASE = 'http://localhost:3000';
+export const DEFAULT_OPENMAIC_BASE = 'https://open.maic.chat';
 /** Lesson log written by the tutor shell. It is not learning evidence and is not inside state.json. */
 export const OPENMAIC_LESSONS_PATH = '.study/openmaic-lessons.json';
 /** Cookie jar shared by generate, poll, retry and stage reads. Never copy it into chat or state. */
@@ -40,8 +42,11 @@ export function normalizeOpenmaicBase(value) {
     return `${url.protocol}//${url.host}${path}`;
 }
 /**
- * Parent setting wins, then OPENMAIC_BASE, then the localhost default.
+ * Parent setting wins, then OPENMAIC_BASE, then the default origin.
  * An invalid saved or environment value is skipped rather than failing a status read.
+ * @param saved - the parent's saved base, when present.
+ * @param env - the OPENMAIC_BASE environment value, when present.
+ * @returns the first valid base or the default origin.
  */
 export function effectiveOpenmaicBase(saved, env) {
     const fromSaved = saved !== undefined && saved !== '' ? normalizeOpenmaicBase(saved) : '';
@@ -52,7 +57,11 @@ export function effectiveOpenmaicBase(saved, env) {
         return fromEnv;
     return DEFAULT_OPENMAIC_BASE;
 }
-/** An http(s) URL with no embedded credentials, or undefined when the browser must not open it. */
+/**
+ * Validate a lesson URL before opening it in the browser.
+ * @param value - the recorded lesson address.
+ * @returns an http(s) URL with no embedded credentials, or undefined when it is unsafe or invalid.
+ */
 export function lessonHttpUrl(value) {
     let url;
     try {
@@ -78,8 +87,12 @@ export const lessonSchema = z.object({
     title: z.string().trim().min(1).max(120),
     requirement: z.string().trim().min(1).max(4000),
     subject: z.enum(['chinese', 'math', 'english']).optional(),
-    objectiveId: lessonId.optional(),
+    objectiveId: knowledgeIdSchema.optional(),
     base: z.string().trim().min(1).max(200).refine(value => normalizeOpenmaicBase(value) !== undefined && normalizeOpenmaicBase(value) !== '', 'OpenMAIC 地址无效'),
+    learnerId: lessonId.optional(),
+    termId: lessonId.optional(),
+    blockId: lessonId.optional(),
+    learnerKey: z.string().trim().min(1).max(200).optional(),
     jobId: z.string().trim().min(1).max(200).optional(),
     pollUrl: pollUrl.optional(),
     runId: z.string().trim().min(1).max(200).optional(),
@@ -89,6 +102,8 @@ export const lessonSchema = z.object({
     url: httpLessonUrl.optional(),
     warning: z.string().trim().max(1000).optional(),
     error: z.string().trim().max(1000).optional(),
+    feedback: feedbackBindingSchema.optional(),
+    checkpoint: feedbackCheckpointSchema.optional(),
     summary: z.object({
         fetchedAt: stamp,
         outline: z.string().trim().min(1).max(2000),
@@ -98,19 +113,37 @@ export const lessonSchema = z.object({
         }).strict()).max(12),
     }).strict().optional(),
 }).strict().superRefine((lesson, ctx) => {
+    if (lesson.feedback && (lesson.feedback.learnerId !== lesson.learnerId || lesson.feedback.termId !== lesson.termId || lesson.feedback.blockId !== lesson.blockId || !lesson.classroomId || !lesson.learnerKey))
+        ctx.addIssue({ code: 'custom', path: ['feedback'], message: 'Retain the original learner, term, block and classroom source binding.' });
+    if (lesson.checkpoint && lesson.checkpoint.bindingId !== lesson.feedback?.bindingId)
+        ctx.addIssue({ code: 'custom', path: ['checkpoint'], message: 'Checkpoint belongs to the original prepared feedback binding.' });
     if (lesson.updatedAt < lesson.createdAt)
         ctx.addIssue({ code: 'custom', path: ['updatedAt'], message: 'Use lifecycle times with update after creation.' });
 });
 /** Complete independent OpenMAIC business file; validation checks all eighty possible rows before pagination. */
 export const lessonFileSchema = z.object({ format: z.literal(1), lessons: z.array(lessonSchema).max(80) }).strict().superRefine((file, ctx) => {
     const seen = new Set();
+    const partitions = new Map();
     for (const [index, lesson] of file.lessons.entries()) {
         if (seen.has(lesson.id))
             ctx.addIssue({ code: 'custom', path: ['lessons', index, 'id'], message: 'Lesson identities must be unique.' });
         seen.add(lesson.id);
+        if (lesson.feedback && lesson.classroomId && lesson.learnerKey) {
+            const partition = JSON.stringify([lesson.base, lesson.classroomId, lesson.learnerKey]);
+            const owner = JSON.stringify([lesson.learnerId, lesson.termId, lesson.blockId]);
+            if (partitions.has(partition) && partitions.get(partition) !== owner)
+                ctx.addIssue({ code: 'custom', path: ['lessons', index, 'feedback'], message: 'One classroom learner partition retains one original Student learner, term and block.' });
+            partitions.set(partition, owner);
+        }
     }
 });
-/** Build the settings half of the projection before a file read. */
+/**
+ * Build the settings half of the projection before a file read.
+ * @param savedBase - the parent's saved base, when present.
+ * @param lessons - the lesson rows to display; defaults to an empty list.
+ * @param error - a read failure to display alongside the remaining workbench.
+ * @returns the lesson rows, resolved base and workspace file paths.
+ */
 export function interactiveLessonsView(savedBase, lessons = [], error) {
     return {
         baseUrl: effectiveOpenmaicBase(savedBase, process.env.OPENMAIC_BASE),
@@ -156,6 +189,10 @@ export function parseInteractiveLessons(text) {
  * Read the lesson log from the session workspace.
  * A missing file is an empty list. A bad file sets `error` and does not fail the workspace request.
  * The shared reader checks actual versions on both sides; the desk displays at most twenty valid rows.
+ * @param agent - the session workspace and its filesystem service.
+ * @param signal - cancels filesystem reads; cancellation rejects the request.
+ * @param savedBase - the parent's saved base, when present.
+ * @returns the lesson projection, with an error for an unreadable file.
  */
 export async function readInteractiveLessons(agent, signal, savedBase) {
     const empty = interactiveLessonsView(savedBase);

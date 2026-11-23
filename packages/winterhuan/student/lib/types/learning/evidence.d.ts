@@ -1,7 +1,7 @@
 /** One read-derived evidence index for mastery, review, history and summary consumers. */
 import type { StudyState } from '../schema.ts';
 import type { ValidatedWorkspace } from '../files/validation.ts';
-import type { AnswerDate, Assessment, LearnerResponse } from '../files/schema.ts';
+import type { AnswerDate, Assessment, LearnerResponse, LearningBlock } from '../files/schema.ts';
 /** Effective assessment of one original response; corrections retain its identity and answer date. */
 export interface EffectiveEvidence {
     termId: string;
@@ -18,9 +18,18 @@ export interface EffectiveEvidence {
     assistance: LearnerResponse['assistance'];
     answerDate: AnswerDate;
     basisStatus?: 'legacy-pending';
+    official?: Assessment['official'];
+    officialHistory?: Assessment['officialHistory'];
+    grading?: Assessment['grading'];
     source: LearnerResponse['source'];
     sourceStatus: 'known' | 'unknown';
     assessedAt?: number;
+    capability?: LearningBlock['questions'][number]['capability'];
+    criteria?: Assessment['criteria'];
+    feedback?: string;
+    errorType?: Assessment['errorType'];
+    /** Allowed mastery scopes; an empty list retains this fact only for historical review replay. */
+    referenceScopes?: NonNullable<LearningBlock['questions'][number]['capability']>['scope'][];
 }
 /** Shared normalized response facts and separately preserved current help signals. */
 export interface EvidenceIndex {
@@ -33,7 +42,7 @@ export interface EvidenceIndex {
 /**
  * Derive effective facts once from validated block and worksheet owners.
  * @param workspace - current validated entity files.
- * @returns one fact per saved response, including unassessed facts and unknown dates, help or unverified native sources; confirmed paper days retain day precision.
+ * @returns one fact per saved response, including unassessed facts and unknown dates, help or native sources without a complete captured learner/term/block/question/response owner; confirmed paper days retain day precision.
  */
 export declare function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex;
 /**

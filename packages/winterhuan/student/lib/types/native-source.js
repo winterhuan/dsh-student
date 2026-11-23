@@ -1,7 +1,46 @@
 /** Exact consumed native input versions from one immutable Session observation. */
+import { z } from 'zod';
 import { createHash } from 'node:crypto';
-import { KNOWN_SESSION_EVENT_TYPES } from '@deepseek-ai/dsh-session';
+import { KNOWN_SESSION_EVENT_TYPES, pluginRecordOf } from '@deepseek-ai/dsh-session';
 import { canonical } from "./learning/shared.js";
+const learningScopeSchema = z.object({ learnerId: z.string().min(1), termId: z.string().min(1), blockId: z.string().min(1), questionId: z.string().min(1), responseId: z.string().min(1).optional() });
+/** Log-only Host support; losing this record leaves ordinary native ownership unknown. */
+export const nativeOwnerCaptureSchema = z.object({ sessionId: z.string().min(1), turn: z.number().int().nonnegative(), step: z.number().int().positive(), receiptSeq: z.number().int().nonnegative(), messageHash: z.string().regex(/^[a-f0-9]{64}$/u), scope: learningScopeSchema.omit({ responseId: true }), questionSnapshot: z.string().min(1).max(65_536), versions: z.array(z.object({ path: z.string(), targetKey: z.string(), version: z.string() })).length(2) });
+/**
+ * Fingerprint an immutable native input including its identity and attachments.
+ * @param message - Complete originally inserted or consumed message.
+ * @returns Stable hash for exact receipt and consumption matching.
+ */
+export function nativeMessageHash(message) { return createHash('sha256').update(canonical(message)).digest('hex'); }
+function learningScope(text) {
+    const intention = /(?:^|\n)Student intention:\n([^\n]+)(?:\n|$)/u.exec(text)?.[1];
+    if (!intention)
+        return undefined;
+    try {
+        const scope = learningScopeSchema.safeParse(JSON.parse(intention));
+        return scope.success ? { learnerId: scope.data.learnerId, termId: scope.data.termId, blockId: scope.data.blockId, questionId: scope.data.questionId, ...(scope.data.responseId ? { responseId: scope.data.responseId } : {}) } : undefined;
+    }
+    catch {
+        return undefined;
+    }
+}
+function panelAnswer(text, sessionId) {
+    if (!text.startsWith('请加载 study 技能。在当前原生会话处理下面的意图，'))
+        return undefined;
+    if (Buffer.byteLength(text) > 32_768)
+        return 'invalid';
+    const lines = /^[^\n]+\nStudent intention:\n([^\n]+)\n([\s\S]*)$/u.exec(text);
+    try {
+        const intent = lines && z.object({ ...learningScopeSchema.shape, responseId: z.string().min(1), nativeSessionId: z.literal(sessionId), request: z.string(), operation: z.object({ action: z.literal('answer'), taskId: z.string().min(1), response: z.string().min(1).max(2000) }).passthrough() }).passthrough().safeParse(JSON.parse(lines[1]));
+        if (!intent || !intent.success || intent.data.request !== lines[2] || intent.data.operation.taskId !== intent.data.questionId)
+            return 'invalid';
+        const { learnerId, termId, blockId, questionId, responseId } = intent.data;
+        return { rawResponse: intent.data.operation.response, scope: { learnerId, termId, blockId, questionId, responseId } };
+    }
+    catch {
+        return 'invalid';
+    }
+}
 /**
  * Replay the complete immutable prefix and identify native versions actually consumed in entered steps.
  * @param observation - caller-owned raw observation; this function does not retain or dispose it.
@@ -35,6 +74,15 @@ export function resolveNativeSources(observation) {
             return unavailable('Session events are not contiguous.');
         if (!event.ignorable && !KNOWN_SESSION_EVENT_TYPES.has(event.type))
             return unavailable('Native source replay contains an unsupported required event.');
+        const record = pluginRecordOf(event);
+        if (record?.type === 'plugin:student/native-owner' && event.seq >= observation.inheritedEventCount && claimWindow && !entered) {
+            const parsed = nativeOwnerCaptureSchema.safeParse(record.data);
+            if (parsed.success && parsed.data.sessionId === cut.sessionId && parsed.data.turn === turn) {
+                const slot = claims.find(slot => slot.receipt.kind === 'known' && slot.receipt.seq === parsed.data.receiptSeq && nativeMessageHash(slot.message) === parsed.data.messageHash);
+                if (slot && !slot.capture)
+                    slot.capture = parsed.data;
+            }
+        }
         switch (event.type) {
             case 'agent/inbox/spliced': {
                 const { target, start, removedCount = 0, inserted, outcome } = event.data;
@@ -86,6 +134,9 @@ export function resolveNativeSources(observation) {
                 break;
             case 'step/start':
                 sealed = event.data.turn === turn && claimWindow ? claims : [];
+                for (const slot of sealed)
+                    if (slot.capture?.step !== event.data.step)
+                        delete slot.capture;
                 claims = [];
                 entered = true;
                 claimWindow = false;
@@ -103,12 +154,19 @@ export function resolveNativeSources(observation) {
                 const receipt = event.seq < observation.inheritedEventCount ? { kind: 'unknown', reason: 'Inherited consumption is not new input in this Session.' } : consumed?.receipt ?? { kind: 'unknown', reason: 'No exact claim in the entered step.' };
                 const inputVersion = `dsh-native-v1:${createHash('sha256').update(canonical({ algorithm: 'dsh-native-v1', sessionId: cut.sessionId, consumedSeq: event.seq, message })).digest('hex')}`;
                 const text = message.content.filter(block => block.type === 'text').map(block => block.text).join('');
-                const rawResponse = text.length > 0 && text.length <= 2000 ? text : undefined;
+                const panel = panelAnswer(text, cut.sessionId);
+                const rawResponse = panel === 'invalid' ? undefined : panel?.rawResponse ?? (text.length > 0 && text.length <= 2000 ? text : undefined);
                 const attachments = message.content.flatMap(block => block.type === 'image' || block.type === 'file' ? [{ kind: block.type, attachmentId: block.attachment.attachmentId }] : []);
-                const input = { status: 'consumed', messageId: message.id, inputVersion, consumedSeq: event.seq, ...(rawResponse === undefined ? { textUnavailable: 'Exact native text is empty or exceeds 2000 characters.' } : { rawResponse }), receipt, ...('rpcId' in message.source ? { requestId: message.source.rpcId } : {}), attachments: attachments.slice(0, 8), omittedAttachments: Math.max(0, attachments.length - 8) };
+                const explicitScope = panel && panel !== 'invalid' ? panel.scope : rawResponse === undefined ? undefined : learningScope(rawResponse);
+                const captured = panel === undefined && !explicitScope && !/Student (?:intention|grading correction):/u.test(text) ? consumed?.capture : undefined;
+                const originalScope = explicitScope ?? (captured ? { ...captured.scope, responseId: `native_${inputVersion.slice('dsh-native-v1:'.length)}` } : undefined);
+                const input = { status: 'consumed', messageId: message.id, inputVersion, consumedSeq: event.seq, ...(rawResponse === undefined ? { textUnavailable: 'Exact native text is empty or exceeds 2000 characters.' } : { rawResponse }), receipt, ...(originalScope ? { learningScope: originalScope } : {}), ...('rpcId' in message.source ? { requestId: message.source.rpcId } : {}), attachments: attachments.slice(0, 8), omittedAttachments: Math.max(0, attachments.length - 8) };
                 inputs.push(input);
                 if (receipt.kind === 'known' && rawResponse !== undefined)
-                    observations.push({ sessionId: cut.sessionId, messageId: message.id, inputVersion, rawResponse, receiptAt: receipt.at });
+                    observations.push({ sessionId: cut.sessionId, messageId: message.id, inputVersion, rawResponse, receiptAt: receipt.at, ...(originalScope ? { learningScope: originalScope } : {}), ...(captured ? { questionSnapshot: captured.questionSnapshot } : {}) });
+                // Previously saved short panel envelopes retain their exact input reference during answer extraction.
+                if (receipt.kind === 'known' && panel && panel !== 'invalid' && text.length <= 2000)
+                    observations.push({ sessionId: cut.sessionId, messageId: message.id, inputVersion, rawResponse: text, receiptAt: receipt.at, learningScope: panel.scope });
                 break;
             }
             case 'step/end':

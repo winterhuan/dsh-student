@@ -50,6 +50,7 @@ export type StudentWatchFrame = {
 } | {
     kind: 'failure';
     message: string;
+    reason?: 'main-session-required';
 };
 /** The shared manual request with JSON values at its wire baseline. */
 export interface StudentManualSaveRequest extends Omit<ManualSaveRequest, 'baseline'> {
@@ -103,5 +104,16 @@ export interface StudentSubmissionInspection {
     versions: WorkspaceQueryResult['versions'];
     issues: FileIssue[];
     backupIssues?: FileIssue[];
+}
+/** Explicit learning return/continue/resume or pause of one bound classroom's native feedback intent. */
+export interface StudentFeedbackSyncRequest {
+    lessonId: string;
+    trigger: 'return' | 'continue' | 'resume' | 'pause';
+}
+/** Native queue admission is separate from independently accepted saved learning facts. */
+export interface StudentFeedbackSyncReply {
+    lessonId: string;
+    status: 'queued' | 'coalesced' | 'paused' | 'unavailable';
+    messageId?: string;
 }
 //# sourceMappingURL=types.d.ts.map

@@ -13,4 +13,7 @@ export * from '../learning/evidence.ts';
 export * from '../learning/queries.ts';
 export { lessonSchema, lessonFileSchema } from '../openmaic.ts';
 export type { LessonFile } from '../openmaic.ts';
+export * from '../capabilities.ts';
+export * from '../openmaic/feedback-schema.ts';
+export * from '../openmaic/feedback-consumer.ts';
 //# sourceMappingURL=index.d.ts.map

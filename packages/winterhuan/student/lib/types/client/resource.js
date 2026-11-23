@@ -66,7 +66,7 @@ export function createStudentResourceOwner(remote) {
                         const frame = item.value;
                         item.accept();
                         if (frame.kind === 'failure') {
-                            yield { ok: false, error: new RemoteError('student/unavailable', frame.message, {}) };
+                            yield { ok: false, error: new RemoteError(frame.reason === 'main-session-required' ? 'student/main-session-required' : 'student/unavailable', frame.message, {}) };
                             continue;
                         }
                         const value = frame.value;

@@ -12,4 +12,7 @@ export * from "./projection.js";
 export * from "../learning/evidence.js";
 export * from "../learning/queries.js";
 export { lessonSchema, lessonFileSchema } from "../openmaic.js";
+export * from "../capabilities.js";
+export * from "../openmaic/feedback-schema.js";
+export * from "../openmaic/feedback-consumer.js";
 //# sourceMappingURL=index.js.map

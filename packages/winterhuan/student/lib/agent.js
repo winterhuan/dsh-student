@@ -1,10 +1,28 @@
-import { a as queryWorkspace } from "./queries-uLd6NB9L.js";
-import { t as readStudentWorkspace } from "./transport-CbFZ8REh.js";
+import { t as applicationStudyFiles } from "./application-DeHoqa_C.js";
+import { E as openmaicAcademicQuestion, G as canonical, ht as readLessonFile, t as readWorkspace } from "./read-CepqKvWP.js";
+import { a as openmaicEntityId, n as generationRequestSchema, o as readStudentWorkspace, u as nativeMessageHash } from "./generation-Cn5g2nX9.js";
+import { a as queryWorkspace } from "./queries-BV89yC1Y.js";
+import "node:module";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { BUNDLED_SKILL_RANK } from "@deepseek-ai/dsh-skill";
 import { defineTool } from "@deepseek-ai/dsh-tools";
 import { z } from "zod";
+import { Service } from "@deepseek-ai/cordis";
+import { appendPluginRecord } from "@deepseek-ai/dsh-session";
+import { apply as apply$1 } from "./openmaic/lib/index.js";
+//#region \0rolldown/runtime.js
+var __defProp = Object.defineProperty;
+var __exportAll = (all, no_symbols) => {
+	let target = {};
+	for (var name in all) __defProp(target, name, {
+		get: all[name],
+		enumerable: true
+	});
+	if (!no_symbols) __defProp(target, Symbol.toStringTag, { value: "Module" });
+	return target;
+};
+//#endregion
 //#region lib/types/skill-provider.js
 /** Provide the study Skill, teaching references and default textbook pages from the installed package. */
 function createStudySkillProvider() {
@@ -79,6 +97,10 @@ function registerStudyTools(context) {
 				type: "string",
 				enum: [
 					"status",
+					"capabilities",
+					"families",
+					"knowledge-sources",
+					"legacy-references",
 					"learning-context",
 					"files",
 					"settings",
@@ -102,7 +124,7 @@ function registerStudyTools(context) {
 					"diagnose",
 					"review-sheet"
 				],
-				description: "status (default) returns validated status and learning context; learning-context returns current block/question, saved responses, pending assessment, selected scope, target facts/method and at most three seeds; files pages official file identities and paths; settings returns term setup; summary returns seven Shanghai calendar days; collections page 20 records with offset. curriculum needs subject (grade and term browse another map); elements needs subject and returns question-writing elements, exercises and the hint ladder; exercises pages shipped and workspace exercises (optional subject, unit or id/objectiveId); diagnose returns check-in plans (grade, term or unit narrow the scope); review-sheet needs subject; weak lists weak points."
+				description: "status (default) returns validated status and learning context; capabilities and families page source-backed goals and canonical mothers (optional subject/id); knowledge-sources returns official curriculum sources and coverage limits; legacy-references pages pending old-ID routes and never grants mastery; learning-context returns current block/question, saved responses, pending assessment, selected scope, target facts/method and at most three seeds; files pages official file identities and paths; settings returns term setup; summary returns seven Shanghai calendar days; collections page 20 records with offset. curriculum needs subject (grade and term browse another map); elements needs subject and returns question-writing elements, exercises and the hint ladder; exercises pages shipped and workspace exercises (optional subject, unit or id/objectiveId); diagnose returns check-in plans (grade, term or unit narrow the scope); review-sheet needs subject; weak lists weak points."
 			},
 			offset: {
 				type: "integer",
@@ -284,6 +306,413 @@ function registerStudyTools(context) {
 	}));
 }
 //#endregion
+//#region lib/types/native-capture.js
+/** Receipt-time ownership is support metadata; the agent still authors all academic records. */
+/** Host-owned receipt snapshots are released on Agent disposal and Host teardown. */
+var StudentNativeCapture = class extends Service {
+	owners = /* @__PURE__ */ new WeakMap();
+	admissions = /* @__PURE__ */ new WeakMap();
+	/** @param ctx - Host lifetime owning receipt metadata. */
+	constructor(ctx) {
+		super(ctx, "studentNativeCapture");
+		ctx.on("agent/disposed", ({ agent }) => {
+			this.owners.delete(agent);
+			this.admissions.delete(agent);
+		});
+		ctx.effect(() => () => {
+			this.owners = /* @__PURE__ */ new WeakMap();
+			this.admissions = /* @__PURE__ */ new WeakMap();
+		});
+	}
+	/** @param agent - Main Agent. @returns Current receipt owner, if available. */
+	owner(agent) {
+		return this.owners.get(agent);
+	}
+	/**
+	* Cache a complete independent owner publication before later user receipt.
+	* @param agent - Owning main native Agent.
+	* @param read - Independently read files with observed versions.
+	* @returns Frozen owner and question when complete; otherwise removes cached ownership.
+	*/
+	remember(agent, read) {
+		this.owners.delete(agent);
+		const workspace = read.status === "valid" ? read.workspace : void 0;
+		const block = workspace?.blocks.find((block) => block.endedAt === void 0);
+		const question = block?.questions.find((question) => question.id === block.currentQuestionId);
+		if (!workspace?.settings.learnerId || !block?.learnerId || !question || agent.session.header.parentSession || agent.session.header.origin === "subagent") return void 0;
+		const paths = [".study/settings.json", `.study/blocks/${block.id}.json`];
+		const versions = read.files.filter((file) => paths.includes(file.path) && file.targetKey && file.version).map((file) => ({
+			path: file.path,
+			targetKey: file.targetKey,
+			version: file.version
+		}));
+		const snapshot = {
+			scope: {
+				learnerId: block.learnerId,
+				termId: block.termId,
+				blockId: block.id,
+				questionId: question.id
+			},
+			questionSnapshot: canonical(question),
+			versions
+		};
+		if (versions.length !== 2 || snapshot.questionSnapshot.length > 65536) return void 0;
+		this.owners.set(agent, snapshot);
+		return snapshot;
+	}
+	async refresh(agent, signal) {
+		if (!agent.session.header.cwd || !agent.ctx.get("fs") || !agent.ctx.get("sandboxPolicy")) {
+			this.owners.delete(agent);
+			return;
+		}
+		let read;
+		try {
+			read = await readWorkspace(applicationStudyFiles({
+				agent,
+				signal
+			}), signal);
+		} catch (error) {
+			this.owners.delete(agent);
+			if (signal.aborted) throw error;
+			return;
+		}
+		signal.throwIfAborted();
+		return this.remember(agent, read);
+	}
+	/**
+	* Freeze the cached owner at inbox insertion and recheck it after downstream admission hooks.
+	* @param context - Student preset lifetime and native Agent events.
+	*/
+	register(context) {
+		context.on("agent/created", async ({ agent, signal }) => {
+			await this.refresh(agent, signal ?? AbortSignal.timeout(3e4));
+		});
+		context.on("agent/inbox/discarded", ({ agent, message }) => {
+			const splice = agent.session.snapshotEvents().at(-1);
+			if (splice?.type !== "agent/inbox/spliced" || splice.data.inserted.length !== 1 || splice.data.inserted[0]?.id !== message.id) this.admissions.get(agent)?.delete(message.id);
+		});
+		context.on("agent/inbox/inserted", ({ agent, message }) => {
+			if (message.source.kind !== "user") return;
+			const splice = agent.session.snapshotEvents().at(-1);
+			if (splice?.type !== "agent/inbox/spliced") return;
+			let pending = this.admissions.get(agent);
+			if (!pending) {
+				pending = /* @__PURE__ */ new Map();
+				this.admissions.set(agent, pending);
+			}
+			const previous = pending.get(message.id);
+			const messageHash = nativeMessageHash(message);
+			const continuous = previous && splice.data.removedCount === 1 && splice.data.inserted.length === 1 && previous.sourceSnapshot === canonical(message.source);
+			const snapshot = continuous ? previous.snapshot : agent.status === "idle" ? this.owner(agent) : void 0;
+			pending.delete(message.id);
+			if (snapshot) {
+				if (pending.size >= 20) pending.delete(pending.keys().next().value);
+				pending.set(message.id, {
+					snapshot,
+					messageHash,
+					sourceSnapshot: canonical(message.source),
+					receiptSeq: continuous && previous.messageHash === messageHash ? previous.receiptSeq : splice.seq
+				});
+			}
+		});
+		context.on("agent/pre-step", async ({ agent, messages, turn, step, signal }, next) => {
+			const users = messages.filter((message) => message.source.kind === "user");
+			const original = users.length === 1 ? users[0] : void 0;
+			const admitted = original ? this.admissions.get(agent)?.get(original.id) : void 0;
+			for (const message of users) this.admissions.get(agent)?.delete(message.id);
+			const decision = await next();
+			if (decision.kind !== "enter") return decision;
+			const current = await this.refresh(agent, signal);
+			if (original && admitted && nativeMessageHash(original) === admitted.messageHash && decision.messages.filter((message) => nativeMessageHash(message) === admitted.messageHash).length === 1 && canonical(current) === canonical(admitted.snapshot)) {
+				signal.throwIfAborted();
+				appendPluginRecord(agent.session, "plugin:student/native-owner", {
+					...admitted.snapshot,
+					sessionId: agent.session.id,
+					turn,
+					step,
+					receiptSeq: admitted.receiptSeq,
+					messageHash: admitted.messageHash
+				});
+			}
+			return decision;
+		});
+	}
+};
+/** @param context - Student preset registering capture before Agent creation. */
+function registerNativeCapture(context) {
+	(context.root.get("studentNativeCapture") ?? new StudentNativeCapture(context.root)).register(context);
+}
+//#endregion
+//#region lib/types/openmaic/feedback-agent.js
+/**
+* Register the source read alongside the official teaching tools in the Student preset.
+* @param ctx - Preset-scoped tool registry and protected Host connection.
+*/
+function registerOpenmaicFeedback(ctx) {
+	ctx.effect(() => ctx.tools.register(defineTool({
+		name: "openmaic_feedback",
+		description: "Read original authorized classroom answers and grading, or prepare its frozen question binding before playback. Returns bounded authoring facts and independent saved-file acceptance; the agent writes the formal files and runs the read-only CLI before advancing a checkpoint.",
+		parameters: {
+			action: {
+				type: "string",
+				enum: ["prepare", "read"],
+				required: true,
+				description: "prepare freezes the original generated classroom before playback; read rereads original submitted/reviewed records after return, continue or restart."
+			},
+			lessonId: {
+				type: "string",
+				required: true,
+				description: "Original ID in .study/openmaic-lessons.json."
+			},
+			offset: {
+				type: "integer",
+				description: "Zero-based source-question/response page; defaults to 0. Each page returns at most twenty records."
+			}
+		},
+		output: {
+			schema: { type: "json" },
+			render: (_args, value) => [{
+				type: "text",
+				text: JSON.stringify(value)
+			}]
+		},
+		isConcurrencySafe: () => true,
+		async execute(args, exec) {
+			const { action, lessonId, offset = 0 } = z.object({
+				action: z.enum(["prepare", "read"]),
+				lessonId: z.string().min(1).max(80),
+				offset: z.number().int().nonnegative().optional()
+			}).parse(args);
+			const { read, openmaic } = await readStudentWorkspace(exec, void 0, lessonId);
+			const lessonRead = await readLessonFile(applicationStudyFiles(exec), exec.signal);
+			const lesson = [...lessonRead.status === "valid" ? lessonRead.file.lessons : [], ...(read.archiveSources ?? []).flatMap((archive) => archive.lessons.status === "valid" ? archive.lessons.file.lessons.filter((lesson) => lesson.termId === archive.workspace.settings.termId) : [])].find((lesson) => lesson.id === lessonId);
+			const workspace = read.workspace;
+			const unavailable = openmaic.find((fact) => fact.lessonId === lessonId && fact.status === "unavailable");
+			if (action === "read" && read.status === "changing" && unavailable) return {
+				status: "unavailable",
+				lessonId,
+				failure: unavailable.failure ?? "incomplete-read",
+				reason: unavailable.reason ?? "Original official source changed during verification.",
+				complete: false,
+				records: [],
+				total: null,
+				drafts: null,
+				nextOffset: null
+			};
+			if (read.status !== "valid" || !workspace?.settings.learnerId || !lesson?.learnerId || !lesson.termId || lesson.learnerId !== workspace.settings.learnerId || !lesson.blockId || !lesson.classroomId || !lesson.learnerKey || lesson.status !== "ready") throw new Error("Confirm valid original learner, term, block and ready classroom files before reading its source.");
+			const block = [workspace, ...(read.archiveSources ?? []).map((archive) => archive.workspace)].find((owner) => owner.settings.termId === lesson.termId && owner.settings.learnerId === workspace.settings.learnerId)?.blocks.find((block) => block.id === lesson.blockId && block.learnerId === workspace.settings.learnerId);
+			if (!block || !exec.agent?.session.header.cwd) throw new Error("Original classroom block ownership is unresolved.");
+			let result;
+			if (action === "prepare") {
+				const target = block.questions.find((question) => question.id === block.currentQuestionId)?.capability;
+				if (!target) throw new Error("Save the current capability, family and tested scope before preparing classroom feedback.");
+				const prepared = await ctx.studentOpenmaic.feedback(exec.agent.session.header.cwd).prepare({
+					learnerId: lesson.learnerId,
+					termId: lesson.termId,
+					blockId: lesson.blockId,
+					base: lesson.base,
+					classroomId: lesson.classroomId,
+					learnerKey: lesson.learnerKey
+				}, target, exec.signal);
+				result = {
+					status: "prepared",
+					lessonId,
+					feedback: prepared.binding,
+					questions: prepared.questions.slice(offset, offset + 20).map((question) => openmaicAcademicQuestion({
+						binding: prepared.binding,
+						questionId: openmaicEntityId("q", [
+							prepared.binding.bindingId,
+							question.sceneId,
+							question.questionId
+						]),
+						question
+					})),
+					total: prepared.questions.length,
+					nextOffset: offset + 20 < prepared.questions.length ? offset + 20 : null
+				};
+			} else {
+				const fact = openmaic.find((fact) => fact.lessonId === lessonId);
+				result = {
+					status: fact?.status ?? "unavailable",
+					lessonId,
+					reason: fact?.reason,
+					failure: fact?.failure,
+					complete: !!fact?.source,
+					consumption: fact?.consumption,
+					records: [...fact?.source?.observations.map((observation) => ({
+						question: openmaicAcademicQuestion(observation),
+						response: {
+							id: observation.responseId,
+							questionId: observation.questionId,
+							rawResponse: JSON.stringify(observation.source.submittedAnswer),
+							assistance: "unknown",
+							answerDate: { kind: "unknown" },
+							source: observation.source
+						},
+						assessment: {
+							id: openmaicEntityId("a", [observation.responseId]),
+							responseId: observation.responseId,
+							result: observation.result,
+							grading: observation.grading,
+							...observation.official ? {
+								official: observation.official,
+								officialHistory: observation.officialHistory
+							} : {},
+							assistance: "unknown",
+							assessedAt: Date.now(),
+							feedback: observation.grading === "equivalent" ? "The submitted value is equivalent to the frozen criterion; the official result is preserved." : observation.grading === "conflict" ? "The official and frozen criterion conflict; review before accepting evidence." : observation.grading === "pending" ? "The original answer is preserved; missing grading or criterion needs review." : "Checked against the original frozen criterion.",
+							answerEvidence: openmaicAcademicQuestion(observation).answerEvidence
+						},
+						sourceStatus: observation.sourceStatus,
+						reason: observation.reason,
+						answerExposure: observation.answerExposure
+					})) ?? [], ...fact?.source?.pending.map((pendingOpenmaic) => ({ pendingOpenmaic })) ?? []].slice(offset, offset + 20),
+					total: fact?.source ? fact.source.observations.length + fact.source.pending.length : null,
+					drafts: fact?.source?.drafts ?? null,
+					nextOffset: fact?.source && offset + 20 < fact.source.observations.length + fact.source.pending.length ? offset + 20 : null
+				};
+			}
+			const bounded = z.record(z.string(), z.json()).parse(JSON.parse(JSON.stringify(result)));
+			const rows = Array.isArray(bounded.records) ? bounded.records : Array.isArray(bounded.questions) ? bounded.questions : void 0;
+			const originalLength = rows?.length ?? 0;
+			if (bounded.consumption && typeof bounded.consumption === "object" && !Array.isArray(bounded.consumption)) {
+				for (const field of [
+					"missingResponseIds",
+					"missingPendingIds",
+					"conflicts"
+				]) if (Array.isArray(bounded.consumption[field])) {
+					const ids = bounded.consumption[field];
+					bounded.consumption[`${field}Count`] = ids.length;
+					bounded.consumption[field] = ids.slice(0, 20);
+				}
+			}
+			while (Buffer.byteLength(JSON.stringify(bounded)) > 32768 && rows?.length) rows.pop();
+			if (rows && rows.length < originalLength) {
+				bounded.nextOffset = offset + rows.length;
+				bounded.omitted = originalLength - rows.length;
+				if (!rows.length) {
+					bounded.status = "unavailable";
+					bounded.failure = "read-limit";
+					bounded.complete = false;
+					delete bounded.consumption;
+					bounded.reason = "This source record exceeds the native result limit. The offset has not advanced; keep its checkpoint pending.";
+				}
+			}
+			if (Buffer.byteLength(JSON.stringify(bounded)) > 32768) throw new Error("Source metadata exceeds the bounded native read result.");
+			return z.json().parse(bounded);
+		}
+	})), "student: official feedback");
+}
+//#endregion
+//#region lib/types/openmaic/agent.js
+var agent_exports = /* @__PURE__ */ __exportAll({
+	apply: () => apply$2,
+	inject: () => inject$1,
+	name: () => name$1
+});
+const name$1 = "student-openmaic-agent";
+const inject$1 = [
+	"studentOpenmaic",
+	"tools",
+	"skills",
+	"systemPrompt"
+];
+/** Official render/widget/slide and four bundled skills retain their original implementations. */
+function apply$2(ctx) {
+	registerOpenmaicFeedback(ctx);
+	const generate = defineTool({
+		name: "openmaic_generate",
+		description: "Start one official OpenMAIC classroom and return its structured job identity immediately. Continue with the same learner, term, block and jobId to poll after interruption; generating and failed jobs are not learning evidence.",
+		parameters: {
+			learnerId: {
+				type: "string",
+				required: true,
+				description: "Stable Student learner identity from the validated profile."
+			},
+			termId: {
+				type: "string",
+				required: true,
+				description: "Original learning term identity."
+			},
+			blockId: {
+				type: "string",
+				required: true,
+				description: "Original active learning block identity. One generated classroom per block."
+			},
+			requirement: {
+				type: "string",
+				description: "Concrete goal, scope, gaps and teaching activity. Required for the initial submission."
+			},
+			jobId: {
+				type: "string",
+				description: "Original returned job identity when continuing. Never replace it after timeout."
+			},
+			language: {
+				type: "string",
+				enum: ["zh-CN", "en-US"],
+				description: "Classroom language."
+			},
+			enableWebSearch: {
+				type: "boolean",
+				description: "Search factual sources for this lesson."
+			},
+			enableImageGeneration: {
+				type: "boolean",
+				description: "Generate slide images."
+			},
+			enableVideoGeneration: {
+				type: "boolean",
+				description: "Generate lesson video."
+			},
+			enableTTS: {
+				type: "boolean",
+				description: "Generate spoken narration."
+			},
+			agentMode: {
+				type: "string",
+				enum: ["default", "generate"],
+				description: "Official classroom generation mode."
+			}
+		},
+		output: {
+			schema: { type: "json" },
+			render: (_args, value) => [{
+				type: "text",
+				text: JSON.stringify(value)
+			}]
+		},
+		isConcurrencySafe: () => true,
+		async execute(args, exec) {
+			const request = generationRequestSchema.parse(args);
+			const workspace = exec.agent?.session.header.cwd;
+			if (!workspace) throw new Error("OpenMAIC requires the current Student workspace.");
+			const { read } = await readStudentWorkspace(exec);
+			const settings = z.object({
+				learnerId: z.string(),
+				termId: z.string()
+			}).safeParse(read.workspace?.settings);
+			if (!settings.success || settings.data.learnerId !== request.learnerId || settings.data.termId !== request.termId || !read.workspace?.blocks.some((block) => block.id === request.blockId)) throw new Error("Confirm the original Student learner, term and learning block before generating or continuing a classroom.");
+			return z.json().parse(await ctx.studentOpenmaic.generation(workspace).run(request, exec.signal));
+		}
+	});
+	const tools = new Proxy(ctx.tools, { get(target, key, receiver) {
+		if (key === "register") return (tool) => target.register(tool.name === "openmaic_generate" ? generate : tool);
+		return Reflect.get(target, key, receiver);
+	} });
+	const systemPrompt = new Proxy(ctx.systemPrompt, { get(target, key, receiver) {
+		if (key === "section") return (section) => target.section(section.name === "tool:dsh-openmaic" ? {
+			...section,
+			text: "Use openmaic_generate for a complete classroom. It returns the official job identity promptly; continue the same job, then let the agent save validated lesson metadata. Use independent inline OpenMAIC widgets, slides and cards whenever they fit the current goal. Load the matching authoring skill first."
+		} : section);
+		return Reflect.get(target, key, receiver);
+	} });
+	apply$1(new Proxy(ctx, { get(target, key, receiver) {
+		if (key === "tools") return tools;
+		if (key === "systemPrompt") return systemPrompt;
+		return Reflect.get(target, key, receiver);
+	} }), { baseUrl: ctx.studentOpenmaic.connection.baseUrl });
+}
+//#endregion
 //#region lib/types/agent.js
 const name = "student-agent";
 const inject = ["skills", "tools"];
@@ -292,7 +721,9 @@ const inject = ["skills", "tools"];
 */
 function apply(context) {
 	context.effect(() => context.skills.registerProvider(() => createStudySkillProvider()), "student: skills");
+	registerNativeCapture(context);
 	registerStudyTools(context);
+	context.plugin(agent_exports);
 }
 //#endregion
 export { apply, inject, name };

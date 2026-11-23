@@ -1,18 +1,22 @@
 /** Pure parsed-file and cross-entity validation, shared by every Student consumer. */
 import { z } from 'zod';
+import { createHash } from 'node:crypto';
 import { canonical, sameScope, scopeSelects, studyDay } from "../learning/shared.js";
 import { builtinObjectiveAnywhere, builtinObjectiveIn, curriculumFor, subjectExercises } from "../curriculum.js";
 import { officialFileSchemas } from "./schema.js";
 import { customObjectiveMethods } from "../schema.js";
+import { effectiveKnowledge, resolveLegacyReference, scopeSupports } from "../capabilities.js";
+import { answerWasExposed } from "./answer-exposure.js";
 import { errorTypesBySubject } from "../vocabulary.js";
 /**
  * Validate parsed official files and available previously validated versions.
  * @param input - discovered current files with exact workspace-relative paths.
  * @param prior - preserved valid file versions for used-content comparison.
  * @param nativeSources - matching consumed input versions resolved from native Session records.
+ * @param openmaicSources - independently authorized original official submissions and grading.
  * @returns bounded issues and independently valid workspace entities.
  */
-export function validateStudyFiles(input, prior = [], nativeSources = []) {
+export function validateStudyFiles(input, prior = [], nativeSources = [], openmaicSources = []) {
     const issues = [];
     const files = [];
     const paths = new Set();
@@ -58,12 +62,93 @@ export function validateStudyFiles(input, prior = [], nativeSources = []) {
     if (worksheets.length > 500)
         fail('.study/worksheets', '', 'collection-limit', 'Keep at most 500 worksheet files in this term.');
     const collections = files.find(entry => entry.file.kind === 'collections')?.file;
-    const workspace = { settings, blocks, worksheets, nativeSources, ...(collections?.kind === 'collections' ? { collections } : {}) };
+    const workspace = { settings, blocks, worksheets, nativeSources, openmaicSources, ...(collections?.kind === 'collections' ? { collections } : {}) };
     const unique = (path, field, rows) => {
         const seen = new Set();
         rows.forEach((row, index) => { if (seen.has(row.id))
             fail(path, `${field}.${index}.id`, 'duplicate-identity', 'Keep one entry per stable identity; use a new identity for a new attempt.'); seen.add(row.id); });
     };
+    let knowledge = effectiveKnowledge();
+    try {
+        knowledge = effectiveKnowledge(workspace.collections?.knowledge);
+    }
+    catch (error) {
+        fail('.study/collections.json', 'knowledge', 'knowledge-index', error instanceof Error ? error.message : 'Repair the capability catalog.');
+    }
+    for (const [i, confirmation] of (settings.learningScopes ?? []).entries()) {
+        if (confirmation.goalIds && (new Set(confirmation.goalIds).size !== confirmation.goalIds.length || confirmation.goalIds.some(id => !knowledge.goals.some(goal => goal.id === id && goal.subject === confirmation.subject))))
+            fail('.study/settings.json', `learningScopes.${i}.goalIds`, 'confirmed-goals', 'Confirm distinct existing capabilities of this subject; omit goalIds to use the confirmed curriculum range.');
+    }
+    const rounds = blocks.flatMap(block => (block.rounds ?? []).map(round => ({ block, round }))).sort((a, b) => a.round.startedAt - b.round.startedAt || a.round.id.localeCompare(b.round.id));
+    unique('.study/blocks', 'rounds', rounds.map(item => item.round));
+    for (const [i, { block, round }] of rounds.entries()) {
+        const path = `.study/blocks/${block.id}.json`;
+        const field = `rounds.${block.rounds.indexOf(round)}`;
+        const familyId = (id) => knowledge.familyAliases[id] ?? id;
+        const memberIds = round.members.map(member => familyId(member.familyId));
+        if (new Set(memberIds).size !== memberIds.length || new Set(round.enteredFamilyIds.map(familyId)).size !== round.enteredFamilyIds.length || new Set(round.presentedQuestionIds).size !== round.presentedQuestionIds.length)
+            fail(path, field, 'round-identity', 'Keep one membership, entry and presentation per stable identity.');
+        if (round.kind === 'check' && round.presentedQuestionIds.length > 3 || round.kind === 'review' && (round.members.length > 2 || round.enteredFamilyIds.length > 2))
+            fail(path, field, 'round-limit', 'A check permits three new instances; a short review permits two entered mothers. Errors, skips and help retain their entries.');
+        if ((round.endedAt === undefined) !== (round.endReason === undefined) || round.startedAt < block.startedAt || round.endedAt !== undefined && round.endedAt < round.startedAt)
+            fail(path, field, 'round-time', 'Keep the round inside its owning activity and save an end time and reason together.');
+        if (round.enteredFamilyIds.some(id => !memberIds.includes(familyId(id))))
+            fail(path, field, 'round-member', 'Enter only a saved member of this round.');
+        for (const member of round.members) {
+            const goal = knowledge.goals.find(goal => goal.id === member.goalId);
+            const family = knowledge.families.find(family => family.id === familyId(member.familyId));
+            if (!goal || goal.subject !== block.subject || !family?.goalIds.includes(member.goalId) || member.mistakeId && !workspace.collections?.mistakes.some(mistake => mistake.id === member.mistakeId && mistake.subject === block.subject && mistake.objectiveId === member.goalId && mistake.confirmedAt !== undefined))
+                fail(path, field, 'round-member', 'Select a compatible capability and mother, with an existing confirmed mistake when specified.');
+        }
+        for (const id of round.presentedQuestionIds) {
+            const question = block.questions.find(question => question.id === id);
+            const binding = question?.capability;
+            if (!question || !binding || !round.members.some(member => member.goalId === binding.goalId && familyId(member.familyId) === familyId(binding.familyId) && scopeSupports(member.scope, binding.scope) && scopeSupports(binding.scope, member.scope)) || !round.enteredFamilyIds.map(familyId).includes(familyId(binding.familyId)) || round.kind === 'check' && (question.openmaic || question.phase === 'demo'))
+                fail(path, field, 'round-presentation', 'Present a saved instance of an entered member in its exact scope; a check counts new native instances, not demonstrations or imported questions.');
+            if ((block.rounds ?? []).filter(other => other.presentedQuestionIds.includes(id)).length > 1)
+                fail(path, field, 'round-instance', 'A question instance belongs to one round; publish a new variant under a new identity.');
+        }
+        const previous = rounds.slice(0, i).findLast(item => item.round.kind === round.kind);
+        if (previous) {
+            const old = previous.round;
+            const explicitMore = round.kind === 'review' && round.moreReview?.afterRoundId === old.id && old.endedAt !== undefined;
+            const newLearning = old.endedAt !== undefined && blocks.some(owner => owner.mode !== 'review' && owner.responses.some(response => {
+                const question = owner.questions.find(question => question.id === response.questionId);
+                const date = response.answerDate;
+                return question?.capability && !old.members.some(member => member.goalId === question.capability.goalId) && !owner.rounds?.some(item => item.presentedQuestionIds.includes(question.id)) && date && (date.kind === 'instant' ? date.at >= old.endedAt && date.at <= round.startedAt : date.kind === 'day' && date.day > studyDay(old.endedAt) && date.day <= studyDay(round.startedAt));
+            }));
+            if (!explicitMore && !newLearning)
+                fail(path, field, 'round-restart', 'Retain the prior allowance across activities and days. Start another round only after actual new-goal learning, or an explicit request for more review after the prior review ends.');
+        }
+        else if (round.moreReview)
+            fail(path, field, 'round-restart', 'An explicit more-review request references an earlier ended review round.');
+    }
+    for (const block of blocks.filter(block => block.endedAt === undefined)) {
+        const current = block.questions.find(question => question.id === block.currentQuestionId);
+        if (!current?.capability || current.openmaic || current.phase === 'demo' || block.responses.some(response => response.questionId === current.id))
+            continue;
+        const check = rounds.findLast(item => item.round.kind === 'check' && item.round.members.some(member => member.goalId === current.capability.goalId));
+        if (check && check.round.endedAt === undefined && check.round.presentedQuestionIds.length < 3 && !(check.block.id === block.id && check.round.presentedQuestionIds.includes(current.id)))
+            fail(`.study/blocks/${block.id}.json`, 'currentQuestionId', 'round-presentation', 'Record this newly presented instance in its original check before answering; switching blocks retains that allowance.');
+    }
+    for (const old of prior)
+        if (old.file.kind === 'block' && old.file.termId === settings.termId && old.file.rounds?.length && !files.some(entry => entry.path === old.path && entry.file.kind === 'block'))
+            fail(old.path, 'rounds', 'round-history', 'Restore the original activity containing the saved round; removing its file cannot release an allowance.');
+    const officialSources = new Set();
+    const evidenceIds = new Set();
+    for (const [i, reference] of (settings.evidenceReferences ?? []).entries()) {
+        const identity = JSON.stringify([reference.termId, reference.ownerKind, reference.ownerId, reference.responseId, reference.goalId, reference.scope.id]);
+        if (!settings.learnerId || reference.learnerId !== settings.learnerId || reference.termId === settings.termId)
+            fail('.study/settings.json', `evidenceReferences.${i}`, 'archive-reference', 'Reference an earlier term of the same stable learner; never copy a response into the current term.');
+        if (evidenceIds.has(identity))
+            fail('.study/settings.json', `evidenceReferences.${i}`, 'duplicate-reference', 'Keep one reference per original response, capability and tested scope.');
+        evidenceIds.add(identity);
+        if (!knowledge.goals.some(goal => goal.id === reference.goalId))
+            fail('.study/settings.json', `evidenceReferences.${i}.goalId`, 'capability-reference', 'Reference an existing capability; scope compatibility and original facts must be verified before reuse.');
+    }
+    for (const previous of prior)
+        if (previous.file.kind === 'term-settings' && previous.file.termId === settings.termId && previous.file.learnerId && previous.file.learnerId !== settings.learnerId)
+            fail('.study/settings.json', 'learnerId', 'learner-identity', 'Retain the stable learner identity for this term.');
     unique('.study/settings.json', 'materials', settings.materials);
     if (new Set(settings.courses.map(course => course.subject)).size !== settings.courses.length)
         fail('.study/settings.json', 'courses', 'duplicate-subject', 'Keep one course per subject.');
@@ -77,11 +162,22 @@ export function validateStudyFiles(input, prior = [], nativeSources = []) {
     if (blocks.filter(block => block.endedAt === undefined).length > 1)
         fail('.study/blocks', '', 'active-block', 'End the previous block before starting another; retain its pending responses.');
     for (const { path, file } of files) {
+        if (file.learnerId !== undefined && file.learnerId !== settings.learnerId)
+            fail(path, 'learnerId', 'learner-identity', 'Use the stable learner identity owning this term.');
         if (file.termId !== settings.termId)
             fail(path, 'termId', 'term-identity', 'Use the current term identity or preserve this entity in its original archive.');
         if (file.kind === 'collections') {
             for (const field of ['mistakes', 'exercises', 'concepts', 'objectives', 'relations', 'teachingQueue'])
                 unique(path, field, file[field]);
+            const legacyIds = new Set();
+            for (const [i, reference] of (file.legacyReferences ?? []).entries()) {
+                const identity = `${reference.kind}:${reference.oldId}`;
+                if (legacyIds.has(identity))
+                    fail(path, `legacyReferences.${i}`, 'duplicate-reference', 'Keep one routing record per preserved old ID.');
+                legacyIds.add(identity);
+                if (reference.candidateGoalIds.some(id => !knowledge.goals.some(goal => goal.id === id)) || reference.routes.some(route => !knowledge.families.some(family => family.id === (knowledge.familyAliases[route.familyId] ?? route.familyId) && family.goalIds.includes(route.goalId))))
+                    fail(path, `legacyReferences.${i}`, 'legacy-reference', 'Use existing compatible capability/family routes; unknown material remains pending.');
+            }
             const rewards = new Set();
             file.rewards.forEach((reward, index) => {
                 const identity = JSON.stringify([reward.day, reward.reason]);
@@ -134,6 +230,9 @@ export function validateStudyFiles(input, prior = [], nativeSources = []) {
                 fail(path, 'context.material', 'future-course-confirmation', 'Confirm a course compatible with the current profile before starting a future school block.');
         }
         if (file.kind === 'block') {
+            for (const [i, reveal] of (file.answerReveals ?? []).entries())
+                if (!questions.some(question => question.id === reveal.questionId))
+                    fail(path, `answerReveals.${i}`, 'question-reference', 'Record answer exposure against a saved frozen instance.');
             for (const [i, hint] of file.hints.entries()) {
                 if (!questions.some(question => question.id === hint.questionId))
                     fail(path, `hints.${i}.questionId`, 'question-reference', 'Reference a saved question in this block.');
@@ -145,18 +244,23 @@ export function validateStudyFiles(input, prior = [], nativeSources = []) {
                     fail(path, `stuckSignals.${i}.questionId`, 'question-reference', 'Reference a saved question in this block.');
         }
         for (const [i, question] of questions.entries()) {
+            if (question.openmaic) {
+                const source = question.openmaic;
+                if (source.snapshotHash !== createHash('sha256').update(canonical(source.snapshot)).digest('hex') || source.snapshot !== null && (typeof source.snapshot !== 'object' || Array.isArray(source.snapshot) || Reflect.get(source.snapshot, 'id') !== source.questionId))
+                    fail(path, `questions.${i}.openmaic`, 'source-snapshot', 'Preserve the exact original source question identity and snapshot hash.');
+            }
             const frozen = prior.some(entry => {
                 if (entry.path !== path || entry.file.kind !== file.kind || (entry.file.kind !== 'block' && entry.file.kind !== 'worksheet'))
                     return false;
                 const oldQuestions = entry.file.kind === 'block' ? entry.file.questions : entry.file.items;
                 const old = oldQuestions.find(item => item.id === question.id);
-                const used = entry.file.kind === 'worksheet' || entry.file.responses.some(response => response.questionId === question.id);
+                const used = entry.file.kind === 'worksheet' || entry.file.responses.some(response => response.questionId === question.id) || entry.file.rounds?.some(round => round.presentedQuestionIds.includes(question.id));
                 return used && canonical(old) === canonical(question);
             });
             if (file.kind === 'block' && file.mode === 'diagnose' && question.phase !== undefined)
                 fail(path, `questions.${i}.phase`, 'diagnostic-phase', 'Omit teaching phases from diagnostic questions.');
-            if (file.kind === 'block' && file.mode === 'review' && !question.mistakeId && question.source.kind !== 'legacy')
-                fail(path, `questions.${i}.mistakeId`, 'review-mistake', 'Bind a review question to a confirmed mistake of the same subject and goal.');
+            if (file.kind === 'block' && file.mode === 'review' && !question.mistakeId && !question.capability && question.source.kind !== 'legacy')
+                fail(path, `questions.${i}.mistakeId`, 'review-mistake', 'Bind a review question to a confirmed mistake or an explicitly scoped learned capability of the same subject.');
             if (question.basisStatus && question.source.kind !== 'legacy')
                 fail(path, `questions.${i}.basisStatus`, 'legacy-basis-source', 'Unresolved answer bases belong only to preserved legacy questions.');
             if (typeof question.objectiveId !== 'string') {
@@ -166,17 +270,43 @@ export function validateStudyFiles(input, prior = [], nativeSources = []) {
             }
             const builtin = builtinObjectiveAnywhere(question.objectiveId);
             const custom = workspace.collections?.objectives.find(item => item.id === question.objectiveId);
-            const goal = builtin ?? custom;
+            const capabilityGoal = knowledge.goals.find(goal => goal.id === question.objectiveId);
+            const goal = builtin ?? custom ?? capabilityGoal;
+            if (capabilityGoal && !question.capability)
+                fail(path, `questions.${i}.capability`, 'tested-scope', 'Save the question family and actual tested capability scope.');
+            if (question.capability) {
+                const binding = question.capability;
+                const target = knowledge.goals.find(item => item.id === binding.goalId);
+                const familyId = knowledge.familyAliases[binding.familyId] ?? binding.familyId;
+                const family = knowledge.families.find(item => item.id === familyId);
+                if (!target || target.subject !== file.subject || !family?.goalIds.includes(binding.goalId) || family.subject !== file.subject)
+                    fail(path, `questions.${i}.capability`, 'capability-family', 'Bind a family and capability of the same subject with a compatible core method and structure.');
+                if (capabilityGoal && question.objectiveId !== binding.goalId)
+                    fail(path, `questions.${i}.capability.goalId`, 'capability-target', 'Use the same stable capability for the question target and tested scope.');
+                if (!capabilityGoal && question.source.kind === 'legacy' && !resolveLegacyReference('objective', question.objectiveId).candidateGoalIds.includes(binding.goalId))
+                    fail(path, `questions.${i}.capability.goalId`, 'legacy-capability-route', 'Review the original question and route only its demonstrated capability; an unknown legacy goal needs explicit source review.');
+                const oral = binding.goalId.startsWith('e.speak') || ['c.read-aloud', 'c.recite', 'c.retell', 'c.describe', 'c.interact'].includes(binding.goalId);
+                const listening = binding.goalId.startsWith('e.listen') || binding.goalId === 'c.listen';
+                if (listening && binding.scope.modality !== 'listening' || oral && binding.scope.modality !== 'oral' || binding.goalId === 'e.sound' && !['listening', 'oral'].includes(binding.scope.modality) || binding.goalId === 'e.view-listen' && binding.scope.modality !== 'audiovisual')
+                    fail(path, `questions.${i}.capability.scope.modality`, 'evidence-modality', 'Listening, speech and audiovisual capabilities require their own actual evidence, rather than written answers.');
+            }
             if (!goal || goal.subject !== file.subject)
                 fail(path, `questions.${i}.objectiveId`, 'subject-target', 'Reference a saved or shipped learning goal of this subject.');
             const effective = file.context.scope ?? file.context.profile;
             if (builtin && !frozen && question.source.kind !== 'legacy' && (!effective || !builtinObjectiveIn(effective, file.subject, question.objectiveId)))
                 fail(path, `questions.${i}.objectiveId`, 'effective-curriculum', 'Publish a goal in the historical profile book, or save an explicit scope selecting the goal’s book.');
-            if (file.context.scope && (!goal || !scopeSelects(file.context.scope, file.subject, builtin?.unit ?? '', question.objectiveId)))
-                fail(path, `questions.${i}.objectiveId`, 'effective-scope', 'Publish a question inside the explicitly selected scope.');
+            if (file.context.scope) {
+                const scope = file.context.scope;
+                const target = knowledge.goals.find(item => item.id === question.capability?.goalId);
+                const compatibleLegacy = target?.curriculumAssociationIds.filter(id => resolveLegacyReference('objective', id).candidateGoalIds.includes(target.id)) ?? [];
+                const targets = [question.objectiveId, ...(capabilityGoal ? compatibleLegacy : target && compatibleLegacy.includes(question.objectiveId) ? [target.id] : [])];
+                if (!goal || !targets.some(id => scopeSelects(scope, file.subject, builtinObjectiveAnywhere(id)?.unit ?? '', id)))
+                    fail(path, `questions.${i}.objectiveId`, 'effective-scope', 'Publish a question inside the explicitly selected scope.');
+            }
             if (question.source.kind === 'exercise') {
                 const sourceId = question.source.exerciseId;
-                if (![...(workspace.collections?.exercises ?? []), ...subjectExercises(file.subject)].some(item => item.id === sourceId && item.objectiveId === question.objectiveId))
+                const objectiveId = question.objectiveId;
+                if (!knowledge.families.some(family => family.representative.id === sourceId && family.goalIds.includes(question.capability?.goalId ?? objectiveId)) && ![...(workspace.collections?.exercises ?? []), ...subjectExercises(file.subject)].some(item => item.id === sourceId && item.objectiveId === question.objectiveId))
                     fail(path, `questions.${i}.source`, 'exercise-source', 'Reference a saved or shipped exercise for this goal.');
             }
             if (question.source.kind === 'mistake' && question.source.mistakeId !== question.mistakeId)
@@ -189,10 +319,36 @@ export function validateStudyFiles(input, prior = [], nativeSources = []) {
                     fail(path, `questions.${i}.prompt`, 'review-variation', 'Vary the prompt of a prepared mistake question; retain original prompts in workbook records.');
             }
         }
+        if (file.kind === 'block' && file.pendingOpenmaic) {
+            const events = new Set();
+            for (const [i, pending] of file.pendingOpenmaic.entries()) {
+                const { binding, record } = pending;
+                const key = canonical([binding.bindingId, record.sessionId, record.id]);
+                if (events.has(key))
+                    fail(path, `pendingOpenmaic.${i}`, 'duplicate-pending-event', 'Preserve one original event per binding, runtime session and record ID.');
+                events.add(key);
+                if (binding.learnerId !== file.learnerId || binding.termId !== file.termId || binding.blockId !== file.id)
+                    fail(path, `pendingOpenmaic.${i}.binding`, 'pending-event-owner', 'Preserve the original learner, term and block binding.');
+                for (const question of questions.filter(question => question.openmaic?.bindingId === binding.bindingId))
+                    if (question.capability && canonical(question.capability) !== canonical({ goalId: binding.goalId, familyId: binding.familyId, scope: binding.scope }))
+                        fail(path, `pendingOpenmaic.${i}.binding`, 'pending-event-target', 'Retain the frozen question capability and scope for this binding.');
+            }
+        }
         for (const [i, response] of file.responses.entries()) {
             const question = questions.find(item => item.id === response.questionId);
             if (!question)
                 fail(path, `responses.${i}.questionId`, 'question-reference', 'Save the referenced question before its original answer.');
+            if (response.source.kind === 'openmaic') {
+                const source = response.source;
+                const tuple = canonical([source.bindingId, source.attemptId, source.sceneId, source.questionId]);
+                if (!file.learnerId || file.kind !== 'block' || !question?.openmaic || question.openmaic.bindingId !== source.bindingId || question.openmaic.sceneId !== source.sceneId || question.openmaic.questionId !== source.questionId || response.rawResponse !== JSON.stringify(source.submittedAnswer))
+                    fail(path, `responses.${i}.source`, 'official-source-tuple', 'Retain the explicit learner and original question tuple with the exact submitted answer JSON.');
+                if (officialSources.has(tuple))
+                    fail(path, `responses.${i}.source`, 'duplicate-source-response', 'Keep one response per original binding, attempt, scene and question; correct its assessment separately.');
+                officialSources.add(tuple);
+            }
+            if (response.assistance === 'independent' && answerWasExposed(file, response))
+                fail(path, `responses.${i}.assistance`, 'answer-revealed', 'A repeated frozen instance after answer exposure is not independent; retain help or use a new constrained variant.');
             if (question?.phase === 'demo' && response.assistance !== 'worked-example')
                 fail(path, `responses.${i}.assistance`, 'demonstration', 'A real response to a demonstration carries worked-example assistance.');
             if (response.answerDate?.kind === 'instant' && response.answerDate.basis === 'native-input' && (response.source.kind !== 'native' || response.source.receiptAt !== response.answerDate.at || response.source.inputVersion !== response.answerDate.sourceVersion))
@@ -213,6 +369,12 @@ export function validateStudyFiles(input, prior = [], nativeSources = []) {
             const response = file.responses.find(item => item.id === assessment.responseId);
             if (!response)
                 fail(path, `assessments.${i}.responseId`, 'response-reference', 'Save the original learner response before assessment.');
+            if (assessment.official || assessment.officialHistory || assessment.grading) {
+                const source = response?.source;
+                const history = assessment.officialHistory;
+                if (source?.kind !== 'openmaic' || assessment.official && (assessment.official.seq <= source.submission.seq || assessment.official.result && assessment.official.result.questionId !== source.questionId) || history && (history.some((review, at) => review.seq <= (at ? history[at - 1].seq : source?.kind === 'openmaic' ? source.submission.seq : -1) || review.result && source?.kind === 'openmaic' && review.result.questionId !== source.questionId) || new Set(history.map(review => review.recordId)).size !== history.length || canonical(history.at(-1)) !== canonical(assessment.official)))
+                    fail(path, `assessments.${i}.official`, 'official-review', 'Retain ordered original reviews of the same submitted question, ending at its current official result.');
+            }
             if (response && assessment.assistance !== response.assistance)
                 fail(path, `assessments.${i}.assistance`, 'assistance-association', 'Keep assessment assistance consistent with the saved response.');
             if (file.kind === 'worksheet' && !assessment.userConfirmation)
@@ -231,14 +393,29 @@ export function validateStudyFiles(input, prior = [], nativeSources = []) {
                 fail(path, 'id', 'identity-reuse', 'Preserve term and entity identity at this path.');
                 continue;
             }
+            if (old.file.kind === 'block' && file.kind === 'block' && old.file.answerReveals?.some(reveal => !file.answerReveals?.some(current => canonical(current) === canonical(reveal))))
+                fail(path, 'answerReveals', 'answer-reveal-history', 'Retain the original frozen-instance reveal facts.');
+            if (old.file.kind === 'block' && file.kind === 'block')
+                for (const priorRound of old.file.rounds ?? []) {
+                    const currentRound = file.rounds?.find(round => round.id === priorRound.id);
+                    const { enteredFamilyIds, presentedQuestionIds, endedAt, endReason, ...identity } = priorRound;
+                    const { enteredFamilyIds: entered, presentedQuestionIds: presented, endedAt: end, endReason: reason, ...currentIdentity } = currentRound ?? priorRound;
+                    if (!currentRound || canonical(identity) !== canonical(currentIdentity) || enteredFamilyIds.some(id => !entered.includes(id)) || presentedQuestionIds.some(id => !presented.includes(id)) || endedAt !== undefined && (endedAt !== end || endReason !== reason || canonical(enteredFamilyIds) !== canonical(entered) || canonical(presentedQuestionIds) !== canonical(presented)))
+                        fail(path, 'rounds', 'round-history', 'Preserve round membership, entry, presentation and ending facts; corrections to answers never release an allowance.');
+                }
             const oldQuestions = old.file.kind === 'block' ? old.file.questions : old.file.items;
             if ((old.file.responses.length > 0 || (old.file.kind === 'worksheet' && old.file.items.length > 0)) && canonical(old.file.context) !== canonical(file.context))
                 fail(path, 'context', 'historical-context', 'Preserve the historical profile, material and selected scope of published worksheets and answered blocks.');
             for (const question of oldQuestions) {
-                const used = old.file.kind === 'worksheet' || old.file.responses.some(response => response.questionId === question.id);
+                const used = old.file.kind === 'worksheet' || old.file.responses.some(response => response.questionId === question.id) || old.file.rounds?.some(round => round.presentedQuestionIds.includes(question.id));
                 if (used && canonical(question) !== canonical(questions.find(item => item.id === question.id)))
                     fail(path, 'questions', 'frozen-content', 'Retain published worksheet and used block question content and target; publish replacements under a new identity.');
             }
+            if (file.kind === 'block' && old.file.kind === 'block')
+                for (const pending of old.file.pendingOpenmaic ?? []) {
+                    if (!file.pendingOpenmaic?.some(current => canonical(current.binding) === canonical(pending.binding) && canonical(current.record) === canonical(pending.record)))
+                        fail(path, 'pendingOpenmaic', 'original-pending-event', 'Preserve original pending events when resolving their association or assessment.');
+                }
             for (const response of old.file.responses) {
                 const current = file.responses.find(item => item.id === response.id);
                 const { assistance: oldHelp, assistanceConfirmation: _oldConfirmation, answerDate: oldDate, answerDateConfirmation: _oldDateConfirmation, ...original } = response;
@@ -255,11 +432,11 @@ export function validateStudyFiles(input, prior = [], nativeSources = []) {
     if (affected('.study/collections.json'))
         for (const file of [...blocks, ...worksheets]) {
             const questions = file.kind === 'block' ? file.questions : file.items;
-            if (questions.some(question => typeof question.objectiveId === 'string' && !builtinObjectiveAnywhere(question.objectiveId)))
+            if (questions.some(question => typeof question.objectiveId === 'string' && !builtinObjectiveAnywhere(question.objectiveId) && !knowledge.goals.some(goal => goal.id === question.objectiveId)))
                 fail(`.study/${file.kind === 'block' ? 'blocks' : 'worksheets'}/${file.id}.json`, 'objectiveId', 'invalid-target-source', 'Repair the referenced custom-goal collection before using this entity.');
         }
     const partial = affected('.study/settings.json') ? undefined : {
-        settings, nativeSources, blocks: blocks.filter(block => !affected(`.study/blocks/${block.id}.json`)),
+        settings, nativeSources, openmaicSources, blocks: blocks.filter(block => !affected(`.study/blocks/${block.id}.json`)),
         worksheets: worksheets.filter(sheet => !affected(`.study/worksheets/${sheet.id}.json`)),
         ...(workspace.collections && !affected('.study/collections.json') ? { collections: workspace.collections } : {}),
     };

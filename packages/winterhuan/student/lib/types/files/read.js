@@ -1,5 +1,9 @@
 import { createHash } from 'node:crypto';
 import { stateSchema } from "../schema.js";
+import { readLessonFile } from "./lessons.js";
+import { scopeSupports } from "../capabilities.js";
+import { deriveEvidence } from "../learning/evidence.js";
+import { replayMistake } from "../learning/schedule.js";
 import { migrateStudyFile } from "./legacy.js";
 import { validateStudyFiles } from "./validation.js";
 import { StudyReadCache } from "./cache.js";
@@ -12,14 +16,96 @@ const MAX_TOTAL_BYTES = 33_554_432;
  * @param signal - cancels discovery, bounded rereads and byte reads.
  * @param prior - supplied preserved versions; omitted reads use verified observed-version backups for cold frozen-content checks.
  * @param nativeSources - independently resolved consumed input observations, empty for the read-only CLI.
+ * @param openmaicSources - independently authorized original official submissions and grading.
  * @returns validated facts or an explicit incomplete, invalid or changing result.
  */
-export async function readWorkspace(fs, signal, prior, nativeSources = []) {
+export async function readWorkspace(fs, signal, prior, nativeSources = [], openmaicSources = []) {
     const owner = fs.cache ??= new StudyReadCache();
     const backups = prior === undefined ? await readBackups(fs, signal) : undefined;
-    return { ...await readWorkspaceFiles(fs, signal, prior ?? backupVersions(backups.backups), nativeSources, owner), cache: owner, ...(backups ? { backupIssues: backups.issues } : {}) };
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const read = await readWorkspaceFiles(fs, signal, prior ?? backupVersions(backups.backups), nativeSources, openmaicSources, owner);
+        if (!read.workspace || read.status !== 'valid')
+            return { ...read, cache: owner, ...(backups ? { backupIssues: backups.issues } : {}) };
+        const archiveIssues = [], archiveFiles = [], archiveSources = [];
+        read.workspace.archivedEvidence = [];
+        const requestedTerms = [...new Set((read.workspace.settings.evidenceReferences ?? []).map(reference => reference.termId))];
+        const terms = requestedTerms.slice(0, 128);
+        if (requestedTerms.length > terms.length)
+            archiveIssues.push({ path: '.study/archives', field: '', rule: 'archive-reference', correction: 'Reference at most 128 original terms in one current read.' });
+        let total = read.files.reduce((sum, file) => sum + file.bytes.byteLength, 0);
+        const archiveSettings = [];
+        for (const term of terms) {
+            const prefix = `.study/archives/${term}`;
+            const path = (relative) => `${prefix}/${relative.slice('.study/'.length)}`;
+            archiveSettings.push({ path: path('.study/settings.json'), observation: await fs.stat(path('.study/settings.json'), signal) });
+            const archiveFs = { cache: owner, stat: (relative, signal) => fs.stat(path(relative), signal), list: (relative, signal) => relative === '.study/archives' ? Promise.resolve([]) : fs.list(path(relative), signal), read: (relative, signal, limit) => fs.read(path(relative), signal, limit) };
+            const archive = await readWorkspaceFiles(archiveFs, signal, [], nativeSources, openmaicSources, owner, Math.max(0, MAX_TOTAL_BYTES - total));
+            const archiveBytes = archive.files.reduce((sum, file) => sum + file.bytes.byteLength, 0);
+            const lessons = await readLessonFile({ ...archiveFs, read: (path, signal, limit) => archiveFs.read(path, signal, Math.max(0, Math.min(limit, MAX_TOTAL_BYTES - total - archiveBytes))) }, signal);
+            if (lessons.bytes && lessons.observation) {
+                total += lessons.bytes.byteLength;
+                archiveFiles.push({ path: path('.study/openmaic-lessons.json'), targetKey: lessons.observation.targetKey, version: lessons.observation.version, bytes: lessons.bytes });
+            }
+            archiveSettings.push({ path: path('.study/openmaic-lessons.json'), observation: lessons.observation });
+            const original = archive.workspace;
+            const references = read.workspace.settings.evidenceReferences.filter(reference => reference.termId === term);
+            total += archiveBytes;
+            archiveFiles.push(...archive.files.map(file => ({ ...file, path: path(file.path) })));
+            read.membership.push(...archive.membership.filter(directory => directory.path !== '.study/archives').map(directory => ({ ...directory, path: path(directory.path) })));
+            if (total > MAX_TOTAL_BYTES || archive.status !== 'archived' || !original || original.settings.termId !== term || !original.settings.learnerId || original.settings.learnerId !== read.workspace.settings.learnerId) {
+                archiveIssues.push({ path: prefix, field: '', rule: 'archive-reference', correction: 'Restore a valid archived term of this same confirmed learner; unavailable history grants no progress.' });
+                continue;
+            }
+            const structural = references.filter(reference => {
+                const entity = reference.ownerKind === 'block' ? original.blocks.find(block => block.id === reference.ownerId) : original.worksheets.find(sheet => sheet.id === reference.ownerId);
+                const response = entity?.responses.find(response => response.id === reference.responseId);
+                const question = (entity?.kind === 'block' ? entity.questions : entity?.items)?.find(question => question.id === response?.questionId);
+                if (!question?.capability || entity?.learnerId !== reference.learnerId || question.capability.goalId !== reference.goalId || !scopeSupports(question.capability.scope, reference.scope)) {
+                    if (archiveIssues.length < 100)
+                        archiveIssues.push({ path: `${prefix}/${reference.ownerKind === 'block' ? 'blocks' : 'worksheets'}/${reference.ownerId}.json`, field: reference.responseId, rule: 'archive-reference', correction: 'Reference the original response, learner, capability and an explicitly compatible tested range.' });
+                    return false;
+                }
+                return true;
+            });
+            if (structural.length)
+                archiveSources.push({ workspace: original, references: structural, lessons });
+            const compatible = structural.filter(reference => {
+                if (reference.review) {
+                    const entity = reference.ownerKind === 'block' ? original.blocks.find(block => block.id === reference.ownerId) : original.worksheets.find(sheet => sheet.id === reference.ownerId);
+                    const response = entity.responses.find(response => response.id === reference.responseId);
+                    const question = (entity.kind === 'block' ? entity.questions : entity.items).find(question => question.id === response.questionId);
+                    const mistake = original.collections?.mistakes.find(mistake => mistake.id === reference.review.mistakeId && (mistake.objectiveId === question.capability.goalId || mistake.objectiveId === question.objectiveId) && mistake.subject === entity.subject);
+                    const replay = mistake ? replayMistake({ ...mistake, objectiveId: question.capability.goalId }, deriveEvidence(original), original.settings.archivedAt) : undefined;
+                    if (!replay || replay.stage !== reference.review.stage || replay.dueAt !== reference.review.dueAt || JSON.stringify(replay.independentDays) !== JSON.stringify(reference.review.independentDays)) {
+                        archiveIssues.push({ path: prefix, field: `${reference.responseId}.review`, rule: 'archive-review', correction: 'Retain the original independently replayed stage, due date and actual independent days.' });
+                        return false;
+                    }
+                }
+                return true;
+            });
+            if (compatible.length)
+                read.workspace.archivedEvidence.push({ workspace: original, references: compatible });
+        }
+        const observations = [...read.files, ...archiveFiles];
+        const after = await Promise.all(observations.map(file => fs.stat(file.path, signal)));
+        if (observations.some((file, index) => after[index]?.version !== file.version || after[index]?.targetKey !== file.targetKey))
+            continue;
+        let changed = false;
+        for (const settings of archiveSettings) {
+            const after = await fs.stat(settings.path, signal);
+            if (after?.version !== settings.observation?.version || after?.targetKey !== settings.observation?.targetKey)
+                changed = true;
+        }
+        for (const directory of read.membership)
+            if (JSON.stringify((await fs.list(directory.path, signal)).map(entry => `${entry.type}:${entry.name}`).sort()) !== JSON.stringify(directory.names))
+                changed = true;
+        if (changed)
+            continue;
+        return { ...read, archiveIssues, archiveFiles, archiveSources, cache: owner, ...(backups ? { backupIssues: backups.issues } : {}) };
+    }
+    return { status: 'changing', files: [], membership: [], issues: [{ path: '.study/archives', field: '', rule: 'changing-read', correction: 'Finish archive edits and read the original history again.' }], cache: owner };
 }
-async function readWorkspaceFiles(fs, signal, prior, nativeSources, owner) {
+async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSources, owner, budget = MAX_TOTAL_BYTES) {
     const cache = owner.files;
     for (let attempt = 0; attempt < 3; attempt += 1) {
         signal.throwIfAborted();
@@ -94,8 +180,8 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, owner) {
                 continue;
             }
             total += bytes.byteLength;
-            if (total > MAX_TOTAL_BYTES)
-                return { status: 'invalid', files, membership, issues: [{ path: '.study', field: '', rule: 'workspace-size', correction: 'Archive older records; current official files are limited to 32 MiB.' }] };
+            if (total > budget)
+                return { status: 'invalid', files, membership, issues: [{ path: '.study', field: '', rule: 'workspace-size', correction: 'Keep the current files and selected original history within the 32 MiB read budget.' }] };
             files.push({ path, ...observed, bytes });
             try {
                 const value = cached?.version === observed.version ? cached.value : JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
@@ -105,7 +191,7 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, owner) {
                 discoveryIssues.push({ path, field: '', rule: 'json', correction: error instanceof Error ? error.message : 'Save valid UTF-8 JSON.' });
             }
         }
-        const validation = validateStudyFiles(input, available, nativeSources);
+        const validation = validateStudyFiles(input, available, nativeSources, openmaicSources);
         const migration = validation.workspace?.settings.migration;
         if (migration) {
             const backup = await fs.stat(migration.backupPath, signal);

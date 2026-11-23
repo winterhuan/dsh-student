@@ -1,13 +1,123 @@
 /** Authoring resources derive structural constraints from the shared input schemas. */
 import { z } from 'zod';
 declare const schemas: {
+    'capability-goal': z.ZodObject<{
+        id: z.ZodString;
+        subject: z.ZodEnum<{
+            chinese: "chinese";
+            math: "math";
+            english: "english";
+        }>;
+        domain: z.ZodString;
+        title: z.ZodString;
+        scope: z.ZodString;
+        criterion: z.ZodString;
+        prerequisites: z.ZodArray<z.ZodString>;
+        familyIds: z.ZodArray<z.ZodString>;
+        sourceIds: z.ZodArray<z.ZodString>;
+        curriculumAssociationIds: z.ZodArray<z.ZodString>;
+        titleEn: z.ZodOptional<z.ZodString>;
+        criterionEn: z.ZodOptional<z.ZodString>;
+        curriculumAssociationGap: z.ZodOptional<z.ZodString>;
+        coverageStatus: z.ZodOptional<z.ZodString>;
+        activation: z.ZodOptional<z.ZodString>;
+        evidenceRequirements: z.ZodOptional<z.ZodArray<z.ZodString>>;
+        progressKind: z.ZodOptional<z.ZodString>;
+        prerequisitePolicy: z.ZodOptional<z.ZodString>;
+        requirementIds: z.ZodOptional<z.ZodArray<z.ZodString>>;
+        sourceLocators: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            sourceId: z.ZodString;
+            pdfPages: z.ZodOptional<z.ZodArray<z.ZodNumber>>;
+            section: z.ZodString;
+        }, z.core.$strict>>>;
+    }, z.core.$strict>;
+    'question-family': z.ZodObject<{
+        id: z.ZodString;
+        subject: z.ZodEnum<{
+            chinese: "chinese";
+            math: "math";
+            english: "english";
+        }>;
+        coreMethod: z.ZodString;
+        structure: z.ZodString;
+        goalIds: z.ZodArray<z.ZodString>;
+        variationAxes: z.ZodArray<z.ZodString>;
+        boundary: z.ZodString;
+        representative: z.ZodObject<{
+            id: z.ZodString;
+            prompt: z.ZodString;
+            rubric: z.ZodString;
+            stimulus: z.ZodOptional<z.ZodJSONSchema>;
+        }, z.core.$strict>;
+        signature: z.ZodObject<{
+            capabilityIds: z.ZodArray<z.ZodString>;
+            coreMethod: z.ZodString;
+            problemStructure: z.ZodString;
+        }, z.core.$strict>;
+    }, z.core.$strict>;
+    'knowledge-extension': z.ZodObject<{
+        goals: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            subject: z.ZodEnum<{
+                chinese: "chinese";
+                math: "math";
+                english: "english";
+            }>;
+            domain: z.ZodString;
+            title: z.ZodString;
+            scope: z.ZodString;
+            criterion: z.ZodString;
+            prerequisites: z.ZodArray<z.ZodString>;
+            familyIds: z.ZodArray<z.ZodString>;
+            sourceIds: z.ZodArray<z.ZodString>;
+            curriculumAssociationIds: z.ZodArray<z.ZodString>;
+            titleEn: z.ZodOptional<z.ZodString>;
+            criterionEn: z.ZodOptional<z.ZodString>;
+            curriculumAssociationGap: z.ZodOptional<z.ZodString>;
+            coverageStatus: z.ZodOptional<z.ZodString>;
+            activation: z.ZodOptional<z.ZodString>;
+            evidenceRequirements: z.ZodOptional<z.ZodArray<z.ZodString>>;
+            progressKind: z.ZodOptional<z.ZodString>;
+            prerequisitePolicy: z.ZodOptional<z.ZodString>;
+            requirementIds: z.ZodOptional<z.ZodArray<z.ZodString>>;
+            sourceLocators: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                sourceId: z.ZodString;
+                pdfPages: z.ZodOptional<z.ZodArray<z.ZodNumber>>;
+                section: z.ZodString;
+            }, z.core.$strict>>>;
+        }, z.core.$strict>>;
+        families: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            subject: z.ZodEnum<{
+                chinese: "chinese";
+                math: "math";
+                english: "english";
+            }>;
+            coreMethod: z.ZodString;
+            structure: z.ZodString;
+            goalIds: z.ZodArray<z.ZodString>;
+            variationAxes: z.ZodArray<z.ZodString>;
+            boundary: z.ZodString;
+            representative: z.ZodObject<{
+                id: z.ZodString;
+                prompt: z.ZodString;
+                rubric: z.ZodString;
+                stimulus: z.ZodOptional<z.ZodJSONSchema>;
+            }, z.core.$strict>;
+            signature: z.ZodObject<{
+                capabilityIds: z.ZodArray<z.ZodString>;
+                coreMethod: z.ZodString;
+                problemStructure: z.ZodString;
+            }, z.core.$strict>;
+        }, z.core.$strict>>;
+    }, z.core.$strict>;
     'openmaic-lessons': z.ZodObject<{
         format: z.ZodLiteral<1>;
         lessons: z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             status: z.ZodEnum<{
-                ready: "ready";
                 generating: "generating";
+                ready: "ready";
                 failed: "failed";
             }>;
             createdAt: z.ZodString;
@@ -21,6 +131,10 @@ declare const schemas: {
             }>>;
             objectiveId: z.ZodOptional<z.ZodString>;
             base: z.ZodString;
+            learnerId: z.ZodOptional<z.ZodString>;
+            termId: z.ZodOptional<z.ZodString>;
+            blockId: z.ZodOptional<z.ZodString>;
+            learnerKey: z.ZodOptional<z.ZodString>;
             jobId: z.ZodOptional<z.ZodString>;
             pollUrl: z.ZodOptional<z.ZodString>;
             runId: z.ZodOptional<z.ZodString>;
@@ -30,6 +144,34 @@ declare const schemas: {
             url: z.ZodOptional<z.ZodString>;
             warning: z.ZodOptional<z.ZodString>;
             error: z.ZodOptional<z.ZodString>;
+            feedback: z.ZodOptional<z.ZodObject<{
+                bindingId: z.ZodString;
+                learnerId: z.ZodString;
+                termId: z.ZodString;
+                blockId: z.ZodString;
+                goalId: z.ZodString;
+                familyId: z.ZodString;
+                scope: z.ZodObject<{
+                    id: z.ZodString;
+                    description: z.ZodString;
+                    modality: z.ZodEnum<{
+                        written: "written";
+                        oral: "oral";
+                        listening: "listening";
+                        audiovisual: "audiovisual";
+                        performed: "performed";
+                    }>;
+                    numberMax: z.ZodOptional<z.ZodNumber>;
+                    vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+                }, z.core.$strict>;
+            }, z.core.$strict>>;
+            checkpoint: z.ZodOptional<z.ZodObject<{
+                bindingId: z.ZodString;
+                attempts: z.ZodArray<z.ZodObject<{
+                    attemptId: z.ZodString;
+                    seq: z.ZodNumber;
+                }, z.core.$strict>>;
+            }, z.core.$strict>>;
             summary: z.ZodOptional<z.ZodObject<{
                 fetchedAt: z.ZodString;
                 outline: z.ZodString;
@@ -393,6 +535,28 @@ declare const schemas: {
             }, z.core.$strict>>;
             parentConfirmation: z.ZodString;
         }, z.core.$strict>>;
+        learningScopes: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            subject: z.ZodEnum<{
+                chinese: "chinese";
+                math: "math";
+                english: "english";
+            }>;
+            goalIds: z.ZodOptional<z.ZodArray<z.ZodString>>;
+            scope: z.ZodObject<{
+                id: z.ZodString;
+                description: z.ZodString;
+                modality: z.ZodEnum<{
+                    written: "written";
+                    oral: "oral";
+                    listening: "listening";
+                    audiovisual: "audiovisual";
+                    performed: "performed";
+                }>;
+                numberMax: z.ZodOptional<z.ZodNumber>;
+                vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+            }, z.core.$strict>;
+            parentConfirmation: z.ZodString;
+        }, z.core.$strict>>>;
         interests: z.ZodOptional<z.ZodObject<{
             tags: z.ZodArray<z.ZodString>;
             parentConfirmation: z.ZodString;
@@ -402,6 +566,36 @@ declare const schemas: {
             parentConfirmation: z.ZodString;
         }, z.core.$strict>>;
         archivedAt: z.ZodOptional<z.ZodNumber>;
+        evidenceReferences: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            learnerId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").LearnerId, string>>;
+            termId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").TermId, string>>;
+            ownerKind: z.ZodEnum<{
+                worksheet: "worksheet";
+                block: "block";
+            }>;
+            ownerId: z.ZodString;
+            responseId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").ResponseId, string>>;
+            goalId: z.ZodString;
+            scope: z.ZodObject<{
+                id: z.ZodString;
+                description: z.ZodString;
+                modality: z.ZodEnum<{
+                    written: "written";
+                    oral: "oral";
+                    listening: "listening";
+                    audiovisual: "audiovisual";
+                    performed: "performed";
+                }>;
+                numberMax: z.ZodOptional<z.ZodNumber>;
+                vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+            }, z.core.$strict>;
+            review: z.ZodOptional<z.ZodObject<{
+                mistakeId: z.ZodString;
+                stage: z.ZodNumber;
+                dueAt: z.ZodNumber;
+                independentDays: z.ZodArray<z.ZodString>;
+            }, z.core.$strict>>;
+        }, z.core.$strict>>>;
         migration: z.ZodOptional<z.ZodObject<{
             sourcePath: z.ZodString;
             sourceSha256: z.ZodString;
@@ -409,6 +603,7 @@ declare const schemas: {
         }, z.core.$strict>>;
         format: z.ZodLiteral<2>;
         termId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").TermId, string>>;
+        learnerId: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").LearnerId, string>>>;
     }, z.core.$strict>;
     block: z.ZodObject<{
         kind: z.ZodLiteral<"block">;
@@ -505,6 +700,23 @@ declare const schemas: {
                 kind: z.ZodLiteral<"pending">;
                 reason: z.ZodString;
             }, z.core.$strict>]>;
+            capability: z.ZodOptional<z.ZodObject<{
+                goalId: z.ZodString;
+                familyId: z.ZodString;
+                scope: z.ZodObject<{
+                    id: z.ZodString;
+                    description: z.ZodString;
+                    modality: z.ZodEnum<{
+                        written: "written";
+                        oral: "oral";
+                        listening: "listening";
+                        audiovisual: "audiovisual";
+                        performed: "performed";
+                    }>;
+                    numberMax: z.ZodOptional<z.ZodNumber>;
+                    vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+                }, z.core.$strict>;
+            }, z.core.$strict>>;
             mistakeId: z.ZodOptional<z.ZodString>;
             source: z.ZodDiscriminatedUnion<[z.ZodObject<{
                 kind: z.ZodLiteral<"authored">;
@@ -527,7 +739,22 @@ declare const schemas: {
             answer: z.ZodString;
             explanation: z.ZodString;
             answerEvidence: z.ZodString;
+            openmaic: z.ZodOptional<z.ZodObject<{
+                bindingId: z.ZodString;
+                sceneId: z.ZodString;
+                questionId: z.ZodString;
+                snapshot: z.ZodJSONSchema;
+                snapshotHash: z.ZodString;
+                revision: z.ZodDiscriminatedUnion<[z.ZodObject<{
+                    kind: z.ZodLiteral<"manifest">;
+                    stageRev: z.ZodNumber;
+                    sceneRev: z.ZodNumber;
+                }, z.core.$strict>, z.ZodObject<{
+                    kind: z.ZodLiteral<"unavailable">;
+                }, z.core.$strict>], "kind">;
+            }, z.core.$strict>>;
             basisStatus: z.ZodOptional<z.ZodLiteral<"legacy-pending">>;
+            legacyRecord: z.ZodOptional<z.ZodJSONSchema>;
             choices: z.ZodOptional<z.ZodArray<z.ZodString>>;
             steps: z.ZodOptional<z.ZodArray<z.ZodString>>;
             figure: z.ZodOptional<z.ZodDiscriminatedUnion<[z.ZodObject<{
@@ -827,6 +1054,7 @@ declare const schemas: {
             questionId: z.ZodString;
             rawResponse: z.ZodString;
             response: z.ZodOptional<z.ZodString>;
+            legacyRecord: z.ZodOptional<z.ZodJSONSchema>;
             assistance: z.ZodEnum<{
                 unknown: "unknown";
                 independent: "independent";
@@ -851,6 +1079,18 @@ declare const schemas: {
                 sourceVersion: z.ZodString;
             }, z.core.$strict>], "kind">>;
             source: z.ZodDiscriminatedUnion<[z.ZodObject<{
+                kind: z.ZodLiteral<"openmaic">;
+                bindingId: z.ZodString;
+                attemptId: z.ZodString;
+                sceneId: z.ZodString;
+                questionId: z.ZodString;
+                submission: z.ZodObject<{
+                    id: z.ZodString;
+                    seq: z.ZodNumber;
+                    createdAt: z.ZodString;
+                }, z.core.$strict>;
+                submittedAnswer: z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>;
+            }, z.core.$strict>, z.ZodObject<{
                 kind: z.ZodLiteral<"unknown">;
             }, z.core.$strict>, z.ZodObject<{
                 kind: z.ZodLiteral<"native">;
@@ -877,6 +1117,48 @@ declare const schemas: {
             }, z.core.$strict>], "kind">;
         }, z.core.$strict>>;
         currentResponseId: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").ResponseId, string>>>;
+        rounds: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            kind: z.ZodEnum<{
+                check: "check";
+                review: "review";
+            }>;
+            startedAt: z.ZodNumber;
+            members: z.ZodArray<z.ZodObject<{
+                goalId: z.ZodString;
+                familyId: z.ZodString;
+                scope: z.ZodObject<{
+                    id: z.ZodString;
+                    description: z.ZodString;
+                    modality: z.ZodEnum<{
+                        written: "written";
+                        oral: "oral";
+                        listening: "listening";
+                        audiovisual: "audiovisual";
+                        performed: "performed";
+                    }>;
+                    numberMax: z.ZodOptional<z.ZodNumber>;
+                    vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+                }, z.core.$strict>;
+                mistakeId: z.ZodOptional<z.ZodString>;
+            }, z.core.$strict>>;
+            enteredFamilyIds: z.ZodArray<z.ZodString>;
+            presentedQuestionIds: z.ZodArray<z.ZodString>;
+            endedAt: z.ZodOptional<z.ZodNumber>;
+            endReason: z.ZodOptional<z.ZodEnum<{
+                complete: "complete";
+                "budget-exhausted": "budget-exhausted";
+                stopped: "stopped";
+            }>>;
+            moreReview: z.ZodOptional<z.ZodObject<{
+                afterRoundId: z.ZodString;
+                request: z.ZodString;
+            }, z.core.$strict>>;
+        }, z.core.$strict>>>;
+        answerReveals: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            questionId: z.ZodString;
+            at: z.ZodNumber;
+        }, z.core.$strict>>>;
         hints: z.ZodArray<z.ZodObject<{
             questionId: z.ZodString;
             responseId: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").ResponseId, string>>>;
@@ -907,15 +1189,27 @@ declare const schemas: {
             answerEvidence: z.ZodString;
             assessedAt: z.ZodNumber;
             correctedAt: z.ZodOptional<z.ZodNumber>;
+            criteria: z.ZodOptional<z.ZodArray<z.ZodEnum<{
+                method: "method";
+                basic: "basic";
+                variation: "variation";
+            }>>>;
+            criterionCorrection: z.ZodOptional<z.ZodObject<{
+                sessionId: z.ZodString;
+                messageId: z.ZodString;
+                inputVersion: z.ZodString;
+                rawResponse: z.ZodString;
+            }, z.core.$strict>>;
             userConfirmation: z.ZodOptional<z.ZodString>;
             errorType: z.ZodOptional<z.ZodEnum<{
+                pattern: "pattern";
+                listening: "listening";
                 "carry-borrow": "carry-borrow";
                 "place-value": "place-value";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
-                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -927,13 +1221,48 @@ declare const schemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
-                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
                 "usage-context": "usage-context";
                 "spoken-response": "spoken-response";
                 "writing-complete": "writing-complete";
+            }>>;
+            official: z.ZodOptional<z.ZodObject<{
+                recordId: z.ZodString;
+                seq: z.ZodNumber;
+                createdAt: z.ZodString;
+                result: z.ZodNullable<z.ZodObject<{
+                    questionId: z.ZodString;
+                    correct: z.ZodNullable<z.ZodBoolean>;
+                    status: z.ZodEnum<{
+                        correct: "correct";
+                        incorrect: "incorrect";
+                    }>;
+                    earned: z.ZodNumber;
+                    aiComment: z.ZodOptional<z.ZodString>;
+                }, z.core.$catchall<z.ZodType<import("../types.ts").StudentJsonValue, unknown, z.core.$ZodTypeInternals<import("../types.ts").StudentJsonValue, unknown>>>>>;
+            }, z.core.$strict>>;
+            officialHistory: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                recordId: z.ZodString;
+                seq: z.ZodNumber;
+                createdAt: z.ZodString;
+                result: z.ZodNullable<z.ZodObject<{
+                    questionId: z.ZodString;
+                    correct: z.ZodNullable<z.ZodBoolean>;
+                    status: z.ZodEnum<{
+                        correct: "correct";
+                        incorrect: "incorrect";
+                    }>;
+                    earned: z.ZodNumber;
+                    aiComment: z.ZodOptional<z.ZodString>;
+                }, z.core.$catchall<z.ZodType<import("../types.ts").StudentJsonValue, unknown, z.core.$ZodTypeInternals<import("../types.ts").StudentJsonValue, unknown>>>>>;
+            }, z.core.$strict>>>;
+            grading: z.ZodOptional<z.ZodEnum<{
+                pending: "pending";
+                aligned: "aligned";
+                equivalent: "equivalent";
+                conflict: "conflict";
             }>>;
         }, z.core.$strict>>;
         pendingLegacy: z.ZodOptional<z.ZodArray<z.ZodObject<{
@@ -942,8 +1271,64 @@ declare const schemas: {
             fields: z.ZodArray<z.ZodString>;
             reason: z.ZodString;
         }, z.core.$strict>>>;
+        pendingOpenmaic: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            binding: z.ZodObject<{
+                bindingId: z.ZodString;
+                learnerId: z.ZodString;
+                termId: z.ZodString;
+                blockId: z.ZodString;
+                goalId: z.ZodString;
+                familyId: z.ZodString;
+                scope: z.ZodObject<{
+                    id: z.ZodString;
+                    description: z.ZodString;
+                    modality: z.ZodEnum<{
+                        written: "written";
+                        oral: "oral";
+                        listening: "listening";
+                        audiovisual: "audiovisual";
+                        performed: "performed";
+                    }>;
+                    numberMax: z.ZodOptional<z.ZodNumber>;
+                    vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+                }, z.core.$strict>;
+            }, z.core.$strict>;
+            record: z.ZodObject<{
+                id: z.ZodString;
+                sessionId: z.ZodString;
+                seq: z.ZodNumber;
+                createdAt: z.ZodString;
+                sceneId: z.ZodOptional<z.ZodString>;
+                payload: z.ZodObject<{
+                    payloadVersion: z.ZodLiteral<1>;
+                    phase: z.ZodEnum<{
+                        draft: "draft";
+                        submitted: "submitted";
+                        reviewed: "reviewed";
+                    }>;
+                    answers: z.ZodRecord<z.ZodString, z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>>;
+                    results: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                        questionId: z.ZodString;
+                        correct: z.ZodNullable<z.ZodBoolean>;
+                        status: z.ZodEnum<{
+                            correct: "correct";
+                            incorrect: "incorrect";
+                        }>;
+                        earned: z.ZodNumber;
+                        aiComment: z.ZodOptional<z.ZodString>;
+                    }, z.core.$catchall<z.ZodType<import("../types.ts").StudentJsonValue, unknown, z.core.$ZodTypeInternals<import("../types.ts").StudentJsonValue, unknown>>>>>>;
+                }, z.core.$catchall<z.ZodJSONSchema>>;
+            }, z.core.$catchall<z.ZodJSONSchema>>;
+            reason: z.ZodEnum<{
+                "missing-submission": "missing-submission";
+                "conflicting-submissions": "conflicting-submissions";
+                "ambiguous-session": "ambiguous-session";
+                "unresolved-question": "unresolved-question";
+            }>;
+        }, z.core.$strict>>>;
         format: z.ZodLiteral<2>;
         termId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").TermId, string>>;
+        learnerId: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").LearnerId, string>>>;
     }, z.core.$strict>;
     worksheet: z.ZodObject<{
         kind: z.ZodLiteral<"worksheet">;
@@ -1013,6 +1398,23 @@ declare const schemas: {
                 kind: z.ZodLiteral<"pending">;
                 reason: z.ZodString;
             }, z.core.$strict>]>;
+            capability: z.ZodOptional<z.ZodObject<{
+                goalId: z.ZodString;
+                familyId: z.ZodString;
+                scope: z.ZodObject<{
+                    id: z.ZodString;
+                    description: z.ZodString;
+                    modality: z.ZodEnum<{
+                        written: "written";
+                        oral: "oral";
+                        listening: "listening";
+                        audiovisual: "audiovisual";
+                        performed: "performed";
+                    }>;
+                    numberMax: z.ZodOptional<z.ZodNumber>;
+                    vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+                }, z.core.$strict>;
+            }, z.core.$strict>>;
             mistakeId: z.ZodOptional<z.ZodString>;
             source: z.ZodDiscriminatedUnion<[z.ZodObject<{
                 kind: z.ZodLiteral<"authored">;
@@ -1035,7 +1437,22 @@ declare const schemas: {
             answer: z.ZodString;
             explanation: z.ZodString;
             answerEvidence: z.ZodString;
+            openmaic: z.ZodOptional<z.ZodObject<{
+                bindingId: z.ZodString;
+                sceneId: z.ZodString;
+                questionId: z.ZodString;
+                snapshot: z.ZodJSONSchema;
+                snapshotHash: z.ZodString;
+                revision: z.ZodDiscriminatedUnion<[z.ZodObject<{
+                    kind: z.ZodLiteral<"manifest">;
+                    stageRev: z.ZodNumber;
+                    sceneRev: z.ZodNumber;
+                }, z.core.$strict>, z.ZodObject<{
+                    kind: z.ZodLiteral<"unavailable">;
+                }, z.core.$strict>], "kind">;
+            }, z.core.$strict>>;
             basisStatus: z.ZodOptional<z.ZodLiteral<"legacy-pending">>;
+            legacyRecord: z.ZodOptional<z.ZodJSONSchema>;
             choices: z.ZodOptional<z.ZodArray<z.ZodString>>;
             steps: z.ZodOptional<z.ZodArray<z.ZodString>>;
             figure: z.ZodOptional<z.ZodDiscriminatedUnion<[z.ZodObject<{
@@ -1335,6 +1752,7 @@ declare const schemas: {
             questionId: z.ZodString;
             rawResponse: z.ZodString;
             response: z.ZodOptional<z.ZodString>;
+            legacyRecord: z.ZodOptional<z.ZodJSONSchema>;
             assistance: z.ZodEnum<{
                 unknown: "unknown";
                 independent: "independent";
@@ -1359,6 +1777,18 @@ declare const schemas: {
                 sourceVersion: z.ZodString;
             }, z.core.$strict>], "kind">>;
             source: z.ZodDiscriminatedUnion<[z.ZodObject<{
+                kind: z.ZodLiteral<"openmaic">;
+                bindingId: z.ZodString;
+                attemptId: z.ZodString;
+                sceneId: z.ZodString;
+                questionId: z.ZodString;
+                submission: z.ZodObject<{
+                    id: z.ZodString;
+                    seq: z.ZodNumber;
+                    createdAt: z.ZodString;
+                }, z.core.$strict>;
+                submittedAnswer: z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>;
+            }, z.core.$strict>, z.ZodObject<{
                 kind: z.ZodLiteral<"unknown">;
             }, z.core.$strict>, z.ZodObject<{
                 kind: z.ZodLiteral<"native">;
@@ -1404,15 +1834,27 @@ declare const schemas: {
             answerEvidence: z.ZodString;
             assessedAt: z.ZodNumber;
             correctedAt: z.ZodOptional<z.ZodNumber>;
+            criteria: z.ZodOptional<z.ZodArray<z.ZodEnum<{
+                method: "method";
+                basic: "basic";
+                variation: "variation";
+            }>>>;
+            criterionCorrection: z.ZodOptional<z.ZodObject<{
+                sessionId: z.ZodString;
+                messageId: z.ZodString;
+                inputVersion: z.ZodString;
+                rawResponse: z.ZodString;
+            }, z.core.$strict>>;
             userConfirmation: z.ZodOptional<z.ZodString>;
             errorType: z.ZodOptional<z.ZodEnum<{
+                pattern: "pattern";
+                listening: "listening";
                 "carry-borrow": "carry-borrow";
                 "place-value": "place-value";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
-                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -1424,13 +1866,48 @@ declare const schemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
-                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
                 "usage-context": "usage-context";
                 "spoken-response": "spoken-response";
                 "writing-complete": "writing-complete";
+            }>>;
+            official: z.ZodOptional<z.ZodObject<{
+                recordId: z.ZodString;
+                seq: z.ZodNumber;
+                createdAt: z.ZodString;
+                result: z.ZodNullable<z.ZodObject<{
+                    questionId: z.ZodString;
+                    correct: z.ZodNullable<z.ZodBoolean>;
+                    status: z.ZodEnum<{
+                        correct: "correct";
+                        incorrect: "incorrect";
+                    }>;
+                    earned: z.ZodNumber;
+                    aiComment: z.ZodOptional<z.ZodString>;
+                }, z.core.$catchall<z.ZodType<import("../types.ts").StudentJsonValue, unknown, z.core.$ZodTypeInternals<import("../types.ts").StudentJsonValue, unknown>>>>>;
+            }, z.core.$strict>>;
+            officialHistory: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                recordId: z.ZodString;
+                seq: z.ZodNumber;
+                createdAt: z.ZodString;
+                result: z.ZodNullable<z.ZodObject<{
+                    questionId: z.ZodString;
+                    correct: z.ZodNullable<z.ZodBoolean>;
+                    status: z.ZodEnum<{
+                        correct: "correct";
+                        incorrect: "incorrect";
+                    }>;
+                    earned: z.ZodNumber;
+                    aiComment: z.ZodOptional<z.ZodString>;
+                }, z.core.$catchall<z.ZodType<import("../types.ts").StudentJsonValue, unknown, z.core.$ZodTypeInternals<import("../types.ts").StudentJsonValue, unknown>>>>>;
+            }, z.core.$strict>>>;
+            grading: z.ZodOptional<z.ZodEnum<{
+                pending: "pending";
+                aligned: "aligned";
+                equivalent: "equivalent";
+                conflict: "conflict";
             }>>;
         }, z.core.$strict>>;
         drafts: z.ZodArray<z.ZodObject<{
@@ -1466,9 +1943,88 @@ declare const schemas: {
         }, z.core.$strict>>>;
         format: z.ZodLiteral<2>;
         termId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").TermId, string>>;
+        learnerId: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").LearnerId, string>>>;
     }, z.core.$strict>;
     collections: z.ZodObject<{
         kind: z.ZodLiteral<"collections">;
+        knowledge: z.ZodOptional<z.ZodObject<{
+            goals: z.ZodArray<z.ZodObject<{
+                id: z.ZodString;
+                subject: z.ZodEnum<{
+                    chinese: "chinese";
+                    math: "math";
+                    english: "english";
+                }>;
+                domain: z.ZodString;
+                title: z.ZodString;
+                scope: z.ZodString;
+                criterion: z.ZodString;
+                prerequisites: z.ZodArray<z.ZodString>;
+                familyIds: z.ZodArray<z.ZodString>;
+                sourceIds: z.ZodArray<z.ZodString>;
+                curriculumAssociationIds: z.ZodArray<z.ZodString>;
+                titleEn: z.ZodOptional<z.ZodString>;
+                criterionEn: z.ZodOptional<z.ZodString>;
+                curriculumAssociationGap: z.ZodOptional<z.ZodString>;
+                coverageStatus: z.ZodOptional<z.ZodString>;
+                activation: z.ZodOptional<z.ZodString>;
+                evidenceRequirements: z.ZodOptional<z.ZodArray<z.ZodString>>;
+                progressKind: z.ZodOptional<z.ZodString>;
+                prerequisitePolicy: z.ZodOptional<z.ZodString>;
+                requirementIds: z.ZodOptional<z.ZodArray<z.ZodString>>;
+                sourceLocators: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                    sourceId: z.ZodString;
+                    pdfPages: z.ZodOptional<z.ZodArray<z.ZodNumber>>;
+                    section: z.ZodString;
+                }, z.core.$strict>>>;
+            }, z.core.$strict>>;
+            families: z.ZodArray<z.ZodObject<{
+                id: z.ZodString;
+                subject: z.ZodEnum<{
+                    chinese: "chinese";
+                    math: "math";
+                    english: "english";
+                }>;
+                coreMethod: z.ZodString;
+                structure: z.ZodString;
+                goalIds: z.ZodArray<z.ZodString>;
+                variationAxes: z.ZodArray<z.ZodString>;
+                boundary: z.ZodString;
+                representative: z.ZodObject<{
+                    id: z.ZodString;
+                    prompt: z.ZodString;
+                    rubric: z.ZodString;
+                    stimulus: z.ZodOptional<z.ZodJSONSchema>;
+                }, z.core.$strict>;
+                signature: z.ZodObject<{
+                    capabilityIds: z.ZodArray<z.ZodString>;
+                    coreMethod: z.ZodString;
+                    problemStructure: z.ZodString;
+                }, z.core.$strict>;
+            }, z.core.$strict>>;
+        }, z.core.$strict>>;
+        legacyHistory: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            sourcePath: z.ZodString;
+            row: z.ZodString;
+            record: z.ZodJSONSchema;
+        }, z.core.$strict>>>;
+        legacyReferences: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            kind: z.ZodEnum<{
+                objective: "objective";
+                exercise: "exercise";
+            }>;
+            oldId: z.ZodString;
+            status: z.ZodEnum<{
+                pending: "pending";
+                "review-required": "review-required";
+            }>;
+            candidateGoalIds: z.ZodArray<z.ZodString>;
+            routes: z.ZodArray<z.ZodObject<{
+                goalId: z.ZodString;
+                familyId: z.ZodString;
+            }, z.core.$strict>>;
+            reason: z.ZodString;
+        }, z.core.$strict>>>;
         mistakes: z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             subject: z.ZodEnum<{
@@ -1476,10 +2032,10 @@ declare const schemas: {
                 math: "math";
                 english: "english";
             }>;
+            prompt: z.ZodString;
             confirmedAt: z.ZodOptional<z.ZodNumber>;
             materialId: z.ZodOptional<z.ZodString>;
             topic: z.ZodString;
-            prompt: z.ZodString;
             learnerAnswer: z.ZodString;
             correction: z.ZodString;
             explanation: z.ZodString;
@@ -1488,13 +2044,14 @@ declare const schemas: {
             uncertainties: z.ZodString;
             objectiveId: z.ZodOptional<z.ZodString>;
             errorType: z.ZodOptional<z.ZodEnum<{
+                pattern: "pattern";
+                listening: "listening";
                 "carry-borrow": "carry-borrow";
                 "place-value": "place-value";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
-                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -1506,7 +2063,6 @@ declare const schemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
-                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -1821,13 +2377,14 @@ declare const schemas: {
             explanation: z.ZodString;
             answerEvidence: z.ZodString;
             errorType: z.ZodOptional<z.ZodEnum<{
+                pattern: "pattern";
+                listening: "listening";
                 "carry-borrow": "carry-borrow";
                 "place-value": "place-value";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
-                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -1839,7 +2396,6 @@ declare const schemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
-                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -1887,13 +2443,14 @@ declare const schemas: {
                 speak: "speak";
             }>;
             errorTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
+                pattern: "pattern";
+                listening: "listening";
                 "carry-borrow": "carry-borrow";
                 "place-value": "place-value";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
-                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -1905,7 +2462,6 @@ declare const schemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
-                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -1963,6 +2519,7 @@ declare const schemas: {
         }, z.core.$strict>>>;
         format: z.ZodLiteral<2>;
         termId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").TermId, string>>;
+        learnerId: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").LearnerId, string>>>;
     }, z.core.$strict>;
 };
 /** Names accepted by the packaged schema and example commands. */

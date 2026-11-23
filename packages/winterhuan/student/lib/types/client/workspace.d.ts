@@ -1,4 +1,5 @@
 import type { ResourceSnapshot } from '@deepseek-ai/dsh-client-resources/client';
+import type { CapabilityProgress, LearningNextAction, LearningRoundView } from '../learning/mastery.ts';
 import type { MistakeStatus } from '../dashboard.ts';
 import type { StudentQueryResult, StudentSessionId, StudentJsonValue } from '../types.ts';
 /** One dashboard selection; browsing and diagnostic ranges do not change the active block. */
@@ -251,7 +252,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                         };
                     })[];
                 } | undefined;
-                errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+                errorType?: "pattern" | "listening" | "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
                 savedAt?: number | undefined;
             }[];
             workbookDrafts: {
@@ -520,7 +521,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 id: string;
                 subject: "chinese" | "math" | "english";
                 title: string;
-                level: "due" | "weak" | "stalled" | "mastered" | "practising" | "untouched";
+                level: "untouched" | "practising" | "weak" | "due" | "mastered" | "stalled";
                 priority: number;
                 reasons: import("../learning/mastery.ts").InsightReason[];
             }[];
@@ -559,7 +560,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 goal: string;
                 conceptIds: string[];
                 method: "listen" | "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "speak";
-                errorTypes?: ("carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
+                errorTypes?: ("pattern" | "listening" | "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
                 questionPoints?: string[] | undefined;
                 variationAxes?: ("reverse" | "context" | "numbers" | "representation" | "explain")[] | undefined;
             }[];
@@ -575,7 +576,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 objectiveTitle: string;
                 open: boolean;
                 results: {
-                    errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
+                    errorType?: "pattern" | "listening" | "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                     itemId: string;
                     result: "correct" | "partial" | "incorrect" | "unassessed";
                     response: string;
@@ -583,7 +584,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 }[];
                 drafts: {
                     confidence?: "high" | "low";
-                    errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
+                    errorType?: "pattern" | "listening" | "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                     itemId: string;
                     response: string;
                     result: "correct" | "partial" | "incorrect" | "unassessed";
@@ -837,7 +838,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 imagePath?: string | undefined;
                 materialId?: string | undefined;
                 objectiveId?: string | undefined;
-                errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+                errorType?: "pattern" | "listening" | "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
                 confirmedAt?: number | undefined;
                 userConfirmation?: string | undefined;
                 dueAt?: number | undefined;
@@ -862,7 +863,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 imagePath?: string | undefined;
                 materialId?: string | undefined;
                 objectiveId?: string | undefined;
-                errorType?: "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+                errorType?: "pattern" | "listening" | "carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
                 confirmedAt?: number | undefined;
                 userConfirmation?: string | undefined;
                 dueAt?: number | undefined;
@@ -1376,8 +1377,27 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
         interactiveLessons: import("../openmaic.ts").InteractiveLessons;
     })) | undefined;
     context: StudentJsonValue | undefined;
+    contextState: {
+        status: import("@deepseek-ai/dsh-client-resources/client").ResourceStatus;
+        readStatus: "partial" | "invalid" | "valid" | "missing" | "future-format" | "changing" | "legacy" | "archived" | undefined;
+        versions: Pick<import("../files/read.ts").ObservedFile, "path" | "targetKey" | "version">[];
+        issues: import("../files/validation.ts").FileIssue[];
+        failure: import("@deepseek-ai/dsh-typert-protocol").RemoteFailure | undefined;
+    };
+    contextReady: boolean;
     termId: string | undefined;
+    learnerId: string | undefined;
+    classroomBindingId: string | undefined;
+    nextAction: (StudentJsonValue & LearningNextAction) | null;
+    round: (StudentJsonValue & LearningRoundView) | null;
+    legalActions: string[];
+    sourceVerification: (StudentJsonValue & {
+        native: import("../native-history.ts").NativeHistoryVerification[];
+        openmaic: import("../openmaic/feedback-schema.ts").OpenmaicSourceVerification[];
+    }) | null;
+    goalProgress: StudentJsonValue[] & CapabilityProgress[];
     value: StudentQueryResult | undefined;
+    loadNeeded: boolean;
     stale: boolean;
     error: string;
     offset: import("react").MutableRefObject<number>;

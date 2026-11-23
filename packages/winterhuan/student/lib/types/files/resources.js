@@ -1,9 +1,10 @@
 /** Authoring resources derive structural constraints from the shared input schemas. */
 import { z } from 'zod';
+import { capabilityGoalSchema, questionFamilySchema, knowledgeExtensionSchema } from "../capabilities.js";
 import { officialFileSchemas } from "./schema.js";
 import { figureSchema, stateSchema } from "../schema.js";
 import { lessonFileSchema } from "../openmaic.js";
-const schemas = { ...officialFileSchemas, 'openmaic-lessons': lessonFileSchema, figure: figureSchema };
+const schemas = { ...officialFileSchemas, 'capability-goal': capabilityGoalSchema, 'question-family': questionFamilySchema, 'knowledge-extension': knowledgeExtensionSchema, 'openmaic-lessons': lessonFileSchema, figure: figureSchema };
 /**
  * Generate the structural JSON schema without losing branded identifier input constraints.
  * @param kind - official file kind or the shared figure union.

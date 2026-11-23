@@ -3,8 +3,9 @@ import { registerModeTab } from "./mode.js";
 import { IconPlayOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives';
 import { useEffect } from 'react';
 import { NS, zh, en } from "./locales.js";
-import { tutorBridge } from "./bridge.js";
+import { tutorBridge, studentSessionBridge } from "./bridge.js";
 import { StudyDesk } from "./desk.js";
+import { registerTeachingAids } from "./teaching-aids.js";
 import { registerWorkbench } from "./workbench.js";
 import { mountStudentResource } from "./resource.js";
 import { createStudentDraftStore } from "./drafts.js";
@@ -15,23 +16,27 @@ function studentCallbacks(scope) {
     const t = scope.locale.bind(NS);
     return {
         ...createStudentManualActions(scope.remote.student),
+        sessionActions: (sessionId) => studentSessionBridge(scope, sessionId, t('sessionError')),
+        openLesson: async (sessionId, lessonId) => { const result = await scope.remote.studentOpenmaicPlayback.open(sessionId, lessonId, new AbortController().signal); if (!result.ok)
+            throw new Error(result.error.message); return result.value; },
         askStudent: (sessionId, text, photo) => tutorBridge(scope, sessionId, t('sessionError'), t('sendError'))(text, photo),
     };
 }
-function Sidebar({ sessionId, useTabInfo, useSession, useSessions, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission }) {
+function Sidebar({ sessionId, useTabInfo, useSession, useSessions, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission, openLesson, sessionActions }) {
     const preset = useSessions(state => state.byId[sessionId]?.projectionValues?.agentPreset);
     const { tab } = useTabInfo();
     useEffect(() => { if (typeof preset === 'string' && preset !== 'student')
         tab.actions.close(); }, [preset, tab.actions]);
-    const running = useSession(snapshot => snapshot.running);
+    const session = useSession(snapshot => snapshot);
     if (preset !== 'student')
         return null;
-    return _jsx(StudyDesk, { sessionId: sessionId, visible: tab.visible, running: !!running, ask: (text, photo) => askStudent(sessionId, text, photo), t: t, useResource: useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission }, sessionId);
+    return _jsx(StudyDesk, { sessionId: sessionId, visible: tab.visible, running: !!session.running, pending: session.pendingSubmissions.length > 0 || session.awaitingFirstTurn, ...sessionActions(sessionId), ask: (text, photo) => askStudent(sessionId, text, photo), t: t, useResource: useResource, openLesson: lessonId => openLesson(sessionId, lessonId), useStore, actions, saveSettings, saveWorksheet, inspectSubmission }, sessionId);
 }
 /** Register the learning desk inside DSH's existing session sidebar. */
 export async function apply(context) {
     await mountStudentResource(context);
     context.effect(() => context.locale.register(NS, { zh, en }), 'student: dictionaries');
+    registerTeachingAids(context);
     const t = context.locale.bind(NS);
     context.effect(() => registerModeTab(context, {
         id: '@winterhuan/dsh-student', kind: 'student', title: () => t('title'),

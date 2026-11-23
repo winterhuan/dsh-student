@@ -6,7 +6,8 @@ import type {
   TypertRemoteMethod,
 } from '@deepseek-ai/dsh-typert-protocol'
 import type { ManualSaveRequest } from '@winterhuan/dsh-student/files'
-import type { StudentManualContext, StudentManualReply, StudentManualSaveRequest, StudentQueryRequest, StudentQueryResult, StudentSessionId, StudentSubmissionInspection, StudentSubmissionRequest, StudentWatchFrame } from '@winterhuan/dsh-student/types'
+import type { OpenmaicPlaybackResult } from '@winterhuan/dsh-student/openmaic'
+import type { StudentFeedbackSyncReply, StudentFeedbackSyncRequest, StudentManualContext, StudentManualReply, StudentManualSaveRequest, StudentQueryRequest, StudentQueryResult, StudentSessionId, StudentSubmissionInspection, StudentSubmissionRequest, StudentWatchFrame } from '@winterhuan/dsh-student/types'
 
 declare module '@deepseek-ai/dsh-typert-protocol' {
   interface TypertRemoteNamespace$73747564656e74 {
@@ -14,17 +15,24 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     manualContext: (sessionId: StudentSessionId, intent: ManualSaveRequest['intent'], signal?: AbortSignal) => Promise<RemoteResult<StudentManualContext>>
     query: (sessionId: StudentSessionId, request: StudentQueryRequest, signal?: AbortSignal) => Promise<RemoteResult<StudentQueryResult>>
     saveManual: (sessionId: StudentSessionId, request: StudentManualSaveRequest, signal?: AbortSignal) => Promise<RemoteResult<StudentManualReply>>
+    syncFeedback: (sessionId: StudentSessionId, request: StudentFeedbackSyncRequest, signal?: AbortSignal) => Promise<RemoteResult<StudentFeedbackSyncReply>>
     watch: (sessionId: StudentSessionId, request: StudentQueryRequest, signal?: AbortSignal) => RemoteStreamHandle<StudentWatchFrame, never>
+  }
+  interface TypertRemoteNamespace$73747564656e744f70656e6d616963506c61796261636b {
+    open: (sessionId: StudentSessionId, lessonId: string, signal?: AbortSignal) => Promise<RemoteResult<OpenmaicPlaybackResult>>
   }
   interface TypertRemoteMap {
     'student/inspectSubmission': (sessionId: StudentSessionId, request: StudentSubmissionRequest, signal?: AbortSignal) => Promise<RemoteResult<StudentSubmissionInspection>>
     'student/manualContext': (sessionId: StudentSessionId, intent: ManualSaveRequest['intent'], signal?: AbortSignal) => Promise<RemoteResult<StudentManualContext>>
     'student/query': (sessionId: StudentSessionId, request: StudentQueryRequest, signal?: AbortSignal) => Promise<RemoteResult<StudentQueryResult>>
     'student/saveManual': (sessionId: StudentSessionId, request: StudentManualSaveRequest, signal?: AbortSignal) => Promise<RemoteResult<StudentManualReply>>
+    'student/syncFeedback': (sessionId: StudentSessionId, request: StudentFeedbackSyncRequest, signal?: AbortSignal) => Promise<RemoteResult<StudentFeedbackSyncReply>>
     'student/watch': (sessionId: StudentSessionId, request: StudentQueryRequest, signal?: AbortSignal) => RemoteStreamHandle<StudentWatchFrame, never>
+    'studentOpenmaicPlayback/open': (sessionId: StudentSessionId, lessonId: string, signal?: AbortSignal) => Promise<RemoteResult<OpenmaicPlaybackResult>>
   }
   interface TypertRemoteNamespaceMap {
     'student': TypertRemoteNamespace$73747564656e74
+    'studentOpenmaicPlayback': TypertRemoteNamespace$73747564656e744f70656e6d616963506c61796261636b
   }
 }
 
@@ -33,7 +41,9 @@ export declare const TYPERT_REMOTE: TypertRemoteInfo<{
   readonly 'student/manualContext': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'intent': ManualSaveRequest['intent'] }, StudentManualContext>
   readonly 'student/query': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'request': StudentQueryRequest }, StudentQueryResult>
   readonly 'student/saveManual': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'request': StudentManualSaveRequest }, StudentManualReply>
+  readonly 'student/syncFeedback': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'request': StudentFeedbackSyncRequest }, StudentFeedbackSyncReply>
   readonly 'student/watch': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'request': StudentQueryRequest }, StudentWatchFrame, 'stream'>
+  readonly 'studentOpenmaicPlayback/open': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'lessonId': string }, OpenmaicPlaybackResult>
 }>
 export default TYPERT_REMOTE
 //# sourceMappingURL=typert.remote-client.d.ts.map

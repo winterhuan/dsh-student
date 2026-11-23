@@ -2,7 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { createSnapshotStore, defineStore } from '@deepseek-ai/dsh-client-store';
 import { IconPlayOutlineRegular, Toast } from '@deepseek-ai/dsh-client-ui-primitives';
 import { useEffect, useState } from 'react';
-import { tutorBridge } from "./bridge.js";
+import { tutorBridge, studentSessionBridge } from "./bridge.js";
 import { StudyDesk } from "./desk.js";
 import { createStudentManualActions } from "./manual-actions.js";
 import { NS } from "./locales.js";
@@ -87,11 +87,11 @@ function SelectedSession({ sessionId, chatVisible, pane, showTutor, selectPane, 
         return _jsxs("div", { className: css.empty, children: [_jsx("p", { role: "alert", children: t('openConversationError') }), _jsx("button", { type: "button", onClick: () => { setFailed(false); setBinding(null); setRetry(value => value + 1); }, children: t('reload') })] });
     return binding ? _jsx(SessionProvider, { session: binding, children: renderSlot(sessionSlot, { chatVisible, pane, showTutor, selectPane }) }) : _jsx(Loading, {});
 }
-function LearningSession({ sessionId, chatVisible, pane, showTutor, selectPane, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, t }) {
+function LearningSession({ sessionId, chatVisible, pane, showTutor, selectPane, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, openLesson, syncFeedback, cancel, t }) {
     const session = useSession(state => state);
     const conversation = useConversation(state => state);
     const settling = session.openState === 'loading' && !conversation.activeTargets.size;
-    return _jsxs("div", { className: `${css.body} ${chatVisible ? css.withChat : ''}`, "data-pane": pane, children: [_jsxs("nav", { className: css.panes, "aria-label": t('workbenchPanels'), children: [_jsx("button", { type: "button", "aria-pressed": pane === 'study', onClick: () => selectPane('study'), children: t('learningContent') }), _jsxs("button", { type: "button", "aria-pressed": pane === 'chat', onClick: () => selectPane('chat'), children: [t('tutorConversation'), session.running ? ` · ${t('busy')}` : ''] })] }), _jsx("div", { className: css.study, children: _jsx(StudyDesk, { sessionId: sessionId, visible: true, running: !!session.running, ask: (text, photo) => { showTutor(); return ask(text, photo); }, t: t, useResource: useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission }) }), chatVisible && _jsxs("aside", { className: css.chat, "aria-label": t('tutorConversation'), children: [_jsx("h2", { children: t('tutorConversation') }), renderFactorySlot('conversation.content', { variant: 'embedded', phase: settling ? 'settling' : 'active', hero: false })] })] });
+    return _jsxs("div", { className: `${css.body} ${chatVisible ? css.withChat : ''}`, "data-pane": pane, children: [_jsxs("nav", { className: css.panes, "aria-label": t('workbenchPanels'), children: [_jsx("button", { type: "button", "aria-pressed": pane === 'study', onClick: () => selectPane('study'), children: t('learningContent') }), _jsxs("button", { type: "button", "aria-pressed": pane === 'chat', onClick: () => selectPane('chat'), children: [t('tutorConversation'), session.running ? ` · ${t('busy')}` : ''] })] }), _jsx("div", { className: css.study, children: _jsx(StudyDesk, { sessionId: sessionId, visible: true, running: !!session.running, pending: session.pendingSubmissions.length > 0 || session.awaitingFirstTurn, syncFeedback: syncFeedback, cancel: cancel, ask: (text, photo) => { showTutor(); return ask(text, photo); }, t: t, useResource: useResource, openLesson: openLesson, useStore, actions, saveSettings, saveWorksheet, inspectSubmission }) }), chatVisible && _jsxs("aside", { className: css.chat, "aria-label": t('tutorConversation'), children: [_jsx("h2", { children: t('tutorConversation') }), renderFactorySlot('conversation.content', { variant: 'embedded', phase: settling ? 'settling' : 'active', hero: false })] })] });
 }
 function PanelIcon({ size }) { return _jsx(IconPlayOutlineRegular, { size: size }); }
 function WorkbenchNotice({ useNotice, dismissNotice, t }) {
@@ -117,7 +117,8 @@ export function registerWorkbench(context, draftStore) {
         }),
     }, Workbench));
     context.slots.inject(sessionSlot, () => context.slots.register({ name: sessionSlot, locale: NS, store: draftStore,
-        inject: (sessionId) => ({ ask: tutorBridge(context, sessionId, t('sessionError'), t('sendError')), ...createStudentManualActions(context.remote.student) }),
+        inject: (sessionId) => ({ ...studentSessionBridge(context, sessionId, t('sessionError')), ask: tutorBridge(context, sessionId, t('sessionError'), t('sendError')), openLesson: async (lessonId) => { const result = await context.remote.studentOpenmaicPlayback.open(sessionId, lessonId, new AbortController().signal); if (!result.ok)
+                throw new Error(result.error.message); return result.value; }, ...createStudentManualActions(context.remote.student) }),
     }, LearningSession));
     context.slots.inject('sidebar.panellist', () => context.slots.register({ name: 'sidebar.panellist', id: 'student', order: 6, locale: NS, label: () => t('title') }, PanelIcon));
     context.slots.inject('shell.overlay', () => context.slots.register({ name: 'shell.overlay', id: 'student.workbench.notice', locale: NS,

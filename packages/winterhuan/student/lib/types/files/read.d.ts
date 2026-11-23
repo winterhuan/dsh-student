@@ -1,6 +1,9 @@
 /** Bounded consistent discovery and version reads shared by Node CLI and DSH application. */
 import type { FsInfo, FsTargetKey, FsVersion, FsWriteIntent } from '@deepseek-ai/dsh-fs';
+import { type LessonFileRead } from './lessons.ts';
 import { type FileIssue, type ValidatedWorkspace, type NativeInputObservation } from './validation.ts';
+import type { NativeHistoryVerification } from '../native-history.ts';
+import type { OpenmaicSourceVerification, OpenmaicInputObservation } from '../openmaic/feedback-schema.ts';
 import type { OfficialFile } from './schema.ts';
 import type { BackupRetentionQueue } from './backup-retention.ts';
 import { StudyReadCache } from './cache.ts';
@@ -42,6 +45,21 @@ export interface WorkspaceRead {
         names: string[];
     }[];
     issues: FileIssue[];
+    /** Missing or incompatible explicit history is excluded without blocking current learning. */
+    archiveIssues?: FileIssue[];
+    /** Exact original archive versions participate in source and query rereads. */
+    archiveFiles?: ObservedFile[];
+    /** Structurally compatible source dependencies; these never grant progress before authenticated replay. */
+    archiveSources?: {
+        workspace: ValidatedWorkspace;
+        references: NonNullable<ValidatedWorkspace['settings']['evidenceReferences']>;
+        lessons: LessonFileRead;
+    }[];
+    /** Independently authorized original sources remain separate from agent-authored file validity. */
+    sourceVerification?: {
+        native: NativeHistoryVerification[];
+        openmaic: OpenmaicSourceVerification[];
+    };
     /** Backup inspection failures remain independent from official-file validity. */
     backupIssues?: FileIssue[];
     workspace?: ValidatedWorkspace;
@@ -53,10 +71,11 @@ export interface WorkspaceRead {
  * @param signal - cancels discovery, bounded rereads and byte reads.
  * @param prior - supplied preserved versions; omitted reads use verified observed-version backups for cold frozen-content checks.
  * @param nativeSources - independently resolved consumed input observations, empty for the read-only CLI.
+ * @param openmaicSources - independently authorized original official submissions and grading.
  * @returns validated facts or an explicit incomplete, invalid or changing result.
  */
 export declare function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?: readonly {
     path: string;
     file: OfficialFile;
-}[], nativeSources?: readonly NativeInputObservation[]): Promise<WorkspaceRead>;
+}[], nativeSources?: readonly NativeInputObservation[], openmaicSources?: readonly OpenmaicInputObservation[]): Promise<WorkspaceRead>;
 //# sourceMappingURL=read.d.ts.map

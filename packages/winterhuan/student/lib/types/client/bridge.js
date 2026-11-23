@@ -25,4 +25,29 @@ export function tutorBridge(context, sessionId, unavailable, failed) {
         }
     };
 }
+/**
+ * Bind original-session controls without creating a user submission or changing the composer.
+ * @param context - Client context with native Session bindings and the Student Remote namespace.
+ * @param sessionId - original native Session to synchronize or cancel.
+ * @param unavailable - localized error when the original Session is no longer available.
+ * @returns controls whose rejected calls preserve the remote/native error; synchronization reports admission only.
+ */
+export function studentSessionBridge(context, sessionId, unavailable) {
+    return {
+        async syncFeedback(lessonId, trigger) {
+            const result = await context.remote.student.syncFeedback(sessionId, { lessonId, trigger }, new AbortController().signal);
+            if (!result.ok)
+                throw new Error(result.error.message);
+            return result.value;
+        },
+        async cancel() {
+            const session = context.sessions.binding(sessionId)?.session;
+            if (!session)
+                throw new Error(unavailable);
+            const result = await session.cancel();
+            if (!result.ok)
+                throw new Error(result.error.message);
+        },
+    };
+}
 //# sourceMappingURL=bridge.js.map

@@ -1,3 +1,4 @@
+import type { OpenmaicInputObservation } from '../openmaic/feedback-schema.ts';
 import { type OfficialFile, type TermSettings, type LearningBlock, type WorksheetFile, type CollectionsFile } from './schema.ts';
 /** Bounded, actionable durable-file failure. */
 export interface FileIssue {
@@ -18,6 +19,11 @@ export interface ValidatedWorkspace {
     worksheets: WorksheetFile[];
     collections?: CollectionsFile;
     nativeSources?: readonly NativeInputObservation[];
+    openmaicSources?: readonly OpenmaicInputObservation[];
+    archivedEvidence?: {
+        workspace: ValidatedWorkspace;
+        references: NonNullable<TermSettings['evidenceReferences']>;
+    }[];
 }
 /** Host-resolved consumed input version; official-file declarations alone cannot supply this observation. */
 export interface NativeInputObservation {
@@ -26,6 +32,14 @@ export interface NativeInputObservation {
     inputVersion: string;
     rawResponse: string;
     receiptAt: number;
+    learningScope?: {
+        learnerId: string;
+        termId: string;
+        blockId: string;
+        questionId: string;
+        responseId?: string;
+    };
+    questionSnapshot?: string;
 }
 /** Validation outcome retains independently valid parsed files when related data fails. */
 export interface ValidationResult {
@@ -42,10 +56,11 @@ export interface ValidationResult {
  * @param input - discovered current files with exact workspace-relative paths.
  * @param prior - preserved valid file versions for used-content comparison.
  * @param nativeSources - matching consumed input versions resolved from native Session records.
+ * @param openmaicSources - independently authorized original official submissions and grading.
  * @returns bounded issues and independently valid workspace entities.
  */
 export declare function validateStudyFiles(input: readonly ParsedFile[], prior?: readonly {
     path: string;
     file: OfficialFile;
-}[], nativeSources?: readonly NativeInputObservation[]): ValidationResult;
+}[], nativeSources?: readonly NativeInputObservation[], openmaicSources?: readonly OpenmaicInputObservation[]): ValidationResult;
 //# sourceMappingURL=validation.d.ts.map

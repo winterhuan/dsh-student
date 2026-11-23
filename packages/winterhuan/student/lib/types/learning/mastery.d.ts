@@ -1,7 +1,106 @@
 import type { ErrorType, StudyState } from '../schema.ts';
 import { type CurriculumMethod, type CurriculumScope, type CurriculumSubject } from '../curriculum.ts';
+import { type CapabilityScope } from '../capabilities.ts';
+import type { ValidatedWorkspace } from '../files/validation.ts';
+import type { Assessment, LearningRound } from '../files/schema.ts';
+import type { WorkspaceRead } from '../files/read.ts';
+import type { OpenmaicSourceVerification } from '../openmaic/feedback-schema.ts';
+import type { NativeHistoryVerification } from '../native-history.ts';
+import type { EffectiveEvidence } from './evidence.ts';
 /** Subject display order shared by check-in plans and history. */
 export declare const SUBJECT_ORDER: readonly ["chinese", "math", "english"];
+/** A goal's evidence within one explicitly selected tested range. */
+export interface CapabilityProgress {
+    id: string;
+    subject: CurriculumSubject;
+    title: string;
+    scope: CapabilityScope | null;
+    level: 'untouched' | 'practising' | 'weak' | 'due' | 'mastered';
+    independentDays: string[];
+    firstMasteredDay?: string;
+    recoveredDay?: string;
+    baseline: boolean;
+    missingFamilyIds: string[];
+    missingCriteria: {
+        familyId: string;
+        criteria: NonNullable<Assessment['criteria']>;
+    }[];
+    feedback: {
+        termId: string;
+        ownerId: string;
+        responseId: string;
+        familyId: string;
+        result: EffectiveEvidence['result'];
+        feedback: string;
+        errorType?: ErrorType;
+        sourceStatus: EffectiveEvidence['sourceStatus'];
+        assistance: EffectiveEvidence['assistance'];
+        answerDate: EffectiveEvidence['answerDate'];
+    }[];
+}
+/** One continuation selected from validated files for the native tutor and workbench. */
+export interface LearningNextAction {
+    kind: 'answer' | 'assess' | 'supplement' | 'teach' | 'review' | 'learn' | 'hold';
+    reason: 'unfinished-question' | 'pending-assessment' | 'missing-evidence' | 'current-gap' | 'prerequisite-gap' | 'due-review' | 'new-goal' | 'confirmed-scope-required' | 'check-budget-exhausted' | 'round-paused' | 'no-learnable-goal' | 'source-unavailable' | 'source-pending';
+    subject: CurriculumSubject;
+    title: string;
+    goalId?: string;
+    familyId?: string;
+    scope?: CapabilityScope;
+    blockId?: string;
+    roundId?: string;
+    questionId?: string;
+    responseId?: string;
+    requirement?: string;
+    source?: {
+        kind: 'openmaic';
+        verification: OpenmaicSourceVerification;
+    } | {
+        kind: 'native';
+        verification: NativeHistoryVerification;
+    };
+    supplement?: {
+        missingFamilyIds: string[];
+        missingCriteria: CapabilityProgress['missingCriteria'];
+        maxNewQuestions: number;
+        remaining: number;
+    };
+    review?: {
+        mistakeIds: string[];
+        familyIds: string[];
+        remaining: number;
+    };
+}
+/** The persisted round retains its owning block, including when that block has ended. */
+export interface LearningRoundView extends LearningRound {
+    blockId: string;
+    status: 'active' | 'paused' | 'ended';
+    limit: 2 | 3;
+    remaining: number;
+}
+/** Actions and allowances are projected together; consumers do not select a second next step. */
+export interface LearningContinuation {
+    nextAction: LearningNextAction | null;
+    goalProgress: CapabilityProgress[];
+    round: LearningRoundView | null;
+    legalActions: string[];
+    reviewRound: {
+        limit: 2;
+        usedFamilyIds: string[];
+        remaining: number;
+        backlog: number;
+    };
+}
+/**
+ * Continue one current activity, bounded evidence check or review round without a workflow file.
+ * @param workspace - independently validated current and explicitly referenced original term files.
+ * @param state - shared evidence and review projection.
+ * @param now - actual query cutoff.
+ * @param subject - optional browsing subject; unfinished activity retains priority.
+ * @param sourceVerification - independently read source availability and consumption for the current owner.
+ * @returns one permitted action, scoped progress and the current two-mother review allowance.
+ */
+export declare function learningContinuation(workspace: ValidatedWorkspace, state: StudyState, now: number, subject?: CurriculumSubject, sourceVerification?: WorkspaceRead['sourceVerification']): LearningContinuation;
 /** Why an objective needs attention; codes are localized by the workbench and read by the model. */
 export interface InsightReason {
     code: 'due-mistakes' | 'open-mistakes' | 'recent-help-or-error' | 'recurring-error' | 'not-practised-recently' | 'not-started' | 'diagnosis-due' | 'preview' | 'school-pace' | 'needs-teaching' | 'prerequisite-gap';
@@ -184,7 +283,7 @@ export declare function insightSummary(insight: StudyInsight): {
         id: string;
         subject: "chinese" | "math" | "english";
         title: string;
-        level: "due" | "weak" | "stalled" | "mastered" | "practising" | "untouched";
+        level: "untouched" | "practising" | "weak" | "due" | "mastered" | "stalled";
         priority: number;
         reasons: InsightReason[];
     }[];

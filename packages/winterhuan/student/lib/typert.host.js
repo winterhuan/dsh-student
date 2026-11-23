@@ -13,6 +13,8 @@ let StudentJsonValueRemoteCodec$schema4$value
 const StudentJsonValueRemoteCodec$schema4 = () => (StudentJsonValueRemoteCodec$schema4$value ??= z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema4())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema4()))]))
 let StudentJsonValueRemoteCodec$schema5$value
 const StudentJsonValueRemoteCodec$schema5 = () => (StudentJsonValueRemoteCodec$schema5$value ??= z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema5())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema5()))]))
+let StudentJsonValueRemoteCodec$schema6$value
+const StudentJsonValueRemoteCodec$schema6 = () => (StudentJsonValueRemoteCodec$schema6$value ??= z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema6())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema6()))]))
 let _winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema$value
 const _winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema = () => (_winterhuan_dsh_student_student_inspectSubmission_parameter_0$schema$value ??= z.string())
 let _winterhuan_dsh_student_student_inspectSubmission_parameter_1$schema$value
@@ -35,7 +37,7 @@ const _winterhuan_dsh_student_student_inspectSubmission_result$schema = () => (_
   'requestId': z.string(),
   'admission': z.union([z.literal("unknown"), z.literal("accepted")]),
   'nativeStates': z.array(z.union([z.literal("pending"), z.literal("consumed"), z.literal("claimed"), z.literal("removed")])),
-  'nativeSourceStatus': z.union([z.literal("available"), z.literal("unavailable")]),
+  'nativeSourceStatus': z.union([z.literal("unavailable"), z.literal("available")]),
   'cut': z.union([z.undefined(), z.object({
   'sessionId': z.string(),
   'cursor': z.number(),
@@ -44,7 +46,7 @@ const _winterhuan_dsh_student_student_inspectSubmission_result$schema = () => (_
   'revision': z.union([z.undefined(), z.string()]).optional(),
 })]).optional(),
   'answer': z.union([z.literal("unavailable"), z.literal("missing"), z.literal("saved"), z.literal("not-requested")]),
-  'assessment': z.union([z.literal("pending"), z.literal("unavailable"), z.literal("valid"), z.literal("not-requested")]),
+  'assessment': z.union([z.literal("unavailable"), z.literal("pending"), z.literal("valid"), z.literal("not-requested")]),
   'readStatus': z.union([z.literal("valid"), z.literal("missing"), z.literal("invalid"), z.literal("future-format"), z.literal("changing"), z.literal("legacy"), z.literal("archived")]),
   'versions': z.array(z.object({
   'path': z.string(),
@@ -148,8 +150,40 @@ const _winterhuan_dsh_student_student_manualContext_parameter_1$schema = () => (
   'answerEvidence': z.string(),
   'assessedAt': z.number(),
   'correctedAt': z.union([z.undefined(), z.number()]).optional(),
+  'criteria': z.union([z.undefined(), z.array(z.union([z.literal("method"), z.literal("basic"), z.literal("variation")]))]).optional(),
+  'criterionCorrection': z.union([z.undefined(), z.object({
+  'sessionId': z.string(),
+  'messageId': z.string(),
+  'inputVersion': z.string(),
+  'rawResponse': z.string(),
+})]).optional(),
   'userConfirmation': z.union([z.undefined(), z.string()]).optional(),
   'errorType': z.union([z.undefined(), z.literal("pattern"), z.literal("place-value"), z.literal("carry-borrow"), z.literal("operation-choice"), z.literal("calculation"), z.literal("unit-quantity"), z.literal("reading-task"), z.literal("geometry-feature"), z.literal("money-measure"), z.literal("reasoning-incomplete"), z.literal("pinyin-tone"), z.literal("character-form"), z.literal("character-usage"), z.literal("word-meaning"), z.literal("reading-evidence"), z.literal("order"), z.literal("expression-incomplete"), z.literal("punctuation"), z.literal("listening"), z.literal("spelling"), z.literal("word-form"), z.literal("sentence-pattern"), z.literal("usage-context"), z.literal("spoken-response"), z.literal("writing-complete")]).optional(),
+  'official': z.union([z.undefined(), z.object({
+  'recordId': z.string(),
+  'seq': z.number(),
+  'createdAt': z.string(),
+  'result': z.union([z.literal(null), z.intersection(z.object({
+  'questionId': z.string(),
+  'correct': z.union([z.literal(null), z.literal(false), z.literal(true)]),
+  'status': z.union([z.literal("correct"), z.literal("incorrect")]),
+  'earned': z.number(),
+  'aiComment': z.union([z.undefined(), z.string()]).optional(),
+}), z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema2()))])))]),
+})]).optional(),
+  'officialHistory': z.union([z.undefined(), z.array(z.object({
+  'recordId': z.string(),
+  'seq': z.number(),
+  'createdAt': z.string(),
+  'result': z.union([z.literal(null), z.intersection(z.object({
+  'questionId': z.string(),
+  'correct': z.union([z.literal(null), z.literal(false), z.literal(true)]),
+  'status': z.union([z.literal("correct"), z.literal("incorrect")]),
+  'earned': z.number(),
+  'aiComment': z.union([z.undefined(), z.string()]).optional(),
+}), z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema2()))])))]),
+}))]).optional(),
+  'grading': z.union([z.undefined(), z.literal("pending"), z.literal("aligned"), z.literal("equivalent"), z.literal("conflict")]).optional(),
 })),
   'answerDate': z.union([z.undefined(), z.object({
   'kind': z.literal("unknown"),
@@ -180,7 +214,7 @@ const _winterhuan_dsh_student_student_manualContext_result$schema = () => (_wint
   'targetKey': z.string(),
   'version': z.string(),
 })),
-  'baseline': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema5())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema5()))])),
+  'baseline': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema()))])),
   'issues': z.array(z.object({
   'path': z.string(),
   'field': z.string(),
@@ -198,7 +232,7 @@ let _winterhuan_dsh_student_student_query_parameter_0$schema$value
 const _winterhuan_dsh_student_student_query_parameter_0$schema = () => (_winterhuan_dsh_student_student_query_parameter_0$schema$value ??= z.string())
 let _winterhuan_dsh_student_student_query_parameter_1$schema$value
 const _winterhuan_dsh_student_student_query_parameter_1$schema = () => (_winterhuan_dsh_student_student_query_parameter_1$schema$value ??= z.union([z.object({
-  'kind': z.union([z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("status"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
+  'kind': z.union([z.literal("capabilities"), z.literal("families"), z.literal("knowledge-sources"), z.literal("legacy-references"), z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("status"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
   'subject': z.union([z.undefined(), z.literal("math"), z.literal("chinese"), z.literal("english")]).optional(),
   'id': z.union([z.undefined(), z.string()]).optional(),
   'unit': z.union([z.undefined(), z.string()]).optional(),
@@ -221,12 +255,12 @@ const _winterhuan_dsh_student_student_query_parameter_1$schema = () => (_winterh
 })]))
 let _winterhuan_dsh_student_student_query_result$schema$value
 const _winterhuan_dsh_student_student_query_result$schema = () => (_winterhuan_dsh_student_student_query_result$schema$value ??= z.object({
-  'data': z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema3()))]),
+  'data': z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema5())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema5()))]),
   'readAt': z.number(),
   'refreshAfter': z.number(),
   'token': z.string(),
   'native': z.object({
-  'status': z.union([z.literal("available"), z.literal("unavailable")]),
+  'status': z.union([z.literal("unavailable"), z.literal("available")]),
   'cut': z.union([z.undefined(), z.object({
   'sessionId': z.string(),
   'cursor': z.number(),
@@ -250,6 +284,13 @@ const _winterhuan_dsh_student_student_query_result$schema = () => (_winterhuan_d
   'kind': z.literal("unknown"),
   'reason': z.string(),
 })]),
+  'learningScope': z.union([z.undefined(), z.object({
+  'learnerId': z.string(),
+  'termId': z.string(),
+  'blockId': z.string(),
+  'questionId': z.string(),
+  'responseId': z.union([z.undefined(), z.string()]).optional(),
+})]).optional(),
   'attachments': z.array(z.object({
   'kind': z.union([z.literal("file"), z.literal("image")]),
   'attachmentId': z.string(),
@@ -288,7 +329,7 @@ let _winterhuan_dsh_student_student_saveManual_parameter_0$schema$value
 const _winterhuan_dsh_student_student_saveManual_parameter_0$schema = () => (_winterhuan_dsh_student_student_saveManual_parameter_0$schema$value ??= z.string())
 let _winterhuan_dsh_student_student_saveManual_parameter_1$schema$value
 const _winterhuan_dsh_student_student_saveManual_parameter_1$schema = () => (_winterhuan_dsh_student_student_saveManual_parameter_1$schema$value ??= z.object({
-  'baseline': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema2()))])),
+  'baseline': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema4())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema4()))])),
   'intent': z.union([z.object({
   'kind': z.literal("settings"),
   'command': z.object({
@@ -370,8 +411,40 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1$schema = () => (_wi
   'answerEvidence': z.string(),
   'assessedAt': z.number(),
   'correctedAt': z.union([z.undefined(), z.number()]).optional(),
+  'criteria': z.union([z.undefined(), z.array(z.union([z.literal("method"), z.literal("basic"), z.literal("variation")]))]).optional(),
+  'criterionCorrection': z.union([z.undefined(), z.object({
+  'sessionId': z.string(),
+  'messageId': z.string(),
+  'inputVersion': z.string(),
+  'rawResponse': z.string(),
+})]).optional(),
   'userConfirmation': z.union([z.undefined(), z.string()]).optional(),
   'errorType': z.union([z.undefined(), z.literal("pattern"), z.literal("place-value"), z.literal("carry-borrow"), z.literal("operation-choice"), z.literal("calculation"), z.literal("unit-quantity"), z.literal("reading-task"), z.literal("geometry-feature"), z.literal("money-measure"), z.literal("reasoning-incomplete"), z.literal("pinyin-tone"), z.literal("character-form"), z.literal("character-usage"), z.literal("word-meaning"), z.literal("reading-evidence"), z.literal("order"), z.literal("expression-incomplete"), z.literal("punctuation"), z.literal("listening"), z.literal("spelling"), z.literal("word-form"), z.literal("sentence-pattern"), z.literal("usage-context"), z.literal("spoken-response"), z.literal("writing-complete")]).optional(),
+  'official': z.union([z.undefined(), z.object({
+  'recordId': z.string(),
+  'seq': z.number(),
+  'createdAt': z.string(),
+  'result': z.union([z.literal(null), z.intersection(z.object({
+  'questionId': z.string(),
+  'correct': z.union([z.literal(null), z.literal(false), z.literal(true)]),
+  'status': z.union([z.literal("correct"), z.literal("incorrect")]),
+  'earned': z.number(),
+  'aiComment': z.union([z.undefined(), z.string()]).optional(),
+}), z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema4())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema4()))])))]),
+})]).optional(),
+  'officialHistory': z.union([z.undefined(), z.array(z.object({
+  'recordId': z.string(),
+  'seq': z.number(),
+  'createdAt': z.string(),
+  'result': z.union([z.literal(null), z.intersection(z.object({
+  'questionId': z.string(),
+  'correct': z.union([z.literal(null), z.literal(false), z.literal(true)]),
+  'status': z.union([z.literal("correct"), z.literal("incorrect")]),
+  'earned': z.number(),
+  'aiComment': z.union([z.undefined(), z.string()]).optional(),
+}), z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema4())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema4()))])))]),
+}))]).optional(),
+  'grading': z.union([z.undefined(), z.literal("pending"), z.literal("aligned"), z.literal("equivalent"), z.literal("conflict")]).optional(),
 })),
   'answerDate': z.union([z.undefined(), z.object({
   'kind': z.literal("unknown"),
@@ -401,8 +474,8 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1$schema = () => (_wi
 }))
 let _winterhuan_dsh_student_student_saveManual_result$schema$value
 const _winterhuan_dsh_student_student_saveManual_result$schema = () => (_winterhuan_dsh_student_student_saveManual_result$schema$value ??= z.object({
-  'status': z.union([z.literal("unknown"), z.literal("invalid"), z.literal("saved"), z.literal("unchanged"), z.literal("conflict"), z.literal("old-term")]),
-  'current': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema()))])),
+  'status': z.union([z.literal("unknown"), z.literal("invalid"), z.literal("conflict"), z.literal("saved"), z.literal("unchanged"), z.literal("old-term")]),
+  'current': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema3()))])),
   'termId': z.union([z.undefined(), z.string()]).optional(),
   'versions': z.array(z.object({
   'path': z.string(),
@@ -424,11 +497,24 @@ const _winterhuan_dsh_student_student_saveManual_result$schema = () => (_winterh
 }))]).optional(),
   'reason': z.union([z.undefined(), z.string()]).optional(),
 }))
+let _winterhuan_dsh_student_student_syncFeedback_parameter_0$schema$value
+const _winterhuan_dsh_student_student_syncFeedback_parameter_0$schema = () => (_winterhuan_dsh_student_student_syncFeedback_parameter_0$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_syncFeedback_parameter_1$schema$value
+const _winterhuan_dsh_student_student_syncFeedback_parameter_1$schema = () => (_winterhuan_dsh_student_student_syncFeedback_parameter_1$schema$value ??= z.object({
+  'lessonId': z.string(),
+  'trigger': z.union([z.literal("return"), z.literal("continue"), z.literal("resume"), z.literal("pause")]),
+}))
+let _winterhuan_dsh_student_student_syncFeedback_result$schema$value
+const _winterhuan_dsh_student_student_syncFeedback_result$schema = () => (_winterhuan_dsh_student_student_syncFeedback_result$schema$value ??= z.object({
+  'lessonId': z.string(),
+  'status': z.union([z.literal("unavailable"), z.literal("queued"), z.literal("coalesced"), z.literal("paused")]),
+  'messageId': z.union([z.undefined(), z.string()]).optional(),
+}))
 let _winterhuan_dsh_student_student_watch_parameter_0$schema$value
 const _winterhuan_dsh_student_student_watch_parameter_0$schema = () => (_winterhuan_dsh_student_student_watch_parameter_0$schema$value ??= z.string())
 let _winterhuan_dsh_student_student_watch_parameter_1$schema$value
 const _winterhuan_dsh_student_student_watch_parameter_1$schema = () => (_winterhuan_dsh_student_student_watch_parameter_1$schema$value ??= z.union([z.object({
-  'kind': z.union([z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("status"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
+  'kind': z.union([z.literal("capabilities"), z.literal("families"), z.literal("knowledge-sources"), z.literal("legacy-references"), z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("status"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
   'subject': z.union([z.undefined(), z.literal("math"), z.literal("chinese"), z.literal("english")]).optional(),
   'id': z.union([z.undefined(), z.string()]).optional(),
   'unit': z.union([z.undefined(), z.string()]).optional(),
@@ -453,12 +539,12 @@ let _winterhuan_dsh_student_student_watch_result$schema$value
 const _winterhuan_dsh_student_student_watch_result$schema = () => (_winterhuan_dsh_student_student_watch_result$schema$value ??= z.union([z.object({
   'kind': z.literal("snapshot"),
   'value': z.object({
-  'data': z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema4())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema4()))]),
+  'data': z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema6())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema6()))]),
   'readAt': z.number(),
   'refreshAfter': z.number(),
   'token': z.string(),
   'native': z.object({
-  'status': z.union([z.literal("available"), z.literal("unavailable")]),
+  'status': z.union([z.literal("unavailable"), z.literal("available")]),
   'cut': z.union([z.undefined(), z.object({
   'sessionId': z.string(),
   'cursor': z.number(),
@@ -482,6 +568,13 @@ const _winterhuan_dsh_student_student_watch_result$schema = () => (_winterhuan_d
   'kind': z.literal("unknown"),
   'reason': z.string(),
 })]),
+  'learningScope': z.union([z.undefined(), z.object({
+  'learnerId': z.string(),
+  'termId': z.string(),
+  'blockId': z.string(),
+  'questionId': z.string(),
+  'responseId': z.union([z.undefined(), z.string()]).optional(),
+})]).optional(),
   'attachments': z.array(z.object({
   'kind': z.union([z.literal("file"), z.literal("image")]),
   'attachmentId': z.string(),
@@ -519,9 +612,27 @@ const _winterhuan_dsh_student_student_watch_result$schema = () => (_winterhuan_d
 }), z.object({
   'kind': z.literal("failure"),
   'message': z.string(),
+  'reason': z.union([z.undefined(), z.literal("main-session-required")]).optional(),
+})]))
+let _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0$schema$value ??= z.string())
+let _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1$schema$value ??= z.string())
+let _winterhuan_dsh_student_studentOpenmaicPlayback_open_result$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_open_result$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_open_result$schema$value ??= z.union([z.object({
+  'status': z.union([z.literal("opened"), z.literal("login-required"), z.literal("identity-mismatch")]),
+  'browser': z.literal("dedicated-chrome"),
+  'classroomUrl': z.string(),
+  'loginUrl': z.union([z.undefined(), z.string()]).optional(),
+  'reason': z.union([z.undefined(), z.literal("credentials-missing"), z.literal("form-unavailable"), z.literal("callback-pending")]).optional(),
+}), z.object({
+  'status': z.union([z.literal("unavailable"), z.literal("ownership-unresolved")]),
+  'reason': z.string(),
 })]))
 let closed$StudentJsonValueRemoteCodec$schema$value
 const closed$StudentJsonValueRemoteCodec$schema = () => (closed$StudentJsonValueRemoteCodec$schema$value ??= z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))]))
+let closed$StudentJsonValueRemoteCodec$schema2$value
+const closed$StudentJsonValueRemoteCodec$schema2 = () => (closed$StudentJsonValueRemoteCodec$schema2$value ??= z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))]))
 let _winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema$value
 const _winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_inspectSubmission_parameter_0_strict$schema$value ??= z.string())
 let _winterhuan_dsh_student_student_inspectSubmission_parameter_1_strict$schema$value
@@ -623,8 +734,40 @@ const _winterhuan_dsh_student_student_manualContext_parameter_1_strict$schema = 
   'answerEvidence': z.string(),
   'assessedAt': z.number(),
   'correctedAt': z.union([z.undefined(), z.number()]).optional(),
+  'criteria': z.union([z.undefined(), z.array(z.union([z.literal("method"), z.literal("basic"), z.literal("variation")]))]).optional(),
+  'criterionCorrection': z.union([z.undefined(), z.strictObject({
+  'sessionId': z.string(),
+  'messageId': z.string(),
+  'inputVersion': z.string(),
+  'rawResponse': z.string(),
+})]).optional(),
   'userConfirmation': z.union([z.undefined(), z.string()]).optional(),
   'errorType': z.union([z.undefined(), z.literal("pattern"), z.literal("place-value"), z.literal("carry-borrow"), z.literal("operation-choice"), z.literal("calculation"), z.literal("unit-quantity"), z.literal("reading-task"), z.literal("geometry-feature"), z.literal("money-measure"), z.literal("reasoning-incomplete"), z.literal("pinyin-tone"), z.literal("character-form"), z.literal("character-usage"), z.literal("word-meaning"), z.literal("reading-evidence"), z.literal("order"), z.literal("expression-incomplete"), z.literal("punctuation"), z.literal("listening"), z.literal("spelling"), z.literal("word-form"), z.literal("sentence-pattern"), z.literal("usage-context"), z.literal("spoken-response"), z.literal("writing-complete")]).optional(),
+  'official': z.union([z.undefined(), z.strictObject({
+  'recordId': z.string(),
+  'seq': z.number(),
+  'createdAt': z.string(),
+  'result': z.union([z.literal(null), z.object({
+  'questionId': z.union([z.intersection(z.string(), z.literal(null)), z.string(), z.intersection(z.string(), z.number()), z.intersection(z.string(), z.literal(false)), z.intersection(z.string(), z.literal(true)), z.intersection(z.string(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.string(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))]),
+  'correct': z.union([z.union([z.literal(null), z.intersection(z.literal(null), z.string()), z.intersection(z.literal(null), z.number()), z.intersection(z.literal(null), z.literal(false)), z.intersection(z.literal(null), z.literal(true)), z.intersection(z.literal(null), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.literal(null), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))]), z.union([z.intersection(z.literal(false), z.literal(null)), z.intersection(z.literal(false), z.string()), z.intersection(z.literal(false), z.number()), z.literal(false), z.intersection(z.literal(false), z.literal(true)), z.intersection(z.literal(false), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.literal(false), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))]), z.union([z.intersection(z.literal(true), z.literal(null)), z.intersection(z.literal(true), z.string()), z.intersection(z.literal(true), z.number()), z.intersection(z.literal(true), z.literal(false)), z.literal(true), z.intersection(z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.literal(true), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))])]),
+  'status': z.union([z.union([z.intersection(z.literal("correct"), z.literal(null)), z.intersection(z.literal("correct"), z.string()), z.intersection(z.literal("correct"), z.number()), z.intersection(z.literal("correct"), z.literal(false)), z.intersection(z.literal("correct"), z.literal(true)), z.intersection(z.literal("correct"), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.literal("correct"), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))]), z.union([z.intersection(z.literal("incorrect"), z.literal(null)), z.intersection(z.literal("incorrect"), z.string()), z.intersection(z.literal("incorrect"), z.number()), z.intersection(z.literal("incorrect"), z.literal(false)), z.intersection(z.literal("incorrect"), z.literal(true)), z.intersection(z.literal("incorrect"), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.literal("incorrect"), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))])]),
+  'earned': z.union([z.intersection(z.number(), z.literal(null)), z.intersection(z.number(), z.string()), z.number(), z.intersection(z.number(), z.literal(false)), z.intersection(z.number(), z.literal(true)), z.intersection(z.number(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.number(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))]),
+  'aiComment': z.union([z.union([z.intersection(z.undefined(), z.literal(null)), z.intersection(z.undefined(), z.string()), z.intersection(z.undefined(), z.number()), z.intersection(z.undefined(), z.literal(false)), z.intersection(z.undefined(), z.literal(true)), z.intersection(z.undefined(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.undefined(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))]), z.union([z.intersection(z.string(), z.literal(null)), z.string(), z.intersection(z.string(), z.number()), z.intersection(z.string(), z.literal(false)), z.intersection(z.string(), z.literal(true)), z.intersection(z.string(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.string(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))])]).optional(),
+}).catchall(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))]))]),
+})]).optional(),
+  'officialHistory': z.union([z.undefined(), z.array(z.strictObject({
+  'recordId': z.string(),
+  'seq': z.number(),
+  'createdAt': z.string(),
+  'result': z.union([z.literal(null), z.object({
+  'questionId': z.union([z.intersection(z.string(), z.literal(null)), z.string(), z.intersection(z.string(), z.number()), z.intersection(z.string(), z.literal(false)), z.intersection(z.string(), z.literal(true)), z.intersection(z.string(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.string(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))]),
+  'correct': z.union([z.union([z.literal(null), z.intersection(z.literal(null), z.string()), z.intersection(z.literal(null), z.number()), z.intersection(z.literal(null), z.literal(false)), z.intersection(z.literal(null), z.literal(true)), z.intersection(z.literal(null), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.literal(null), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))]), z.union([z.intersection(z.literal(false), z.literal(null)), z.intersection(z.literal(false), z.string()), z.intersection(z.literal(false), z.number()), z.literal(false), z.intersection(z.literal(false), z.literal(true)), z.intersection(z.literal(false), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.literal(false), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))]), z.union([z.intersection(z.literal(true), z.literal(null)), z.intersection(z.literal(true), z.string()), z.intersection(z.literal(true), z.number()), z.intersection(z.literal(true), z.literal(false)), z.literal(true), z.intersection(z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.literal(true), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))])]),
+  'status': z.union([z.union([z.intersection(z.literal("correct"), z.literal(null)), z.intersection(z.literal("correct"), z.string()), z.intersection(z.literal("correct"), z.number()), z.intersection(z.literal("correct"), z.literal(false)), z.intersection(z.literal("correct"), z.literal(true)), z.intersection(z.literal("correct"), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.literal("correct"), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))]), z.union([z.intersection(z.literal("incorrect"), z.literal(null)), z.intersection(z.literal("incorrect"), z.string()), z.intersection(z.literal("incorrect"), z.number()), z.intersection(z.literal("incorrect"), z.literal(false)), z.intersection(z.literal("incorrect"), z.literal(true)), z.intersection(z.literal("incorrect"), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.literal("incorrect"), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))])]),
+  'earned': z.union([z.intersection(z.number(), z.literal(null)), z.intersection(z.number(), z.string()), z.number(), z.intersection(z.number(), z.literal(false)), z.intersection(z.number(), z.literal(true)), z.intersection(z.number(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.number(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))]),
+  'aiComment': z.union([z.union([z.intersection(z.undefined(), z.literal(null)), z.intersection(z.undefined(), z.string()), z.intersection(z.undefined(), z.number()), z.intersection(z.undefined(), z.literal(false)), z.intersection(z.undefined(), z.literal(true)), z.intersection(z.undefined(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.undefined(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))]), z.union([z.intersection(z.string(), z.literal(null)), z.string(), z.intersection(z.string(), z.number()), z.intersection(z.string(), z.literal(false)), z.intersection(z.string(), z.literal(true)), z.intersection(z.string(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))), z.intersection(z.string(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())))])]).optional(),
+}).catchall(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))]))]),
+}))]).optional(),
+  'grading': z.union([z.undefined(), z.literal("pending"), z.literal("aligned"), z.literal("equivalent"), z.literal("conflict")]).optional(),
 })),
   'answerDate': z.union([z.undefined(), z.strictObject({
   'kind': z.literal("unknown"),
@@ -650,7 +793,7 @@ let _winterhuan_dsh_student_student_query_parameter_0_strict$schema$value
 const _winterhuan_dsh_student_student_query_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_query_parameter_0_strict$schema$value ??= z.string())
 let _winterhuan_dsh_student_student_query_parameter_1_strict$schema$value
 const _winterhuan_dsh_student_student_query_parameter_1_strict$schema = () => (_winterhuan_dsh_student_student_query_parameter_1_strict$schema$value ??= z.union([z.strictObject({
-  'kind': z.union([z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("status"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
+  'kind': z.union([z.literal("capabilities"), z.literal("families"), z.literal("knowledge-sources"), z.literal("legacy-references"), z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("status"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
   'subject': z.union([z.undefined(), z.literal("math"), z.literal("chinese"), z.literal("english")]).optional(),
   'id': z.union([z.undefined(), z.string()]).optional(),
   'unit': z.union([z.undefined(), z.string()]).optional(),
@@ -675,7 +818,7 @@ let _winterhuan_dsh_student_student_saveManual_parameter_0_strict$schema$value
 const _winterhuan_dsh_student_student_saveManual_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_saveManual_parameter_0_strict$schema$value ??= z.string())
 let _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema$value
 const _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema = () => (_winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema$value ??= z.strictObject({
-  'baseline': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))])),
+  'baseline': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))])),
   'intent': z.union([z.strictObject({
   'kind': z.literal("settings"),
   'command': z.strictObject({
@@ -757,8 +900,40 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema = () 
   'answerEvidence': z.string(),
   'assessedAt': z.number(),
   'correctedAt': z.union([z.undefined(), z.number()]).optional(),
+  'criteria': z.union([z.undefined(), z.array(z.union([z.literal("method"), z.literal("basic"), z.literal("variation")]))]).optional(),
+  'criterionCorrection': z.union([z.undefined(), z.strictObject({
+  'sessionId': z.string(),
+  'messageId': z.string(),
+  'inputVersion': z.string(),
+  'rawResponse': z.string(),
+})]).optional(),
   'userConfirmation': z.union([z.undefined(), z.string()]).optional(),
   'errorType': z.union([z.undefined(), z.literal("pattern"), z.literal("place-value"), z.literal("carry-borrow"), z.literal("operation-choice"), z.literal("calculation"), z.literal("unit-quantity"), z.literal("reading-task"), z.literal("geometry-feature"), z.literal("money-measure"), z.literal("reasoning-incomplete"), z.literal("pinyin-tone"), z.literal("character-form"), z.literal("character-usage"), z.literal("word-meaning"), z.literal("reading-evidence"), z.literal("order"), z.literal("expression-incomplete"), z.literal("punctuation"), z.literal("listening"), z.literal("spelling"), z.literal("word-form"), z.literal("sentence-pattern"), z.literal("usage-context"), z.literal("spoken-response"), z.literal("writing-complete")]).optional(),
+  'official': z.union([z.undefined(), z.strictObject({
+  'recordId': z.string(),
+  'seq': z.number(),
+  'createdAt': z.string(),
+  'result': z.union([z.literal(null), z.object({
+  'questionId': z.union([z.intersection(z.string(), z.literal(null)), z.string(), z.intersection(z.string(), z.number()), z.intersection(z.string(), z.literal(false)), z.intersection(z.string(), z.literal(true)), z.intersection(z.string(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.string(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))]),
+  'correct': z.union([z.union([z.literal(null), z.intersection(z.literal(null), z.string()), z.intersection(z.literal(null), z.number()), z.intersection(z.literal(null), z.literal(false)), z.intersection(z.literal(null), z.literal(true)), z.intersection(z.literal(null), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.literal(null), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))]), z.union([z.intersection(z.literal(false), z.literal(null)), z.intersection(z.literal(false), z.string()), z.intersection(z.literal(false), z.number()), z.literal(false), z.intersection(z.literal(false), z.literal(true)), z.intersection(z.literal(false), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.literal(false), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))]), z.union([z.intersection(z.literal(true), z.literal(null)), z.intersection(z.literal(true), z.string()), z.intersection(z.literal(true), z.number()), z.intersection(z.literal(true), z.literal(false)), z.literal(true), z.intersection(z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.literal(true), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))])]),
+  'status': z.union([z.union([z.intersection(z.literal("correct"), z.literal(null)), z.intersection(z.literal("correct"), z.string()), z.intersection(z.literal("correct"), z.number()), z.intersection(z.literal("correct"), z.literal(false)), z.intersection(z.literal("correct"), z.literal(true)), z.intersection(z.literal("correct"), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.literal("correct"), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))]), z.union([z.intersection(z.literal("incorrect"), z.literal(null)), z.intersection(z.literal("incorrect"), z.string()), z.intersection(z.literal("incorrect"), z.number()), z.intersection(z.literal("incorrect"), z.literal(false)), z.intersection(z.literal("incorrect"), z.literal(true)), z.intersection(z.literal("incorrect"), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.literal("incorrect"), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))])]),
+  'earned': z.union([z.intersection(z.number(), z.literal(null)), z.intersection(z.number(), z.string()), z.number(), z.intersection(z.number(), z.literal(false)), z.intersection(z.number(), z.literal(true)), z.intersection(z.number(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.number(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))]),
+  'aiComment': z.union([z.union([z.intersection(z.undefined(), z.literal(null)), z.intersection(z.undefined(), z.string()), z.intersection(z.undefined(), z.number()), z.intersection(z.undefined(), z.literal(false)), z.intersection(z.undefined(), z.literal(true)), z.intersection(z.undefined(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.undefined(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))]), z.union([z.intersection(z.string(), z.literal(null)), z.string(), z.intersection(z.string(), z.number()), z.intersection(z.string(), z.literal(false)), z.intersection(z.string(), z.literal(true)), z.intersection(z.string(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.string(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))])]).optional(),
+}).catchall(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))]))]),
+})]).optional(),
+  'officialHistory': z.union([z.undefined(), z.array(z.strictObject({
+  'recordId': z.string(),
+  'seq': z.number(),
+  'createdAt': z.string(),
+  'result': z.union([z.literal(null), z.object({
+  'questionId': z.union([z.intersection(z.string(), z.literal(null)), z.string(), z.intersection(z.string(), z.number()), z.intersection(z.string(), z.literal(false)), z.intersection(z.string(), z.literal(true)), z.intersection(z.string(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.string(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))]),
+  'correct': z.union([z.union([z.literal(null), z.intersection(z.literal(null), z.string()), z.intersection(z.literal(null), z.number()), z.intersection(z.literal(null), z.literal(false)), z.intersection(z.literal(null), z.literal(true)), z.intersection(z.literal(null), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.literal(null), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))]), z.union([z.intersection(z.literal(false), z.literal(null)), z.intersection(z.literal(false), z.string()), z.intersection(z.literal(false), z.number()), z.literal(false), z.intersection(z.literal(false), z.literal(true)), z.intersection(z.literal(false), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.literal(false), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))]), z.union([z.intersection(z.literal(true), z.literal(null)), z.intersection(z.literal(true), z.string()), z.intersection(z.literal(true), z.number()), z.intersection(z.literal(true), z.literal(false)), z.literal(true), z.intersection(z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.literal(true), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))])]),
+  'status': z.union([z.union([z.intersection(z.literal("correct"), z.literal(null)), z.intersection(z.literal("correct"), z.string()), z.intersection(z.literal("correct"), z.number()), z.intersection(z.literal("correct"), z.literal(false)), z.intersection(z.literal("correct"), z.literal(true)), z.intersection(z.literal("correct"), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.literal("correct"), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))]), z.union([z.intersection(z.literal("incorrect"), z.literal(null)), z.intersection(z.literal("incorrect"), z.string()), z.intersection(z.literal("incorrect"), z.number()), z.intersection(z.literal("incorrect"), z.literal(false)), z.intersection(z.literal("incorrect"), z.literal(true)), z.intersection(z.literal("incorrect"), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.literal("incorrect"), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))])]),
+  'earned': z.union([z.intersection(z.number(), z.literal(null)), z.intersection(z.number(), z.string()), z.number(), z.intersection(z.number(), z.literal(false)), z.intersection(z.number(), z.literal(true)), z.intersection(z.number(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.number(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))]),
+  'aiComment': z.union([z.union([z.intersection(z.undefined(), z.literal(null)), z.intersection(z.undefined(), z.string()), z.intersection(z.undefined(), z.number()), z.intersection(z.undefined(), z.literal(false)), z.intersection(z.undefined(), z.literal(true)), z.intersection(z.undefined(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.undefined(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))]), z.union([z.intersection(z.string(), z.literal(null)), z.string(), z.intersection(z.string(), z.number()), z.intersection(z.string(), z.literal(false)), z.intersection(z.string(), z.literal(true)), z.intersection(z.string(), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))), z.intersection(z.string(), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())))])]).optional(),
+}).catchall(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))]))]),
+}))]).optional(),
+  'grading': z.union([z.undefined(), z.literal("pending"), z.literal("aligned"), z.literal("equivalent"), z.literal("conflict")]).optional(),
 })),
   'answerDate': z.union([z.undefined(), z.strictObject({
   'kind': z.literal("unknown"),
@@ -786,11 +961,18 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema = () 
   'version': z.string(),
 })),
 }))
+let _winterhuan_dsh_student_student_syncFeedback_parameter_0_strict$schema$value
+const _winterhuan_dsh_student_student_syncFeedback_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_syncFeedback_parameter_0_strict$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_syncFeedback_parameter_1_strict$schema$value
+const _winterhuan_dsh_student_student_syncFeedback_parameter_1_strict$schema = () => (_winterhuan_dsh_student_student_syncFeedback_parameter_1_strict$schema$value ??= z.strictObject({
+  'lessonId': z.string(),
+  'trigger': z.union([z.literal("return"), z.literal("continue"), z.literal("resume"), z.literal("pause")]),
+}))
 let _winterhuan_dsh_student_student_watch_parameter_0_strict$schema$value
 const _winterhuan_dsh_student_student_watch_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_watch_parameter_0_strict$schema$value ??= z.string())
 let _winterhuan_dsh_student_student_watch_parameter_1_strict$schema$value
 const _winterhuan_dsh_student_student_watch_parameter_1_strict$schema = () => (_winterhuan_dsh_student_student_watch_parameter_1_strict$schema$value ??= z.union([z.strictObject({
-  'kind': z.union([z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("status"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
+  'kind': z.union([z.literal("capabilities"), z.literal("families"), z.literal("knowledge-sources"), z.literal("legacy-references"), z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("status"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
   'subject': z.union([z.undefined(), z.literal("math"), z.literal("chinese"), z.literal("english")]).optional(),
   'id': z.union([z.undefined(), z.string()]).optional(),
   'unit': z.union([z.undefined(), z.string()]).optional(),
@@ -811,6 +993,10 @@ const _winterhuan_dsh_student_student_watch_parameter_1_strict$schema = () => (_
   'tab': z.union([z.undefined(), z.literal("mistakes"), z.literal("map"), z.literal("today"), z.literal("parent")]).optional(),
 })]).optional(),
 })]))
+let _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0_strict$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0_strict$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0_strict$schema$value ??= z.string())
+let _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1_strict$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1_strict$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1_strict$schema$value ??= z.string())
 
 const $remote = createTypertRemoteInfo({
   package: '@winterhuan/dsh-student',
@@ -861,9 +1047,9 @@ const $remote = createTypertRemoteInfo({
         typeSymbol: '@winterhuan/dsh-student/types#StudentSubmissionInspection',
         create: _winterhuan_dsh_student_student_inspectSubmission_result$schema,
         description: 'admission, saved-answer and valid-assessment facts separately; omitted admission remains unknown.',
-        jsonSchema: {"type":"object","properties":{"requestId":{"type":"string"},"admission":{"type":"string","enum":["unknown","accepted"]},"nativeStates":{"type":"array","items":{"type":"string","enum":["pending","consumed","claimed","removed"]}},"nativeSourceStatus":{"type":"string","enum":["available","unavailable"]},"cut":{"type":"object","properties":{"sessionId":{"type":"string"},"cursor":{"type":"number"},"source":{"type":"string","enum":["live","prepared"]},"inheritedEventCount":{"type":"number"},"revision":{"type":"string"}},"required":["sessionId","cursor","source","inheritedEventCount"],"additionalProperties":true},"answer":{"type":"string","enum":["unavailable","missing","saved","not-requested"]},"assessment":{"type":"string","enum":["pending","unavailable","valid","not-requested"]},"readStatus":{"type":"string","enum":["valid","missing","invalid","future-format","changing","legacy","archived"]},"versions":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"targetKey":{"type":"string"},"version":{"type":"string"}},"required":["path","targetKey","version"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}},"backupIssues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}}},"required":["requestId","admission","nativeStates","nativeSourceStatus","answer","assessment","readStatus","versions","issues"],"additionalProperties":true},
+        jsonSchema: {"type":"object","properties":{"requestId":{"type":"string"},"admission":{"type":"string","enum":["unknown","accepted"]},"nativeStates":{"type":"array","items":{"type":"string","enum":["pending","consumed","claimed","removed"]}},"nativeSourceStatus":{"type":"string","enum":["unavailable","available"]},"cut":{"type":"object","properties":{"sessionId":{"type":"string"},"cursor":{"type":"number"},"source":{"type":"string","enum":["live","prepared"]},"inheritedEventCount":{"type":"number"},"revision":{"type":"string"}},"required":["sessionId","cursor","source","inheritedEventCount"],"additionalProperties":true},"answer":{"type":"string","enum":["unavailable","missing","saved","not-requested"]},"assessment":{"type":"string","enum":["unavailable","pending","valid","not-requested"]},"readStatus":{"type":"string","enum":["valid","missing","invalid","future-format","changing","legacy","archived"]},"versions":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"targetKey":{"type":"string"},"version":{"type":"string"}},"required":["path","targetKey","version"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}},"backupIssues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}}},"required":["requestId","admission","nativeStates","nativeSourceStatus","answer","assessment","readStatus","versions","issues"],"additionalProperties":true},
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":129,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":141,"column":9},
     },
     'student/manualContext': {
       service: 'student',
@@ -913,7 +1099,7 @@ const $remote = createTypertRemoteInfo({
         description: 'exact current term identity, observed versions, draft baseline and read issues.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":99,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":111,"column":9},
     },
     'student/query': {
       service: 'student',
@@ -945,13 +1131,13 @@ const $remote = createTypertRemoteInfo({
             mode: 'strict',
             typeSymbol: '@winterhuan/dsh-student/types#StudentQueryRequest',
             create: _winterhuan_dsh_student_student_query_parameter_1$schema,
-            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["learning-context","summary","files","settings","status","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["math","chinese","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":true},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["math","chinese","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["mistakes","map","today","parent"]}},"required":[],"additionalProperties":true}},"required":["kind"],"additionalProperties":true}]},
+            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["capabilities","families","knowledge-sources","legacy-references","learning-context","summary","files","settings","status","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["math","chinese","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":true},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["math","chinese","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["mistakes","map","today","parent"]}},"required":[],"additionalProperties":true}},"required":["kind"],"additionalProperties":true}]},
           },
           strictCodec: {
             mode: 'strict',
             typeSymbol: '@winterhuan/dsh-student/types#StudentQueryRequest',
             create: _winterhuan_dsh_student_student_query_parameter_1_strict$schema,
-            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["learning-context","summary","files","settings","status","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["math","chinese","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":false},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["math","chinese","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["mistakes","map","today","parent"]}},"required":[],"additionalProperties":false}},"required":["kind"],"additionalProperties":false}]},
+            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["capabilities","families","knowledge-sources","legacy-references","learning-context","summary","files","settings","status","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["math","chinese","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":false},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["math","chinese","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["mistakes","map","today","parent"]}},"required":[],"additionalProperties":false}},"required":["kind"],"additionalProperties":false}]},
           },
         },
       ],
@@ -963,7 +1149,7 @@ const $remote = createTypertRemoteInfo({
         description: 'current projection, actual file versions, cut and explicit partial or unavailable status.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":48,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":61,"column":9},
     },
     'student/saveManual': {
       service: 'student',
@@ -1013,7 +1199,57 @@ const $remote = createTypertRemoteInfo({
         description: 'thin save outcome, current edited values and versions for subsequent draft saves.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":114,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":126,"column":9},
+    },
+    'student/syncFeedback': {
+      service: 'student',
+      description: 'Queue one authorized feedback intent behind existing native input, or withdraw its pending system message.',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'sessionId',
+          description: 'Registered main Student Session; Remote authorization is required.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_syncFeedback_parameter_0$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_syncFeedback_parameter_0_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+        {
+          name: 'request',
+          description: 'Explicit return, continue or resume trigger; pause removes only this lesson\'s queued system intent before caller-owned native cancellation.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentFeedbackSyncRequest',
+            create: _winterhuan_dsh_student_student_syncFeedback_parameter_1$schema,
+            jsonSchema: {"type":"object","properties":{"lessonId":{"type":"string"},"trigger":{"type":"string","enum":["return","continue","resume","pause"]}},"required":["lessonId","trigger"],"additionalProperties":true},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentFeedbackSyncRequest',
+            create: _winterhuan_dsh_student_student_syncFeedback_parameter_1_strict$schema,
+            jsonSchema: {"type":"object","properties":{"lessonId":{"type":"string"},"trigger":{"type":"string","enum":["return","continue","resume","pause"]}},"required":["lessonId","trigger"],"additionalProperties":false},
+          },
+        },
+      ],
+      cancellation: { parameter: 'signal' },
+      result: {
+        mode: 'strict',
+        typeSymbol: '@winterhuan/dsh-student/types#StudentFeedbackSyncReply',
+        create: _winterhuan_dsh_student_student_syncFeedback_result$schema,
+        description: 'Queue state only. Failure, cancellation and completion allow a later explicit retry; no automatic wake loop or academic write occurs.',
+        jsonSchema: {"type":"object","properties":{"lessonId":{"type":"string"},"status":{"type":"string","enum":["unavailable","queued","coalesced","paused"]},"messageId":{"type":"string"}},"required":["lessonId","status"],"additionalProperties":true},
+      },
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":168,"column":9},
     },
     'student/watch': {
       service: 'student',
@@ -1023,7 +1259,7 @@ const $remote = createTypertRemoteInfo({
       parameters: [
         {
           name: 'sessionId',
-          description: 'registered main native Session identity, authorized before the stream opens.',
+          description: 'native Session identity; every read requires a registered main Agent.',
           source: 'json',
           codec: {
             mode: 'strict',
@@ -1046,13 +1282,13 @@ const $remote = createTypertRemoteInfo({
             mode: 'strict',
             typeSymbol: '@winterhuan/dsh-student/types#StudentQueryRequest',
             create: _winterhuan_dsh_student_student_watch_parameter_1$schema,
-            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["learning-context","summary","files","settings","status","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["math","chinese","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":true},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["math","chinese","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["mistakes","map","today","parent"]}},"required":[],"additionalProperties":true}},"required":["kind"],"additionalProperties":true}]},
+            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["capabilities","families","knowledge-sources","legacy-references","learning-context","summary","files","settings","status","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["math","chinese","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":true},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["math","chinese","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["mistakes","map","today","parent"]}},"required":[],"additionalProperties":true}},"required":["kind"],"additionalProperties":true}]},
           },
           strictCodec: {
             mode: 'strict',
             typeSymbol: '@winterhuan/dsh-student/types#StudentQueryRequest',
             create: _winterhuan_dsh_student_student_watch_parameter_1_strict$schema,
-            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["learning-context","summary","files","settings","status","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["math","chinese","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":false},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["math","chinese","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["mistakes","map","today","parent"]}},"required":[],"additionalProperties":false}},"required":["kind"],"additionalProperties":false}]},
+            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["capabilities","families","knowledge-sources","legacy-references","learning-context","summary","files","settings","status","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["math","chinese","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":false},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["math","chinese","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["mistakes","map","today","parent"]}},"required":[],"additionalProperties":false}},"required":["kind"],"additionalProperties":false}]},
           },
         },
       ],
@@ -1064,7 +1300,57 @@ const $remote = createTypertRemoteInfo({
         description: 'an initial snapshot and later changes or recoverable read-failure frames.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":72,"column":10},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":85,"column":10},
+    },
+    'studentOpenmaicPlayback/open': {
+      service: 'studentOpenmaicPlayback',
+      description: 'Open one independently read lesson after checking original learner, term and block.',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'sessionId',
+          description: 'Registered main Student conversation identity.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+        {
+          name: 'lessonId',
+          description: 'Original agent-authored lesson-log entry.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#studentOpenmaicPlayback/open:lessonId',
+            create: _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#studentOpenmaicPlayback/open:lessonId',
+            create: _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+      ],
+      cancellation: { parameter: 'signal' },
+      result: {
+        mode: 'strict',
+        typeSymbol: '@winterhuan/dsh-student/openmaic#OpenmaicPlaybackResult',
+        create: _winterhuan_dsh_student_studentOpenmaicPlayback_open_result$schema,
+        description: 'Safe playback, unresolved ownership or recovery outcome.',
+        jsonSchema: {"oneOf":[{"type":"object","properties":{"status":{"type":"string","enum":["opened","login-required","identity-mismatch"]},"browser":{"type":"string","const":"dedicated-chrome"},"classroomUrl":{"type":"string"},"loginUrl":{"type":"string"},"reason":{"type":"string","enum":["credentials-missing","form-unavailable","callback-pending"]}},"required":["status","browser","classroomUrl"],"additionalProperties":true},{"type":"object","properties":{"status":{"type":"string","enum":["unavailable","ownership-unresolved"]},"reason":{"type":"string"}},"required":["status","reason"],"additionalProperties":true}]},
+      },
+      sourceLocation: {"file":"packages/winterhuan/student/src/openmaic/playback.ts","line":30,"column":9},
     },
   },
 }, z)
@@ -1097,7 +1383,7 @@ export const TYPERT = {
             "name": "watch",
             "signature": "@Remote({ mode: 'stream', resources: { session: sessionId => sessionId } }) async *watch(sessionId: StudentSessionId, request: StudentQueryRequest, signal: AbortSignal): AsyncIterable<StudentWatchFrame>",
             "summary": "Follow current files and time thresholds; unchanged version/cut/projection tokens produce no frame.",
-            "jsDoc": "/**\n * Follow current files and time thresholds; unchanged version/cut/projection tokens produce no frame.\n * @param sessionId - registered main native Session identity, authorized before the stream opens.\n * @param request - shared bounded projection selector.\n * @param signal - cancellation stops reads and the owned refresh timer.\n * @returns an initial snapshot and later changes or recoverable read-failure frames.\n */"
+            "jsDoc": "/**\n * Follow current files and time thresholds; unchanged version/cut/projection tokens produce no frame.\n * @param sessionId - native Session identity; every read requires a registered main Agent.\n * @param request - shared bounded projection selector.\n * @param signal - cancellation stops reads and the owned refresh timer.\n * @returns an initial snapshot and later changes or recoverable read-failure frames.\n */"
           },
           {
             "kind": "method",
@@ -1119,6 +1405,13 @@ export const TYPERT = {
             "signature": "@Remote({ resources: { session: sessionId => sessionId } }) async inspectSubmission(sessionId: StudentSessionId, request: StudentSubmissionRequest, signal: AbortSignal): Promise<StudentSubmissionInspection>",
             "summary": "Inspect an uncertain submission before deliberate recovery; this method never submits input.",
             "jsDoc": "/**\n * Inspect an uncertain submission before deliberate recovery; this method never submits input.\n * @param sessionId - registered main native Session identity.\n * @param request - original native request and optional term/owner/response identity.\n * @param signal - cancellation for the independent Session and file reads.\n * @returns admission, saved-answer and valid-assessment facts separately; omitted admission remains unknown.\n */"
+          },
+          {
+            "kind": "method",
+            "name": "syncFeedback",
+            "signature": "@Remote({ resources: { session: sessionId => sessionId } }) async syncFeedback(sessionId: StudentSessionId, request: StudentFeedbackSyncRequest, signal: AbortSignal): Promise<StudentFeedbackSyncReply>",
+            "summary": "Queue one authorized feedback intent behind existing native input, or withdraw its pending system message.",
+            "jsDoc": "/**\n * Queue one authorized feedback intent behind existing native input, or withdraw its pending system message.\n * @param sessionId - Registered main Student Session; Remote authorization is required.\n * @param request - Explicit return, continue or resume trigger; pause removes only this lesson's queued system intent before caller-owned native cancellation.\n * @param signal - Cancellation before admission; admitted work belongs to the native queue.\n * @returns Queue state only. Failure, cancellation and completion allow a later explicit retry; no automatic wake loop or academic write occurs.\n */"
           }
         ],
         "types": [
@@ -1147,12 +1440,28 @@ export const TYPERT = {
             "declaration": "export interface FileIssue {\n    path: string;\n    field: string;\n    rule: string;\n    correction: string;\n}"
           },
           {
+            "name": "FileObservation",
+            "declaration": "export interface FileObservation extends FsInfo {\n    targetKey: FsTargetKey;\n}"
+          },
+          {
+            "name": "InteractiveLesson",
+            "declaration": "export type InteractiveLesson = z.infer<typeof lessonSchema>;"
+          },
+          {
             "name": "LearnerResponse",
             "declaration": "export type LearnerResponse = z.infer<typeof responseSchema>;"
           },
           {
             "name": "LearningBlock",
             "declaration": "export type LearningBlock = z.infer<typeof blockSchema>;"
+          },
+          {
+            "name": "LessonFile",
+            "declaration": "export type LessonFile = z.infer<typeof lessonFileSchema>;"
+          },
+          {
+            "name": "LessonFileRead",
+            "declaration": "export interface LessonFileRead {\n    status: 'valid' | 'missing' | 'invalid' | 'future-format' | 'changing';\n    file?: LessonFile;\n    validRows?: InteractiveLesson[];\n    observation?: FileObservation;\n    bytes?: Uint8Array;\n    issues: FileIssue[];\n}"
           },
           {
             "name": "ManualBaseline",
@@ -1184,11 +1493,15 @@ export const TYPERT = {
           },
           {
             "name": "NativeConsumedInput",
-            "declaration": "export interface NativeConsumedInput {\n    status: 'consumed';\n    messageId: string;\n    requestId?: string;\n    inputVersion: string;\n    consumedSeq: number;\n    rawResponse?: string;\n    textUnavailable?: string;\n    receipt: NativeReceipt;\n    attachments: { kind: 'image' | 'file'; attachmentId: string; }[];\n    omittedAttachments: number;\n}"
+            "declaration": "export interface NativeConsumedInput {\n    status: 'consumed';\n    messageId: string;\n    requestId?: string;\n    inputVersion: string;\n    consumedSeq: number;\n    rawResponse?: string;\n    textUnavailable?: string;\n    receipt: NativeReceipt;\n    learningScope?: NativeInputObservation['learningScope'];\n    attachments: { kind: 'image' | 'file'; attachmentId: string; }[];\n    omittedAttachments: number;\n}"
+          },
+          {
+            "name": "NativeHistoryVerification",
+            "declaration": "export interface NativeHistoryVerification {\n    sessionId: string;\n    status: 'available' | 'unavailable';\n    reason?: string;\n}"
           },
           {
             "name": "NativeInputObservation",
-            "declaration": "export interface NativeInputObservation {\n    sessionId: string;\n    messageId: string;\n    inputVersion: string;\n    rawResponse: string;\n    receiptAt: number;\n}"
+            "declaration": "export interface NativeInputObservation {\n    sessionId: string;\n    messageId: string;\n    inputVersion: string;\n    rawResponse: string;\n    receiptAt: number;\n    learningScope?: { learnerId: string; termId: string; blockId: string; questionId: string; responseId?: string; };\n    questionSnapshot?: string;\n}"
           },
           {
             "name": "NativeReceipt",
@@ -1215,8 +1528,32 @@ export const TYPERT = {
             "declaration": "export type OfficialFile = TermSettings | LearningBlock | WorksheetFile | CollectionsFile;"
           },
           {
+            "name": "OpenmaicError",
+            "declaration": "export class OpenmaicError extends Error {\n}"
+          },
+          {
+            "name": "OpenmaicGrading",
+            "declaration": "export type OpenmaicGrading = 'aligned' | 'equivalent' | 'conflict' | 'pending';"
+          },
+          {
+            "name": "OpenmaicInputObservation",
+            "declaration": "export interface OpenmaicInputObservation {\n    binding: z.infer<typeof feedbackBindingSchema>;\n    questionId: string;\n    responseId: string;\n    question: z.infer<typeof openmaicQuestionSchema>;\n    source: z.infer<typeof openmaicResponseSourceSchema>;\n    official?: z.infer<typeof officialReviewSchema>;\n    officialHistory?: z.infer<typeof officialReviewSchema>[];\n    answerExposure?: 'possible';\n    sourceStatus: 'known' | 'unknown';\n    reason?: string;\n    result: 'correct' | 'incorrect' | 'partial' | 'unassessed';\n    grading: OpenmaicGrading;\n}"
+          },
+          {
+            "name": "OpenmaicSourceVerification",
+            "declaration": "export interface OpenmaicSourceVerification {\n    bindingId?: string;\n    lessonId: string;\n    learnerId?: string;\n    termId?: string;\n    blockId?: string;\n    status: 'available' | 'unavailable' | 'ownership-unresolved';\n    reason?: string;\n    failure?: import('./connection.ts').OpenmaicError['code'];\n    consumption?: 'pending' | 'accepted';\n    pendingCount?: number;\n    conflictCount?: number;\n    omitted: number;\n}"
+          },
+          {
             "name": "ResponseId",
             "declaration": "export type ResponseId = Branded<'StudentResponseId'>;"
+          },
+          {
+            "name": "StudentFeedbackSyncReply",
+            "declaration": "export interface StudentFeedbackSyncReply {\n    lessonId: string;\n    status: 'queued' | 'coalesced' | 'paused' | 'unavailable';\n    messageId?: string;\n}"
+          },
+          {
+            "name": "StudentFeedbackSyncRequest",
+            "declaration": "export interface StudentFeedbackSyncRequest {\n    lessonId: string;\n    trigger: 'return' | 'continue' | 'resume' | 'pause';\n}"
           },
           {
             "name": "StudentJsonValue",
@@ -1256,7 +1593,7 @@ export const TYPERT = {
           },
           {
             "name": "StudentWatchFrame",
-            "declaration": "export type StudentWatchFrame = { kind: 'snapshot'; value: StudentQueryResult; } | { kind: 'failure'; message: string; };"
+            "declaration": "export type StudentWatchFrame = { kind: 'snapshot'; value: StudentQueryResult; } | { kind: 'failure'; message: string; reason?: 'main-session-required'; };"
           },
           {
             "name": "StudyReadCache",
@@ -1276,7 +1613,7 @@ export const TYPERT = {
           },
           {
             "name": "ValidatedWorkspace",
-            "declaration": "export interface ValidatedWorkspace {\n    settings: TermSettings;\n    blocks: LearningBlock[];\n    worksheets: WorksheetFile[];\n    collections?: CollectionsFile;\n    nativeSources?: readonly NativeInputObservation[];\n}"
+            "declaration": "export interface ValidatedWorkspace {\n    settings: TermSettings;\n    blocks: LearningBlock[];\n    worksheets: WorksheetFile[];\n    collections?: CollectionsFile;\n    nativeSources?: readonly NativeInputObservation[];\n    openmaicSources?: readonly OpenmaicInputObservation[];\n    archivedEvidence?: { workspace: ValidatedWorkspace; references: NonNullable<TermSettings['evidenceReferences']>; }[];\n}"
           },
           {
             "name": "WorksheetFile",
@@ -1292,7 +1629,7 @@ export const TYPERT = {
           },
           {
             "name": "WorkspaceQuery",
-            "declaration": "export interface WorkspaceQuery {\n    kind: 'learning-context' | 'summary' | 'files' | 'settings' | 'status' | 'curriculum' | 'elements' | 'exercises' | 'review-sheet' | 'diagnose' | 'weak' | 'due' | 'pending' | 'progress' | 'concepts' | 'objectives' | 'relations' | 'worksheets' | 'paper-results' | 'materials' | 'mistakes' | 'sessions' | 'attempts';\n    subject?: 'math' | 'chinese' | 'english';\n    id?: string;\n    unit?: string;\n    grade?: number;\n    term?: 'first' | 'second';\n    offset?: number;\n}"
+            "declaration": "export interface WorkspaceQuery {\n    kind: 'capabilities' | 'families' | 'knowledge-sources' | 'legacy-references' | 'learning-context' | 'summary' | 'files' | 'settings' | 'status' | 'curriculum' | 'elements' | 'exercises' | 'review-sheet' | 'diagnose' | 'weak' | 'due' | 'pending' | 'progress' | 'concepts' | 'objectives' | 'relations' | 'worksheets' | 'paper-results' | 'materials' | 'mistakes' | 'sessions' | 'attempts';\n    subject?: 'math' | 'chinese' | 'english';\n    id?: string;\n    unit?: string;\n    grade?: number;\n    term?: 'first' | 'second';\n    offset?: number;\n}"
           },
           {
             "name": "WorkspaceQueryResult",
@@ -1300,7 +1637,7 @@ export const TYPERT = {
           },
           {
             "name": "WorkspaceRead",
-            "declaration": "export interface WorkspaceRead {\n    cache?: StudyReadCache;\n    status: 'valid' | 'missing' | 'invalid' | 'future-format' | 'changing' | 'legacy' | 'archived';\n    files: ObservedFile[];\n    membership: { path: string; names: string[]; }[];\n    issues: FileIssue[];\n    backupIssues?: FileIssue[];\n    workspace?: ValidatedWorkspace;\n    legacy?: unknown;\n}"
+            "declaration": "export interface WorkspaceRead {\n    cache?: StudyReadCache;\n    status: 'valid' | 'missing' | 'invalid' | 'future-format' | 'changing' | 'legacy' | 'archived';\n    files: ObservedFile[];\n    membership: { path: string; names: string[]; }[];\n    issues: FileIssue[];\n    archiveIssues?: FileIssue[];\n    archiveFiles?: ObservedFile[];\n    archiveSources?: { workspace: ValidatedWorkspace; references: NonNullable<ValidatedWorkspace['settings']['evidenceReferences']>; lessons: LessonFileRead; }[];\n    sourceVerification?: { native: NativeHistoryVerification[]; openmaic: OpenmaicSourceVerification[]; };\n    backupIssues?: FileIssue[];\n    workspace?: ValidatedWorkspace;\n    legacy?: unknown;\n}"
           }
         ]
       },
@@ -1319,6 +1656,133 @@ export const TYPERT = {
           }
         ],
         "types": []
+      },
+      {
+        "description": "Installed once at Host scope, shared by every Student agent.",
+        "summary": "Installed once at Host scope, shared by every Student agent.",
+        "tags": [],
+        "jsDoc": "/** Installed once at Host scope, shared by every Student agent. */",
+        "key": "studentOpenmaic",
+        "exportName": "StudentOpenmaic",
+        "members": [
+          {
+            "kind": "property",
+            "name": "connection",
+            "signature": "readonly connection: OpenmaicConnection",
+            "summary": "Verified account transport shared across Student conversations.",
+            "jsDoc": "/** Verified account transport shared across Student conversations. */"
+          },
+          {
+            "kind": "property",
+            "name": "browser",
+            "signature": "readonly browser: OpenmaicBrowser",
+            "summary": "Dedicated Chrome profile and process owned by this service.",
+            "jsDoc": "/** Dedicated Chrome profile and process owned by this service. */"
+          },
+          {
+            "kind": "method",
+            "name": "feedback",
+            "signature": "feedback(workspace: string): OpenmaicFeedback",
+            "summary": "Read original authorized feedback with protected capture ownership shared across children.",
+            "jsDoc": "/**\n * Read original authorized feedback with protected capture ownership shared across children.\n * @param workspace - Authorized original workspace used to verify its generation job.\n * @returns Read-only source transport; academic writes remain native agent operations.\n */"
+          },
+          {
+            "kind": "method",
+            "name": "generation",
+            "signature": "generation(workspace: string): OpenmaicGeneration",
+            "summary": "Recover jobs within their original workspace, learner, term and learning block.",
+            "jsDoc": "/**\n * Recover jobs within their original workspace, learner, term and learning block.\n * @param workspace - Original Student workspace path from the authorized agent.\n * @returns Workspace-scoped official job transport.\n */"
+          }
+        ],
+        "types": [
+          {
+            "name": "OpenmaicBrowser",
+            "declaration": "export class OpenmaicBrowser {\n    open(classroomId: string, signal: AbortSignal): Promise<OpenmaicBrowserResult>;\n    dispose(): Promise<void>;\n}"
+          },
+          {
+            "name": "OpenmaicBrowserResult",
+            "declaration": "export interface OpenmaicBrowserResult {\n    status: 'opened' | 'login-required' | 'identity-mismatch';\n    browser: 'dedicated-chrome';\n    classroomUrl: string;\n    loginUrl?: string;\n    reason?: 'credentials-missing' | 'form-unavailable' | 'callback-pending';\n}"
+          },
+          {
+            "name": "OpenmaicConnection",
+            "declaration": "export class OpenmaicConnection {\n    readonly baseUrl: string;\n    readonly operationTimeoutMs: number;\n    identity(signal: AbortSignal): Promise<OpenmaicIdentity>;\n    read(path: string, signal: AbortSignal): Promise<unknown>;\n    request(path: string, init: RequestInit, signal: AbortSignal): Promise<unknown>;\n    prepareGeneration(signal: AbortSignal): Promise<void>;\n    browserHandoff(classroomId: string): { url: string; automatic: false; };\n}"
+          },
+          {
+            "name": "OpenmaicFeedback",
+            "declaration": "export class OpenmaicFeedback {\n    prepare(owner: OpenmaicLessonOwner, target: Omit<z.infer<typeof feedbackBindingSchema>, 'bindingId' | 'learnerId' | 'termId' | 'blockId'>, signal: AbortSignal): Promise<OpenmaicPreparation>;\n    verify(owner: OpenmaicLessonOwner, binding: z.infer<typeof feedbackBindingSchema>, signal: AbortSignal, revision?: string): Promise<boolean>;\n    read(owner: OpenmaicLessonOwner, binding: z.infer<typeof feedbackBindingSchema>, signal: AbortSignal): Promise<OpenmaicFeedbackRead>;\n}"
+          },
+          {
+            "name": "OpenmaicFeedbackRead",
+            "declaration": "export interface OpenmaicFeedbackRead {\n    revision: string;\n    observations: OpenmaicInputObservation[];\n    pending: PendingOpenmaic[];\n    checkpoint: z.infer<typeof feedbackCheckpointSchema>;\n    drafts: number;\n    omitted: number;\n}"
+          },
+          {
+            "name": "OpenmaicGeneration",
+            "declaration": "export class OpenmaicGeneration {\n    run(input: OpenmaicGenerationRequest, signal: AbortSignal): Promise<OpenmaicGenerationResult>;\n    verify(owner: Pick<OpenmaicGenerationRequest, 'learnerId' | 'termId' | 'blockId'>, classroomId: string, signal: AbortSignal): Promise<boolean>;\n}"
+          },
+          {
+            "name": "OpenmaicGenerationRequest",
+            "declaration": "export type OpenmaicGenerationRequest = z.infer<typeof generationRequestSchema>;"
+          },
+          {
+            "name": "OpenmaicGenerationResult",
+            "declaration": "export interface OpenmaicGenerationResult {\n    status: 'generating' | 'ready' | 'failed';\n    jobId: string;\n    pollUrl: string;\n    base: string;\n    learnerId: string;\n    termId: string;\n    blockId: string;\n    learnerKey: string;\n    classroomId?: string;\n    url?: string;\n    retryable: boolean;\n}"
+          },
+          {
+            "name": "OpenmaicGrading",
+            "declaration": "export type OpenmaicGrading = 'aligned' | 'equivalent' | 'conflict' | 'pending';"
+          },
+          {
+            "name": "OpenmaicIdentity",
+            "declaration": "export interface OpenmaicIdentity {\n    baseUrl: string;\n    accountId: string;\n    learnerKey: string;\n    expiresAt: number;\n}"
+          },
+          {
+            "name": "OpenmaicInputObservation",
+            "declaration": "export interface OpenmaicInputObservation {\n    binding: z.infer<typeof feedbackBindingSchema>;\n    questionId: string;\n    responseId: string;\n    question: z.infer<typeof openmaicQuestionSchema>;\n    source: z.infer<typeof openmaicResponseSourceSchema>;\n    official?: z.infer<typeof officialReviewSchema>;\n    officialHistory?: z.infer<typeof officialReviewSchema>[];\n    answerExposure?: 'possible';\n    sourceStatus: 'known' | 'unknown';\n    reason?: string;\n    result: 'correct' | 'incorrect' | 'partial' | 'unassessed';\n    grading: OpenmaicGrading;\n}"
+          },
+          {
+            "name": "OpenmaicLessonOwner",
+            "declaration": "export interface OpenmaicLessonOwner {\n    learnerId: string;\n    termId: string;\n    blockId: string;\n    classroomId: string;\n    base: string;\n    learnerKey: string;\n}"
+          },
+          {
+            "name": "OpenmaicPreparation",
+            "declaration": "export interface OpenmaicPreparation {\n    binding: z.infer<typeof feedbackBindingSchema>;\n    questions: z.infer<typeof openmaicQuestionSchema>[];\n}"
+          },
+          {
+            "name": "PendingOpenmaic",
+            "declaration": "export type PendingOpenmaic = z.infer<typeof pendingOpenmaicSchema>;"
+          }
+        ]
+      },
+      {
+        "description": "Browser opening is a Client action, not a model-visible secret exchange.",
+        "summary": "Browser opening is a Client action, not a model-visible secret exchange.",
+        "tags": [],
+        "jsDoc": "/** Browser opening is a Client action, not a model-visible secret exchange. */",
+        "key": "studentOpenmaicPlayback",
+        "exportName": "StudentOpenmaicPlayback",
+        "members": [
+          {
+            "kind": "method",
+            "name": "open",
+            "signature": "@Remote({ resources: { session: sessionId => sessionId } }) async open(sessionId: StudentSessionId, lessonId: string, signal: AbortSignal): Promise<OpenmaicPlaybackResult>",
+            "summary": "Open one independently read lesson after checking original learner, term and block.",
+            "jsDoc": "/**\n * Open one independently read lesson after checking original learner, term and block.\n * @param sessionId - Registered main Student conversation identity.\n * @param lessonId - Original agent-authored lesson-log entry.\n * @param signal - Cancellation for independent reads and browser opening.\n * @returns Safe playback, unresolved ownership or recovery outcome.\n */"
+          }
+        ],
+        "types": [
+          {
+            "name": "OpenmaicBrowserResult",
+            "declaration": "export interface OpenmaicBrowserResult {\n    status: 'opened' | 'login-required' | 'identity-mismatch';\n    browser: 'dedicated-chrome';\n    classroomUrl: string;\n    loginUrl?: string;\n    reason?: 'credentials-missing' | 'form-unavailable' | 'callback-pending';\n}"
+          },
+          {
+            "name": "OpenmaicPlaybackResult",
+            "declaration": "export type OpenmaicPlaybackResult = OpenmaicBrowserResult | { status: 'unavailable' | 'ownership-unresolved'; reason: string; };"
+          },
+          {
+            "name": "StudentSessionId",
+            "declaration": "export type StudentSessionId = SessionId;"
+          }
+        ]
       }
     ],
     "events": [],

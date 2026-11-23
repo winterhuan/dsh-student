@@ -8,7 +8,7 @@ import type { InteractiveLessons } from '../openmaic.ts';
 import type { StudentJsonValue } from '../types.ts';
 /** Bounded read query; an explicit clock belongs to the caller. */
 export interface WorkspaceQuery {
-    kind: 'learning-context' | 'summary' | 'files' | 'settings' | 'status' | 'curriculum' | 'elements' | 'exercises' | 'review-sheet' | 'diagnose' | 'weak' | 'due' | 'pending' | 'progress' | 'concepts' | 'objectives' | 'relations' | 'worksheets' | 'paper-results' | 'materials' | 'mistakes' | 'sessions' | 'attempts';
+    kind: 'capabilities' | 'families' | 'knowledge-sources' | 'legacy-references' | 'learning-context' | 'summary' | 'files' | 'settings' | 'status' | 'curriculum' | 'elements' | 'exercises' | 'review-sheet' | 'diagnose' | 'weak' | 'due' | 'pending' | 'progress' | 'concepts' | 'objectives' | 'relations' | 'worksheets' | 'paper-results' | 'materials' | 'mistakes' | 'sessions' | 'attempts';
     subject?: 'math' | 'chinese' | 'english';
     id?: string;
     unit?: string;

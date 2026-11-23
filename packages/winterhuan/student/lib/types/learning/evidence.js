@@ -1,9 +1,12 @@
-import { studyDay } from "./shared.js";
+import { matchOpenmaicResponse, effectiveOpenmaicAssessment } from "../openmaic/feedback-consumer.js";
+import { canonical, studyDay } from "./shared.js";
+import { answerWasExposed } from "../files/answer-exposure.js";
+import { scopeSupports } from "../capabilities.js";
 const EVIDENCE = Symbol('studentEvidence');
 /**
  * Derive effective facts once from validated block and worksheet owners.
  * @param workspace - current validated entity files.
- * @returns one fact per saved response, including unassessed facts and unknown dates, help or unverified native sources; confirmed paper days retain day precision.
+ * @returns one fact per saved response, including unassessed facts and unknown dates, help or native sources without a complete captured learner/term/block/question/response owner; confirmed paper days retain day precision.
  */
 export function deriveEvidence(workspace) {
     const entries = [];
@@ -17,16 +20,21 @@ export function deriveEvidence(workspace) {
             const assessment = file.assessments.find(item => item.responseId === response.id);
             const declaredDate = response.answerDate ?? (file.kind === 'worksheet' ? file.answerDate : undefined) ?? { kind: 'unknown' };
             const source = response.source;
-            const matchedNative = source.kind === 'native' ? workspace.nativeSources?.find(item => item.sessionId === source.sessionId && item.messageId === source.messageId && item.inputVersion === source.inputVersion && item.rawResponse === response.rawResponse) : undefined;
+            const matchedNative = source.kind === 'native' ? workspace.nativeSources?.find(item => item.sessionId === source.sessionId && item.messageId === source.messageId && item.inputVersion === source.inputVersion && item.rawResponse === response.rawResponse && file.kind === 'block' && file.learnerId !== undefined && item.learningScope?.learnerId === file.learnerId && item.learningScope.termId === file.termId && item.learningScope.blockId === file.id && item.learningScope.questionId === question.id && item.learningScope.responseId === response.id && (item.questionSnapshot === undefined || item.questionSnapshot === canonical(question))) : undefined;
+            const matchedOfficial = source.kind === 'openmaic' ? workspace.openmaicSources?.find(item => matchOpenmaicResponse(item, file, response, question, assessment)) : undefined;
+            const officialGrade = matchedOfficial ? effectiveOpenmaicAssessment(matchedOfficial, file, response, question, assessment, workspace.nativeSources) : undefined;
             const answerDate = declaredDate.kind === 'instant' && declaredDate.basis === 'native-input'
                 ? matchedNative && matchedNative.receiptAt === declaredDate.at ? declaredDate : { kind: 'unknown' }
                 : declaredDate;
             entries.push({ termId: file.termId, ownerId: file.id, ownerKind: file.kind, responseId: response.id, questionId: question.id,
-                subject: file.subject, topic: question.topic, ...(typeof question.objectiveId === 'string' && !question.basisStatus ? { objectiveId: question.objectiveId } : {}),
+                subject: file.subject, topic: question.topic, ...(!question.basisStatus && (question.capability || typeof question.objectiveId === 'string') ? { objectiveId: question.capability?.goalId ?? question.objectiveId } : {}),
                 ...(question.basisStatus ? { basisStatus: question.basisStatus } : {}),
                 ...(question.mistakeId ? { mistakeId: question.mistakeId } : {}), rawResponse: response.rawResponse,
-                result: question.basisStatus ? 'unassessed' : assessment?.result ?? 'unassessed', assistance: response.assistance, source: response.source,
-                sourceStatus: source.kind === 'unknown' || source.kind === 'native' && (!matchedNative || source.receiptAt !== undefined && source.receiptAt !== matchedNative.receiptAt) ? 'unknown' : 'known',
+                ...(question.capability ? { capability: question.capability } : {}),
+                ...(assessment ? { feedback: assessment.feedback, criteria: assessment.criteria ?? [question.phase === 'vary' ? 'variation' : question.phase === 'guide' ? 'method' : 'basic'], ...(assessment.errorType ? { errorType: assessment.errorType } : {}) } : {}),
+                result: question.basisStatus ? 'unassessed' : source.kind === 'openmaic' ? officialGrade?.result ?? 'unassessed' : assessment?.result ?? 'unassessed',
+                ...(assessment?.official ? { official: assessment.official } : {}), ...(assessment?.officialHistory ? { officialHistory: assessment.officialHistory } : {}), ...(source.kind === 'openmaic' ? { grading: officialGrade?.grading ?? 'pending' } : assessment?.grading ? { grading: assessment.grading } : {}), assistance: source.kind === 'openmaic' && (matchedOfficial?.answerExposure || !response.assistanceConfirmation) || response.assistance === 'independent' && answerWasExposed(file, response) ? 'unknown' : response.assistance, source: response.source,
+                sourceStatus: source.kind === 'unknown' || source.kind === 'openmaic' && !matchedOfficial || source.kind === 'native' && (!matchedNative || source.receiptAt !== undefined && source.receiptAt !== matchedNative.receiptAt) ? 'unknown' : 'known',
                 answerDate,
                 ...(assessment ? { assessedAt: assessment.assessedAt } : {}) });
         }
@@ -36,6 +44,14 @@ export function deriveEvidence(workspace) {
                 if (typeof goal === 'string')
                     stuckSignals.push({ objectiveId: goal, at: signal.at });
             }
+    }
+    for (const archive of workspace.archivedEvidence ?? []) {
+        const original = deriveEvidence(archive.workspace);
+        for (const entry of original.entries) {
+            const references = archive.references.filter(reference => reference.goalId === entry.objectiveId && (reference.ownerKind === entry.ownerKind && reference.ownerId === entry.ownerId && reference.responseId === entry.responseId && entry.capability && scopeSupports(entry.capability.scope, reference.scope) || reference.review && reference.review.mistakeId === entry.mistakeId));
+            if (references.length && !entries.some(existing => existing.termId === entry.termId && existing.ownerKind === entry.ownerKind && existing.ownerId === entry.ownerId && existing.responseId === entry.responseId))
+                entries.push({ ...entry, referenceScopes: references.filter(reference => entry.capability && scopeSupports(entry.capability.scope, reference.scope)).map(reference => reference.scope) });
+        }
     }
     return { entries, stuckSignals };
 }
@@ -87,7 +103,7 @@ export function evidenceDay(evidence) { return evidence.answerDate.kind === 'day
  */
 export function evidenceAtCutoff(index, now) {
     const today = studyDay(now);
-    return index.entries.filter(item => item.answerDate.kind === 'instant' ? item.answerDate.at <= now : item.answerDate.kind === 'day' ? item.answerDate.day <= today : false);
+    return index.entries.filter(item => item.sourceStatus === 'known' && (item.answerDate.kind === 'instant' ? item.answerDate.at <= now : item.answerDate.kind === 'day' ? item.answerDate.day <= today : false));
 }
 /**
  * Compare answer ordering without borrowing receipt or assessment times.

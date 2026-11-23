@@ -7769,17 +7769,21 @@ window.__ModuleLoader__.load({
 					mistakeStatus
 				}
 			}) : "");
-			const context = useResource(visible ? studentResourceAddress(sessionId, { kind: "learning-context" }) : "");
+			const context = useResource(visible ? studentResourceAddress(sessionId, {
+				kind: "learning-context",
+				subject: query.subject
+			}) : "");
 			const currentData = resource.value && dashboardValue(resource.value.data) ? resource.value.data : void 0;
 			const currentFacts = context.value?.data;
 			const contextReady = resource.status === "live" && resource.value?.status === "valid" && context.status === "live" && context.value?.status === "valid" && currentData !== void 0 && currentFacts !== null && currentFacts !== void 0 && resource.value.versions.length === context.value.versions.length && resource.value.versions.every((file) => context.value.versions.some((other) => other.path === file.path && other.targetKey === file.targetKey && other.version === file.version));
 			const lastView = (0, react.useRef)();
 			if (contextReady) lastView.current = {
 				sessionId,
+				subject: query.subject,
 				data: currentData,
 				facts: currentFacts
 			};
-			const retained = lastView.current?.sessionId === sessionId ? lastView.current : void 0;
+			const retained = lastView.current?.sessionId === sessionId && lastView.current.subject === query.subject ? lastView.current : void 0;
 			const data = contextReady ? currentData : retained?.data ?? currentData;
 			const facts = contextReady ? currentFacts : retained?.facts ?? currentFacts;
 			const offset = (0, react.useRef)(0);
@@ -11054,7 +11058,7 @@ window.__ModuleLoader__.load({
 		//#region lib/types/client/today-view.js
 		/** The learner's page: one recommended next step, the current question, and a folded set of other ways to practise. */
 		function TodayView({ nextAction, round, legalActions, onAction, learnerId, termId, classroomBindingId, onContinue, study, subject, activity, setActivity, goal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startDiagnosis, chosenIntensity, disabled, pending, running, act, tutor, t, prompts, lessons, onOpenClassroom, draftScope, useStore, actions }) {
-			const active = study.active;
+			const active = study.active?.subject === subject ? study.active : void 0;
 			const reflectionKey = formDraftKey(`reflection:${active?.id ?? "none"}`, draftScope);
 			const reflection = useStore((state) => state.drafts[reflectionKey]) ?? "";
 			const ownSession = !!active;
@@ -12092,7 +12096,7 @@ window.__ModuleLoader__.load({
 					});
 				}
 			}, [active?.id, sessionId]);
-			const ownerBlockId = active?.id ?? workspace.round?.blockId;
+			const ownerBlockId = active?.subject === subject ? active.id : workspace.round?.blockId;
 			const currentLesson = workspace.learnerId && workspace.termId ? data?.interactiveLessons.lessons.find((item) => item.blockId === ownerBlockId && item.learnerId === workspace.learnerId && item.termId === workspace.termId && item.status !== "failed") : void 0;
 			async function requestSync(lessonId, trigger) {
 				if (!syncFeedback) return;
@@ -12451,7 +12455,7 @@ window.__ModuleLoader__.load({
 								daily: dailySheetPrompt(subject),
 								dictation: dictationPrompt(subject)
 							},
-							lessons: (data.interactiveLessons?.lessons ?? []).filter((item) => active ? item.blockId === active.id || item.blockId === void 0 && (item.subject === void 0 || item.subject === active.subject) : item.blockId === void 0 && (item.subject === void 0 || item.subject === subject)),
+							lessons: lessonsForSubject(data.interactiveLessons?.lessons ?? [], subject),
 							onOpenClassroom: (lessonId) => {
 								openSavedLesson(lessonId).catch(() => {});
 							}

@@ -4,7 +4,7 @@ import { studentResourceAddress } from "./resource.js";
 export function useStudy(sessionId, visible, networkError, query, useResource) {
     const { offset: mistakeOffset, status: mistakeStatus, ...options } = query;
     const resource = useResource(visible ? studentResourceAddress(sessionId, { kind: 'dashboard', options: { ...options, mistakeOffset, mistakeStatus } }) : '');
-    const context = useResource(visible ? studentResourceAddress(sessionId, { kind: 'learning-context' }) : '');
+    const context = useResource(visible ? studentResourceAddress(sessionId, { kind: 'learning-context', subject: query.subject }) : '');
     const currentData = resource.value && dashboardValue(resource.value.data) ? resource.value.data : undefined;
     const currentFacts = context.value?.data;
     // Independent streams must agree on the files before an action can combine their facts.
@@ -12,9 +12,9 @@ export function useStudy(sessionId, visible, networkError, query, useResource) {
         && resource.value.versions.length === context.value.versions.length && resource.value.versions.every(file => context.value.versions.some(other => other.path === file.path && other.targetKey === file.targetKey && other.version === file.version));
     const lastView = useRef();
     if (contextReady)
-        lastView.current = { sessionId, data: currentData, facts: currentFacts };
+        lastView.current = { sessionId, subject: query.subject, data: currentData, facts: currentFacts };
     // Preserve one coherent question and draft identity while current reads disable actions.
-    const retained = lastView.current?.sessionId === sessionId ? lastView.current : undefined;
+    const retained = lastView.current?.sessionId === sessionId && lastView.current.subject === query.subject ? lastView.current : undefined;
     const data = contextReady ? currentData : retained?.data ?? currentData;
     const facts = contextReady ? currentFacts : retained?.facts ?? currentFacts;
     const offset = useRef(0);

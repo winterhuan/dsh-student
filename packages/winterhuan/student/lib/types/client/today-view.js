@@ -9,7 +9,7 @@ import { assistKeys, day, focusKeys, intensityHelpKeys, intensityKeys, reminderK
 import css from './desk.module.css';
 /** The learner's page: one recommended next step, the current question, and a folded set of other ways to practise. */
 export function TodayView({ nextAction, round, legalActions, onAction, learnerId, termId, classroomBindingId, onContinue, study, subject, activity, setActivity, goal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startDiagnosis, chosenIntensity, disabled, pending, running, act, tutor, t, prompts, lessons, onOpenClassroom, draftScope, useStore, actions }) {
-    const active = study.active;
+    const active = study.active?.subject === subject ? study.active : undefined;
     const reflectionKey = formDraftKey(`reflection:${active?.id ?? 'none'}`, draftScope);
     const reflection = useStore(state => state.drafts[reflectionKey]) ?? '';
     const ownSession = !!active;

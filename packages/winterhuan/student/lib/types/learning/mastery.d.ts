@@ -96,7 +96,7 @@ export interface LearningContinuation {
  * @param workspace - independently validated current and explicitly referenced original term files.
  * @param state - shared evidence and review projection.
  * @param now - actual query cutoff.
- * @param subject - optional browsing subject; unfinished activity retains priority.
+ * @param subject - optional selected subject; unfinished activity within that subject retains priority.
  * @param sourceVerification - independently read source availability and consumption for the current owner.
  * @returns one permitted action, scoped progress and the current two-mother review allowance.
  */
@@ -283,7 +283,7 @@ export declare function insightSummary(insight: StudyInsight): {
         id: string;
         subject: "chinese" | "math" | "english";
         title: string;
-        level: "untouched" | "practising" | "weak" | "due" | "mastered" | "stalled";
+        level: "due" | "weak" | "stalled" | "mastered" | "practising" | "untouched";
         priority: number;
         reasons: InsightReason[];
     }[];

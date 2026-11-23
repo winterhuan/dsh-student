@@ -1,7 +1,7 @@
 import { t as applicationStudyFiles } from "./application-CqpzE1NY.js";
 import { E as openmaicAcademicQuestion, G as canonical, ht as readLessonFile, t as readWorkspace } from "./read-YvE7arze.js";
 import { a as openmaicEntityId, n as generationRequestSchema, o as readStudentWorkspace, u as nativeMessageHash } from "./generation-BNfl7I4b.js";
-import { a as queryWorkspace } from "./queries-B3YsGM7q.js";
+import { a as queryWorkspace } from "./queries-BmflTqpv.js";
 import "node:module";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";

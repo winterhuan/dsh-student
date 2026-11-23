@@ -275,7 +275,7 @@ export declare function studyStatus(state: StudyState, now: number): {
                 x: number;
                 y: number;
                 label: string;
-                align?: "left" | "center" | undefined;
+                align?: "center" | "left" | undefined;
             } | {
                 draw: "arrow";
                 from: {
@@ -489,7 +489,7 @@ export declare function studyStatus(state: StudyState, now: number): {
                 x: number;
                 y: number;
                 label: string;
-                align?: "left" | "center" | undefined;
+                align?: "center" | "left" | undefined;
             } | {
                 draw: "arrow";
                 from: {

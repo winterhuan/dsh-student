@@ -11075,7 +11075,7 @@ window.__ModuleLoader__.load({
 			const readyUrl = classroomUrl(ready?.url);
 			const shownReady = ready ?? (!nextAction ? lessons.find((item) => item.status === "ready" && matchesCurrent(item) && classroomUrl(item.url)) : void 0);
 			const chosen = nextAction;
-			const nextTitle = chosen?.title ?? goalTitle(study, task?.objectiveId) ?? task?.topic ?? t("todayPlan");
+			const nextTitle = chosen?.reason === "confirmed-scope-required" || chosen?.reason === "no-learnable-goal" ? t("todayPlan") : chosen?.title ?? goalTitle(study, task?.objectiveId) ?? task?.topic ?? t("todayPlan");
 			const chosenReason = chosen ? continuationReasons[chosen.reason] : void 0;
 			const primaryAction = chosen?.kind === "hold" ? legalActions.includes("resume-round") ? "resume-round" : legalActions.includes("request-teaching") ? "request-teaching" : legalActions.includes("sync-feedback") ? "sync-feedback" : legalActions.includes("verify-source") ? "verify-source" : void 0 : void 0;
 			const needsParent = chosen?.reason === "confirmed-scope-required";

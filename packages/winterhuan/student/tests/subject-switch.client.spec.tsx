@@ -51,6 +51,7 @@ it('switches an unfinished English question to the selected subject and restores
     view.rerender(<Desk />)
     await waitFor(() => expect(screen.getByRole('button', { name: en[subject] }).getAttribute('aria-pressed')).toBe('true'))
     expect(screen.queryByText('English sports')).toBeNull()
+    expect(screen.queryByText('Confirm the next learning range or choose another allowed activity.')).toBeNull()
     expect(screen.queryByText('play ____')).toBeNull()
     expect(screen.queryByLabelText(en.reflection)).toBeNull()
     expect(queryWorkspace(read, { kind: 'learning-context', subject }, NOW)).toMatchObject({ data: { nextAction: { subject, reason: subject === 'math' ? 'new-goal' : 'confirmed-scope-required' }, round: null } })

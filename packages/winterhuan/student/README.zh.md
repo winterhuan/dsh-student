@@ -155,7 +155,9 @@ node packages/winterhuan/student/lib/cli.js validate --workspace /path/to/worksp
 
 能力与母题查询从[随包学习目录](knowledge/curriculum/capabilities/catalog.json)读取判据、先修和来源，与个人记录分开。新能力题保存母题及实际检验范围；旧课程 ID 保留历史去向。等价工作区母题解析为同一有效题型。学期设置的稳定 `learnerId` 跨学期延续；旧格式2缺少身份时需核对。归档证据引用指向同一学生的原学期、实体与回答，不复制答案。`describeKnowledgeMigration` 描述可重复的格式2身份和旧 ID 去向；原题、回答与评分声明保留，未知日期、帮助和答案依据不授予进度。CLI 按需资源包括 `capability-goal`、`question-family`、`knowledge-extension`；详见[编辑参考](knowledge/skills/study/references/files.md)。
 
-内置目标的新题默认使用保存的历史档案年级与学期；跨册时必须由 `context.scope` 明确选择匹配的知识地图，浏览本身不授予范围。只有摸底学习段可记录强度，摸底题不带教学阶段。复习题绑定同科同目标的已确认错题。准备的错题巩固题须更换原题面；练习册记录保留原题面。旧题保留未核实事实，已观察使用内容在来源错题更改或删除后保留冻结绑定。
+[共享继续查询](src/learning/mastery.ts)按当前题、待评价、当前或先修缺口、短复习及已确认新学给出一个下一步。查询复用有效回答，只请求缺失的基本应用、方法或变式证据；当前目标学习段最多新增三道原生检验题。评分可记录实际证明的判据。两个已结束母题用完当前短复习额度；连续继续随后提供允许的新学。明确原归档引用提供范围内掌握基线和独立重放的复习日期、阶段；缺失或不兼容原档不授予进度。首次掌握与恢复掌握跨学期分别保留。下一官方教学需求包含有界的已保存反馈与复习发现，并明确报告遗漏；大词表请求只教学列出的子集。
+
+内置目标的新题默认使用保存的历史档案年级与学期；跨册时必须由 `context.scope` 明确选择匹配的知识地图，浏览本身不授予范围。只有摸底学习段可记录强度，摸底题不带教学阶段。复习题绑定同科的已确认错题或明确范围的已学能力。准备的错题巩固题须更换原题面；练习册记录保留原题面。旧题保留未核实事实，已观察使用内容在来源错题更改或删除后保留冻结绑定。
 
 [Student Remote](src/remote-service.ts)为已注册的 DSH 主会话提供生成的类型化查询、显式手动保存与提交检查。Gateway 在每次调用前检查会话权限；缺失、已关闭和子 Agent 会被拒绝，且不触发激活。提交检查分别报告原生消息接纳、已保存原答与有效的已保存评分，绝不重发输入。手动保存使用已观察的学期、版本和编辑字段基线；设置明确提供 `editedProfileFields`。Host 配置默认 `refreshIntervalMs: 3000`、`maxWireBytes: 1048576`，限制完整请求与响应的 JSON 大小，包含 watch/manual/inspection 包装；超大的手动请求在保存前拒绝。[客户端资源提供者](src/client/resource.ts)通过原生重连跟踪 `dsh-resource://student/session/<encoded-id>?query=<encoded-JSON>`，在失败时报告错误并将之前的值标记为过期状态，等待流关闭后才撤销命名空间。
 

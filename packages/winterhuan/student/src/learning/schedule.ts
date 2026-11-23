@@ -18,7 +18,7 @@ export interface MistakeReplay { stage: number; independentDays: string[]; dueAt
  * @param windowStart - optional seven-day window start for review completion.
  * @returns earned stage, current due date and one review opportunity/completion per mistake.
  */
-export function replayMistake(mistake: StudyState['mistakes'][number], index: EvidenceIndex, now: number, windowStart?: number): MistakeReplay {
+export function replayMistake(mistake: Pick<StudyState['mistakes'][number], 'id' | 'subject' | 'objectiveId' | 'confirmedAt'>, index: EvidenceIndex, now: number, windowStart?: number): MistakeReplay {
   if (mistake.confirmedAt === undefined || mistake.confirmedAt > now) return { stage: 0, independentDays: [], opportunity: false, completed: false }
   let dueAt = dayStart(studyDay(mistake.confirmedAt + DAY))
   let stage = 0

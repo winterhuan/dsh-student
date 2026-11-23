@@ -78,6 +78,7 @@ export const responseSchema = z.object({ id: responseId, questionId: id, rawResp
 /** The current assessment of one response. A correction replaces this entry under the same response identity. */
 export const assessmentSchema = z.object({ id, responseId, result: z.enum(['correct', 'partial', 'incorrect', 'unassessed', 'stuck']),
   assistance: assistanceSchema, feedback: text, answerEvidence: text, assessedAt: time, correctedAt: time.optional(),
+  criteria: z.array(z.enum(['basic', 'method', 'variation'])).min(1).max(3).optional(),
   userConfirmation: text.optional(), errorType: errorTypeSchema.optional(), official: officialReviewSchema.optional(), officialHistory: z.array(officialReviewSchema).max(2000).optional(), grading: z.enum(['aligned', 'equivalent', 'conflict', 'pending']).optional() }).strict()
 const pending = z.object({ sourcePath: text, row: text, fields: z.array(text).min(1).max(20), reason: text }).strict()
 /** One term owns profile, material, course and compound school-progress settings. */

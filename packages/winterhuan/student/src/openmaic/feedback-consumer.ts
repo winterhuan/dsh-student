@@ -32,8 +32,11 @@ export function openmaicAcademicQuestion(observation: Pick<OpenmaicInputObservat
  * @returns Exact source/content/official-grading match; pending or conflicting effective grades remain separate.
  */
 export function matchOpenmaicResponse(observation: OpenmaicInputObservation, file: LearningBlock | WorksheetFile, response: LearnerResponse, question: z.infer<typeof questionSchema>, assessment?: Assessment): boolean {
+  return observation.sourceStatus === 'known' && matchesStoredOpenmaic(observation, file, response, question, assessment)
+}
+function matchesStoredOpenmaic(observation: OpenmaicInputObservation, file: LearningBlock | WorksheetFile, response: LearnerResponse, question: z.infer<typeof questionSchema>, assessment?: Assessment): boolean {
   const binding = observation.binding
-  if (observation.sourceStatus !== 'known' || file.learnerId !== binding.learnerId || file.termId !== binding.termId || file.kind !== 'block' || file.id !== binding.blockId || response.id !== observation.responseId || question.id !== observation.questionId || response.questionId !== question.id || response.rawResponse !== JSON.stringify(observation.source.submittedAnswer) || canonical(response.source) !== canonical(observation.source) || canonical(question) !== canonical(openmaicAcademicQuestion(observation))) return false
+  if (file.learnerId !== binding.learnerId || file.termId !== binding.termId || file.kind !== 'block' || file.id !== binding.blockId || response.id !== observation.responseId || question.id !== observation.questionId || response.questionId !== question.id || response.rawResponse !== JSON.stringify(observation.source.submittedAnswer) || canonical(response.source) !== canonical(observation.source) || canonical(question) !== canonical(openmaicAcademicQuestion(observation))) return false
   if (canonical(assessment?.official) !== canonical(observation.official) || canonical(assessment?.officialHistory) !== canonical(observation.officialHistory)) return false
   return true
 }
@@ -61,21 +64,22 @@ export function effectiveOpenmaicAssessment(observation: OpenmaicInputObservatio
   return assessment?.result === observation.result && assessment.grading === observation.grading ? { result: observation.result, grading: observation.grading } : { result: 'unassessed', grading: 'pending' }
 }
 /**
- * Inspect saved import completion; source uncertainty and invalid/partial writes leave the previous checkpoint.
+ * Inspect complete saved coverage; unresolved original facts may be acknowledged without granting evidence.
  * @param workspace - Independently validated exact file read.
  * @param source - Fresh original runtime observation, never an agent-created verified marker.
  * @returns Candidate checkpoint and missing/conflicting response identities; performs no business write.
  */
-export function consumeOpenmaicFeedback(workspace: ValidatedWorkspace, source: OpenmaicFeedbackRead): { status: 'pending' | 'accepted'; checkpoint: OpenmaicFeedbackRead['checkpoint']; missingResponseIds: string[]; conflicts: string[] } {
+export function consumeOpenmaicFeedback(workspace: ValidatedWorkspace, source: OpenmaicFeedbackRead): { status: 'pending' | 'accepted'; checkpoint: OpenmaicFeedbackRead['checkpoint']; missingResponseIds: string[]; missingPendingIds: string[]; conflicts: string[] } {
   const missingResponseIds: string[] = [], conflicts: string[] = []
   for (const observation of source.observations) {
     const file = workspace.blocks.find(block => block.id === observation.binding.blockId && block.termId === observation.binding.termId)
     const response = file?.responses.find(response => response.id === observation.responseId)
     const question = file?.questions.find(question => question.id === observation.questionId)
     const assessment = file?.assessments.find(assessment => assessment.responseId === response?.id)
-    if (!file || !response || !question || !assessment || !matchOpenmaicResponse(observation, file, response, question, assessment)) missingResponseIds.push(observation.responseId)
     const effective = file && response && question ? effectiveOpenmaicAssessment(observation, file, response, question, assessment, workspace.nativeSources) : undefined
+    if (!file || !response || !question || !assessment || !matchesStoredOpenmaic(observation, file, response, question, assessment) || assessment.result !== effective?.result || assessment.grading !== effective.grading) missingResponseIds.push(observation.responseId)
     if (!effective || effective.grading === 'conflict' || effective.grading === 'pending' || observation.sourceStatus === 'unknown') conflicts.push(observation.responseId)
   }
-  return { status: missingResponseIds.length || conflicts.length || source.omitted ? 'pending' as const : 'accepted' as const, checkpoint: source.checkpoint, missingResponseIds, conflicts }
+  const missingPendingIds = source.pending.filter(pending => !workspace.blocks.some(block => block.learnerId === pending.binding.learnerId && block.termId === pending.binding.termId && block.id === pending.binding.blockId && block.pendingOpenmaic?.some(saved => canonical(saved) === canonical(pending)))).map(pending => canonical([pending.binding.bindingId, pending.record.sessionId, pending.record.id]))
+  return { status: missingResponseIds.length || missingPendingIds.length || source.omitted ? 'pending' as const : 'accepted' as const, checkpoint: source.checkpoint, missingResponseIds, missingPendingIds, conflicts }
 }

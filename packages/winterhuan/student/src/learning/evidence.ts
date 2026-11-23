@@ -3,7 +3,7 @@ import type { StudyState } from '../schema.ts'
 import type { ValidatedWorkspace } from '../files/validation.ts'
 import type { AnswerDate, Assessment, LearnerResponse, LearningBlock } from '../files/schema.ts'
 import { matchOpenmaicResponse, effectiveOpenmaicAssessment } from '../openmaic/feedback-consumer.ts'
-import { studyDay } from './shared.ts'
+import { canonical, studyDay } from './shared.ts'
 import { scopeSupports } from '../capabilities.ts'
 
 /** Effective assessment of one original response; corrections retain its identity and answer date. */
@@ -38,7 +38,7 @@ export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
       const assessment = file.assessments.find(item => item.responseId === response.id)
       const declaredDate = response.answerDate ?? (file.kind === 'worksheet' ? file.answerDate : undefined) ?? { kind: 'unknown' }
       const source = response.source
-      const matchedNative = source.kind === 'native' ? workspace.nativeSources?.find(item => item.sessionId === source.sessionId && item.messageId === source.messageId && item.inputVersion === source.inputVersion && item.rawResponse === response.rawResponse && file.kind === 'block' && file.learnerId !== undefined && item.learningScope?.learnerId === file.learnerId && item.learningScope.termId === file.termId && item.learningScope.blockId === file.id && item.learningScope.questionId === question.id && item.learningScope.responseId === response.id) : undefined
+      const matchedNative = source.kind === 'native' ? workspace.nativeSources?.find(item => item.sessionId === source.sessionId && item.messageId === source.messageId && item.inputVersion === source.inputVersion && item.rawResponse === response.rawResponse && file.kind === 'block' && file.learnerId !== undefined && item.learningScope?.learnerId === file.learnerId && item.learningScope.termId === file.termId && item.learningScope.blockId === file.id && item.learningScope.questionId === question.id && item.learningScope.responseId === response.id && (item.questionSnapshot === undefined || item.questionSnapshot === canonical(question))) : undefined
       const matchedOfficial = source.kind === 'openmaic' ? workspace.openmaicSources?.find(item => matchOpenmaicResponse(item, file, response, question, assessment)) : undefined
       const officialGrade = matchedOfficial ? effectiveOpenmaicAssessment(matchedOfficial, file, response, question, assessment, workspace.nativeSources) : undefined
       const answerDate: AnswerDate = declaredDate.kind === 'instant' && declaredDate.basis === 'native-input'

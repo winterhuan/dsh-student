@@ -50,7 +50,9 @@ validate 成功退出 0，输出实际读取的文件 kind、身份和观察版�
 
 `study_status` 的 `native` 给出独立观察的 `cut.sessionId`、已消费 `inputs` 的 messageId/inputVersion/原话及 receipt。只有原话完整且 receipt.kind 为 known 时，才用该版本和 receipt.at 保存对应原生来源。来源 unavailable、时间 unknown 或原话不可用时保留未知；omitted 明确省略的旧输入数量，不能把最近一条输入借给其他回答。admissions 的 pending/claimed/consumed/removed 是已记录的消息状态，和业务回答、评价保存无关；重试先用 requestId/messageId 核对，omittedAdmissions 表示省略数量。文件版本和 Session cut 是两个不同观察。
 
-Host 只匹配当前授权 Session 的接收来源。其他 Session 的已保存回答继续保留，但从当前 Session 读取时原生日期可能变为未知；不能用当前输入补写或替换旧来源，也不能宣称已经跨会话核实。
+普通输入框、Headless 和 `/study` 回答沿用实际消费的原生消息。Host 在空闲接收时冻结已独立读取的 learner/term/block/question、题面和文件版本，在模型回合前复核原话及当前版本；成功时 `native.inputs[].learningScope` 给出稳定 responseId。只把该输入关联到返回的原归属。运行中排队的普通输入、缺失捕获、文件或题面变化均保持归属未知，不能按读取时的当前题补关联。tool、skill、系统消息和 student-sync 不提供孩子回答。
+
+Host 可在同一规范工作区、当前会话访问授权下重读明确引用的原主 Session；原历史中必须有完整归属与精确消费来源。原历史不可用或不匹配时保留未知日期。不能用当前输入替换旧来源；当前 Session 的创建时间、消费时间和写入时间也不是旧回答日期。
 
 ## 迁移、归档和明确恢复
 

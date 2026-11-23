@@ -1,6 +1,6 @@
 /** Strict official Student files. Entity identity is independent of file observation and business revision. */
 import { z } from 'zod'
-import { openmaicResponseSourceSchema, openmaicQuestionSchema, officialReviewSchema } from '../openmaic/feedback-schema.ts'
+import { openmaicResponseSourceSchema, openmaicQuestionSchema, officialReviewSchema, pendingOpenmaicSchema } from '../openmaic/feedback-schema.ts'
 import { knowledgeIdSchema, capabilityScopeSchema, knowledgeExtensionSchema } from '../capabilities.ts'
 import type { Branded } from '@deepseek-ai/dsh-brand'
 import { stateSchema, figureSchema, phaseSchema, variantSchema, errorTypeSchema, sheetKindSchema } from '../schema.ts'
@@ -99,7 +99,7 @@ export const blockSchema = z.object({ ...base, kind: z.literal('block'), id: blo
   currentResponseId: responseId.optional(),
   hints: z.array(z.object({ questionId: id, responseId: responseId.optional(), level: z.number().int().min(1).max(3), at: time }).strict()).max(500),
   stuckSignals: z.array(z.object({ questionId: id, at: time }).strict()).max(200).optional(),
-  assessments: z.array(assessmentSchema).max(500), pendingLegacy: z.array(pending).max(500).optional(),
+  assessments: z.array(assessmentSchema).max(500), pendingLegacy: z.array(pending).max(500).optional(), pendingOpenmaic: z.array(pendingOpenmaicSchema).max(2000).optional(),
 }).strict()
 /** One worksheet owns frozen question targets, photo drafts and all confirmed workbook outcomes. */
 export const worksheetSchema = z.object({ ...base, kind: z.literal('worksheet'), id: worksheetId, subject,

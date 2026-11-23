@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import { createHash } from 'node:crypto'
 import type { UserMessage } from '@deepseek-ai/dsh-llm'
-import { KNOWN_SESSION_EVENT_TYPES } from '@deepseek-ai/dsh-session'
+import { KNOWN_SESSION_EVENT_TYPES, pluginRecordOf } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-api-session-controller'
 import type { SessionObservation } from '@deepseek-ai/dsh-session-query'
@@ -14,12 +14,24 @@ export interface NativeSourceCut { sessionId: string; cursor: number; source: 'l
 /** Receipt time is known only for an exactly claimed and consumed continuous input version. */
 export type NativeReceipt = { kind: 'known'; at: number; seq: number } | { kind: 'unknown'; reason: string }
 /** Bounded consumed text context, with a version of the complete source and attachment snapshot. */
-export interface NativeConsumedInput { status: 'consumed'; messageId: string; requestId?: string; inputVersion: string; consumedSeq: number; rawResponse?: string; textUnavailable?: string; receipt: NativeReceipt; attachments: { kind: 'image' | 'file'; attachmentId: string }[]; omittedAttachments: number }
+export interface NativeConsumedInput { status: 'consumed'; messageId: string; requestId?: string; inputVersion: string; consumedSeq: number; rawResponse?: string; textUnavailable?: string; receipt: NativeReceipt; learningScope?: NativeInputObservation['learningScope']; attachments: { kind: 'image' | 'file'; attachmentId: string }[]; omittedAttachments: number }
 /** A logged inbox insertion establishes admission, while consumption and removal remain separate states. */
 export interface NativeAdmission { messageId: string; requestId?: string; status: 'pending' | 'claimed' | 'consumed' | 'removed' }
 /** Source reconstruction failure stops all independently trusted receipt observations. */
 export interface NativeSourceContext { status: 'available' | 'unavailable'; cut?: NativeSourceCut; inputs: NativeConsumedInput[]; admissions: NativeAdmission[]; observations: NativeInputObservation[]; omitted: number; omittedAdmissions: number; reason?: string }
 const learningScopeSchema = z.object({ learnerId: z.string().min(1), termId: z.string().min(1), blockId: z.string().min(1), questionId: z.string().min(1), responseId: z.string().min(1).optional() })
+/** Log-only Host support; losing this record leaves ordinary native ownership unknown. */
+export const nativeOwnerCaptureSchema = z.object({ sessionId: z.string().min(1), turn: z.number().int().nonnegative(), step: z.number().int().positive(), receiptSeq: z.number().int().nonnegative(), messageHash: z.string().regex(/^[a-f0-9]{64}$/u), scope: learningScopeSchema.omit({ responseId: true }), questionSnapshot: z.string().min(1).max(65_536), versions: z.array(z.object({ path: z.string(), targetKey: z.string(), version: z.string() })).length(2) })
+type NativeOwnerCapture = z.infer<typeof nativeOwnerCaptureSchema>
+declare module '@deepseek-ai/dsh-session/types' {
+  interface PluginRecordMap { 'plugin:student/native-owner': NativeOwnerCapture }
+}
+/**
+ * Fingerprint an immutable native input including its identity and attachments.
+ * @param message - Complete originally inserted or consumed message.
+ * @returns Stable hash for exact receipt and consumption matching.
+ */
+export function nativeMessageHash(message: UserMessage): string { return createHash('sha256').update(canonical(message)).digest('hex') }
 function learningScope(text: string): NativeInputObservation['learningScope'] {
   const intention = /(?:^|\n)Student intention:\n([^\n]+)(?:\n|$)/u.exec(text)?.[1]
   if (!intention) return undefined
@@ -37,7 +49,7 @@ function panelAnswer(text: string, sessionId: string): { rawResponse: string; sc
     return { rawResponse: intent.data.operation.response, scope: { learnerId, termId, blockId, questionId, responseId } }
   } catch { return 'invalid' }
 }
-type Slot = { message: UserMessage; receipt: NativeReceipt; admission?: NativeAdmission }
+type Slot = { message: UserMessage; receipt: NativeReceipt; admission?: NativeAdmission; capture?: NativeOwnerCapture }
 
 /**
  * Replay the complete immutable prefix and identify native versions actually consumed in entered steps.
@@ -67,6 +79,14 @@ export function resolveNativeSources(observation: Pick<SessionObservation, 'head
     if (replayBytes > 16_777_216) return unavailable('Native source replay exceeds 16 MiB.')
     if (event.seq !== seq) return unavailable('Session events are not contiguous.')
     if (!event.ignorable && !KNOWN_SESSION_EVENT_TYPES.has(event.type)) return unavailable('Native source replay contains an unsupported required event.')
+    const record = pluginRecordOf(event)
+    if (record?.type === 'plugin:student/native-owner' && event.seq >= observation.inheritedEventCount && claimWindow && !entered) {
+      const parsed = nativeOwnerCaptureSchema.safeParse(record.data)
+      if (parsed.success && parsed.data.sessionId === cut.sessionId && parsed.data.turn === turn) {
+        const slot = claims.find(slot => slot.receipt.kind === 'known' && slot.receipt.seq === parsed.data.receiptSeq && nativeMessageHash(slot.message) === parsed.data.messageHash)
+        if (slot && !slot.capture) slot.capture = parsed.data
+      }
+    }
     switch (event.type) {
       case 'agent/inbox/spliced': {
         const { target, start, removedCount = 0, inserted, outcome } = event.data
@@ -97,6 +117,7 @@ export function resolveNativeSources(observation: Pick<SessionObservation, 'head
       case 'turn/start': turn = event.data.turn; firstStep = true; claimWindow = true; claims = []; sealed = []; entered = false; claimTargets.clear(); break
       case 'step/start':
         sealed = event.data.turn === turn && claimWindow ? claims : []
+        for (const slot of sealed) if (slot.capture?.step !== event.data.step) delete slot.capture
         claims = []; entered = true; claimWindow = false; firstStep = false
         break
       case 'user/message': {
@@ -112,10 +133,12 @@ export function resolveNativeSources(observation: Pick<SessionObservation, 'head
         const panel = panelAnswer(text, cut.sessionId)
         const rawResponse = panel === 'invalid' ? undefined : panel?.rawResponse ?? (text.length > 0 && text.length <= 2000 ? text : undefined)
         const attachments = message.content.flatMap(block => block.type === 'image' || block.type === 'file' ? [{ kind: block.type, attachmentId: block.attachment.attachmentId }] : [])
-        const input: NativeConsumedInput = { status: 'consumed', messageId: message.id, inputVersion, consumedSeq: event.seq, ...(rawResponse === undefined ? { textUnavailable: 'Exact native text is empty or exceeds 2000 characters.' } : { rawResponse }), receipt, ...('rpcId' in message.source ? { requestId: message.source.rpcId } : {}), attachments: attachments.slice(0, 8), omittedAttachments: Math.max(0, attachments.length - 8) }
+        const explicitScope = panel && panel !== 'invalid' ? panel.scope : rawResponse === undefined ? undefined : learningScope(rawResponse)
+        const captured = panel === undefined && !explicitScope && !/Student (?:intention|grading correction):/u.test(text) ? consumed?.capture : undefined
+        const originalScope = explicitScope ?? (captured ? { ...captured.scope, responseId: `native_${inputVersion.slice('dsh-native-v1:'.length)}` } : undefined)
+        const input: NativeConsumedInput = { status: 'consumed', messageId: message.id, inputVersion, consumedSeq: event.seq, ...(rawResponse === undefined ? { textUnavailable: 'Exact native text is empty or exceeds 2000 characters.' } : { rawResponse }), receipt, ...(originalScope ? { learningScope: originalScope } : {}), ...('rpcId' in message.source ? { requestId: message.source.rpcId } : {}), attachments: attachments.slice(0, 8), omittedAttachments: Math.max(0, attachments.length - 8) }
         inputs.push(input)
-        const originalScope = panel && panel !== 'invalid' ? panel.scope : rawResponse === undefined ? undefined : learningScope(rawResponse)
-        if (receipt.kind === 'known' && rawResponse !== undefined) observations.push({ sessionId: cut.sessionId, messageId: message.id, inputVersion, rawResponse, receiptAt: receipt.at, ...(originalScope ? { learningScope: originalScope } : {}) })
+        if (receipt.kind === 'known' && rawResponse !== undefined) observations.push({ sessionId: cut.sessionId, messageId: message.id, inputVersion, rawResponse, receiptAt: receipt.at, ...(originalScope ? { learningScope: originalScope } : {}), ...(captured ? { questionSnapshot: captured.questionSnapshot } : {}) })
         // Previously saved short panel envelopes retain their exact input reference during answer extraction.
         if (receipt.kind === 'known' && panel && panel !== 'invalid' && text.length <= 2000) observations.push({ sessionId: cut.sessionId, messageId: message.id, inputVersion, rawResponse: text, receiptAt: receipt.at, learningScope: panel.scope })
         break

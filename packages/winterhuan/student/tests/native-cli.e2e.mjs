@@ -25,6 +25,8 @@ const profile = { nickname: 'Native fixture', region: '上海市', grade: 2, ter
 const settings = { format: 2, kind: 'term-settings', learnerId: 'native-fixture-child', termId: 'native-term', revision: 1, updatedAt: now, profile, materials: [], courses: [] }
 const question = { id: 'q1', objectiveId: 'm2a-o-sub', source: { kind: 'authored', description: 'Original deterministic fixture' }, topic: 'Subtraction', prompt: '18 − 7?', answer: '11', explanation: 'Subtract seven ones', answerEvidence: '18 − 7 = 11; 11 + 7 = 18', phase: 'try' }
 const block = { format: 2, kind: 'block', learnerId: settings.learnerId, termId: settings.termId, id: 'native-block', subject: 'math', mode: 'foundation', startedAt: now, context: { profile, scope: { grade: 2, term: 'first', objectiveIds: ['m2a-o-sub'] } }, currentQuestionId: 'q1', questions: [question], responses: [], hints: [], assessments: [] }
+const nativeQuestion = { ...question, objectiveId: 'm.sub', capability: { goalId: 'm.sub', familyId: 'math.sub-column', scope: { id: 'within100', description: 'Written subtraction within100', modality: 'written', numberMax: 100 } }, prompt: '62 - 38?', answer: '24', explanation: 'Regroup one ten', answerEvidence: '24 + 38 = 62' }
+const nativeBlock = { ...block, id: 'native-answer-block', context: { profile, scope: { grade: 2, term: 'first', objectiveIds: ['m.sub'] } }, questions: [nativeQuestion] }
 const response = { id: 'r1', questionId: 'q1', rawResponse: '11', assistance: 'unknown', answerDate: { kind: 'unknown' }, source: { kind: 'unknown' } }
 const assessment = { id: 'a1', responseId: 'r1', result: 'correct', assistance: 'unknown', feedback: 'Correct', answerEvidence: question.answerEvidence, assessedAt: now }
 const draft = { id: 'draft1', questionId: 'q1', response: '11', result: 'correct', assistance: 'unknown', confidence: 'high', uncertainties: '', imagePaths: ['photo.png'], receivedAt: now }
@@ -35,6 +37,7 @@ const edit = (file_path, old_string, new_string) => ['edit', { file_path, old_st
 let cliCommand
 const validate = () => ['bash', { command: cliCommand, description: 'Run the packaged read-only CLI and independently observe business facts', timeoutMs: 30000, run_in_background: false }]
 const status = () => ['study_status', { kind: 'learning-context' }]
+let nativeSessionId
 const dsh = (...args) => execute(process.execPath, [dshBin, ...args], { cwd: project, env, timeout: 60000, maxBuffer: 16 * 1024 * 1024 })
 try {
   await mkdir(project)
@@ -65,13 +68,18 @@ process.exitCode=code;
   await writeFile(fixture, `import {appendFile} from 'node:fs/promises';
 import {LlmAdapter} from ${JSON.stringify(pathToFileURL(runtime.resolve('@deepseek-ai/dsh-llm')).href)};
 import {estimateMessage,estimateToolsTokens} from ${JSON.stringify(pathToFileURL(runtime.resolve('@deepseek-ai/dsh-token-meter/estimate')).href)};
-export const inject=['llm','agentPresets'];
+export const inject=['llm'];
 export function apply(ctx,config){
-ctx.on('agent/created',async ({agent})=>{if(agent.session.header.origin!=='subagent')await ctx.agentPresets.mount(agent.ctx,'student');});
 class Fixture extends LlmAdapter{
 index=0;
 async listModels(provider){return [{provider,id:'student-cli-fixture',name:'Student CLI fixture',contextWindow:1000000,maxTokens:16000}];}
-async *stream(options){options.signal?.throwIfAborted();const next=config.calls[this.index++];const action=next?.[0]??'final';
+async *stream(options){options.signal?.throwIfAborted();let next=config.calls[this.index++];const action=next?.[0]??'final';
+if(action==='save-native-answer'){
+const statuses=options.messages.filter(message=>message.role==='tool').flatMap(message=>{try{return [JSON.parse(message.content.filter(block=>block.type==='text').map(block=>block.text).join(''))];}catch{return [];}});
+const observed=statuses.at(-1);const input=observed?.native?.inputs.findLast(input=>input.rawResponse==='24'&&input.learningScope?.questionId==='q1');
+if(!input||input.receipt.kind!=='known'||!/^native_[a-f0-9]{64}$/u.test(input.learningScope.responseId))throw new Error('Plain native answer lacks a complete independent owner');
+const response={id:input.learningScope.responseId,questionId:'q1',rawResponse:input.rawResponse,assistance:'independent',source:{kind:'native',sessionId:observed.native.cut.sessionId,messageId:input.messageId,inputVersion:input.inputVersion,receiptAt:input.receipt.at},answerDate:{kind:'instant',at:input.receipt.at,basis:'native-input',sourceVersion:input.inputVersion}};
+next=['write',{file_path:'.study/blocks/native-answer-block.json',content:JSON.stringify({...config.nativeBlock,currentResponseId:response.id,responses:[response],assessments:[{id:'native-assessment',responseId:response.id,result:'correct',assistance:'independent',feedback:'Correct',answerEvidence:config.nativeBlock.questions[0].answerEvidence,assessedAt:Date.now()}]},null,2)+'\\n'}];}
 const row={dispatch:this.index,action,purpose:options.purpose??null,provider:options.provider,model:options.model,messages:options.messages,tools:options.tools??[],promptUtf16Chars:JSON.stringify(options.messages).length,promptUtf8Bytes:Buffer.byteLength(JSON.stringify(options.messages)),toolSchemaUtf16Chars:JSON.stringify(options.tools??[]).length,fixedDensityRequestEstimate:options.messages.reduce((sum,message)=>sum+estimateMessage(message),0)+estimateToolsTokens({tools:options.tools??[]}),usage:null};
 await appendFile(config.telemetry,JSON.stringify(row)+'\\n');
 if(next){const [name,args]=next;if(!(options.tools??[]).some(tool=>tool.name===name))throw new Error('Missing real native tool '+name);const id='native-'+this.index;yield {type:'block-start',index:0,blockType:'tool-call'};yield {type:'tool-call-delta',index:0,id,name,argumentsDelta:JSON.stringify(args)};yield {type:'block-end',index:0,block:{type:'tool-call',id,name,arguments:JSON.stringify(args)}};yield {type:'finish',reason:{kind:'tool-calls'}};}
@@ -90,17 +98,22 @@ ctx.effect(()=>ctx.llm.registerAdapter(['student-cli-fixture'],new Fixture()));
       ['bash', { command: `${quote(process.execPath)} ${quote(join(packageRoot, 'lib/cli.js'))} schema term-settings > .study-settings.schema.json`, description: 'Generate source-derived setup constraints', timeoutMs: 30000, run_in_background: false }],
       ['read', { file_path: '.study-settings.schema.json' }], write('.study/settings.json', settings), validate(), status(),
     ]],
+    ['native-author-question', [write('.study/blocks/native-answer-block.json', nativeBlock), validate(), status()]],
+    ['native-plain-answer', [['read', { file_path: '.study/blocks/native-answer-block.json' }], status(), ['save-native-answer', {}], validate(), status()]],
+    ['native-cold-read', [status()]],
+    ['native-finish', [['read', { file_path: '.study/blocks/native-answer-block.json' }], edit('.study/blocks/native-answer-block.json', '"kind": "block",', `"kind": "block",\n  "endedAt": ${now + 1},`), validate()]],
     ['learning-and-repair', [write('.study/blocks/native-block.json', block), validate(), edit('.study/blocks/native-block.json', json(block).trim(), json(answered).trim()), validate(), status(), edit('.study/blocks/native-block.json', json(answered).trim(), json(invalid).trim()), validate(), status(), edit('.study/blocks/native-block.json', 'missing-response', 'r1'), validate(), status(), edit('.study/blocks/native-block.json', json(assessed).trim(), json({ ...assessed, endedAt: now + 1 }).trim()), validate()]],
     ['photo-confirmation', [write('.study/worksheets/native-photo.json', worksheet), validate(), edit('.study/worksheets/native-photo.json', json(worksheet).trim(), json(confirmedPhoto).trim()), validate(), ['study_status', { kind: 'worksheets', id: 'native-photo' }]]],
     ['worksheet', [write('.study/worksheets/native-sheet.json', sheet), validate(), ['study_status', { kind: 'worksheets', id: 'native-sheet' }]]],
     ['archive', [
+      ['read', { file_path: '.study/settings.json' }],
       ['bash', { command: `${quote(process.execPath)} -e ${quote(`const fs=require('node:fs');fs.cpSync('.study/settings.json','.study/archives/native-term/settings.json',{recursive:true});fs.cpSync('.study/blocks','.study/archives/native-term/blocks',{recursive:true});fs.cpSync('.study/worksheets','.study/archives/native-term/worksheets',{recursive:true});`)}`, description: 'Preserve the confirmed term under its stable identity', timeoutMs: 30000, run_in_background: false }],
       edit('.study/settings.json', json(settings).trim(), json({ ...settings, archivedAt: now + 2 }).trim()), validate(), status(),
     ]],
   ]
   for (const [flow, calls] of flows) {
-    if (flow !== 'setup') {
-      const kind = flow === 'learning-and-repair' ? 'block' : flow === 'archive' ? 'term-settings' : 'worksheet'
+    if (flow !== 'setup' && flow !== 'native-cold-read') {
+      const kind = flow === 'learning-and-repair' || flow.startsWith('native-') ? 'block' : flow === 'archive' ? 'term-settings' : 'worksheet'
       const schemaPath = `.study-${flow}.schema.json`
       const schema = JSON.parse((await execute(process.execPath, [join(packageRoot, 'lib/cli.js'), 'schema', kind])).stdout)
       const lineCount = json(schema).split('\n').length
@@ -113,9 +126,10 @@ ctx.effect(()=>ctx.llm.registerAdapter(['student-cli-fixture'],new Fixture()));
     await writeFile(overlay, JSON.stringify([
       { id: 'agent-default-model', config: { provider: 'student-cli-fixture', model: 'student-cli-fixture' } },
       { id: 'session-title-llm', disabled: true }, { id: 'session-telemetry-otel', disabled: true }, { id: 'llm-deepseek', disabled: true }, { id: 'llm-deepseek-account', disabled: true },
-      { insert: [{ id: 'agent-preset-registry', name: '@deepseek-ai/dsh-agent-preset-registry', config: { default: 'student' } }, { id: 'student-fixture', name: fixture, config: { flow, calls, telemetry } }] },
+      { id: 'preset-student', disabled: true },
+      { insert: [{ id: 'student-headless-capabilities', name: join(packageRoot, 'lib/agent.js') }, { id: 'student-fixture', name: fixture, config: { flow, calls, telemetry, nativeBlock } }] },
     ]))
-    const result = await dsh('--profile', 'native-cli', '--patch', overlay, '--permission-mode', 'danger-full-access', '--json', `Execute the deterministic ${flow} fixture. Parent confirmations and answers are fixture facts.`)
+    const result = await dsh('--profile', 'native-cli', '--patch', overlay, '--permission-mode', 'danger-full-access', '--json', ...(flow === 'native-plain-answer' ? ['--session-id', nativeSessionId, '24'] : [`Execute the deterministic ${flow} fixture. Parent confirmations and answers are fixture facts.`]))
     if (outputRoot) {
       await mkdir(outputRoot, { recursive: true })
       await writeFile(join(outputRoot, `${flow}.requests.jsonl`), await readFile(telemetry))
@@ -132,6 +146,9 @@ ctx.effect(()=>ctx.llm.registerAdapter(['student-cli-fixture'],new Fixture()));
     assert.ok(resident <= 30000)
     const events = result.stdout.trim().split('\n').map(line => JSON.parse(line))
     const sessionId = events.find(event => event.type === 'session').sessionId
+    if (flow === 'native-author-question') nativeSessionId = sessionId
+    if (flow === 'native-plain-answer') assert.equal(sessionId, nativeSessionId)
+    if (flow === 'native-cold-read') assert.notEqual(sessionId, nativeSessionId)
     const statusIds = new Set(events.filter(event => event.type === 'tool_call' && event.tool === 'study_status').map(event => event.callId))
     const statuses = events.filter(event => event.type === 'tool_result' && statusIds.has(event.callId))
     assert.equal(statuses.length, statusIds.size)
@@ -147,7 +164,20 @@ ctx.effect(()=>ctx.llm.registerAdapter(['student-cli-fixture'],new Fixture()));
       assert.ok(native.admissions.some(admission => admission.status === 'consumed' && native.inputs.some(input => input.messageId === admission.messageId)))
       assert.equal('observations' in native, false)
     }
-    const summary = { flow, nativeToolCalls: calls.length, harnessDispatches: requests.length, firstTurnPromptUtf16Chars: requests[0].promptUtf16Chars, continuationPromptUtf16Chars: requests.slice(1).map(row => row.promptUtf16Chars), fullRequestPromptUtf16Chars: requests.reduce((sum, row) => sum + row.promptUtf16Chars, 0), fixedDensityFirstRequestEstimate: requests[0].fixedDensityRequestEstimate, fixedDensityContinuationEstimates: requests.slice(1).map(row => row.fixedDensityRequestEstimate), fixedDensityTotalRequestEstimate: requests.reduce((sum, row) => sum + row.fixedDensityRequestEstimate, 0), residentParameterUtf16Chars: resident, schemaAndReferenceReads: calls.filter(([name]) => name === 'read').map(([, args]) => args), providerUsage: null, paidProviderRequests: 0, titleProducer: 'disabled', compaction: 'Student preset enabled; no triggered compaction asserted', textOnlyPhotoFixture: flow === 'photo-confirmation', headlessEvents: events.length }
+    if (flow === 'native-plain-answer' || flow === 'native-cold-read') {
+      const data = JSON.parse([...admitted.values()].at(-1).filter(block => block.type === 'text').map(block => block.text).join('')).data
+      assert.equal(data.savedResponse.rawResponse, '24')
+      assert.equal(data.savedResponse.sourceStatus, 'known')
+      assert.equal(data.savedResponse.source.sessionId, nativeSessionId)
+      assert.match(data.savedResponse.id, /^native_[a-f0-9]{64}$/u)
+      assert.equal(data.savedResponse.answerDate.kind, 'instant')
+      assert.equal(data.savedResponse.answerDate.at, data.savedResponse.source.receiptAt)
+      assert.equal(data.savedResponse.effectiveResult, 'correct')
+      assert.equal(data.currentQuestion.capability.goalId, 'm.sub')
+      assert.equal(data.currentQuestion.capability.familyId, 'math.sub-column')
+      if (outputRoot && flow === 'native-cold-read') await cp(join(project, '.study'), join(outputRoot, 'native-answer-workspace/.study'), { recursive: true })
+    }
+    const summary = { flow, nativeToolCalls: calls.length, harnessDispatches: requests.length, firstTurnPromptUtf16Chars: requests[0].promptUtf16Chars, continuationPromptUtf16Chars: requests.slice(1).map(row => row.promptUtf16Chars), fullRequestPromptUtf16Chars: requests.reduce((sum, row) => sum + row.promptUtf16Chars, 0), fixedDensityFirstRequestEstimate: requests[0].fixedDensityRequestEstimate, fixedDensityContinuationEstimates: requests.slice(1).map(row => row.fixedDensityRequestEstimate), fixedDensityTotalRequestEstimate: requests.reduce((sum, row) => sum + row.fixedDensityRequestEstimate, 0), residentParameterUtf16Chars: resident, schemaAndReferenceReads: calls.filter(([name]) => name === 'read').map(([, args]) => args), providerUsage: null, paidProviderRequests: 0, titleProducer: 'disabled', compaction: 'Headless default composition; no triggered compaction asserted', textOnlyPhotoFixture: flow === 'photo-confirmation', headlessEvents: events.length }
     summaries.push(summary)
   }
   const cliEvidence = (await readFile(join(root, 'cli-evidence.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line))
@@ -171,7 +201,8 @@ ctx.effect(()=>ctx.llm.registerAdapter(['student-cli-fixture'],new Fixture()));
     persistedCalls += events.filter(event => event.type === 'tool/call').length
     retries += events.filter(event => event.type === 'llm/retry' || event.type === 'llm/retry-started').length
     usageSamples += events.filter(event => event.type === 'assistant/message' && event.data.usage).length
-    assert.deepEqual(events.filter(event => event.type === 'turn/end').map(event => event.data.reason), [{ kind: 'completed' }])
+    const expectedTurns = events[0].id === nativeSessionId ? 2 : 1
+    assert.deepEqual(events.filter(event => event.type === 'turn/end').map(event => event.data.reason), Array.from({ length: expectedTurns }, () => ({ kind: 'completed' })))
     if (outputRoot) await writeFile(join(outputRoot, `${group.split('/').at(-1)}.session.jsonl`), text)
   }
   assert.equal(persistedCalls, summaries.reduce((sum, row) => sum + row.nativeToolCalls, 0))

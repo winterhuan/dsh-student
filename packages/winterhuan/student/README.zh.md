@@ -135,7 +135,7 @@ Student 在 Web 和 Headless 中启用 profile 已有的 `fs-observation-policy`
 <a id="understand-the-implementation"></a>
 ## 理解实现
 
-职责与信任边界见[学生学习子系统](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/docs/subsystems/student.zh.md)。在仓库根目录通过 `pnpm --filter @winterhuan/dsh-student build` 构建，通过 `pnpm --filter @winterhuan/dsh-student test` 测试。
+职责与信任边界见[学生学习子系统](https://github.com/winterhuan/dsh-creative/blob/codex%2Fstudent-openmaic-loop/docs/subsystems/student.zh.md)。在仓库根目录通过 `pnpm --filter @winterhuan/dsh-student build` 构建，通过 `pnpm --filter @winterhuan/dsh-student test` 测试。
 
 Host 入口负责已验证工作区读取、类型化手动保存和配置。`./agent` 导出在 `student` preset 及继承它的原生子 Agent 组合内注册领域技能和工具。preset 提供任务专属 persona 和显式原生工具组合，不改变默认模式。学习模式使用文件、搜索、网页、提问、呈现和系统对应的 shell 工具，不默认挂载委派或创作生产工作流。
 
@@ -215,7 +215,7 @@ Student 模式注册 study_status、openmaic_feedback 和四个官方 OpenMAIC �
 
 #### Token 影响
 
-技能正文和参考按需加载，启用时提供两个只读 Student 工具定义；每次请求也包含原生工具的成本。集合查询每页返回 20 条及下一页偏移。不加载整本教材。两个隔离的 DSH 0.2.2-rc.1 首次请求使用同一空工作区和输入，固定密度估算测得基线包为 8,765 tokens，官方组合为 10,744，增加 1,979（22.6%），包含消息和工具定义。24 份官方方法正文仍按需加载。请求未调用付费模型或写学习事实；该估算不衡量提供方计费、整课成本、教学质量或 KV Cache 性能。
+技能正文和参考按需加载，启用时提供两个只读 Student 工具定义；每次请求也包含原生工具的成本。集合查询每页返回 20 条及下一页偏移。不加载整本教材。两个隔离的 DSH 0.2.2-rc.1 首次请求使用同一空工作区、输入及类似 Web 的 preset 组合，固定密度估算测得基线包为 8,765 tokens，官方组合为 10,808，增加 2,043（23.3%），包含消息和工具定义。独立 Headless 入口的能力在 Agent 创建前组合，其实际调用路径由原生测试覆盖。24 份官方方法正文仍按需加载。请求未调用付费模型或写学习事实；该估算不衡量提供方计费、整课成本、教学质量或 KV Cache 性能。
 
 #### KV Cache 影响
 

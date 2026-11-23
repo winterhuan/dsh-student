@@ -1,9 +1,10 @@
 import { execFile } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { promisify } from 'node:util'
 import { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { it, expect, onTestFinished } from 'vitest'
@@ -15,6 +16,7 @@ import { blockSchema, worksheetSchema } from '../src/files/schema.ts'
 import { studyStore } from '../src/store.ts'
 import { readBackups, describeRestore, retainObservedBackups, sourceSha256 } from '../src/files/recovery.ts'
 import { NOW, setup, material, course } from './fixtures.ts'
+import { canonical } from '../src/learning/shared.ts'
 import { readLessonFile } from '../src/files/lessons.ts'
 import { readInteractiveLessons } from '../src/openmaic.ts'
 
@@ -147,6 +149,36 @@ it('validates the complete lesson file beyond the twenty-row application display
   const shown = await readInteractiveLessons(agent, signal, undefined)
   expect(shown.error).toBeDefined()
   expect(shown.lessons.some(lesson => lesson.id === 'om-20')).toBe(false)
+})
+
+it('retains a referenced classroom beyond display and lesson-count limits without pruning its source', async () => {
+  const { fs, signal, cwd, agent, settings, save } = await fixture()
+  await save({ ...settings, learnerId: 'child-1' })
+  const binding = { bindingId: 'original-binding', learnerId: 'child-1', termId: 'term-1', blockId: 'original-block', goalId: 'm.sub', familyId: 'math.sub-basic', scope: { id: 'within20', description: 'Written subtraction within20', modality: 'written', numberMax: 20 } }
+  const original = { id: 'original-lesson', status: 'ready', createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z', title: 'Original classroom', requirement: 'Subtract within20', base: 'https://open.maic.chat', classroomId: 'original-classroom', learnerKey: 'user:parent', learnerId: 'child-1', termId: 'term-1', blockId: 'original-block', feedback: binding, checkpoint: { bindingId: binding.bindingId, attempts: [{ attemptId: 'original-attempt', seq: 1 }] } }
+  const source = { kind: 'openmaic', bindingId: binding.bindingId, attemptId: 'original-attempt', sceneId: 'original-scene', questionId: 'official-question', submission: { id: 'original-submission', seq: 0, createdAt: original.createdAt }, submittedAnswer: '11' }
+  const snapshot = { id: 'official-question', type: 'short_answer', question: '18 - 7?', answer: '11' }
+  const frozen = { bindingId: binding.bindingId, sceneId: source.sceneId, questionId: source.questionId, snapshot, snapshotHash: createHash('sha256').update(canonical(snapshot)).digest('hex'), revision: { kind: 'manifest', stageRev: 1, sceneRev: 1 } }
+  const block = blockSchema.parse({ format: 2, kind: 'block', learnerId: 'child-1', termId: 'term-1', id: binding.blockId, subject: 'math', mode: 'foundation', startedAt: NOW, context: { profile: setup.profile }, questions: [{ id: 'q1', objectiveId: 'm.sub', capability: { goalId: binding.goalId, familyId: binding.familyId, scope: binding.scope }, source: { kind: 'authored', description: 'Frozen original classroom' }, topic: 'Subtraction', prompt: '18 - 7?', answer: '11', explanation: 'Subtract seven', answerEvidence: '11 + 7 = 18', openmaic: frozen }], responses: [{ id: 'r1', questionId: 'q1', rawResponse: JSON.stringify(source.submittedAnswer), assistance: 'unknown', answerDate: { kind: 'unknown' }, source }], hints: [], assessments: [] })
+  await mkdir(join(cwd, '.study/blocks'))
+  const blockPath = join(cwd, '.study/blocks/original-block.json')
+  await writeFile(blockPath, JSON.stringify(block))
+  const originalBlock = await readFile(blockPath, 'utf8')
+  const lessons = [original, ...Array.from({ length: 79 }, (_, index) => ({ id: `later-${index}`, status: 'ready', createdAt: '2026-10-01T00:00:00Z', updatedAt: '2026-10-01T00:00:00Z', title: 'Later lesson', requirement: 'Other content', base: 'https://open.maic.chat', classroomId: `later-classroom-${index}` }))]
+  const path = join(cwd, '.study/openmaic-lessons.json')
+  await writeFile(path, JSON.stringify({ format: 1, lessons }))
+  expect((await readInteractiveLessons(agent, signal, undefined)).lessons.some(lesson => lesson.id === original.id)).toBe(false)
+  expect(await readLessonFile(fs, signal)).toMatchObject({ status: 'valid', file: { lessons: expect.arrayContaining([original]) } })
+  lessons.push({ ...lessons[1]!, id: 'beyond-limit', classroomId: 'beyond-classroom' })
+  const oversized = JSON.stringify({ format: 1, lessons })
+  await writeFile(path, oversized)
+  expect(await readLessonFile(fs, signal)).toMatchObject({ status: 'invalid' })
+  expect((await readInteractiveLessons(agent, signal, undefined)).error).toBeDefined()
+  expect(await readFile(path, 'utf8')).toBe(oversized)
+  expect(await readFile(blockPath, 'utf8')).toBe(originalBlock)
+  const independent = await readWorkspace(nodeStudyFiles(cwd), signal)
+  expect(independent.issues).toEqual([])
+  expect(independent).toMatchObject({ status: 'valid', workspace: { blocks: [{ responses: [{ source }] }] } })
 })
 
 it('returns an invalid manual outcome for a bad compound progress command and permits unrelated invalid data', async () => {

@@ -89,6 +89,7 @@
   },
   "dependencies": {
     "@deepseek-ai/cordis-plugin-group": "~1.1.0",
+    "@deepseek-ai/cordis-plugin-include": "~1.1.0",
     "@deepseek-ai/dsh-agent-instructions": "0.2.2-rc.1",
     "@deepseek-ai/dsh-agent-preset": "0.2.2-rc.1",
     "@deepseek-ai/dsh-brand": "0.2.2-rc.1",
@@ -110,7 +111,6 @@
     "@deepseek-ai/dsh-tool-web": "0.2.2-rc.1",
     "@deepseek-ai/dsh-typert-protocol": "0.2.2-rc.1",
     "@deepseek-ai/schemastery": "3.19.0",
-    "@openmaic/dsh-openmaic": "github:THU-MAIC/dsh-openmaic#09c1693cfe83224db89fdd4abd245ac9174d3a05",
     "playwright-core": "1.56.1",
     "zod": "^4.4.3"
   },
@@ -151,6 +151,7 @@
     "@deepseek-ai/dsh-tools": "0.2.2-rc.1",
     "@deepseek-ai/dsh-typert-loader": "0.2.2-rc.1",
     "@deepseek-ai/dsh-typert-registry": "0.2.2-rc.1",
+    "@openmaic/dsh-openmaic": "github:THU-MAIC/dsh-openmaic#09c1693cfe83224db89fdd4abd245ac9174d3a05",
     "@types/react": "18.3.28",
     "@types/react-dom": "18.3.7",
     "react": "18.3.1",

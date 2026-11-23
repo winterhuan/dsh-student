@@ -2,10 +2,6 @@
 - id: credentials
   disabled: false
 - insert:
-    - id: student-openmaic-client
-      name: '@openmaic/dsh-openmaic'
-      config:
-        hostTools: false
     - id: student
       name: '@winterhuan/dsh-student'
     - id: preset-student

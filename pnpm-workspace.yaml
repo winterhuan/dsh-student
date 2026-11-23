@@ -157,4 +157,3 @@ minimumReleaseAgeExclude:
 
 patchedDependencies:
   '@deepseek-ai/dsh-typert-generator@0.2.2-rc.1': patches/@deepseek-ai__dsh-typert-generator@0.2.2-rc.1.patch
-  '@openmaic/dsh-openmaic@0.4.0': patches/@openmaic__dsh-openmaic@0.4.0.patch

@@ -1,4 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
+import Include from '@deepseek-ai/cordis-plugin-include'
 import StudentRemote from './remote-service.ts'
 import type { StudentTransportConfig } from './types.ts'
 import { StudentOpenmaicPlayback } from './openmaic/playback.ts'
@@ -20,6 +21,7 @@ export const Config: z<StudentHostConfig> = z.object({ refreshIntervalMs: z.numb
 
 /** Register Student reads, manual saves and backup retention for the Host lifetime. */
 export function apply(context: Context, config: StudentHostConfig): void {
+  context.plugin(Include, { path: new URL('./openmaic/cordis.yml', import.meta.url).href })
   context.plugin(StudentOpenmaic, config.openmaic)
   context.plugin(StudentOpenmaicPlayback)
   context.plugin(StudyBackupRetention)

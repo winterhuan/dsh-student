@@ -25,6 +25,7 @@ const hash = value => createHash('sha256').update(value).digest('hex')
 const signal = new AbortController().signal
 const flows = []
 const evidence = []
+const read = file_path => ['read', { file_path }]
 const write = (file_path, content) => ['write', { file_path, content }]
 const edit = (file_path, old_string, new_string) => ['edit', { file_path, old_string, new_string }]
 const bash = command => ['bash', { command, description: 'Inspect or recover the explicitly confirmed fixture operation', timeoutMs: 30000, run_in_background: false }]
@@ -147,13 +148,13 @@ const text='Recovery fixture completed with independently queried Student facts.
   assert.equal(resumed.outputs.find(output => output.path === settings.path).status, 'already-valid')
   assert.ok(resumed.outputs.some(output => output.status === 'missing'))
   await save('migration-interrupted.plan.json', json(resumed))
-  await run('migration-source-change', [edit('.study/state.json', 'Recovery fixture', 'Changed legacy source'), cli, status('learning-context')])
+  await run('migration-source-change', [read('.study/state.json'), edit('.study/state.json', 'Recovery fixture', 'Changed legacy source'), cli, status('learning-context')])
   const changed = await observe('changed migration source', 1)
   assert.ok(changed.row.issues.some(issue => issue.rule === 'migration-source'))
   assert.equal(changed.read.workspace, undefined)
   assert.equal((await migration()).status, 'blocked')
   assert.deepEqual(await readFile(join(project, '.study/v1-original.json')), legacyBytes)
-  await run('migration-source-repair-and-resume', [write('.study/state.json', legacyBytes.toString()), ...resumed.outputs.filter(output => output.status === 'missing').map(output => write(output.path, json(output.file))), cli, status('learning-context')])
+  await run('migration-source-repair-and-resume', [read('.study/state.json'), write('.study/state.json', legacyBytes.toString()), ...resumed.outputs.filter(output => output.status === 'missing').map(output => write(output.path, json(output.file))), cli, status('learning-context')])
   const migrated = await observe('completed migration', 0)
   assert.equal(migrated.read.status, 'valid')
   const correct = migrated.read.workspace.worksheets.find(sheet => sheet.id === 'workbook-legacy-correct')
@@ -170,7 +171,7 @@ const text='Recovery fixture completed with independently queried Student facts.
   let nickname = profile.nickname
   const retentionCalls = []
   for (const next of names) {
-    retentionCalls.push(edit('.study/settings.json', nickname, next), status('settings'))
+    retentionCalls.push(read('.study/settings.json'), edit('.study/settings.json', nickname, next), status('settings'))
     nickname = next
   }
   await run('bounded-observed-backups', retentionCalls)
@@ -185,7 +186,7 @@ const text='Recovery fixture completed with independently queried Student facts.
   const chosen = backupSet.backups.find(candidate => candidate.backup.sourcePath === '.study/settings.json' && candidate.backup.sha256 === restoredHash)
   assert.ok(chosen, 'An actual application observation must retain recovery material')
   const invalid = '{"format":2,"kind":"term-settings", invalid original\n'
-  const broken = await run('invalid-file-pauses-manual-save', [write('.study/settings.json', invalid), cli, status('learning-context')], { manualRequest: baseline.request })
+  const broken = await run('invalid-file-pauses-manual-save', [read('.study/settings.json'), write('.study/settings.json', invalid), cli, status('learning-context')], { manualRequest: baseline.request })
   assert.equal(broken.query.data, null)
   assert.equal(broken.manual.status, 'invalid')
   assert.equal(await readFile(join(project, '.study/settings.json'), 'utf8'), invalid)
@@ -194,7 +195,7 @@ const text='Recovery fixture completed with independently queried Student facts.
   assert.equal(restore.status, 'available')
   assert.equal(restore.preserveCurrent.sha256, hash(invalid))
   await save('explicit-restore-choice.json', json({ chosen, restore }))
-  await run('explicit-backup-restore', [write('.study/invalid-settings-original.json', invalid), write('.study/settings.json', Buffer.from(chosen.backup.bytesBase64, 'base64').toString()), cli, status('settings')])
+  await run('explicit-backup-restore', [read('.study/settings.json'), write('.study/invalid-settings-original.json', invalid), write('.study/settings.json', Buffer.from(chosen.backup.bytesBase64, 'base64').toString()), cli, status('settings')])
   assert.equal(await readFile(join(project, '.study/invalid-settings-original.json'), 'utf8'), invalid)
   assert.deepEqual(await readFile(join(project, '.study/settings.json')), Buffer.from(chosen.backup.bytesBase64, 'base64'))
   await observe('explicit restored version', 0)
@@ -217,11 +218,11 @@ const text='Recovery fixture completed with independently queried Student facts.
   assert.equal(describeArchive(source, await archive(), await readWorkspace(fs, signal)).status, 'export-valid-active-retained')
   for (const row of archiveOutput) assert.deepEqual(await readFile(join(project, row.path.replace(/^\.study/u, archivePath))), Buffer.from(row.bytes))
   const oldRequest = (await run('archive-before-replacement-restart', [cli, status('settings')])).request
-  await run('archive-active-replacement-interrupted', [write('.study/settings.json', invalid), cli])
+  await run('archive-active-replacement-interrupted', [read('.study/settings.json'), write('.study/settings.json', invalid), cli])
   assert.equal(describeArchive(source, await archive(), await readWorkspace(fs, signal)).status, 'export-valid-active-unknown')
   const nextSettings = { ...source.workspace.settings, termId: 'new-term', profile: { ...profile }, revision: source.workspace.settings.revision }
   delete nextSettings.migration
-  await run('new-term-old-request-denied', [bash(`${quote(process.execPath)} -e ${quote("const fs=require('node:fs');for(const path of ['.study/blocks','.study/worksheets','.study/collections.json'])fs.rmSync(path,{recursive:true,force:true});")}`), write('.study/settings.json', json(nextSettings)), cli, status('settings')], { manualRequest: oldRequest, deniedSessions: flows.map(flow => flow.sessionId) })
+  await run('new-term-old-request-denied', [bash(`${quote(process.execPath)} -e ${quote("const fs=require('node:fs');for(const path of ['.study/blocks','.study/worksheets','.study/collections.json'])fs.rmSync(path,{recursive:true,force:true});")}`), read('.study/settings.json'), write('.study/settings.json', json(nextSettings)), cli, status('settings')], { manualRequest: oldRequest, deniedSessions: flows.map(flow => flow.sessionId) })
   assert.equal(flows.at(-1).manualStatus, 'old-term')
   assert.equal(describeArchive(source, await archive(), await readWorkspace(fs, signal)).status, 'complete')
   const restarted = await run('new-term-restart', [cli, status('settings')], { manualRequest: oldRequest })

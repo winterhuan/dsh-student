@@ -246,7 +246,7 @@ The tables group goals and criteria by subject and capability domain for parent 
 | Whole units, appendices, and combined revision | Retain course/resource links rather than independent capability mastery. | Route original questions and separable subparts; a unit score cannot grant every candidate capability. |
 | Bundled capabilities | Link the capabilities actually tested separately. | Score column subtraction and addition checking separately rather than infer both from one total. |
 | Old goals describing the same capability | Consolidate across terms under a stable capability identity. | Inherit valid evidence only for the same or narrower scope without copying responses. |
-| Equivalent numeric, character, or story variants | Link one family and retain original prompts as historical instances. | Preserve input, source and effective grading, date, help, and provenance. |
+| Equivalent numeric, character, or story variants | Link one family and retain original prompts as historical instances. | Preserve the original input, original and effective grades, date, assistance, and response source. |
 | Rule descriptions, choices, or incomplete sources | Retain diagnostic, partial, or pending evidence. | Do not grant unobserved operations, listening/speaking, or reading; check the missing evidence with a fresh task. |
 
 For example, `ex-m2a-sub-1`, subtracting 52−28 and checking it, links subtraction and checking separately. A request to use breaking ten or inverse addition links only the demonstrated method. English how-to-say prompts route by actual response modality: text supports only confirmed written scope, while speech requires audio or verified observation. One response is not copied into two learning events.

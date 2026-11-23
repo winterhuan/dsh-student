@@ -1,5 +1,7 @@
 # OpenMAIC methods
 
+English | [中文](README.zh.md)
+
 The official DSH plugin supplies four tools and four DSH skills. This directory inventories all 24 skills in the fixed website agent-runtime source. It does not register a second agent or make website-only tools available.
 
 Use `manifest.json` to find a method, then read its `student-adaptation.md` before any source reference. Only load the current method and the references it requires. Official source files retain their exact bytes and Git blob identity; Student adaptation pages explicitly separate reusable teaching guidance from unavailable website workflows.

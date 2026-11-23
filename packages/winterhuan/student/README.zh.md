@@ -69,7 +69,7 @@ DSH `0.2.2-rc.1` Headless 不选择 Web 预设列表。非 Web 配置应禁用 `
 
 ### 打开互动课
 
-Student 组合固定官方 OpenMAIC 0.4.0：四个工具和四个 DSH skill，可使用完整课堂、独立 simulation/game/code 组件、课件和教学卡片。Host 默认连接官方服务，Token 剩余不足 24 小时自动续登并核对相同 learner，安全读取遇到明确 401 最多续登重试一次。生成提交遇到拒绝、重定向或未知结果不会自动重发。生成及时返回结构化 job 身份，重启后继续同一活动只轮询原任务。学习文件均由 agent 编写并运行只读 CLI。[24 项方法来源清单](knowledge/skills/study/openmaic/README.md)区分可复用教学方法与官网专用工作流，正文和引用按需读取。
+Student 组合固定官方 OpenMAIC 0.4.0：四个工具和四个 DSH skill，可使用完整课堂、独立 simulation/game/code 组件、课件和教学卡片。Host 默认连接官方服务，Token 剩余不足 24 小时自动续登并核对相同 learner，安全读取遇到明确 401 最多续登重试一次。生成提交遇到拒绝、重定向或未知结果不会自动重发。生成及时返回结构化 job 身份，重启后继续同一活动只轮询原任务。学习文件均由 agent 编写并运行只读 CLI。[24 项方法来源清单](knowledge/skills/study/openmaic/README.zh.md)区分可复用教学方法与官网专用工作流，正文和引用按需读取。
 
 Host 将每次网络请求（包括响应正文）限制在 `requestTimeoutMs`（默认 30 秒）内，每次授权或生成操作限制在 `operationTimeoutMs`（默认 120 秒）内；响应读取超过 8 MiB 时停止，不进入 JSON 解析。取消本地等待保留已接受的 job，不代表服务已取消。轮询地址和每次读取重定向必须保持已配置原点；原始错误及响应头不进入工具回执。
 
@@ -211,7 +211,7 @@ node packages/winterhuan/student/lib/cli.js validate --workspace /path/to/worksp
 
 #### 模型看到的内容
 
-Student 模式注册 study_status、openmaic_feedback 和四个官方 OpenMAIC 工具，以及 study 和四个官方 DSH skill。[提示词快照](../../../tests/fixtures/student-persona.txt)记录前缀；标准与其他模式不包含这些工具与技能。官方编写契约和选中方法资源按需加载。Host 账号凭据与浏览器授权不进入模型参数、工具回执或学习文件。agent 通过原生文件工具完成学习写入并运行随包只读 CLI，区分消息接收、回答保存和有效评价保存。
+Student 模式注册 `study_status`、`openmaic_feedback` 和四个官方 OpenMAIC 工具，以及 study 和四个官方 DSH skill。[提示词快照](../../../tests/fixtures/student-persona.txt)记录前缀；标准与其他模式不包含这些工具与技能。官方编写契约和选中方法资源按需加载。Host 账号凭据与浏览器授权不进入模型参数、工具回执或学习文件。agent 通过原生文件工具完成学习写入并运行随包只读 CLI，区分消息接收、回答保存和有效评价保存。
 
 #### Token 影响
 

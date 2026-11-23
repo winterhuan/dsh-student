@@ -1,7 +1,7 @@
 /** Strict official Student files. Entity identity is independent of file observation and business revision. */
 import { z } from 'zod'
 import { openmaicResponseSourceSchema, openmaicQuestionSchema, officialReviewSchema, pendingOpenmaicSchema } from '../openmaic/feedback-schema.ts'
-import { knowledgeIdSchema, capabilityScopeSchema, knowledgeExtensionSchema } from '../capabilities.ts'
+import { knowledgeIdSchema, capabilityScopeSchema, knowledgeExtensionSchema } from '../capability-schema.ts'
 import type { Branded } from '@deepseek-ai/dsh-brand'
 import { stateSchema, figureSchema, phaseSchema, variantSchema, errorTypeSchema, sheetKindSchema } from '../schema.ts'
 

@@ -5667,7 +5667,7 @@
             3,
             3
           ],
-          "provenance": "new-math-blueprint"
+          "sourceDescription": "new-math-blueprint"
         }
       },
       "variationAxes": [
@@ -5733,7 +5733,7 @@
             0
           ],
           "expectedRelation": "right",
-          "provenance": "new-math-blueprint"
+          "sourceDescription": "new-math-blueprint"
         }
       },
       "variationAxes": [
@@ -5825,7 +5825,7 @@
             ]
           ],
           "expectedLongerIndex": 0,
-          "provenance": "new-math-blueprint"
+          "sourceDescription": "new-math-blueprint"
         }
       },
       "variationAxes": [
@@ -5884,7 +5884,7 @@
           "start": 2,
           "end": 9,
           "answer": 7,
-          "provenance": "new-verified-math-sample"
+          "sourceDescription": "new-verified-math-sample"
         }
       },
       "variationAxes": [
@@ -5993,7 +5993,7 @@
         "stimulus": {
           "hour": 9,
           "minute": 30,
-          "provenance": "new-math-blueprint"
+          "sourceDescription": "new-math-blueprint"
         }
       },
       "variationAxes": [
@@ -6223,7 +6223,7 @@
           ],
           "targetSum": 15,
           "answer": 5,
-          "provenance": "new-verified-math-sample"
+          "sourceDescription": "new-verified-math-sample"
         }
       },
       "variationAxes": [
@@ -6698,7 +6698,7 @@
         "rubric": "音频对照字词，无关键漏读，停顿恰当",
         "stimulus": {
           "text": "下雨了。小熊撑起雨伞，慢慢走回家。",
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -6729,7 +6729,7 @@
         "stimulus": {
           "text": "小兔种了一棵树。每天放学后，她给小树浇水。春天，小树长出了新叶。",
           "expectedMainEvent": "小兔照顾小树，小树长新叶",
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -6759,7 +6759,7 @@
         "rubric": "回答风，并定位相应句",
         "stimulus": {
           "text": "蒲公英的种子长着轻轻的绒毛。风一吹，种子就飞走了。",
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -6800,7 +6800,7 @@
               "数学"
             ]
           ],
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -6830,7 +6830,7 @@
         "rubric": "顺序与原文一致，指出线索",
         "stimulus": {
           "text": "小蝌蚪先长出后腿，接着长出前腿。后来，尾巴慢慢变短，最后不见了。",
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -6860,7 +6860,7 @@
         "rubric": "有伙伴；联系文本关键情节",
         "stimulus": {
           "text": "从前，只有一棵树和一只喜鹊，他们没有伙伴，很孤单。后来种了许多树，来了许多喜鹊，他们有了伙伴，变得快乐。",
-          "provenance": "new-authored-paraphrase; not-a-textbook-quotation"
+          "sourceDescription": "new-authored-paraphrase; not-a-textbook-quotation"
         }
       },
       "variationAxes": [
@@ -6895,7 +6895,7 @@
             "小兔帮助找到",
             "小熊道谢去上学"
           ],
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -6925,7 +6925,7 @@
         "rubric": "合理观点加相关修补情节，允许多种措辞",
         "stimulus": {
           "text": "牧羊人发现羊圈有个洞，一只羊丢了。他没修补。又丢了一只羊后，他把洞补好，以后没有再丢羊。",
-          "provenance": "new-authored-paraphrase; not-a-textbook-quotation"
+          "sourceDescription": "new-authored-paraphrase; not-a-textbook-quotation"
         }
       },
       "variationAxes": [
@@ -6958,7 +6958,7 @@
             "月亮弯弯挂天上，小船轻轻摇梦乡。",
             "通知：明天下午3点在教室开班会，请全体同学参加。"
           ],
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -7017,7 +7017,7 @@
             "行如风",
             "卧如弓"
           ],
-          "provenance": "known-phrase; illustrative-only"
+          "sourceDescription": "known-phrase; illustrative-only"
         }
       },
       "variationAxes": [
@@ -7125,7 +7125,7 @@
         "stimulus": {
           "script": "请同学们明天下午三点到教室开班会。",
           "delivery": "real-audio-or-live-speech-required",
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -7160,7 +7160,7 @@
             "小兔帮助找到",
             "小熊道谢去上学"
           ],
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -7191,7 +7191,7 @@
         "stimulus": {
           "scene": "公园里，一个小朋友用水壶给花浇水。",
           "delivery": "provide-picture-or-real-scene-before-assessing; scene-description-not-the-visual-stimulus",
-          "provenance": "new-authored-blueprint"
+          "sourceDescription": "new-authored-blueprint"
         }
       },
       "variationAxes": [
@@ -7252,7 +7252,7 @@
             "你不用值日。"
           ],
           "acceptedIndex": 1,
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -7336,7 +7336,7 @@
         "stimulus": {
           "script": "under",
           "delivery": "real-audio-without-written-word",
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -7368,7 +7368,7 @@
         "stimulus": {
           "script": "The ball is under the desk.",
           "delivery": "real-audio-without-transcript",
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -7400,7 +7400,7 @@
         "stimulus": {
           "script": "Don't run.",
           "delivery": "real-audio-or-live-speech",
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -7432,7 +7432,7 @@
           "script": "A little duck has a ball. The ball falls into a box. A dog helps the duck get the ball.",
           "answer": "The duck; gets the ball with help from the dog",
           "delivery": "real-audio; pictures-may-help; no-full-transcript",
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -7593,7 +7593,7 @@
         "rubric": "妈妈产卵，爸爸孵化照顾；指向文本",
         "stimulus": {
           "text": "Mama Seahorse lays eggs. Papa Seahorse carries the eggs and takes care of the babies.",
-          "provenance": "new-authored-sample; not-a-textbook-snapshot"
+          "sourceDescription": "new-authored-sample; not-a-textbook-snapshot"
         }
       },
       "variationAxes": [
@@ -7862,7 +7862,7 @@
           "script": "A little duck has a ball. The ball falls into a box. A dog helps the duck get the ball.",
           "answer": "The duck; gets the ball with help from the dog",
           "delivery": "real-audio; pictures-may-help; no-full-transcript",
-          "provenance": "new-authored-sample"
+          "sourceDescription": "new-authored-sample"
         }
       },
       "variationAxes": [
@@ -8220,7 +8220,7 @@
             }
           ],
           "delivery": "must-produce-actual-video-before-assessment",
-          "provenance": "new-authored-blueprint"
+          "sourceDescription": "new-authored-blueprint"
         }
       },
       "variationAxes": [

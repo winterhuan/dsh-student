@@ -211,7 +211,7 @@ Default textbook resources live in the Skill's `textbooks/` directory and ship w
 
 #### What the model sees
 
-The Student preset adds study_status, openmaic_feedback and the four official OpenMAIC tools, plus the study skill and four official DSH skills. The [prompt snapshot](../../../tests/fixtures/student-persona.txt) records its prefix; Standard and sibling modes omit these tools and skills. Official authoring contracts and the selected method resources load only when needed. Host account credentials and browser authorization remain outside model parameters, tool receipts and learning files. Agents author all learning changes with native file tools, run the packaged read-only CLI, and distinguish admitted messages, saved answers and valid assessments.
+The Student preset adds `study_status`, `openmaic_feedback` and the four official OpenMAIC tools, plus the study skill and four official DSH skills. The [prompt snapshot](../../../tests/fixtures/student-persona.txt) records its prefix; Standard and sibling modes omit these tools and skills. Official authoring contracts and the selected method resources load only when needed. Host account credentials and browser authorization remain outside model parameters, tool receipts and learning files. Agents author all learning changes with native file tools, run the packaged read-only CLI, and distinguish admitted messages, saved answers and valid assessments.
 
 #### Token effect
 

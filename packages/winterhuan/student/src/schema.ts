@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { knowledgeIdSchema } from './capabilities.ts'
+import { knowledgeIdSchema } from './capability-schema.ts'
 import { INTEREST_TAG } from './interests.ts'
 import { chineseErrorTypes, chineseFocus, englishErrorTypes, englishFocus, mathErrorTypes, mathFocus } from './vocabulary.ts'
 

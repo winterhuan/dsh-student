@@ -1,6 +1,6 @@
 /** Official source identities and frozen snapshots shared by files and authorized readers. */
 import { z } from 'zod'
-import { capabilityScopeSchema, knowledgeIdSchema } from '../capabilities.ts'
+import { capabilityScopeSchema, knowledgeIdSchema } from '../capability-schema.ts'
 import type { StudentJsonValue } from '../types.ts'
 const sourceId = z.string().min(1).max(500).refine(value => value !== '.' && value !== '..' && !/[\u0000-\u001f]/u.test(value), 'Use one opaque source identifier.')
 const stamp = z.string().min(1).max(80).refine(value => Number.isFinite(Date.parse(value)), 'Preserve a valid source timestamp.')

@@ -161,7 +161,7 @@ it('displays a legacy learning profile with browsing controls and guards saves u
   render(<Desk />)
   expect(screen.getByText(en.legacyFilesHelp)).toBeTruthy()
   expect(screen.getByText(setup.profile.nickname, { exact: false })).toBeTruthy()
-  expect((screen.getByRole('button', { name: en.startNow }) as HTMLButtonElement).disabled).toBe(true)
+  expect((screen.getByRole('button', { name: en.continueLearning }) as HTMLButtonElement).disabled).toBe(true)
   openParent()
   fireEvent.click(screen.getByRole('button', { name: en.parentPractice, exact: false }))
   expect(screen.getByRole('button', { name: en.addMistake }).matches(':disabled')).toBe(true)

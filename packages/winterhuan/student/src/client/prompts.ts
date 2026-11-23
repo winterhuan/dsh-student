@@ -3,7 +3,7 @@ import { intensityKeys } from './display.ts'
 import type { Translate } from './locales.ts'
 
 /** Natural-language tutor requests. The study skill owns the teaching rules. */
-export const continuePrompt = '请加载 study 和官方 openmaic-teach 技能，读取 study_status kind=learning-context 的 nextAction。沿共享投影继续当前目标，不重新排序或制造新学习段：先续当前题和待评价，再按已保存证据补学、补缺检验、短复习或范围内新学。读取当前段绑定的课堂记录；生成中或提交未知时恢复原 jobId，不另建课堂；就绪但未绑定时先 prepare 分页冻结并保存全部原题及绑定，再校验和独立读取，之后打开原课堂。课堂有回答时读取原反馈全部有界页，由原生文件工具保存，运行打包只读 CLI，再独立 study_status 核对；只有接受后才保存 checkpoint。根据有效证据只补缺项，一次一题，不要求已覆盖的题重做。新目标可以直接采用官方组件，无需先有课堂或答错。继续是明确请求下一步；保留上一题原回答。已确认范围内无需逐课确认，想休息就保留状态并结束当前段。'
+export const continuePrompt = '请加载 study，读取 references/continuation.md 和独立 learning-context，按 nextAction、round、legalActions 处理明确的下一步。执行身份仅来自 nextAction，保留 previousActivity 的原题和回答；不另排目标或重置轮次。按需选择官方课堂或独立组件，沿 requirement 教学。原生写入后运行随包只读 CLI，再独立读取确认；来源未接受时保留状态。'
 
 /** Read initial learning records through the native tutor before the resource can follow them. */
 export const loadLearningPrompt = '请加载 study 技能，只读 study_status kind=status 和 kind=learning-context，核对已有档案与当前 nextAction。仅显示当前学习目标、保留的题目和下一步；无档案时说明可以先在家长页确认资料。此请求只读，不修改学习文件、不建立学习段、不生成课堂或题目、不记录回答或掌握。'
@@ -32,31 +32,8 @@ export function hintPromptFor(task: { phase?: string | undefined; hintLevel?: nu
   return hintPrompt
 }
 
-/** Teach one objective before any later lesson. */
-export function teachPrompt(objectiveId: string): string {
-  return `请加载 study 技能，阅读 references/teaching.md 的「不会做时先教」。本段先教学习目标 ${objectiveId}：按 demo、guide、try、vary 四步，task 写 phase 和这个 objectiveId。今天停在这个目标上，不排下一课。`
-}
-
-/** Teach one confirmed workbook item that is not linked to an objective yet. */
-export function teachQueuePrompt(title: string): string {
-  return `请加载 study 技能，阅读 references/teaching.md 的「不会做时先教」。本段教这道待教的题：${title}。按 demo、guide、try、vary 四步，task 写 phase。`
-}
-
 export const stuckPrompt = '请加载 study 技能，阅读 references/teaching.md 的「不会做时先教」。孩子说不会。先用 demo 示范方法，再进入 guide。摸底段只记下不会，不讲课。'
 export const mistakePhotoPrompt = '请加载 study 技能，读取这张题目照片，用 mistake 保存待确认错题。能对应知识地图时写上 objectiveId。不要替我确认。'
-
-/** Practise the current goal inside one interest scene. Facts stay on the knowledge map. */
-export function interestPracticePrompt(objectiveId: string | undefined, tags: string[], focus: string, unitName?: string): string {
-  const goal = objectiveId ? `学习目标 ${objectiveId}` : '今日建议的目标'
-  const scene = tags.length > 0 ? `兴趣标签：${tags.join('、')}。本题优先用「${focus}」套壳，下一题可以换一个标签。` : '用 study_status 的 interests 套壳。'
-  const unit = unitName ? `校内单元「${unitName}」。` : ''
-  return `请加载 study 技能，阅读 references/interest-hooks.md 和 references/questions.md。本段用趣味情境练${goal}。${scene}${unit}事实只核知识地图的 facts，不把兴趣写成知识点。一次一题，task 写 objectiveId。`
-}
-
-/** Clear only the one or two due mistakes named for today. */
-export function dueClearPrompt(ids: string[]): string {
-  return `请加载 study 技能，阅读 references/interest-hooks.md。今天只清 dueToday 里的这 ${ids.length} 条到期错题（${ids.join('、')}），其余到期错题留到以后。先做变式，不展示已保存答案。task 写 mistakeId 和 objectiveId。情境用 interests 里的标签套壳，事实只核知识地图。一次一题。`
-}
 
 /** Problem-based explore: guess, check, revise. */
 export function explorePrompt(question: string | undefined): string {
@@ -67,11 +44,6 @@ export function explorePrompt(question: string | undefined): string {
 /** Continue around one shipped or custom learning goal. */
 export function goalPrompt(objectiveId: string): string {
   return `请加载 study 技能，查询 study_status。本段围绕学习目标 ${objectiveId} 出题，一次一题，task 写上这个 objectiveId。需要看图时写 figure。`
-}
-
-/** Tell the child the next unit is still ahead of school. */
-export function previewPrompt(objectiveId: string): string {
-  return `${goalPrompt(objectiveId)}先告诉孩子这是预习，学校还没教到这里。`
 }
 
 /** One short question per sampled check-in goal. */
@@ -110,11 +82,6 @@ export function paperPhotoPrompt(worksheetId: string): string {
   return `请加载 study 技能，读取练习单 ${worksheetId} 的作答照片，按题号用 paper-draft 保存转录草稿。不要直接入库。`
 }
 
-/** Request a complete official classroom inside the saved learning range. */
-export function openmaicGeneratePrompt(subjectLabel: string, objectiveId: string | undefined, tags: string[], focus: string, unitName?: string): string {
-  return `请加载 study、openmaic-teach，阅读 references/openmaic.md 和 references/interest-hooks.md。为${subjectLabel}安排连贯的官方课堂，目标 ${objectiveId ?? 'nextAction.goalId'}，校内单元 ${unitName ?? '已确认范围'}，兴趣 ${tags.join('、')}，情境 ${focus}。先读 learning-context.nextAction.requirement、原学习段和课堂，恢复已有任务；确需新课时先保存 learnerId/termId/blockId 和目标范围，用 openmaic_generate 原生工具提交。立即保存返回 jobId；沿同一任务查询。打开前 prepare 并分页保存全部冻结原题、反馈绑定，校验和独立读取。成功后把无凭据课堂 URL 单独一行原文发给我。`
-}
-
 /** Recover one original job, prepare its saved questions and continue authorized playback. */
 export function openmaicQueryPrompt(lessonId: string): string {
   return `请加载 study、openmaic-teach，阅读 references/openmaic.md 和 references/openmaic-feedback.md。继续 .study/openmaic-lessons.json 中 id=${lessonId} 的原课堂。读取原 learnerId/termId/blockId/jobId，调用 openmaic_generate 恢复或查询原 jobId，超时或提交未知不新建任务。ready 后用 openmaic_feedback prepare 读取全部有界页，保存所有原题面、选项、修订及反馈绑定，运行只读 CLI 并独立读取，再打开原课堂。已有作答先读取并保存原记录，接受后才更新 checkpoint；已确认范围内继续教学，无需逐课确认。`
@@ -127,7 +94,7 @@ export function openmaicRetryPrompt(runId: string): string {
 
 /** Import original answers and supplement only criteria still missing. */
 export function openmaicReviewPrompt(classroomId: string): string {
-  return `请加载 study、openmaic-teach，阅读 references/openmaic-feedback.md。继续课堂 ${classroomId} 的原 learnerId/termId/blockId，用 openmaic_feedback 读取全部有界来源页，逐页通过原生文件工具保存原回答和官方/有效评分。运行随包只读 CLI，并用 study_status 独立读取核对接受后才更新原 checkpoint。按 learning-context.nextAction 只补缺少的目标判据，最多三道新题，一次一题，不要求已有效覆盖的题重做；未知日期和帮助保持未知。`
+  return `请加载 study、openmaic-teach，阅读 references/openmaic-feedback.md。继续课堂 ${classroomId} 的原 learnerId/termId/blockId，用 openmaic_feedback 读取全部有界来源页，逐页通过原生文件工具保存原回答和官方/有效评分。运行随包只读 CLI，并用 study_status 独立读取核对接受后才更新原 checkpoint。读取 references/continuation.md，按 learning-context 的 nextAction、round 和 legalActions 沿原轮次只补缺少判据，一次一题，不要求已有效覆盖的题重做；未知日期和帮助保持未知。`
 }
 
 /** Transcribe a workbook photo that is not tied to a saved worksheet. */

@@ -2,7 +2,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { describe, expect, it, vi } from 'vitest'
-import { tutorBridge, type StudyPhoto } from '../src/client/bridge.ts'
+import { tutorBridge, studentSessionBridge, type StudyPhoto } from '../src/client/bridge.ts'
 
 describe('native tutoring submission', () => {
   it('submits image base64 and preview together without touching the composer', async () => {
@@ -22,4 +22,20 @@ describe('native tutoring submission', () => {
     await expect(tutorBridge(fake as Context, 'student-session' as SessionId, 'No session', 'Failed')('Try again')).rejects.toThrow('Network interrupted')
     expect(abandon).toHaveBeenCalledOnce()
   })
+})
+
+
+it('uses native system synchronization and cancellation without creating a user echo', async () => {
+  const syncFeedback = vi.fn().mockResolvedValue({ ok: true, value: { lessonId: 'lesson-one', status: 'queued', messageId: 'system-one' } })
+  const cancel = vi.fn().mockResolvedValue({ ok: true, value: { accepted: true } })
+  const beginSubmission = vi.fn()
+  const prompt = vi.fn()
+  const context = { remote: { student: { syncFeedback } }, sessions: { binding: () => ({ session: { cancel, beginSubmission, prompt } }) } } as Context
+  const controls = studentSessionBridge(context, 'native-session' as SessionId, 'No session')
+  expect(await controls.syncFeedback('lesson-one', 'continue')).toMatchObject({ status: 'queued' })
+  expect(syncFeedback).toHaveBeenCalledWith('native-session', { lessonId: 'lesson-one', trigger: 'continue' }, expect.any(AbortSignal))
+  await controls.cancel()
+  expect(cancel).toHaveBeenCalledOnce()
+  expect(beginSubmission).not.toHaveBeenCalled()
+  expect(prompt).not.toHaveBeenCalled()
 })

@@ -40,6 +40,8 @@ node "$STUDY_CLI" validate --workspace '<当前工作区绝对路径>'
 
 settings 的 evidenceReferences 引用原 learnerId、termId、ownerKind、ownerId、responseId、goalId 与 scope；可保留复习的 mistakeId、stage、dueAt 和 independentDays。原文件位于 `.study/archives/<termId>/blocks|worksheets/<ownerId>.json`。先独立核对原学生、原回答和兼容范围，不能仅凭结构校验继承掌握。数域或词表扩展重新检查；未完成复习保留原到期日与阶段。
 
+补检与复习的原轮次、已呈现题目、进入母题及暂停恢复事实保存在学习段，规则见 [继续与轮次](continuation.md)。
+
 ## 校验结果与恢复
 
 validate 成功退出 0，输出实际读取的文件 kind、身份和观察版本。日志可缺失；学期设置不可缺失。归档设置返回 archived。只列最多 100 份文件和 20 个问题，完整验证摘要最多 32 KiB，omittedFiles/omittedIssues 明确遗漏；完整文件仍用原生 read 或 `study_status` 分页查看。schema/example 是显式请求的完整资源输出。

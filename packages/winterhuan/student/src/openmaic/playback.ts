@@ -2,6 +2,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 import type {} from '@deepseek-ai/dsh-typert-registry'
+import type {} from '@deepseek-ai/dsh-api-remote-access'
 import type {} from './service.ts'
 import { z } from 'zod'
 import { readStudentWorkspace } from '../transport.ts'
@@ -16,7 +17,7 @@ declare module '@deepseek-ai/cordis' { interface Context { /** Same-workspace le
 export type OpenmaicPlaybackResult = OpenmaicBrowserResult | { status: 'unavailable' | 'ownership-unresolved'; reason: string }
 /** Browser opening is a Client action, not a model-visible secret exchange. */
 export class StudentOpenmaicPlayback extends TypertRemoteService {
-  static inject = ['typert', 'agents', 'studentOpenmaic']
+  static inject = ['typert', 'agents', 'studentOpenmaic', 'remoteAccess']
   constructor(ctx: Context) { super(ctx, 'studentOpenmaicPlayback') }
   /**
    * Open one independently read lesson after checking original learner, term and block.

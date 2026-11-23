@@ -7,6 +7,7 @@ import type { Agent } from '@deepseek-ai/dsh-agent'
 import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 import type {} from '@deepseek-ai/dsh-typert-registry'
 import type {} from '@deepseek-ai/dsh-api-gateway'
+import type {} from '@deepseek-ai/dsh-api-remote-access'
 import { queryWorkspace, queryWorkspaceDashboard, queryJsonData, type WorkspaceQueryResult } from './learning/queries.ts'
 import { readInteractiveLessons } from './openmaic.ts'
 import { readStudentWorkspace } from './transport.ts'
@@ -29,7 +30,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
 }
 /** Host owner for the generated student Remote namespace. */
 export class StudentRemote extends TypertRemoteService {
-  static inject = ['typert', 'sessionQuery', 'agents']
+  static inject = ['typert', 'sessionQuery', 'agents', 'remoteAccess']
   static Config: z<StudentTransportConfig> = z.object({ refreshIntervalMs: z.number().step(1).min(1).max(2_147_483_647).default(3000), maxWireBytes: z.number().step(1).min(1024).default(1_048_576) })
   /**
    * @param ctx - Host services containing authorized native Agent lookups.

@@ -4,6 +4,9 @@ import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
 import SessionQuery from '@deepseek-ai/dsh-session-query'
 import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
 import TypertRegistry from '@deepseek-ai/dsh-typert-registry'
+import RemoteAccessService from '@deepseek-ai/dsh-api-remote-access'
+import TypertGatewayService from '@deepseek-ai/dsh-api-gateway'
+import { Peer } from '@deepseek-ai/dsh-client-connection'
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -30,6 +33,8 @@ async function fixture(maxWireBytes = 1_048_576, child = false, refreshIntervalM
   await ctx.plugin(SessionStore)
   await ctx.plugin(SessionQuery)
   await ctx.plugin(TypertRegistry)
+  await ctx.plugin(RemoteAccessService)
+  await ctx.plugin(TypertGatewayService)
   await mkdir(join(cwd, '.study'))
   await writeFile(join(cwd, '.study/settings.json'), JSON.stringify({ format: 2, kind: 'term-settings', termId: 'term-1', revision: 1, updatedAt: NOW, profile: setup.profile, materials: [], courses: [] }))
   const id = SessionId('student-main')
@@ -63,6 +68,12 @@ it('keeps a cold main Session watch alive until native admission registers its A
   expect((await iterator.next()).value).toMatchObject({ kind: 'snapshot', value: { status: 'valid', data: { study: { profile: setup.profile } } } })
   abort.abort()
   expect(await iterator.next()).toEqual({ done: true, value: undefined })
+})
+
+it('independently reads valid files through the real Remote invocation context', async () => {
+  const { ctx, id } = await fixture()
+  const peer = new Peer(ctx.root, { principal: { kind: 'owner' } })
+  await expect(ctx.typertGateway.invoke({ peer, namespace: 'student', method: 'query', args: { sessionId: id, request: { kind: 'dashboard' } } })).resolves.toMatchObject({ status: 'valid', data: { study: { profile: setup.profile } } })
 })
 
 it('reads paged and filtered notebooks and browsed maps through the resource Remote query', async () => {

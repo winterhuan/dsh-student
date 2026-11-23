@@ -1,7 +1,7 @@
 /** Strict official Student files. Entity identity is independent of file observation and business revision. */
 import { z } from 'zod';
 import { openmaicResponseSourceSchema, openmaicQuestionSchema, officialReviewSchema, pendingOpenmaicSchema } from "../openmaic/feedback-schema.js";
-import { knowledgeIdSchema, capabilityScopeSchema, knowledgeExtensionSchema } from "../capabilities.js";
+import { knowledgeIdSchema, capabilityScopeSchema, knowledgeExtensionSchema } from "../capability-schema.js";
 import { stateSchema, figureSchema, phaseSchema, variantSchema, errorTypeSchema, sheetKindSchema } from "../schema.js";
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u);
 const text = z.string().min(1).max(2000);

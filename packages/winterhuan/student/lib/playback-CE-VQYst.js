@@ -1,6 +1,6 @@
-import { t as applicationStudyFiles } from "./application-DeHoqa_C.js";
-import { ht as readLessonFile, t as readWorkspace } from "./read-CepqKvWP.js";
-import { c as OpenmaicError, o as readStudentWorkspace, r as OpenmaicFeedback, s as OpenmaicConnection, t as OpenmaicGeneration } from "./generation-Cn5g2nX9.js";
+import { t as applicationStudyFiles } from "./application-CqpzE1NY.js";
+import { ht as readLessonFile, t as readWorkspace } from "./read-YvE7arze.js";
+import { c as OpenmaicError, o as readStudentWorkspace, r as OpenmaicFeedback, s as OpenmaicConnection, t as OpenmaicGeneration } from "./generation-BNfl7I4b.js";
 import { chmod, lstat, mkdir } from "node:fs/promises";
 import { z } from "zod";
 import { Service } from "@deepseek-ai/cordis";

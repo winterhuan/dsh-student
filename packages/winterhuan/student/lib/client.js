@@ -9,7 +9,6 @@ window.__ModuleLoader__.load({
 		let react = require("react");
 		let zod = require("zod");
 		let _deepseek_ai_dsh_client_store = require("@deepseek-ai/dsh-client-store");
-		let node_fs = require("node:fs");
 		let _deepseek_ai_dsh_api_gateway_client = require("@deepseek-ai/dsh-api-gateway/client");
 		require("@deepseek-ai/cordis");
 		let react_dom = require("react-dom");
@@ -4926,8 +4925,8 @@ window.__ModuleLoader__.load({
 			return `${namespace}:${entity}`;
 		}
 		//#endregion
-		//#region lib/types/capabilities.js
-		/** Learning content and legacy reference routing; learner responses never belong to this catalog. */
+		//#region lib/types/capability-schema.js
+		/** Capability contracts shared by the browser and Host. Packaged content is loaded by the Host. */
 		/** Stable capability, family and source IDs admit dots; entity filenames retain their existing alphabet. */
 		const knowledgeIdSchema = zod.z.string().regex(/^[a-zA-Z0-9_.-]{1,80}$/u);
 		const text$2 = zod.z.string().trim().min(1).max(4e3);
@@ -5004,129 +5003,6 @@ window.__ModuleLoader__.load({
 			goals: zod.z.array(capabilityGoalSchema).max(1e3),
 			families: zod.z.array(questionFamilySchema).max(1e3)
 		}).strict();
-		const catalogSchema = knowledgeExtensionSchema.extend({
-			formatVersion: zod.z.literal(1),
-			status: text$2,
-			reconstructedOn: text$2,
-			subjects: zod.z.array(subject$2),
-			gradeScope: zod.z.array(zod.z.number().int()),
-			termScope: zod.z.array(zod.z.enum(["first", "second"]))
-		}).strict();
-		const routeSchema = zod.z.object({
-			goalId: knowledgeIdSchema,
-			familyId: knowledgeIdSchema,
-			evidenceGates: zod.z.array(text$2),
-			creditPolicy: text$2,
-			evidenceUse: text$2
-		}).strict();
-		const legacySchema = zod.z.object({
-			status: text$2,
-			workspaceBanks: text$2,
-			objectives: zod.z.array(zod.z.object({
-				oldObjectiveId: knowledgeIdSchema,
-				oldTitle: text$2,
-				subject: subject$2,
-				grade: zod.z.number().int(),
-				term: zod.z.enum(["first", "second"]),
-				unitIds: ids,
-				classification: text$2,
-				candidateGoalIds: ids,
-				scopeStatus: text$2,
-				inheritance: text$2
-			}).strict()),
-			exercises: zod.z.array(zod.z.object({
-				oldExerciseId: knowledgeIdSchema,
-				oldObjectiveId: knowledgeIdSchema,
-				subject: subject$2,
-				originalPrompt: text$2,
-				originalRecordPolicy: text$2,
-				routes: zod.z.array(routeSchema),
-				pendingReasons: zod.z.array(text$2),
-				automationStatus: text$2,
-				routePolicy: text$2.optional()
-			}).strict()),
-			sourceFingerprints: zod.z.array(zod.z.object({
-				path: text$2,
-				sha256: zod.z.string().regex(/^[a-f0-9]{64}$/u)
-			}).strict())
-		}).strict();
-		const moduleUrl = require("url").pathToFileURL(__filename).href;
-		function immutable(value) {
-			if (value && typeof value === "object" && !Object.isFrozen(value)) {
-				for (const child of Object.values(value)) immutable(child);
-				Object.freeze(value);
-			}
-			return value;
-		}
-		const read$1 = (name) => JSON.parse((0, node_fs.readFileSync)(new URL(`../knowledge/curriculum/capabilities/${name}.json`, moduleUrl), "utf8"));
-		function signature(family) {
-			return JSON.stringify([
-				family.subject,
-				[...family.signature.capabilityIds].sort(),
-				family.signature.coreMethod.trim(),
-				family.signature.problemStructure.trim()
-			]);
-		}
-		function validateCatalog(catalog) {
-			const goals = new Map(catalog.goals.map((goal) => [goal.id, goal]));
-			const families = new Map(catalog.families.map((family) => [family.id, family]));
-			if (goals.size !== catalog.goals.length || families.size !== catalog.families.length) throw new Error("Knowledge IDs must be unique.");
-			const mothers = /* @__PURE__ */ new Set();
-			const signatures = /* @__PURE__ */ new Set();
-			for (const family of catalog.families) {
-				if (mothers.has(family.representative.id) || signatures.has(signature(family))) throw new Error(`Duplicate mother or question family: ${family.id}`);
-				mothers.add(family.representative.id);
-				signatures.add(signature(family));
-				if (family.coreMethod !== family.signature.coreMethod || family.structure !== family.signature.problemStructure || JSON.stringify([...family.goalIds].sort()) !== JSON.stringify([...family.signature.capabilityIds].sort())) throw new Error(`Family signature disagrees with its method, structure or capabilities: ${family.id}`);
-				for (const goalId of family.goalIds) {
-					const goal = goals.get(goalId);
-					if (!goal || goal.subject !== family.subject || !goal.familyIds.includes(family.id)) throw new Error(`Family references an incompatible capability: ${family.id} / ${goalId}`);
-				}
-			}
-			const sourceIds = new Set(knowledgeSources().sources.map((source) => source.id));
-			for (const goal of catalog.goals) for (const id of goal.sourceIds) if (!sourceIds.has(id)) throw new Error(`Missing capability source: ${goal.id} / ${id}`);
-			const active = /* @__PURE__ */ new Set();
-			const visited = /* @__PURE__ */ new Set();
-			const visit = (id) => {
-				if (active.has(id)) throw new Error(`Capability prerequisites contain a cycle: ${id}`);
-				if (visited.has(id)) return;
-				const goal = goals.get(id);
-				if (!goal) throw new Error(`Missing prerequisite capability: ${id}`);
-				active.add(id);
-				for (const prerequisite of goal.prerequisites) visit(prerequisite);
-				active.delete(id);
-				visited.add(id);
-			};
-			for (const goal of catalog.goals) {
-				for (const id of goal.familyIds) if (!families.get(id)?.goalIds.includes(goal.id)) throw new Error(`Capability references an incompatible family: ${goal.id} / ${id}`);
-				visit(goal.id);
-			}
-		}
-		const sources = immutable(zod.z.object({
-			retrievedOn: text$2,
-			sources: zod.z.array(zod.z.object({
-				id: knowledgeIdSchema,
-				label: text$2,
-				url: text$2.optional(),
-				sha256: text$2.optional(),
-				pdfPages: zod.z.number().int().positive().optional(),
-				retrievedOn: text$2.optional(),
-				paths: zod.z.array(text$2).optional(),
-				status: text$2.optional()
-			}).strict()),
-			coverage: zod.z.array(zod.z.json()),
-			quantitativeCoverageLedgers: zod.z.array(zod.z.json()),
-			scopeCaveats: zod.z.array(text$2)
-		}).strict().parse(read$1("sources")));
-		immutable(legacySchema.parse(read$1("legacy-map")));
-		validateCatalog(immutable(catalogSchema.parse(read$1("catalog"))));
-		/**
-		* Read immutable packaged curriculum sources, capability decomposition and quantitative activity limits.
-		* @returns deeply frozen borrowed source locators and coverage policies, never learner evidence.
-		*/
-		function knowledgeSources() {
-			return sources;
-		}
 		//#endregion
 		//#region lib/types/openmaic/feedback-schema.js
 		/** Official source identities and frozen snapshots shared by files and authorized readers. */

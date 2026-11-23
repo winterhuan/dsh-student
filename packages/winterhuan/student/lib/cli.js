@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { I as officialFileSchemas, Rt as figureSchema, Wt as capabilityGoalSchema, Xt as questionFamilySchema, bt as lessonFileSchema, ht as readLessonFile, l as readBackups, qt as knowledgeExtensionSchema, r as backupVersions, t as readWorkspace, zt as stateSchema } from "./read-CepqKvWP.js";
+import { Ht as figureSchema, I as officialFileSchemas, Jt as capabilityGoalSchema, Qt as questionFamilySchema, Ut as stateSchema, Xt as knowledgeExtensionSchema, bt as lessonFileSchema, ht as readLessonFile, l as readBackups, r as backupVersions, t as readWorkspace } from "./read-YvE7arze.js";
 import { t as nodeStudyFiles } from "./node-sZCrHR59.js";
 import { z } from "zod";
 import { parseArgs } from "node:util";

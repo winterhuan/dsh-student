@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { knowledgeIdSchema } from "./capabilities.js";
+import { knowledgeIdSchema } from "./capability-schema.js";
 import { INTEREST_TAG } from "./interests.js";
 import { chineseErrorTypes, chineseFocus, englishErrorTypes, englishFocus, mathErrorTypes, mathFocus } from "./vocabulary.js";
 const text = z.string().trim().min(1).max(2000);

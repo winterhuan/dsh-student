@@ -19,13 +19,13 @@ var StudyReadCache = class {
 	}
 };
 //#endregion
-//#region lib/types/capabilities.js
-/** Learning content and legacy reference routing; learner responses never belong to this catalog. */
+//#region lib/types/capability-schema.js
+/** Capability contracts shared by the browser and Host. Packaged content is loaded by the Host. */
 /** Stable capability, family and source IDs admit dots; entity filenames retain their existing alphabet. */
 const knowledgeIdSchema = z.string().regex(/^[a-zA-Z0-9_.-]{1,80}$/u);
-const text$3 = z.string().trim().min(1).max(4e3);
-const ids = z.array(knowledgeIdSchema).max(500);
-const subject$2 = z.enum([
+const text$4 = z.string().trim().min(1).max(4e3);
+const ids$1 = z.array(knowledgeIdSchema).max(500);
+const subject$3 = z.enum([
 	"chinese",
 	"math",
 	"english"
@@ -33,7 +33,7 @@ const subject$2 = z.enum([
 /** The tested range is explicit; a broader range never inherits merely by goal name. */
 const capabilityScopeSchema = z.object({
 	id: knowledgeIdSchema,
-	description: text$3,
+	description: text$4,
 	modality: z.enum([
 		"written",
 		"oral",
@@ -42,54 +42,54 @@ const capabilityScopeSchema = z.object({
 		"performed"
 	]),
 	numberMax: z.number().int().positive().max(1e4).optional(),
-	vocabulary: z.array(text$3.max(240)).max(2e3).optional()
+	vocabulary: z.array(text$4.max(240)).max(2e3).optional()
 }).strict();
 /** Source-backed capability with criteria, prerequisites and independent course associations. */
 const capabilityGoalSchema = z.object({
 	id: knowledgeIdSchema,
-	subject: subject$2,
+	subject: subject$3,
 	domain: knowledgeIdSchema,
-	title: text$3,
-	scope: text$3,
-	criterion: text$3,
-	prerequisites: ids,
-	familyIds: ids,
-	sourceIds: ids,
-	curriculumAssociationIds: ids,
-	titleEn: text$3.optional(),
-	criterionEn: text$3.optional(),
-	curriculumAssociationGap: text$3.optional(),
-	coverageStatus: text$3.optional(),
-	activation: text$3.optional(),
-	evidenceRequirements: z.array(text$3).max(20).optional(),
-	progressKind: text$3.optional(),
-	prerequisitePolicy: text$3.optional(),
-	requirementIds: ids.optional(),
+	title: text$4,
+	scope: text$4,
+	criterion: text$4,
+	prerequisites: ids$1,
+	familyIds: ids$1,
+	sourceIds: ids$1,
+	curriculumAssociationIds: ids$1,
+	titleEn: text$4.optional(),
+	criterionEn: text$4.optional(),
+	curriculumAssociationGap: text$4.optional(),
+	coverageStatus: text$4.optional(),
+	activation: text$4.optional(),
+	evidenceRequirements: z.array(text$4).max(20).optional(),
+	progressKind: text$4.optional(),
+	prerequisitePolicy: text$4.optional(),
+	requirementIds: ids$1.optional(),
 	sourceLocators: z.array(z.object({
 		sourceId: knowledgeIdSchema,
 		pdfPages: z.array(z.number().int().positive()).max(120).optional(),
-		section: text$3
+		section: text$4
 	}).strict()).max(20).optional()
 }).strict();
 /** One method/structure family owns exactly one representative exercise. Stimuli are blueprints, not completed media evidence. */
 const questionFamilySchema = z.object({
 	id: knowledgeIdSchema,
-	subject: subject$2,
-	coreMethod: text$3,
-	structure: text$3,
-	goalIds: ids.min(1),
-	variationAxes: z.array(text$3).min(1).max(20),
-	boundary: text$3,
+	subject: subject$3,
+	coreMethod: text$4,
+	structure: text$4,
+	goalIds: ids$1.min(1),
+	variationAxes: z.array(text$4).min(1).max(20),
+	boundary: text$4,
 	representative: z.object({
 		id: knowledgeIdSchema,
-		prompt: text$3,
-		rubric: text$3,
+		prompt: text$4,
+		rubric: text$4,
 		stimulus: z.json().optional()
 	}).strict(),
 	signature: z.object({
-		capabilityIds: ids.min(1),
-		coreMethod: text$3,
-		problemStructure: text$3
+		capabilityIds: ids$1.min(1),
+		coreMethod: text$4,
+		problemStructure: text$4
 	}).strict()
 }).strict();
 /** Workspace content extensions stay in the existing collection; this is not a second question bank. */
@@ -97,215 +97,6 @@ const knowledgeExtensionSchema = z.object({
 	goals: z.array(capabilityGoalSchema).max(1e3),
 	families: z.array(questionFamilySchema).max(1e3)
 }).strict();
-const catalogSchema = knowledgeExtensionSchema.extend({
-	formatVersion: z.literal(1),
-	status: text$3,
-	reconstructedOn: text$3,
-	subjects: z.array(subject$2),
-	gradeScope: z.array(z.number().int()),
-	termScope: z.array(z.enum(["first", "second"]))
-}).strict();
-const routeSchema = z.object({
-	goalId: knowledgeIdSchema,
-	familyId: knowledgeIdSchema,
-	evidenceGates: z.array(text$3),
-	creditPolicy: text$3,
-	evidenceUse: text$3
-}).strict();
-const legacySchema = z.object({
-	status: text$3,
-	workspaceBanks: text$3,
-	objectives: z.array(z.object({
-		oldObjectiveId: knowledgeIdSchema,
-		oldTitle: text$3,
-		subject: subject$2,
-		grade: z.number().int(),
-		term: z.enum(["first", "second"]),
-		unitIds: ids,
-		classification: text$3,
-		candidateGoalIds: ids,
-		scopeStatus: text$3,
-		inheritance: text$3
-	}).strict()),
-	exercises: z.array(z.object({
-		oldExerciseId: knowledgeIdSchema,
-		oldObjectiveId: knowledgeIdSchema,
-		subject: subject$2,
-		originalPrompt: text$3,
-		originalRecordPolicy: text$3,
-		routes: z.array(routeSchema),
-		pendingReasons: z.array(text$3),
-		automationStatus: text$3,
-		routePolicy: text$3.optional()
-	}).strict()),
-	sourceFingerprints: z.array(z.object({
-		path: text$3,
-		sha256: z.string().regex(/^[a-f0-9]{64}$/u)
-	}).strict())
-}).strict();
-const moduleUrl$1 = import.meta.url;
-function immutable(value) {
-	if (value && typeof value === "object" && !Object.isFrozen(value)) {
-		for (const child of Object.values(value)) immutable(child);
-		Object.freeze(value);
-	}
-	return value;
-}
-const read = (name) => JSON.parse(readFileSync(new URL(`../knowledge/curriculum/capabilities/${name}.json`, moduleUrl$1), "utf8"));
-function signature(family) {
-	return JSON.stringify([
-		family.subject,
-		[...family.signature.capabilityIds].sort(),
-		family.signature.coreMethod.trim(),
-		family.signature.problemStructure.trim()
-	]);
-}
-function validateCatalog(catalog) {
-	const goals = new Map(catalog.goals.map((goal) => [goal.id, goal]));
-	const families = new Map(catalog.families.map((family) => [family.id, family]));
-	if (goals.size !== catalog.goals.length || families.size !== catalog.families.length) throw new Error("Knowledge IDs must be unique.");
-	const mothers = /* @__PURE__ */ new Set();
-	const signatures = /* @__PURE__ */ new Set();
-	for (const family of catalog.families) {
-		if (mothers.has(family.representative.id) || signatures.has(signature(family))) throw new Error(`Duplicate mother or question family: ${family.id}`);
-		mothers.add(family.representative.id);
-		signatures.add(signature(family));
-		if (family.coreMethod !== family.signature.coreMethod || family.structure !== family.signature.problemStructure || JSON.stringify([...family.goalIds].sort()) !== JSON.stringify([...family.signature.capabilityIds].sort())) throw new Error(`Family signature disagrees with its method, structure or capabilities: ${family.id}`);
-		for (const goalId of family.goalIds) {
-			const goal = goals.get(goalId);
-			if (!goal || goal.subject !== family.subject || !goal.familyIds.includes(family.id)) throw new Error(`Family references an incompatible capability: ${family.id} / ${goalId}`);
-		}
-	}
-	const sourceIds = new Set(knowledgeSources().sources.map((source) => source.id));
-	for (const goal of catalog.goals) for (const id of goal.sourceIds) if (!sourceIds.has(id)) throw new Error(`Missing capability source: ${goal.id} / ${id}`);
-	const active = /* @__PURE__ */ new Set();
-	const visited = /* @__PURE__ */ new Set();
-	const visit = (id) => {
-		if (active.has(id)) throw new Error(`Capability prerequisites contain a cycle: ${id}`);
-		if (visited.has(id)) return;
-		const goal = goals.get(id);
-		if (!goal) throw new Error(`Missing prerequisite capability: ${id}`);
-		active.add(id);
-		for (const prerequisite of goal.prerequisites) visit(prerequisite);
-		active.delete(id);
-		visited.add(id);
-	};
-	for (const goal of catalog.goals) {
-		for (const id of goal.familyIds) if (!families.get(id)?.goalIds.includes(goal.id)) throw new Error(`Capability references an incompatible family: ${goal.id} / ${id}`);
-		visit(goal.id);
-	}
-}
-/**
-* Resolve built-in and workspace content into one effective capability/family index.
-* @param extension - content in the existing workspace collection, without learner facts.
-* @returns deeply frozen borrowed content and canonical family aliases; incompatible duplicates throw.
-*/
-function effectiveKnowledge(extension) {
-	if (!extension) return immutable({
-		goals: shipped.goals,
-		families: shipped.families,
-		familyAliases: {}
-	});
-	const parsed = knowledgeExtensionSchema.parse(extension);
-	const goals = new Map(shipped.goals.map((goal) => [goal.id, goal]));
-	for (const goal of parsed.goals) {
-		const previous = goals.get(goal.id);
-		if (previous && JSON.stringify(previous) !== JSON.stringify(goal)) throw new Error(`Workspace capability conflicts with built-in content: ${goal.id}`);
-		goals.set(goal.id, goal);
-	}
-	const families = [...shipped.families];
-	const familyAliases = {};
-	for (const family of parsed.families) {
-		const sameId = families.find((item) => item.id === family.id);
-		if (sameId && signature(sameId) !== signature(family)) throw new Error(`Workspace family conflicts with an existing identity: ${family.id}`);
-		const sameType = families.find((item) => signature(item) === signature(family));
-		if (sameType) {
-			if (sameType.id !== family.id) familyAliases[family.id] = sameType.id;
-			continue;
-		}
-		families.push(family);
-	}
-	const catalog = {
-		goals: [...goals.values()].map((goal) => ({
-			...goal,
-			familyIds: [...new Set(goal.familyIds.map((id) => familyAliases[id] ?? id).concat(families.filter((family) => family.goalIds.includes(goal.id)).map((family) => family.id)))]
-		})),
-		families
-	};
-	validateCatalog(catalog);
-	return immutable({
-		...catalog,
-		familyAliases
-	});
-}
-/**
-* Resolve an old course or exercise identity, retaining uncertainty for unenumerated workspace banks.
-* @param kind - course objective or concrete source exercise.
-* @param oldId - exact preserved identity.
-* @returns deeply frozen borrowed candidate routes and evidence requirements, never mastery credit.
-*/
-function resolveLegacyReference(kind, oldId) {
-	if (kind === "objective") {
-		const item = legacy.objectives.find((item) => item.oldObjectiveId === oldId);
-		return immutable({
-			kind,
-			oldId,
-			status: "pending",
-			candidateGoalIds: item?.candidateGoalIds ?? [],
-			routes: [],
-			pendingReasons: [item?.inheritance ?? "Unknown legacy objective; inspect the preserved source before assigning a capability."]
-		});
-	}
-	const item = legacy.exercises.find((item) => item.oldExerciseId === oldId);
-	return immutable({
-		kind,
-		oldId,
-		status: item?.routes.length ? "review-required" : "pending",
-		candidateGoalIds: [...new Set(item?.routes.map((route) => route.goalId) ?? [])],
-		routes: item?.routes ?? [],
-		pendingReasons: item?.pendingReasons ?? ["Unknown workspace exercise; inspect its method, structure and tested scope."],
-		...item ? { originalPrompt: item.originalPrompt } : {}
-	});
-}
-/**
-* Check whether independently tested evidence covers a requested range.
-* @param tested - original demonstrated modality and range.
-* @param requested - current teaching range; missing range facts cannot establish compatibility.
-* @returns true for the same modality and a contained numeric/vocabulary range, or the exact unexpanded scope.
-*/
-function scopeSupports(tested, requested) {
-	if (tested.modality !== requested.modality) return false;
-	if (requested.numberMax !== void 0 && (tested.numberMax === void 0 || tested.numberMax < requested.numberMax)) return false;
-	if (requested.vocabulary !== void 0 && (tested.vocabulary === void 0 || !requested.vocabulary.every((word) => tested.vocabulary?.includes(word)))) return false;
-	if (tested.numberMax !== void 0 !== (requested.numberMax !== void 0) || tested.vocabulary !== void 0 !== (requested.vocabulary !== void 0)) return false;
-	return requested.numberMax !== void 0 || requested.vocabulary !== void 0 || tested.id === requested.id && tested.description === requested.description;
-}
-const sources = immutable(z.object({
-	retrievedOn: text$3,
-	sources: z.array(z.object({
-		id: knowledgeIdSchema,
-		label: text$3,
-		url: text$3.optional(),
-		sha256: text$3.optional(),
-		pdfPages: z.number().int().positive().optional(),
-		retrievedOn: text$3.optional(),
-		paths: z.array(text$3).optional(),
-		status: text$3.optional()
-	}).strict()),
-	coverage: z.array(z.json()),
-	quantitativeCoverageLedgers: z.array(z.json()),
-	scopeCaveats: z.array(text$3)
-}).strict().parse(read("sources")));
-const legacy = immutable(legacySchema.parse(read("legacy-map")));
-const shipped = immutable(catalogSchema.parse(read("catalog")));
-validateCatalog(shipped);
-/**
-* Read immutable packaged curriculum sources, capability decomposition and quantitative activity limits.
-* @returns deeply frozen borrowed source locators and coverage policies, never learner evidence.
-*/
-function knowledgeSources() {
-	return sources;
-}
 //#endregion
 //#region lib/types/interests.js
 /** Example tags used when a profile has not saved its own list. */
@@ -417,10 +208,10 @@ const focusBySubject = {
 };
 //#endregion
 //#region lib/types/schema.js
-const text$2 = z.string().trim().min(1).max(2e3);
+const text$3 = z.string().trim().min(1).max(2e3);
 const id$1 = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u);
 const time$1 = z.number().int().nonnegative();
-const subject$1 = z.enum([
+const subject$2 = z.enum([
 	"chinese",
 	"math",
 	"english"
@@ -491,24 +282,24 @@ const customObjectiveMethods = {
 	]
 };
 const scope$1 = z.object({
-	region: text$2,
+	region: text$3,
 	grade: z.number().int().min(1).max(6),
 	term: z.enum(["first", "second"]),
-	schoolYear: text$2,
+	schoolYear: text$3,
 	schoolSystem: z.enum(["five-four", "six-three"])
 }).strict();
 const profile = scope$1.extend({
-	nickname: text$2,
+	nickname: text$3,
 	schoolAlias: z.string().trim().max(2e3),
-	parentConfirmation: text$2.default("家长已确认学习档案")
+	parentConfirmation: text$3.default("家长已确认学习档案")
 }).strict();
 const material = z.object({
 	id: id$1,
-	subject: subject$1,
+	subject: subject$2,
 	scope: scope$1,
-	title: text$2,
-	publisher: text$2,
-	edition: text$2,
+	title: text$3,
+	publisher: text$3,
+	edition: text$3,
 	editionStatus: z.enum(["unconfirmed", "identified"]),
 	kind: z.enum([
 		"official-textbook",
@@ -516,8 +307,8 @@ const material = z.object({
 		"reference",
 		"generated"
 	]),
-	locator: text$2,
-	evidence: text$2
+	locator: text$3,
+	evidence: text$3
 }).strict();
 const schoolProgress = z.object({
 	unitId: id$1,
@@ -527,22 +318,22 @@ const schoolProgress = z.object({
 	pace: z.enum(["teaching", "review"])
 }).strict();
 const courseInput = z.object({
-	subject: subject$1,
+	subject: subject$2,
 	materialId: id$1,
-	unit: text$2,
-	parentConfirmation: text$2.default("家长已确认教材与当前单元")
+	unit: text$3,
+	parentConfirmation: text$3.default("家长已确认教材与当前单元")
 }).strict();
 const course = courseInput.extend({ progress: schoolProgress.optional() }).strict();
 const mistake = z.object({
 	id: id$1,
-	subject: subject$1,
-	topic: text$2,
-	prompt: text$2,
-	learnerAnswer: text$2,
-	correction: text$2,
-	explanation: text$2,
-	answerEvidence: text$2,
-	imagePath: text$2.optional(),
+	subject: subject$2,
+	topic: text$3,
+	prompt: text$3,
+	learnerAnswer: text$3,
+	correction: text$3,
+	explanation: text$3,
+	answerEvidence: text$3,
+	imagePath: text$3.optional(),
 	uncertainties: z.string().max(2e3),
 	materialId: id$1.optional(),
 	objectiveId: knowledgeIdSchema.optional(),
@@ -550,19 +341,19 @@ const mistake = z.object({
 }).strict();
 const concept = z.object({
 	id: id$1,
-	subject: subject$1,
-	name: text$2,
-	definition: text$2,
-	example: text$2,
-	source: text$2,
+	subject: subject$2,
+	name: text$3,
+	definition: text$3,
+	example: text$3,
+	source: text$3,
 	facts: z.array(stepText).min(2).max(8).optional(),
-	misconceptions: z.array(text$2).max(3).optional()
+	misconceptions: z.array(text$3).max(3).optional()
 }).strict();
 const objective = z.object({
 	id: id$1,
-	subject: subject$1,
-	title: text$2,
-	goal: text$2,
+	subject: subject$2,
+	title: text$3,
+	goal: text$3,
 	conceptIds: z.array(id$1).min(1).max(5),
 	method: z.enum([
 		"recognize",
@@ -576,7 +367,7 @@ const objective = z.object({
 		"speak"
 	]),
 	errorTypes: z.array(errorTypeSchema).max(4).optional(),
-	questionPoints: z.array(text$2).max(4).optional(),
+	questionPoints: z.array(text$3).max(4).optional(),
 	variationAxes: z.array(variationAxisSchema).max(4).optional()
 }).strict();
 const relation = z.object({
@@ -590,8 +381,8 @@ const relation = z.object({
 		"explains",
 		"cause-effect"
 	]),
-	explanation: text$2,
-	source: text$2
+	explanation: text$3,
+	source: text$3
 }).strict();
 const label = z.string().trim().max(24);
 const count = (max) => z.number().int().min(0).max(max);
@@ -898,32 +689,32 @@ const figure = figureSchema;
 /** One structured exercise item shared by the shipped exercise bank and the workspace collection. */
 const exerciseItemSchema = z.object({
 	id: id$1,
-	subject: subject$1,
+	subject: subject$2,
 	objectiveId: knowledgeIdSchema,
 	role: exerciseRoleSchema,
 	variant: variantSchema,
-	prompt: text$2,
-	choices: z.array(text$2).min(2).max(4).optional(),
+	prompt: text$3,
+	choices: z.array(text$3).min(2).max(4).optional(),
 	figure: figure.optional(),
 	steps: z.array(stepText).min(2).max(4),
-	answer: text$2,
-	explanation: text$2,
-	answerEvidence: text$2,
+	answer: text$3,
+	explanation: text$3,
+	answerEvidence: text$3,
 	errorType: errorTypeSchema.optional()
 }).strict();
 const workspaceExerciseInput = z.object({
 	id: id$1,
-	subject: subject$1,
+	subject: subject$2,
 	objectiveId: knowledgeIdSchema,
 	role: exerciseRoleSchema.default("try"),
 	variant: variantSchema.default("numeric"),
-	prompt: text$2,
-	choices: z.array(text$2).min(2).max(4).optional(),
+	prompt: text$3,
+	choices: z.array(text$3).min(2).max(4).optional(),
 	figure: figure.optional(),
 	steps: z.array(stepText).min(2).max(4),
-	answer: text$2,
-	explanation: text$2,
-	answerEvidence: text$2,
+	answer: text$3,
+	explanation: text$3,
+	answerEvidence: text$3,
 	errorType: errorTypeSchema.optional()
 }).strict();
 /** One step of teaching the current task: show, guide, independent try, then a variation. */
@@ -949,12 +740,12 @@ const assistance = z.enum([
 const attemptBody = {
 	id: id$1,
 	sessionId: id$1,
-	subject: subject$1,
-	topic: text$2,
-	prompt: text$2,
-	response: text$2,
-	feedback: text$2,
-	answerEvidence: text$2,
+	subject: subject$2,
+	topic: text$3,
+	prompt: text$3,
+	response: text$3,
+	feedback: text$3,
+	answerEvidence: text$3,
 	mistakeId: id$1.optional(),
 	objectiveId: knowledgeIdSchema.optional(),
 	variant: variantSchema.optional(),
@@ -974,10 +765,10 @@ const recordAttempt = z.object({
 const task = z.object({
 	id: id$1,
 	sessionId: id$1,
-	subject: subject$1,
-	topic: text$2,
-	prompt: text$2,
-	choices: z.array(text$2).min(2).max(4).optional(),
+	subject: subject$2,
+	topic: text$3,
+	prompt: text$3,
+	choices: z.array(text$3).min(2).max(4).optional(),
 	steps: z.array(stepText).min(2).max(5).optional(),
 	phase: phaseSchema.optional(),
 	variant: variantSchema.optional(),
@@ -996,16 +787,16 @@ const worksheetItem = z.object({
 	objectiveId: knowledgeIdSchema.optional(),
 	mistakeId: id$1.optional(),
 	variant: variantSchema.optional(),
-	prompt: text$2,
+	prompt: text$3,
 	figure: figure.optional(),
 	space: answerSpace.optional(),
-	answer: text$2,
-	explanation: text$2,
-	answerEvidence: text$2
+	answer: text$3,
+	explanation: text$3,
+	answerEvidence: text$3
 }).strict();
 const worksheet = z.object({
 	id: id$1,
-	subject: subject$1,
+	subject: subject$2,
 	kind: sheetKindSchema.optional(),
 	objectiveId: knowledgeIdSchema.optional(),
 	items: z.array(worksheetItem).min(1).max(8)
@@ -1019,17 +810,17 @@ const result = z.enum([
 const paperResult = z.object({
 	worksheetId: id$1,
 	itemId: id$1,
-	response: text$2,
+	response: text$3,
 	result,
 	assistance,
-	feedback: text$2,
-	answerEvidence: text$2,
-	userConfirmation: text$2.default("家长在面板批改")
+	feedback: text$3,
+	answerEvidence: text$3,
+	userConfirmation: text$3.default("家长在面板批改")
 }).strict();
 const paperDraft = z.object({
 	worksheetId: id$1,
 	itemId: id$1,
-	response: text$2,
+	response: text$3,
 	result,
 	assistance,
 	uncertainties: z.string().max(2e3),
@@ -1045,11 +836,11 @@ const gradeSheet = z.object({
 			"partial",
 			"incorrect"
 		]),
-		response: text$2.optional(),
+		response: text$3.optional(),
 		assistance: assistance.optional(),
 		errorType: errorTypeSchema.optional()
 	}).strict()).min(1).max(8),
-	userConfirmation: text$2.default("家长在面板批改")
+	userConfirmation: text$3.default("家长在面板批改")
 }).strict();
 const workbookOutcome = z.enum([
 	"stuck",
@@ -1059,18 +850,18 @@ const workbookOutcome = z.enum([
 ]);
 const workbookDraft = z.object({
 	id: id$1,
-	subject: subject$1,
-	prompt: text$2,
-	response: text$2.optional(),
+	subject: subject$2,
+	prompt: text$3,
+	response: text$3.optional(),
 	outcome: workbookOutcome,
 	objectiveId: knowledgeIdSchema.optional(),
 	uncertainties: z.string().max(2e3),
-	imagePath: text$2.optional()
+	imagePath: text$3.optional()
 }).strict();
 const teachingItem = z.object({
 	id: id$1,
-	subject: subject$1,
-	prompt: text$2,
+	subject: subject$2,
+	prompt: text$3,
 	objectiveId: knowledgeIdSchema.optional(),
 	confirmedAt: time$1,
 	sourceDraftId: id$1.optional()
@@ -1080,7 +871,7 @@ const schoolProgressInput = z.object({
 	posture: z.enum(["keep-up", "catch-up"]),
 	preview: z.enum(["on", "off"]),
 	pace: z.enum(["teaching", "review"]),
-	parentConfirmation: text$2.default("家长确认学校进度")
+	parentConfirmation: text$3.default("家长确认学校进度")
 }).strict();
 /** Validated mutations; confirmation fields record user statements, not authenticated identities. */
 const commandSchema = z.discriminatedUnion("action", [
@@ -1099,7 +890,7 @@ const commandSchema = z.discriminatedUnion("action", [
 	z.object({
 		action: z.literal("start"),
 		id: id$1,
-		subject: subject$1,
+		subject: subject$2,
 		mode: z.enum([
 			"foundation",
 			"school",
@@ -1126,7 +917,7 @@ const commandSchema = z.discriminatedUnion("action", [
 	z.object({
 		action: z.literal("answer"),
 		taskId: id$1,
-		response: text$2
+		response: text$3
 	}).strict(),
 	z.object({
 		action: z.literal("hint"),
@@ -1140,7 +931,7 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("school-progress"),
-		subject: subject$1,
+		subject: subject$2,
 		...schoolProgressInput.shape
 	}).strict(),
 	z.object({
@@ -1163,16 +954,16 @@ const commandSchema = z.discriminatedUnion("action", [
 	z.object({
 		action: z.literal("confirm-mistake"),
 		id: id$1,
-		subject: subject$1.optional(),
-		topic: text$2.optional(),
+		subject: subject$2.optional(),
+		topic: text$3.optional(),
 		objectiveId: z.union([id$1, z.literal("")]).optional(),
-		prompt: text$2,
-		learnerAnswer: text$2.optional(),
-		correction: text$2,
-		explanation: text$2,
-		answerEvidence: text$2,
+		prompt: text$3,
+		learnerAnswer: text$3.optional(),
+		correction: text$3,
+		explanation: text$3,
+		answerEvidence: text$3,
 		errorType: errorTypeSchema.optional(),
-		userConfirmation: text$2.default("家长已核对错题与订正")
+		userConfirmation: text$3.default("家长已核对错题与订正")
 	}).strict(),
 	z.object({
 		action: z.literal("delete-mistake"),
@@ -1193,10 +984,10 @@ const commandSchema = z.discriminatedUnion("action", [
 	z.object({
 		action: z.literal("confirm-concept"),
 		id: id$1,
-		definition: text$2.optional(),
-		example: text$2.optional(),
-		source: text$2.optional(),
-		userConfirmation: text$2.default("家长已核对概念")
+		definition: text$3.optional(),
+		example: text$3.optional(),
+		source: text$3.optional(),
+		userConfirmation: text$3.default("家长已核对概念")
 	}).strict(),
 	z.object({
 		action: z.literal("objective"),
@@ -1238,11 +1029,11 @@ const commandSchema = z.discriminatedUnion("action", [
 				"partial",
 				"incorrect"
 			]),
-			response: text$2.optional(),
+			response: text$3.optional(),
 			assistance: assistance.optional(),
 			errorType: errorTypeSchema.optional()
 		}).strict()).min(1).max(8),
-		userConfirmation: text$2.default("家长已核对转录结果")
+		userConfirmation: text$3.default("家长已核对转录结果")
 	}).strict(),
 	z.object({
 		action: z.literal("discard-sheet"),
@@ -1257,10 +1048,10 @@ const commandSchema = z.discriminatedUnion("action", [
 		id: id$1,
 		outcome: workbookOutcome.optional(),
 		objectiveId: z.union([id$1, z.literal("")]).optional(),
-		correction: text$2.optional(),
-		explanation: text$2.optional(),
-		answerEvidence: text$2.optional(),
-		userConfirmation: text$2.default("家长已核对练习册题目")
+		correction: text$3.optional(),
+		explanation: text$3.optional(),
+		answerEvidence: text$3.optional(),
+		userConfirmation: text$3.default("家长已核对练习册题目")
 	}).strict(),
 	z.object({
 		action: z.literal("dismiss-teaching"),
@@ -1268,17 +1059,17 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("archive-term"),
-		parentConfirmation: text$2.default("家长确认归档本学期")
+		parentConfirmation: text$3.default("家长确认归档本学期")
 	}).strict(),
 	z.object({
 		action: z.literal("openmaic-settings"),
 		baseUrl: z.string().trim().max(200),
-		parentConfirmation: text$2.default("家长确认 OpenMAIC 地址")
+		parentConfirmation: text$3.default("家长确认 OpenMAIC 地址")
 	}).strict(),
 	z.object({
 		action: z.literal("interests"),
 		tags: z.array(z.string().trim().regex(INTEREST_TAG)).min(3).max(8),
-		parentConfirmation: text$2.default("家长确认兴趣标签")
+		parentConfirmation: text$3.default("家长确认兴趣标签")
 	}).strict()
 ]);
 /** One learner and term per workspace; previous materials and attempts are retained. */
@@ -1293,7 +1084,7 @@ const stateSchema = z.object({
 	courses: z.array(course).max(3),
 	sessions: z.array(z.object({
 		id: id$1,
-		subject: subject$1,
+		subject: subject$2,
 		mode: z.enum([
 			"foundation",
 			"school",
@@ -1310,7 +1101,7 @@ const stateSchema = z.object({
 		endedAt: time$1.optional(),
 		spentMs: time$1.optional(),
 		materialId: id$1.optional(),
-		unit: text$2.optional(),
+		unit: text$3.optional(),
 		reflection: z.string().max(2e3).optional(),
 		scope: z.object({
 			grade: z.number().int().min(1).max(6),
@@ -1323,13 +1114,13 @@ const stateSchema = z.object({
 		feedback: z.string().max(2e3),
 		at: time$1,
 		materialId: id$1.optional(),
-		rawResponse: text$2.optional(),
+		rawResponse: text$3.optional(),
 		questionId: id$1.optional(),
 		responseId: id$1.optional()
 	}).strict()).max(2e4),
 	mistakes: z.array(mistake.extend({
 		confirmedAt: time$1.optional(),
-		userConfirmation: text$2.optional(),
+		userConfirmation: text$3.optional(),
 		dueAt: time$1.optional(),
 		source: z.object({
 			worksheetId: id$1,
@@ -1341,7 +1132,7 @@ const stateSchema = z.object({
 	exercises: z.array(exerciseItemSchema.extend({ savedAt: time$1.optional() }).strict()).max(1e3).default([]),
 	concepts: z.array(concept.extend({
 		confirmedAt: time$1.optional(),
-		userConfirmation: text$2.optional()
+		userConfirmation: text$3.optional()
 	}).strict()).max(1e3).default([]),
 	objectives: z.array(objective).max(1e3).default([]),
 	relations: z.array(relation).max(2e3).default([]),
@@ -1355,29 +1146,29 @@ const stateSchema = z.object({
 	workbookResults: z.array(workbookDraft.extend({
 		receivedAt: time$1,
 		confirmedAt: time$1,
-		userConfirmation: text$2,
-		correction: text$2.optional(),
-		explanation: text$2.optional(),
-		answerEvidence: text$2.optional()
+		userConfirmation: text$3,
+		correction: text$3.optional(),
+		explanation: text$3.optional(),
+		answerEvidence: text$3.optional()
 	}).strict()).max(500).default([]),
 	teachingQueue: z.array(teachingItem).max(500).default([]),
 	/** Parent override for the OpenMAIC origin. Absent means the environment or the localhost default. */
 	openmaic: z.object({
 		baseUrl: z.string().trim().min(1).max(200),
-		parentConfirmation: text$2
+		parentConfirmation: text$3
 	}).strict().optional(),
 	/** Parent theme tags. Absent profiles still read the example list; facts stay on the knowledge map. */
 	interests: z.object({
 		tags: z.array(z.string().trim().regex(INTEREST_TAG)).min(3).max(8),
-		parentConfirmation: text$2
+		parentConfirmation: text$3
 	}).strict().optional(),
 	rewards: z.array(z.object({
 		day: z.string(),
 		reason: z.enum(["participation", "reflection"])
 	}).strict()).max(1e3),
 	task: task.extend({
-		response: text$2.optional(),
-		rawResponse: text$2.optional(),
+		response: text$3.optional(),
+		rawResponse: text$3.optional(),
 		answeredAt: time$1.optional(),
 		responseId: id$1.optional(),
 		hintLevel: z.number().int().min(0).max(3),
@@ -1388,6 +1179,225 @@ z.object({
 	action: z.literal("archive-term"),
 	parentConfirmation: z.string().trim().min(1).max(2e3).default("家长确认归档本学期")
 }).strict();
+//#endregion
+//#region lib/types/capabilities.js
+/** Learning content and legacy reference routing; learner responses never belong to this catalog. */
+const text$2 = z.string().trim().min(1).max(4e3);
+const ids = z.array(knowledgeIdSchema).max(500);
+const subject$1 = z.enum([
+	"chinese",
+	"math",
+	"english"
+]);
+const catalogSchema = knowledgeExtensionSchema.extend({
+	formatVersion: z.literal(1),
+	status: text$2,
+	reconstructedOn: text$2,
+	subjects: z.array(subject$1),
+	gradeScope: z.array(z.number().int()),
+	termScope: z.array(z.enum(["first", "second"]))
+}).strict();
+const routeSchema = z.object({
+	goalId: knowledgeIdSchema,
+	familyId: knowledgeIdSchema,
+	evidenceGates: z.array(text$2),
+	creditPolicy: text$2,
+	evidenceUse: text$2
+}).strict();
+const legacySchema = z.object({
+	status: text$2,
+	workspaceBanks: text$2,
+	objectives: z.array(z.object({
+		oldObjectiveId: knowledgeIdSchema,
+		oldTitle: text$2,
+		subject: subject$1,
+		grade: z.number().int(),
+		term: z.enum(["first", "second"]),
+		unitIds: ids,
+		classification: text$2,
+		candidateGoalIds: ids,
+		scopeStatus: text$2,
+		inheritance: text$2
+	}).strict()),
+	exercises: z.array(z.object({
+		oldExerciseId: knowledgeIdSchema,
+		oldObjectiveId: knowledgeIdSchema,
+		subject: subject$1,
+		originalPrompt: text$2,
+		originalRecordPolicy: text$2,
+		routes: z.array(routeSchema),
+		pendingReasons: z.array(text$2),
+		automationStatus: text$2,
+		routePolicy: text$2.optional()
+	}).strict()),
+	sourceFingerprints: z.array(z.object({
+		path: text$2,
+		sha256: z.string().regex(/^[a-f0-9]{64}$/u)
+	}).strict())
+}).strict();
+const moduleUrl$1 = import.meta.url;
+function immutable(value) {
+	if (value && typeof value === "object" && !Object.isFrozen(value)) {
+		for (const child of Object.values(value)) immutable(child);
+		Object.freeze(value);
+	}
+	return value;
+}
+const read = (name) => JSON.parse(readFileSync(new URL(`../knowledge/curriculum/capabilities/${name}.json`, moduleUrl$1), "utf8"));
+function signature(family) {
+	return JSON.stringify([
+		family.subject,
+		[...family.signature.capabilityIds].sort(),
+		family.signature.coreMethod.trim(),
+		family.signature.problemStructure.trim()
+	]);
+}
+function validateCatalog(catalog) {
+	const goals = new Map(catalog.goals.map((goal) => [goal.id, goal]));
+	const families = new Map(catalog.families.map((family) => [family.id, family]));
+	if (goals.size !== catalog.goals.length || families.size !== catalog.families.length) throw new Error("Knowledge IDs must be unique.");
+	const mothers = /* @__PURE__ */ new Set();
+	const signatures = /* @__PURE__ */ new Set();
+	for (const family of catalog.families) {
+		if (mothers.has(family.representative.id) || signatures.has(signature(family))) throw new Error(`Duplicate mother or question family: ${family.id}`);
+		mothers.add(family.representative.id);
+		signatures.add(signature(family));
+		if (family.coreMethod !== family.signature.coreMethod || family.structure !== family.signature.problemStructure || JSON.stringify([...family.goalIds].sort()) !== JSON.stringify([...family.signature.capabilityIds].sort())) throw new Error(`Family signature disagrees with its method, structure or capabilities: ${family.id}`);
+		for (const goalId of family.goalIds) {
+			const goal = goals.get(goalId);
+			if (!goal || goal.subject !== family.subject || !goal.familyIds.includes(family.id)) throw new Error(`Family references an incompatible capability: ${family.id} / ${goalId}`);
+		}
+	}
+	const sourceIds = new Set(knowledgeSources().sources.map((source) => source.id));
+	for (const goal of catalog.goals) for (const id of goal.sourceIds) if (!sourceIds.has(id)) throw new Error(`Missing capability source: ${goal.id} / ${id}`);
+	const active = /* @__PURE__ */ new Set();
+	const visited = /* @__PURE__ */ new Set();
+	const visit = (id) => {
+		if (active.has(id)) throw new Error(`Capability prerequisites contain a cycle: ${id}`);
+		if (visited.has(id)) return;
+		const goal = goals.get(id);
+		if (!goal) throw new Error(`Missing prerequisite capability: ${id}`);
+		active.add(id);
+		for (const prerequisite of goal.prerequisites) visit(prerequisite);
+		active.delete(id);
+		visited.add(id);
+	};
+	for (const goal of catalog.goals) {
+		for (const id of goal.familyIds) if (!families.get(id)?.goalIds.includes(goal.id)) throw new Error(`Capability references an incompatible family: ${goal.id} / ${id}`);
+		visit(goal.id);
+	}
+}
+/**
+* Resolve built-in and workspace content into one effective capability/family index.
+* @param extension - content in the existing workspace collection, without learner facts.
+* @returns deeply frozen borrowed content and canonical family aliases; incompatible duplicates throw.
+*/
+function effectiveKnowledge(extension) {
+	if (!extension) return immutable({
+		goals: shipped.goals,
+		families: shipped.families,
+		familyAliases: {}
+	});
+	const parsed = knowledgeExtensionSchema.parse(extension);
+	const goals = new Map(shipped.goals.map((goal) => [goal.id, goal]));
+	for (const goal of parsed.goals) {
+		const previous = goals.get(goal.id);
+		if (previous && JSON.stringify(previous) !== JSON.stringify(goal)) throw new Error(`Workspace capability conflicts with built-in content: ${goal.id}`);
+		goals.set(goal.id, goal);
+	}
+	const families = [...shipped.families];
+	const familyAliases = {};
+	for (const family of parsed.families) {
+		const sameId = families.find((item) => item.id === family.id);
+		if (sameId && signature(sameId) !== signature(family)) throw new Error(`Workspace family conflicts with an existing identity: ${family.id}`);
+		const sameType = families.find((item) => signature(item) === signature(family));
+		if (sameType) {
+			if (sameType.id !== family.id) familyAliases[family.id] = sameType.id;
+			continue;
+		}
+		families.push(family);
+	}
+	const catalog = {
+		goals: [...goals.values()].map((goal) => ({
+			...goal,
+			familyIds: [...new Set(goal.familyIds.map((id) => familyAliases[id] ?? id).concat(families.filter((family) => family.goalIds.includes(goal.id)).map((family) => family.id)))]
+		})),
+		families
+	};
+	validateCatalog(catalog);
+	return immutable({
+		...catalog,
+		familyAliases
+	});
+}
+/**
+* Resolve an old course or exercise identity, retaining uncertainty for unenumerated workspace banks.
+* @param kind - course objective or concrete source exercise.
+* @param oldId - exact preserved identity.
+* @returns deeply frozen borrowed candidate routes and evidence requirements, never mastery credit.
+*/
+function resolveLegacyReference(kind, oldId) {
+	if (kind === "objective") {
+		const item = legacy.objectives.find((item) => item.oldObjectiveId === oldId);
+		return immutable({
+			kind,
+			oldId,
+			status: "pending",
+			candidateGoalIds: item?.candidateGoalIds ?? [],
+			routes: [],
+			pendingReasons: [item?.inheritance ?? "Unknown legacy objective; inspect the preserved source before assigning a capability."]
+		});
+	}
+	const item = legacy.exercises.find((item) => item.oldExerciseId === oldId);
+	return immutable({
+		kind,
+		oldId,
+		status: item?.routes.length ? "review-required" : "pending",
+		candidateGoalIds: [...new Set(item?.routes.map((route) => route.goalId) ?? [])],
+		routes: item?.routes ?? [],
+		pendingReasons: item?.pendingReasons ?? ["Unknown workspace exercise; inspect its method, structure and tested scope."],
+		...item ? { originalPrompt: item.originalPrompt } : {}
+	});
+}
+/**
+* Check whether independently tested evidence covers a requested range.
+* @param tested - original demonstrated modality and range.
+* @param requested - current teaching range; missing range facts cannot establish compatibility.
+* @returns true for the same modality and a contained numeric/vocabulary range, or the exact unexpanded scope.
+*/
+function scopeSupports(tested, requested) {
+	if (tested.modality !== requested.modality) return false;
+	if (requested.numberMax !== void 0 && (tested.numberMax === void 0 || tested.numberMax < requested.numberMax)) return false;
+	if (requested.vocabulary !== void 0 && (tested.vocabulary === void 0 || !requested.vocabulary.every((word) => tested.vocabulary?.includes(word)))) return false;
+	if (tested.numberMax !== void 0 !== (requested.numberMax !== void 0) || tested.vocabulary !== void 0 !== (requested.vocabulary !== void 0)) return false;
+	return requested.numberMax !== void 0 || requested.vocabulary !== void 0 || tested.id === requested.id && tested.description === requested.description;
+}
+const sources = immutable(z.object({
+	retrievedOn: text$2,
+	sources: z.array(z.object({
+		id: knowledgeIdSchema,
+		label: text$2,
+		url: text$2.optional(),
+		sha256: text$2.optional(),
+		pdfPages: z.number().int().positive().optional(),
+		retrievedOn: text$2.optional(),
+		paths: z.array(text$2).optional(),
+		status: text$2.optional()
+	}).strict()),
+	coverage: z.array(z.json()),
+	quantitativeCoverageLedgers: z.array(z.json()),
+	scopeCaveats: z.array(text$2)
+}).strict().parse(read("sources")));
+const legacy = immutable(legacySchema.parse(read("legacy-map")));
+const shipped = immutable(catalogSchema.parse(read("catalog")));
+validateCatalog(shipped);
+/**
+* Read immutable packaged curriculum sources, capability decomposition and quantitative activity limits.
+* @returns deeply frozen borrowed source locators and coverage policies, never learner evidence.
+*/
+function knowledgeSources() {
+	return sources;
+}
 //#endregion
 //#region lib/types/openmaic/feedback-schema.js
 /** Official source identities and frozen snapshots shared by files and authorized readers. */
@@ -4986,4 +4996,4 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
 	};
 }
 //#endregion
-export { schoolGate as $, StudyReadCache as $t, assessmentSchema as A, officialRuntimePayloadSchema as At, responseSourceSchema as B, errorTypesBySubject as Bt, consumeOpenmaicFeedback as C, readInteractiveLessons as Ct, answerDateSchema as D, officialQuestionSchema as Dt, openmaicAcademicQuestion as E, officialAnswerSchema as Et, learningRoundSchema as F, snapshotRevisionSchema as Ft, canonical as G, capabilityScopeSchema as Gt, worksheetSchema as H, interestFocus as Ht, officialFileSchemas as I, commandSchema as It, formatDuration as J, knowledgeIdSchema as Jt, choiceMismatch as K, effectiveKnowledge as Kt, questionSchema as L, customObjectiveMethods as Lt, blockSchema as M, openmaicQuestionSchema as Mt, capabilityBindingSchema as N, openmaicResponseSourceSchema as Nt, archiveEvidencePath as O, officialResultSchema as Ot, collectionsSchema as P, pendingOpenmaicSchema as Pt, sameScope as Q, scopeSupports as Qt, questionSourceSchema as R, figureSchema as Rt, evidenceOf as S, normalizeOpenmaicBase as St, matchOpenmaicResponse as T, feedbackCheckpointSchema as Tt, DAY as U, interestTagsOf as Ut, termSettingsSchema as V, DEFAULT_INTEREST_TAGS as Vt, activeSession as W, capabilityGoalSchema as Wt, requireValue as X, questionFamilySchema as Xt, matchChoice as Y, knowledgeSources as Yt, sameSavedAnswer as Z, resolveLegacyReference as Zt, attachEvidence as _, OPENMAIC_LESSONS_PATH as _t, describeKnowledgeMigration as a, todaySpent as at, evidenceAtCutoff as b, lessonFileSchema as bt, migrationOutputPaths as c, builtinObjectiveIn as ct, sourceSha256 as d, curriculumFor as dt, scopeSelects as et, validateStudyFiles as f, exercisesForObjective as ft, scheduleMistakes as g, OPENMAIC_COOKIE_PATH as gt, replayMistake as h, readLessonFile as ht, describeArchive as i, taughtUnit as it, assistanceSchema as j, officialRuntimeRecordSchema as jt, archiveEvidenceReferenceSchema as k, officialReviewSchema as kt, readBackups as l, builtinObjectives as lt, dayStart as m, subjectIdeas as mt, backupSchema as n, spent as nt, describeMigration as o, builtinObjective as ot, migrateStudyFile as p, subjectExercises as pt, foldText as q, knowledgeExtensionSchema as qt, backupVersions as r, studyDay as rt, describeRestore as s, builtinObjectiveAnywhere as st, readWorkspace as t, showValue as tt, retainObservedBackups as u, builtinObjectivesIn as ut, demonstrablyAfter as v, effectiveOpenmaicBase as vt, effectiveOpenmaicAssessment as w, feedbackBindingSchema as wt, evidenceDay as x, lessonSchema as xt, deriveEvidence as y, interactiveLessonsView as yt, responseSchema as z, stateSchema as zt };
+export { schoolGate as $, StudyReadCache as $t, assessmentSchema as A, officialRuntimePayloadSchema as At, responseSourceSchema as B, commandSchema as Bt, consumeOpenmaicFeedback as C, readInteractiveLessons as Ct, answerDateSchema as D, officialQuestionSchema as Dt, openmaicAcademicQuestion as E, officialAnswerSchema as Et, learningRoundSchema as F, snapshotRevisionSchema as Ft, canonical as G, DEFAULT_INTEREST_TAGS as Gt, worksheetSchema as H, figureSchema as Ht, officialFileSchemas as I, effectiveKnowledge as It, formatDuration as J, capabilityGoalSchema as Jt, choiceMismatch as K, interestFocus as Kt, questionSchema as L, knowledgeSources as Lt, blockSchema as M, openmaicQuestionSchema as Mt, capabilityBindingSchema as N, openmaicResponseSourceSchema as Nt, archiveEvidencePath as O, officialResultSchema as Ot, collectionsSchema as P, pendingOpenmaicSchema as Pt, sameScope as Q, questionFamilySchema as Qt, questionSourceSchema as R, resolveLegacyReference as Rt, evidenceOf as S, normalizeOpenmaicBase as St, matchOpenmaicResponse as T, feedbackCheckpointSchema as Tt, DAY as U, stateSchema as Ut, termSettingsSchema as V, customObjectiveMethods as Vt, activeSession as W, errorTypesBySubject as Wt, requireValue as X, knowledgeExtensionSchema as Xt, matchChoice as Y, capabilityScopeSchema as Yt, sameSavedAnswer as Z, knowledgeIdSchema as Zt, attachEvidence as _, OPENMAIC_LESSONS_PATH as _t, describeKnowledgeMigration as a, todaySpent as at, evidenceAtCutoff as b, lessonFileSchema as bt, migrationOutputPaths as c, builtinObjectiveIn as ct, sourceSha256 as d, curriculumFor as dt, scopeSelects as et, validateStudyFiles as f, exercisesForObjective as ft, scheduleMistakes as g, OPENMAIC_COOKIE_PATH as gt, replayMistake as h, readLessonFile as ht, describeArchive as i, taughtUnit as it, assistanceSchema as j, officialRuntimeRecordSchema as jt, archiveEvidenceReferenceSchema as k, officialReviewSchema as kt, readBackups as l, builtinObjectives as lt, dayStart as m, subjectIdeas as mt, backupSchema as n, spent as nt, describeMigration as o, builtinObjective as ot, migrateStudyFile as p, subjectExercises as pt, foldText as q, interestTagsOf as qt, backupVersions as r, studyDay as rt, describeRestore as s, builtinObjectiveAnywhere as st, readWorkspace as t, showValue as tt, retainObservedBackups as u, builtinObjectivesIn as ut, demonstrablyAfter as v, effectiveOpenmaicBase as vt, effectiveOpenmaicAssessment as w, feedbackBindingSchema as wt, evidenceDay as x, lessonSchema as xt, deriveEvidence as y, interactiveLessonsView as yt, responseSchema as z, scopeSupports as zt };

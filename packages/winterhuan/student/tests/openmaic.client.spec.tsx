@@ -11,7 +11,7 @@ import { LessonsPanel } from '../src/client/lessons-view.tsx'
 import { en } from '../src/client/locales.ts'
 import { dashboard } from '../src/dashboard.ts'
 import { updateStudy } from '../src/learning/update/index.ts'
-import { NOW, setup } from './fixtures.ts'
+import { NOW, setup, start } from './fixtures.ts'
 
 function openParent() {
   if (!screen.queryByRole('navigation', { name: en.parentEntry })) fireEvent.click(screen.getByRole('button', { name: en.parentEntry }))
@@ -55,16 +55,16 @@ describe('interactive lesson desk', () => {
     expect(onReview).toHaveBeenCalledWith('room-1')
   })
 
-  it('asks the tutor to generate from the student page', async () => {
+  it('continues a projected new goal with its component teaching requirement', async () => {
     const ask = vi.fn().mockResolvedValue(undefined)
-    backend = studentClientFixture(updateStudy(undefined, setup, Date.now()))
+    const nextAction = { kind: 'learn', reason: 'new-goal', subject: 'math', title: 'Make ten', goalId: 'm.add', requirement: 'Use an interactive number line within20' }
+    backend = studentClientFixture(updateStudy(undefined, setup, Date.now()), undefined, { termId: 'term-one', learnerId: 'learner-one', nextAction })
     render(<StudyDesk sessionId="om" visible running={false} ask={ask} t={t} />)
-    fireEvent.click(await screen.findByRole('button', { name: en.openLesson }))
-    await waitFor(() => expect(ask).toHaveBeenCalledWith(expect.stringContaining('references/openmaic.md'), undefined))
-    expect(String(ask.mock.calls[0]?.[0])).toContain('单独一行')
-    expect(String(ask.mock.calls[0]?.[0])).toContain('购物超市钱')
-    expect(String(ask.mock.calls[0]?.[0])).toContain('interest-hooks.md')
-    expect(String(ask.mock.calls[0]?.[0])).not.toContain('](')
+    expect(screen.queryByRole('button', { name: en.openLesson })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: en.continueLearning }))
+    await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+    expect(String(ask.mock.calls[0]?.[0])).toContain(nextAction.requirement)
+    expect(String(ask.mock.calls[0]?.[0])).toContain('m.add')
   })
 
   it('saves an OpenMAIC address from parent setup', async () => {
@@ -79,21 +79,20 @@ describe('interactive lesson desk', () => {
     expect(change).toHaveBeenCalledWith({ action: 'openmaic-settings', baseUrl: 'http://127.0.0.1:3000/', parentConfirmation: en.openmaicConfirm }, 1, expect.any(String))
   })
 
-  it('continues the original work while another lesson is generating', async () => {
+  it('queries the original generating job without creating another classroom', async () => {
     const open = vi.spyOn(window, 'open').mockReturnValue(null)
-    const base = dashboard(updateStudy(undefined, setup, Date.now()), Date.now())
-    const generating = { ...ready, id: 'om-gen', status: 'generating' as const, title: '正在生成', pollUrl: '/api/generate-classroom/run-1', url: undefined, classroomId: undefined, summary: undefined }
-    const body = { ...base, interactiveLessons: { ...base.interactiveLessons, lessons: [ready, generating] } }
-    backend = studentClientFixture(updateStudy(undefined, setup, Date.now()), body.interactiveLessons)
+    const state = updateStudy(updateStudy(undefined, setup, NOW), start, NOW)
+    const generating = { ...ready, id: 'om-gen', learnerId: 'learner-one', termId: 'term-one', blockId: start.id, status: 'generating' as const, title: '正在生成', runId: 'run-1', pollUrl: '/api/generate-classroom/run-1', url: undefined, classroomId: undefined, summary: undefined }
+    backend = studentClientFixture(state, { lessons: [generating] }, { learnerId: 'learner-one', termId: 'term-one', nextAction: { kind: 'teach', reason: 'current-gap', subject: 'math', title: 'Make ten', blockId: start.id } })
     const ask = vi.fn().mockResolvedValue(undefined)
     render(<StudyDesk sessionId="ready-lesson" visible running={false} ask={ask} t={t} />)
-    expect(await screen.findByText(/Generating · 正在生成/)).toBeTruthy()
-    expect((screen.getByRole('button', { name: en.openLesson }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText(/Generating · 正在生成/)).toBeTruthy()
     expect(screen.queryByRole('button', { name: en.goToClass })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: en.continueLearning }))
     expect(open).not.toHaveBeenCalled()
     await waitFor(() => expect(ask).toHaveBeenCalledOnce())
     expect(ask.mock.calls[0]).toMatchSnapshot()
+    expect(String(ask.mock.calls[0]?.[0])).toContain('id=om-gen')
   })
 
   it('saves interest tags from parent setup', async () => {

@@ -117,7 +117,7 @@ ctx.effect(()=>ctx.llm.registerAdapter(['student-cli-fixture'],new Fixture()));
       const schemaPath = `.study-${flow}.schema.json`
       const schema = JSON.parse((await execute(process.execPath, [join(packageRoot, 'lib/cli.js'), 'schema', kind])).stdout)
       const lineCount = json(schema).split('\n').length
-      const references = flow === 'archive' ? ['files.md'] : ['files.md', 'questions.md', ...(flow === 'learning-and-repair' ? ['teaching.md'] : [])]
+      const references = flow === 'archive' ? ['files.md'] : ['files.md', 'questions.md', ...(flow === 'learning-and-repair' ? ['teaching.md', 'continuation.md'] : [])]
       calls.unshift(['read', { file_path: join(packageRoot, 'knowledge/skills/study/SKILL.md') }], ...references.map(name => ['read', { file_path: join(packageRoot, 'knowledge/skills/study/references', name) }]), ['bash', { command: `${quote(process.execPath)} ${quote(join(packageRoot, 'lib/cli.js'))} schema ${kind} > ${quote(schemaPath)}`, description: 'Generate source-derived authoring schema', timeoutMs: 30000, run_in_background: false }], ...Array.from({ length: Math.ceil(lineCount / 500) }, (_, index) => ['read', { file_path: schemaPath, offset: index * 500 + 1, limit: 500 }]))
     }
     calls.unshift(['study_status', {}])

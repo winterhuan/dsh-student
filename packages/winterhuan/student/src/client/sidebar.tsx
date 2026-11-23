@@ -8,7 +8,7 @@ import type { PropsLocale, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-cli
 import { IconPlayOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import { useEffect } from 'react'
 import { NS, zh, en } from './locales.ts'
-import { tutorBridge, type StudyPhoto } from './bridge.ts'
+import { tutorBridge, studentSessionBridge, type StudentSessionActions, type StudyPhoto } from './bridge.ts'
 import { StudyDesk } from './desk.tsx'
 import { registerTeachingAids } from './teaching-aids.tsx'
 import { registerWorkbench } from './workbench.tsx'
@@ -23,19 +23,20 @@ function studentCallbacks(scope: Context) {
   const t = scope.locale.bind(NS)
   return {
     ...createStudentManualActions(scope.remote.student),
+    sessionActions: (sessionId: StudentSessionId): StudentSessionActions => studentSessionBridge(scope, sessionId, t('sessionError')),
     openLesson: async (sessionId: StudentSessionId, lessonId: string) => { const result = await scope.remote.studentOpenmaicPlayback.open(sessionId, lessonId, new AbortController().signal); if (!result.ok) throw new Error(result.error.message); return result.value },
     askStudent: (sessionId: StudentSessionId, text: string, photo?: StudyPhoto) => tutorBridge(scope, sessionId, t('sessionError'), t('sendError'))(text, photo),
   }
 }
 type Props = PropsRuntime<'sidebar.right.pane.tab'> & PropsLocale<typeof NS> & PropsStore<ReturnType<typeof createStudentDraftStore>> & ReturnType<typeof studentCallbacks>
 
-function Sidebar({ sessionId, useTabInfo, useSession, useSessions, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission, openLesson }: Props) {
+function Sidebar({ sessionId, useTabInfo, useSession, useSessions, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission, openLesson, sessionActions }: Props) {
   const preset = useSessions(state => state.byId[sessionId]?.projectionValues?.agentPreset)
   const { tab } = useTabInfo()
   useEffect(() => { if (typeof preset === 'string' && preset !== 'student') tab.actions.close() }, [preset, tab.actions])
-  const running = useSession(snapshot => snapshot.running)
+  const session = useSession(snapshot => snapshot)
   if (preset !== 'student') return null
-  return <StudyDesk key={sessionId} sessionId={sessionId} visible={tab.visible} running={!!running} ask={(text, photo) => askStudent(sessionId, text, photo)} t={t} useResource={useResource} openLesson={lessonId => openLesson(sessionId, lessonId)} {...{ useStore, actions, saveSettings, saveWorksheet, inspectSubmission }} />
+  return <StudyDesk key={sessionId} sessionId={sessionId} visible={tab.visible} running={!!session.running} pending={session.pendingSubmissions.length > 0 || session.awaitingFirstTurn} {...sessionActions(sessionId)} ask={(text, photo) => askStudent(sessionId, text, photo)} t={t} useResource={useResource} openLesson={lessonId => openLesson(sessionId, lessonId)} {...{ useStore, actions, saveSettings, saveWorksheet, inspectSubmission }} />
 }
 
 /** Register the learning desk inside DSH's existing session sidebar. */

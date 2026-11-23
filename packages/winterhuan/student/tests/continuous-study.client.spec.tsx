@@ -12,13 +12,14 @@ import { updateStudy, NOW, setup, start } from './fixtures.ts'
 const t = (key: keyof typeof en) => en[key]
 afterEach(() => { cleanup(); window.localStorage.clear(); window.sessionStorage.clear(); vi.restoreAllMocks() })
 
-function mount(context?: import('../src/types.ts').StudentJsonValue, options: { lessons?: import('../src/dashboard.ts').Dashboard['interactiveLessons']; openLesson?: import('react').ComponentProps<typeof StudyDesk>['openLesson'] } = {}) {
+function mount(context?: import('../src/types.ts').StudentJsonValue, options: { lessons?: import('../src/dashboard.ts').Dashboard['interactiveLessons']; openLesson?: import('react').ComponentProps<typeof StudyDesk>['openLesson']; syncFeedback?: import('react').ComponentProps<typeof StudyDesk>['syncFeedback']; cancel?: () => Promise<void>; running?: boolean; pending?: boolean } = {}) {
   const state = updateStudy(updateStudy(updateStudy(undefined, setup, NOW), start, NOW), { action: 'task', task: { id: 'current-question', sessionId: start.id, subject: 'math', topic: 'Addition', prompt: '8 + 7?' } }, NOW)
-  const fixture = studentClientFixture(state, options.lessons, context)
+  const fixture = studentClientFixture(state, options.lessons, context ?? { termId: 'term-one', learnerId: 'learner-one', nextAction: { kind: 'answer', reason: 'unfinished-question', subject: 'math', title: 'Addition', blockId: start.id, questionId: 'current-question' } })
   const ask = vi.fn().mockResolvedValue(undefined)
-  function Desk() { return <StudyDesk {...useDraftFixture()} {...createStudentManualActions(fixture.remote)} useResource={fixture.useResource} sessionId="two-entries" visible running={false} ask={ask} t={t} openLesson={options.openLesson} /> }
-  render(<Desk />)
-  return { ask, fixture }
+  const syncFeedback = options.syncFeedback ?? vi.fn().mockResolvedValue({ status: 'queued', lessonId: 'original-class' })
+  function Desk() { return <StudyDesk {...useDraftFixture()} {...createStudentManualActions(fixture.remote)} useResource={fixture.useResource} sessionId="two-entries" visible running={options.running ?? false} pending={options.pending} cancel={options.cancel} ask={ask} t={t} openLesson={options.openLesson} syncFeedback={syncFeedback} /> }
+  const view = render(<Desk />)
+  return { ask, fixture, syncFeedback, rerender: () => view.rerender(<Desk />) }
 }
 
 it('has only Learning and Parent main entries and preserves an answer draft through parent browsing', async () => {
@@ -132,8 +133,7 @@ it('opens the chosen saved classroom through protected playback rather than a di
   const open = vi.spyOn(window, 'open').mockReturnValue(null)
   const openLesson = vi.fn().mockResolvedValue({ status: 'opened', browser: 'dedicated-chrome', classroomUrl: classroom.url })
   const { ask } = mount(currentContext, { lessons: lessonList(currentClassroom), openLesson })
-  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
-  ask.mockClear()
+  await waitFor(() => expect(screen.getByRole('button', { name: en.goToClass })).toBeTruthy())
   fireEvent.click(screen.getByRole('button', { name: en.goToClass }))
   await waitFor(() => expect(openLesson).toHaveBeenCalledWith(classroom.id))
   expect(open).not.toHaveBeenCalled()
@@ -156,8 +156,6 @@ it.each([
 it('opens a newly ready classroom for the current canonical goal and scope before further questions', async () => {
   const openLesson = vi.fn().mockResolvedValue({ status: 'opened', browser: 'dedicated-chrome', classroomUrl: classroom.url })
   const { ask, fixture } = mount({ ...currentContext, currentQuestion: null, nextAction: { ...currentAction, kind: 'learn', reason: 'new-goal' } }, { lessons: { lessons: [currentClassroom, { ...classroom, id: 'unrelated-job', status: 'generating', blockId: 'another-block' }] }, openLesson })
-  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
-  ask.mockClear()
   fixture.replace(updateStudy(updateStudy(undefined, setup, NOW), start, NOW))
   fireEvent.click(await screen.findByRole('button', { name: en.goToClass }))
   await waitFor(() => expect(openLesson).toHaveBeenCalledWith(currentClassroom.id))
@@ -167,8 +165,7 @@ it('opens a newly ready classroom for the current canonical goal and scope befor
 it('retains protected playback login failures and queues original ownership preparation', async () => {
   const openLesson = vi.fn().mockResolvedValueOnce({ status: 'login-required', browser: 'dedicated-chrome', classroomUrl: classroom.url }).mockResolvedValueOnce({ status: 'ownership-unresolved', reason: 'Frozen questions need saving' })
   const { ask } = mount(currentContext, { lessons: lessonList(currentClassroom), openLesson })
-  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
-  ask.mockClear()
+  await waitFor(() => expect(screen.getByRole('button', { name: en.goToClass })).toBeTruthy())
   fireEvent.click(screen.getByRole('button', { name: en.goToClass }))
   await screen.findByText(en.classroomLoginRequired)
   fireEvent.click(screen.getByRole('button', { name: en.goToClass }))
@@ -177,17 +174,19 @@ it('retains protected playback login failures and queues original ownership prep
   expect(String(ask.mock.calls[0]![0])).toContain('prepare')
 })
 
-it('queues one bounded original-classroom synchronization and retains learner and block identity', async () => {
-  const { ask, fixture } = mount({ learnerId: 'learner-one', termId: 'term-one' }, { lessons: lessonList({ ...classroom, blockId: start.id, learnerId: 'learner-one', termId: 'term-one' } as typeof classroom) })
-  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
-  const message = String(ask.mock.calls[0]![0])
-  const intent = JSON.parse(message.split('Student intention:\n')[1]!.split('\n')[0]!)
-  expect(intent).toMatchObject({ learnerId: 'learner-one', termId: 'term-one', blockId: start.id, selection: { subject: 'math' } })
-  expect(message).toContain('独立消费接受后才推进 checkpoint')
-  expect(message).toContain('不创建新课堂')
+it('requests original-classroom synchronization without a learner message or focus change', async () => {
+  const { ask, fixture, syncFeedback } = mount({ learnerId: 'learner-one', termId: 'term-one' }, { lessons: lessonList({ ...classroom, blockId: start.id, learnerId: 'learner-one', termId: 'term-one' } as typeof classroom) })
+  const answer = screen.getByLabelText(en.answer)
+  answer.focus()
+  fireEvent.change(answer, { target: { value: 'Keep this draft' } })
+  await waitFor(() => expect(syncFeedback).toHaveBeenCalledWith(classroom.id, 'resume'))
+  expect(ask).not.toHaveBeenCalled()
+  expect(document.activeElement).toBe(answer)
+  expect((answer as HTMLInputElement).value).toBe('Keep this draft')
   fireEvent.click(screen.getByRole('button', { name: en.parentEntry }))
   fixture.replace(fixture.read())
-  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+  expect(syncFeedback).toHaveBeenCalledOnce()
+  expect(ask).not.toHaveBeenCalled()
 })
 
 it('shows the shared next-action reason and continues missing evidence before an old ready classroom', async () => {
@@ -212,6 +211,19 @@ it('keeps the shared next goal and scope when Continue is used after subject bro
   expect(intention.selection).toEqual({ subject: nextAction.subject, goalId: nextAction.goalId, scope: nextAction.scope })
 })
 
+it('keeps a missing next action from restarting the legacy dashboard recommendation', async () => {
+  const { ask, fixture } = mount({ learnerId: 'learner-one', termId: 'term-one', nextAction: null })
+  fixture.replace(updateStudy(undefined, setup, NOW))
+  await waitFor(() => expect(screen.queryByLabelText(en.answer)).toBeNull())
+  expect(screen.queryByRole('button', { name: en.startNow })).toBeNull()
+  expect(screen.queryByRole('button', { name: en.openLesson })).toBeNull()
+  expect(screen.queryByRole('button', { name: en.interestPractice })).toBeNull()
+  const continueButton = screen.getByRole('button', { name: en.continueLearning }) as HTMLButtonElement
+  expect(continueButton.disabled).toBe(true)
+  fireEvent.click(continueButton)
+  expect(ask).not.toHaveBeenCalled()
+})
+
 it('continues the projected prerequisite goal and capability scope while preserving the old question owner', async () => {
   const nextAction = { kind: 'learn', reason: 'prerequisite-gap', subject: 'math', title: 'Compose ten', goalId: 'm.compose', scope: currentScope, requirement: 'Use the prerequisite gap in the current round' }
   const { ask } = mount({ learnerId: 'learner-one', termId: 'term-one', nextAction })
@@ -220,8 +232,9 @@ it('continues the projected prerequisite goal and capability scope while preserv
   const intention = JSON.parse(String(ask.mock.calls[0]![0]).split('Student intention:\n')[1]!.split('\n')[0]!)
   expect(intention.selection).toEqual({ subject: 'math', goalId: 'm.compose', scope: currentScope })
   expect(intention.nextAction.requirement).toBe(nextAction.requirement)
-  expect(intention.blockId).toBe(start.id)
-  expect(intention.questionId).toBe('current-question')
+  expect(intention.blockId).toBeUndefined()
+  expect(intention.questionId).toBeUndefined()
+  expect(intention.previousActivity).toMatchObject({ blockId: start.id, questionId: 'current-question' })
 })
 
 it('shows only the saved scope and actual independent days in Parent goal progress', () => {
@@ -273,4 +286,132 @@ it('offers Continue for an unregistered new Session and waits for an independent
   act(() => recover!())
   await screen.findByText(new RegExp(setup.profile.nickname))
   expect(screen.queryByText(en.staleData)).toBeNull()
+})
+
+const pausedRound = { id: 'round-one', blockId: start.id, kind: 'check', status: 'paused', limit: 3, remaining: 1, startedAt: NOW, members: [{ goalId: 'm.add', familyId: 'math.add-column', scope: currentScope }], enteredFamilyIds: ['math.add-column'], presentedQuestionIds: ['earlier-one', 'current-question'] }
+
+it('resumes the original projected round and displays its remaining allowance without calculating it', async () => {
+  const { ask, syncFeedback } = mount({ ...currentContext, round: pausedRound, legalActions: ['resume-round', 'switch-block', 'rest'], nextAction: { ...currentAction, kind: 'hold', reason: 'round-paused', roundId: pausedRound.id } }, { lessons: lessonList(currentClassroom) })
+  expect(syncFeedback).not.toHaveBeenCalled()
+  expect(screen.getByText(en.roundCheckRemaining.replace('{count}', '1'))).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: en.resumeRound }))
+  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+  const intent = JSON.parse(String(ask.mock.calls[0]![0]).split('Student intention:\n')[1]!.split('\n')[0]!)
+  expect(intent).toMatchObject({ blockId: start.id, continuationAction: 'resume-round', round: { id: 'round-one', remaining: 1 } })
+  expect(syncFeedback).not.toHaveBeenCalled()
+})
+
+it('offers teaching at the check limit without allowing Continue to create another check', async () => {
+  const { ask } = mount({ ...currentContext, round: { ...pausedRound, status: 'ended', remaining: 0, endReason: 'budget-exhausted' }, legalActions: ['request-teaching', 'switch-block', 'rest'], nextAction: { ...currentAction, kind: 'hold', reason: 'check-budget-exhausted', roundId: pausedRound.id } })
+  expect(screen.queryByRole('button', { name: en.continueLearning })).toBeNull()
+  expect(screen.queryByRole('button', { name: en.moreReview })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: en.requestTeaching }))
+  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+  expect(String(ask.mock.calls[0]![0])).toContain('request-teaching')
+})
+
+it('keeps source waiting and the answer draft visible while a deliberate retry only queues system feedback', async () => {
+  const syncFeedback = vi.fn().mockResolvedValue({ status: 'coalesced', lessonId: classroom.id })
+  const { ask } = mount({ ...currentContext, legalActions: ['sync-feedback', 'switch-block', 'rest'], nextAction: { ...currentAction, kind: 'hold', reason: 'source-pending', source: { kind: 'openmaic', verification: { lessonId: classroom.id, status: 'available', omitted: 0, consumption: 'pending' } } } }, { lessons: lessonList(currentClassroom), syncFeedback })
+  fireEvent.change(screen.getByLabelText(en.answer), { target: { value: 'Keep source pending draft' } })
+  fireEvent.click(screen.getByRole('button', { name: en.retryFeedbackSync }))
+  await waitFor(() => expect(syncFeedback).toHaveBeenCalledWith(classroom.id, 'continue'))
+  expect(ask).not.toHaveBeenCalled()
+  expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('Keep source pending draft')
+  expect(screen.getByText(en.feedbackSyncCoalesced)).toBeTruthy()
+})
+
+it('withdraws pending feedback before native cancellation and never restarts it on idle or focus', async () => {
+  const order: string[] = []
+  const syncFeedback = vi.fn(async (_lesson, trigger) => { order.push(trigger); return { status: trigger === 'pause' ? 'paused' as const : 'queued' as const, lessonId: classroom.id } })
+  const options = { lessons: lessonList(currentClassroom), running: true, syncFeedback, cancel: vi.fn(async () => { order.push('cancel') }) }
+  const { ask, rerender } = mount(currentContext, options)
+  await waitFor(() => expect(syncFeedback).toHaveBeenCalledWith(classroom.id, 'resume'))
+  fireEvent.click(screen.getByRole('button', { name: en.stop }))
+  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+  expect(order).toEqual(['resume', 'pause', 'cancel'])
+  options.running = false; rerender(); fireEvent.focus(window)
+  expect(syncFeedback).toHaveBeenCalledTimes(2)
+})
+
+it('retries the same classroom on explicit returns without requiring a changed local checkpoint', async () => {
+  const { syncFeedback, ask } = mount(currentContext, { lessons: lessonList(currentClassroom), running: true, pending: true })
+  await waitFor(() => expect(syncFeedback).toHaveBeenCalledWith(classroom.id, 'resume'))
+  fireEvent.focus(window)
+  await waitFor(() => expect(syncFeedback).toHaveBeenLastCalledWith(classroom.id, 'return'))
+  fireEvent.focus(window)
+  await waitFor(() => expect(syncFeedback).toHaveBeenCalledTimes(3))
+  expect(ask).not.toHaveBeenCalled()
+})
+
+
+it('keeps Continue disabled while the native session still has an accepted submission', () => {
+  const { ask } = mount(currentContext, { pending: true })
+  const button = screen.getByRole('button', { name: en.continueLearning }) as HTMLButtonElement
+  expect(button.disabled).toBe(true)
+  fireEvent.click(button)
+  expect(ask).not.toHaveBeenCalled()
+})
+
+
+it('can pause while a user input is pending and leaves cancellation to the native session', async () => {
+  const cancel = vi.fn().mockResolvedValue(undefined)
+  const { ask, syncFeedback } = mount(currentContext, { lessons: lessonList(currentClassroom), pending: true, cancel })
+  fireEvent.click(screen.getByRole('button', { name: en.stop }))
+  await waitFor(() => expect(cancel).toHaveBeenCalledOnce())
+  expect(syncFeedback).toHaveBeenCalledWith(classroom.id, 'pause')
+  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+})
+
+it.each([
+  ['login-required', en.feedbackAuthorizationRequired],
+  ['operation-timeout', en.feedbackReadInterrupted],
+  ['read-limit', en.feedbackReadIncomplete],
+])('shows a precise recovery notice for %s while retaining the question', (failure, notice) => {
+  mount({ ...currentContext, legalActions: ['sync-feedback', 'switch-block', 'rest'], nextAction: { ...currentAction, kind: 'hold', reason: 'source-unavailable', source: { kind: 'openmaic', verification: { lessonId: classroom.id, status: 'unavailable', omitted: 0, failure } } } })
+  expect(screen.getByText(notice)).toBeTruthy()
+  expect(screen.getByText('8 + 7?')).toBeTruthy()
+  expect(screen.getByRole('button', { name: en.submit }).matches(':disabled')).toBe(true)
+  expect(screen.getByRole('button', { name: en.stop }).matches(':disabled')).toBe(false)
+})
+
+it.each(['learning-context', 'dashboard'])('blocks advancement for a partial %s while retaining the same draft and visible question', query => {
+  const state = updateStudy(updateStudy(updateStudy(undefined, setup, NOW), start, NOW), { action: 'task', task: { id: 'current-question', sessionId: start.id, subject: 'math', topic: 'Addition', prompt: '8 + 7?' } }, NOW)
+  const fixture = studentClientFixture(state, undefined, currentContext)
+  let partial = false
+  const useResource: import('../src/client/workspace.ts').UseStudentResource = address => {
+    const result = fixture.useResource(address)
+    return partial && address.includes(query) ? { ...result, value: { ...result.value, status: 'partial', data: null } } : result
+  }
+  function Desk() { return <StudyDesk {...useDraftFixture()} {...createStudentManualActions(fixture.remote)} useResource={useResource} sessionId="partial" visible running={false} ask={vi.fn()} t={t} /> }
+  const view = render(<Desk />)
+  fireEvent.change(screen.getByLabelText(en.answer), { target: { value: 'Keep me through partial read' } })
+  partial = true; view.rerender(<Desk />)
+  expect(screen.getByText(query === 'learning-context' ? en.partialLearningRecords : en.continueWaiting)).toBeTruthy()
+  expect(screen.getByText('8 + 7?')).toBeTruthy()
+  expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('Keep me through partial read')
+  expect(screen.getByRole('button', { name: en.continueLearning }).matches(':disabled')).toBe(true)
+})
+
+
+it('keeps the last coherent question and draft while a newer dashboard arrives before its context', () => {
+  const state = updateStudy(updateStudy(updateStudy(undefined, setup, NOW), start, NOW), { action: 'task', task: { id: 'current-question', sessionId: start.id, subject: 'math', topic: 'Addition', prompt: '8 + 7?' } }, NOW)
+  const nextState = updateStudy(state, { action: 'task', task: { id: 'new-question', sessionId: start.id, subject: 'math', topic: 'Addition', prompt: '9 + 9?' } }, NOW + 1)
+  const original = studentClientFixture(state, undefined, currentContext)
+  const newer = studentClientFixture(nextState, undefined, { ...currentContext, nextAction: { ...currentAction, questionId: 'new-question' } })
+  let changed = false
+  const useResource: import('../src/client/workspace.ts').UseStudentResource = address => {
+    const before = original.useResource(address), after = newer.useResource(address)
+    const isContext = address.includes('learning-context')
+    const value = changed && !isContext ? after : before
+    return { ...value, value: { ...value.value, versions: [{ path: '.study/blocks/current.json', targetKey: 'current', version: changed && !isContext ? 'v2' : 'v1' }] } }
+  }
+  function Desk() { return <StudyDesk {...useDraftFixture()} {...createStudentManualActions(original.remote)} useResource={useResource} sessionId="pending-version" visible running={false} ask={vi.fn()} t={t} /> }
+  const view = render(<Desk />)
+  fireEvent.change(screen.getByLabelText(en.answer), { target: { value: 'My first thought' } })
+  changed = true; view.rerender(<Desk />)
+  expect(screen.getByText('8 + 7?')).toBeTruthy()
+  expect(screen.queryByText('9 + 9?')).toBeNull()
+  expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('My first thought')
+  expect(screen.getByRole('button', { name: en.continueLearning }).matches(':disabled')).toBe(true)
 })

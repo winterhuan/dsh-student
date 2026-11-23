@@ -45,9 +45,21 @@ dsh plugin --profile student add ./packages/winterhuan/student
 
 The profile must already provide Skills, tools, a Session filesystem and sandbox policy. A web profile also supplies chat, image attachments and the Learning desk sidebar. The bundle adds the `student` Host row and the `preset-student` mode row and does not install any creative package. Restart the profile after installing or rebuilding.
 
+DSH `0.2.2-rc.1` Headless does not select the Web preset roster. For a non-Web profile, disable `preset-student` and load the installed Student Agent entry before creating an Agent, using this profile patch:
+
+```yaml
+- id: preset-student
+  disabled: true
+- insert:
+    - id: student-headless-capabilities
+      name: '@winterhuan/dsh-student/agent'
+```
+
+The profile must provide the same native tools and filesystem services. Installation already enables the existing `fs-observation-policy` row; keep one instance. Loading the Student entry after `agent/created` cannot capture ordinary input ownership for that Agent. Restart the profile, create a new Agent, then invoke `/study`.
+
 ### Use the Learning desk
 
-Select 智能学习 in a new conversation in the learning workspace, then choose Learning desk from the right sidebar. The two main entries are Learning and Parent. A new conversation offers Continue learning to read existing records through the native tutor; the desk waits for an independent valid read before showing progress. Learning highlights the current goal, the shared next step and its reason. Continue learning retains the original learner, term, block, question and confirmed scope while asking the native tutor to continue an answer, assessment, missing check, teaching or short review. Subject browsing preserves unfinished work and the selected activity. A ready current classroom opens through protected playback after its frozen questions and bindings are saved and independently read. Generation, synchronization and original-job recovery use the same native conversation; the learner does not choose generation parameters or individual official skills.
+Select 智能学习 in a new conversation in the learning workspace, then choose Learning desk from the right sidebar. The two main entries are Learning and Parent. A new conversation offers Continue learning to read existing records through the native tutor; the desk waits for an independent valid read before showing progress. Learning highlights the current goal, the shared next step and its reason. Continue learning uses the shared next action's learner, term, goal, owner and confirmed scope to continue an answer, assessment, missing check, teaching or short review; a new goal receives its own block while the previous question and answer remain saved. Subject browsing preserves unfinished work and the selected activity. A ready current classroom opens through protected playback after its frozen questions and bindings are saved and independently read. Generation, synchronization and original-job recovery use the same native conversation; the learner does not choose generation parameters or individual official skills.
 
 A block shows one saved question with its figure and answer controls first. Choice questions use options; other questions use typed answers. Optional question goals, micro-steps, phases and study details remain available. The original answer and feedback stay visible; unknown source, assistance or actual answer date stays pending. The tutor uses official one-question teaching, minimal hints and appropriate independent components or complete classrooms. Try it together beside a reply reveals the original official widget, slide or teaching card. Component interaction helps understanding; the learner answers in native chat for learning evidence. Other ways keeps foundation, school, review, check-in and inquiry practice discoverable; optional routines retain daily-sheet printing, dictation and explain-it-back prompts. Ending a block preserves its original answers for later assessment. Native message admission remains separate from independently verified saved evidence; uncertain admission offers inspection and does not automatically resend. Model errors remain visible in chat.
 

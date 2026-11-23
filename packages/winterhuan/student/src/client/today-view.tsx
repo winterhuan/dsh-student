@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { Command } from '../schema.ts'
-import type { CheckInIntensity, LearningNextAction } from '../learning/mastery.ts'
+import type { CheckInIntensity, LearningNextAction, LearningRoundView } from '../learning/mastery.ts'
 import type { Translate } from './locales.ts'
 import { formDraftKey, type DraftProps } from './drafts.tsx'
 import { FigureView } from './figure-view.tsx'
 import { classroomUrl } from './lessons-view.tsx'
 import { MasteryDots } from './mastery-dots.tsx'
 import { feynmanPrompt, hintPromptFor, stuckPrompt } from './prompts.ts'
-import { assistKeys, day, focusKeys, intensityHelpKeys, intensityKeys, planKeys, reasonText, reminderKeys, type Activity, type Mode, type ScopeChoice, type Subject } from './display.ts'
+import { assistKeys, day, focusKeys, intensityHelpKeys, intensityKeys, reminderKeys, type Activity, type Mode, type ScopeChoice, type Subject } from './display.ts'
 import type { Dashboard } from '../dashboard.ts'
 import css from './desk.module.css'
 
@@ -17,11 +17,14 @@ type Goal = { id: string; title: string }
 type Act = (command: Command, withTutor?: boolean, prompt?: string) => Promise<void>
 
 /** The learner's page: one recommended next step, the current question, and a folded set of other ways to practise. */
-export function TodayView({ nextAction, learnerId, termId, classroomBindingId, onContinue, study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom, draftScope, useStore, actions }: DraftProps & {
+export function TodayView({ nextAction, round, legalActions, onAction, learnerId, termId, classroomBindingId, onContinue, study, subject, activity, setActivity, goal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startDiagnosis, chosenIntensity, disabled, pending, running, act, tutor, t, prompts, lessons, onOpenClassroom, draftScope, useStore, actions }: DraftProps & {
   learnerId: string | undefined
   termId: string | undefined
   classroomBindingId: string | undefined
   nextAction: LearningNextAction | null
+  round: LearningRoundView | null
+  legalActions: string[]
+  onAction: (action: string) => void
   onContinue: () => void
   draftScope?: string
   study: Study
@@ -29,7 +32,6 @@ export function TodayView({ nextAction, learnerId, termId, classroomBindingId, o
   activity: Activity
   setActivity: (activity: Activity) => void
   goal: Goal | undefined
-  clearGoal: () => void
   curriculum: Curriculum | null
   selectedObjectiveId: string
   chooseGoal: (goal: { id: string; subject: Subject }) => void
@@ -40,19 +42,16 @@ export function TodayView({ nextAction, learnerId, termId, classroomBindingId, o
   setScope: (scope: ScopeChoice) => void
   scopeUnits: { id: string; name: string }[]
   start: (subject: Subject, mode: Mode, inquiry?: string) => Promise<void>
-  startRecommended: () => void
   startDiagnosis: (subject: Subject, intensity: CheckInIntensity) => Promise<void>
   chosenIntensity: CheckInIntensity
   disabled: boolean
+  pending: boolean
   running: boolean
   act: Act
   tutor: (text: string, currentBlock?: boolean) => Promise<void>
   t: Translate
   prompts: { daily: string; dictation: string }
   lessons: Dashboard['interactiveLessons']['lessons']
-  onInterestPractice: () => void
-  onOpenLesson: () => void
-  onClearDue: () => void
   onOpenClassroom: (lessonId: string) => void
 }) {
   const active = study.active
@@ -60,15 +59,11 @@ export function TodayView({ nextAction, learnerId, termId, classroomBindingId, o
   const reflection = useStore(state => state.drafts[reflectionKey]) ?? ''
   const ownSession = !!active
   const task = ownSession && study.task?.sessionId === active.id ? study.task : undefined
-  const recommendation = study.recommendation
   const progress = curriculum?.scope.current ? study.courses.find(item => item.subject === subject)?.progress : undefined
   const frontierIndex = progress ? curriculum?.units.findIndex(unit => unit.id === progress.unitId) ?? -1 : -1
   const schoolUnit = frontierIndex >= 0 ? curriculum?.units[frontierIndex] : undefined
   const homeUnit = curriculum?.scope.current ? [...curriculum.units].reverse().find(unit => curriculum.concepts.some(concept => concept.unit === unit.id && concept.level !== 'untouched')) : undefined
   const objectiveMeta = curriculum?.scope.current ? curriculum.objectives.find(item => item.id === task?.objectiveId) : undefined
-  const recommendGoal = curriculum?.scope.current && recommendation?.objectiveId
-    ? curriculum.objectives.find(item => item.id === recommendation.objectiveId)
-    : undefined
   const explain = study.understandingReminders[0]
   const matchesCurrent = (item: typeof lessons[number]) => !!active && !!learnerId && !!termId && item.learnerId === learnerId && item.termId === termId && item.blockId === active.id && (item.subject === undefined || item.subject === (nextAction?.subject ?? active.subject))
   const generating = lessons.find(item => item.status === 'generating' && matchesCurrent(item))
@@ -79,16 +74,20 @@ export function TodayView({ nextAction, learnerId, termId, classroomBindingId, o
       || nextAction.kind === 'learn' && !task))
   const readyUrl = classroomUrl(ready?.url)
   const shownReady = ready ?? (!nextAction ? lessons.find(item => item.status === 'ready' && matchesCurrent(item) && classroomUrl(item.url)) : undefined)
-  const goalPractice = recommendation?.kind === 'practice' || recommendation?.kind === 'learn' || recommendation?.kind === 'preview' || (recommendation?.kind === 'review' && recommendation.objectiveId !== undefined)
   const chosen = nextAction
-  const nextTitle = chosen?.title ?? goalTitle(study, task?.objectiveId) ?? recommendation?.title ?? task?.topic ?? t('todayPlan')
+  const nextTitle = chosen?.title ?? goalTitle(study, task?.objectiveId) ?? task?.topic ?? t('todayPlan')
   const chosenReason = chosen ? continuationReasons[chosen.reason] : undefined
+  const primaryAction = chosen?.kind === 'hold' ? legalActions.includes('resume-round') ? 'resume-round' : legalActions.includes('request-teaching') ? 'request-teaching' : legalActions.includes('sync-feedback') ? 'sync-feedback' : legalActions.includes('verify-source') ? 'verify-source' : undefined : undefined
+  const needsParent = chosen?.reason === 'confirmed-scope-required'
+  const primaryLabelKey = needsParent ? 'confirmLearningScope' : primaryAction === 'resume-round' ? 'resumeRound' : primaryAction === 'request-teaching' ? 'requestTeaching' : primaryAction === 'sync-feedback' || primaryAction === 'verify-source' ? 'retryFeedbackSync' : 'continueLearning'
   const playable = !!readyUrl && !lessons.some(item => item.status === 'generating' && matchesCurrent(item))
   return <>
     <section className="student-plan"><h3>{nextTitle}</h3>
-      <p className="student-muted">{t(chosenReason ?? (task ? task.response === undefined ? 'continueCurrentQuestion' : study.feedback ? 'continueAfterFeedback' : 'continuePendingAnswer' : 'continueConfirmedGoal'))}</p>
-      <button type="button" className="student-primary" disabled={disabled || running} onClick={playable ? () => onOpenClassroom(ready!.id) : onContinue}>{t(playable ? 'goToClass' : 'continueLearning')}</button>
+      <p className="student-muted">{t(chosenReason ?? 'continueWaiting')}</p>
+      <button type="button" className="student-primary" disabled={disabled || running || pending || !chosen || chosen.kind === 'hold' && !needsParent && !primaryAction} onClick={needsParent ? openParent : primaryAction ? () => onAction(primaryAction) : playable ? () => onOpenClassroom(ready!.id) : onContinue}>{t(playable ? 'goToClass' : primaryLabelKey)}</button>
     </section>
+    {round && <section className="student-status"><p role="status"><span>{t(round.status === 'paused' ? 'roundPaused' : round.status === 'ended' ? 'roundEnded' : 'roundActive')}</span> · <span>{t(round.kind === 'check' ? 'roundCheckRemaining' : 'roundReviewRemaining').replace('{count}', String(round.remaining))}</span></p></section>}
+    {chosen?.source?.kind === 'openmaic' && <p role="status">{t(sourceNotice(chosen.source.verification))}</p>}
     {(generating || shownReady) && <section>
       {generating && <p role="status">{t('openmaicGenerating')} · {generating.title}</p>}
       {shownReady && <p className="student-muted">{shownReady.title}</p>}
@@ -101,14 +100,14 @@ export function TodayView({ nextAction, learnerId, termId, classroomBindingId, o
       </details>
     </section>
     {ownSession && <>
-      <section className="student-focus">{task ? <Task useStore={useStore} actions={actions} draftScope={draftScope} key={`${task.sessionId}:${task.id}`} study={study} goalTitle={goalTitle(study, task.objectiveId)} goalText={objectiveMeta?.goal} days={objectiveMeta?.independentDays} disabled={disabled || running} t={t} act={act} tutor={tutor} /> : <p>{t('waiting')}</p>}
+      <section className="student-focus">{task ? <Task useStore={useStore} actions={actions} draftScope={draftScope} key={`${task.sessionId}:${task.id}`} study={study} goalTitle={goalTitle(study, task.objectiveId)} goalText={objectiveMeta?.goal} days={objectiveMeta?.independentDays} disabled={disabled || running || pending || chosen?.kind === 'hold'} t={t} act={act} tutor={tutor} /> : <p>{t('waiting')}</p>}
         <p className="student-muted">{t('chatHelp')}</p>
         {running && <p role="status">{t('tutorWorking')}</p>}
       </section>
       <form onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); void act({ action: 'stop', sessionId: active.id, reflection: String(form.get('reflection') ?? '') }) }}>
         <div className="student-segments">
           <button disabled={disabled} type="submit">{t('stop')}</button>
-          {(explain || task?.objectiveId) && <button type="button" disabled={disabled || running} onClick={() => { void tutor(feynmanPrompt(explain?.title ?? goalTitle(study, task?.objectiveId)), true).catch(() => {}) }}>{t('feynmanTeach')}</button>}
+          {(explain || task?.objectiveId) && <button type="button" disabled={disabled || running || pending} onClick={() => { void tutor(feynmanPrompt(explain?.title ?? goalTitle(study, task?.objectiveId)), true).catch(() => {}) }}>{t('feynmanTeach')}</button>}
         </div>
         <details className="student-fold">
           <summary>{t('reflectionOptional')}</summary>
@@ -117,38 +116,9 @@ export function TodayView({ nextAction, learnerId, termId, classroomBindingId, o
         </details>
       </form>
     </>}
-    {!ownSession && !chosen && <details className="student-fold"><summary>{t('learningOptions')}</summary>
-    {!ownSession && <section className="student-plan"><h3>{t('todayPlan')}</h3>
-      {recommendation ? <><p>{t(planKeys[recommendation.kind])} · {t(recommendation.subject)}{recommendation.title ? ` · ${recommendation.title}` : ''}</p>
-        {recommendGoal?.goal && <p>{t('objectiveGoal')}: {recommendGoal.goal}</p>}
-        {recommendGoal && <MasteryDots days={recommendGoal.independentDays} t={t} />}
-        <p className="student-muted">{reasonText([recommendation.reason], t)}</p>
-        {study.interestFocus && <p className="student-muted">{t('interestFocusLabel')}: {study.interestFocus}</p>}
-        {recommendation.redirectedFrom && <p className="student-muted">{t('prerequisiteFor')}: {recommendation.redirectedFrom.title}</p>}
-        {recommendation.kind === 'hold' ? <button type="button" onClick={openParent}>{t('updateSchoolProgress')}</button>
-          : <div className="student-segments">
-            {goalPractice && <button type="button" className="student-primary" disabled={disabled || running} onClick={onInterestPractice}>{t('interestPractice')}</button>}
-            {recommendation.kind === 'diagnose' && <button type="button" className="student-primary" disabled={disabled || running} onClick={startRecommended}>{t('startNow')}</button>}
-            {recommendation.kind === 'review' && study.dueToday.length === 0 && <button type="button" className="student-primary" disabled={disabled || running} onClick={startRecommended}>{t('startNow')}</button>}
-            <button type="button" disabled={disabled || running || generating !== undefined} onClick={onOpenLesson}>{t('openLesson')}</button>
-          </div>}
-      </> : <p>{t('allDone')}</p>}
-      {goal && <p>{t('learningGoal')}: {goal.title} <button type="button" onClick={clearGoal}>{t('clearGoal')}</button></p>}
-      {study.weakPoints.length > 0 && <details><summary>{t('weakPoints')} · {study.weakPoints.length}</summary><p className="student-muted">{t('weakHint')}</p>
-        {study.weakPoints.map(item => <div key={item.id}><p>{t(item.subject)} · {item.title} · {t(levelKey(item.level))}</p><p className="student-muted">{reasonText(item.reasons, t)}</p>
-          <button type="button" disabled={disabled || running} aria-pressed={selectedObjectiveId === item.id} onClick={() => chooseGoal(item)}>{t('chooseGoal')} · {item.title}</button>
-        </div>)}
-      </details>}
-    </section>}
-    {!ownSession && study.dueToday.length > 0 && <section>
-      <h3>{t('dueTodayTitle')}</h3>
-      <p className="student-muted">{t('dueTodayHelp')}</p>
-      {study.dueToday.map(item => <p key={item.id}>{t(item.subject)} · {item.topic}</p>)}
-      <button type="button" disabled={disabled || running} onClick={onClearDue}>{t('clearDue').replace('{count}', String(study.dueToday.length))}</button>
-      {study.dueBacklog > study.dueToday.length && <p className="student-muted">{t('dueLater').replace('{count}', String(study.dueBacklog - study.dueToday.length))}</p>}
-    </section>}
-    </details>}
-    {<Alternate useStore={useStore} actions={actions} draftScope={draftScope} study={study} subject={subject} activity={activity} setActivity={setActivity} disabled={disabled || running} t={t} goal={goal} intensityLabel={intensityLabel} openCheckins={openCheckins} scope={scope} setScope={setScope} scopeUnits={scopeUnits} start={start} />}
+    {chosen && legalActions.includes('more-review') && <button type="button" disabled={disabled || running || pending} onClick={() => onAction('more-review')}>{t('moreReview')}</button>}
+    {chosen && !ownSession && legalActions.includes('rest') && <button type="button" disabled={disabled || running || pending} onClick={() => onAction('rest')}>{t('stop')}</button>}
+    {<Alternate useStore={useStore} actions={actions} draftScope={draftScope} study={study} subject={subject} activity={activity} setActivity={setActivity} disabled={disabled || running || pending} t={t} goal={goal} intensityLabel={intensityLabel} openCheckins={openCheckins} scope={scope} setScope={setScope} scopeUnits={scopeUnits} start={start} />}
     {!ownSession && <details className="student-fold"><summary>{t('morePractice')}</summary>
     {!ownSession && (() => {
       const unit = progress && curriculum ? curriculum.units.find(item => item.id === progress.unitId) : undefined
@@ -159,26 +129,26 @@ export function TodayView({ nextAction, learnerId, termId, classroomBindingId, o
         {unit?.focus !== undefined && <p>{unit.name}：{t(focusKeys[unit.focus])}</p>}
         {causes.length > 0 && <p className="student-muted">{t('topCauses')}：{causes.map(item => `${t(item.type)} ×${item.count}`).join('、')}</p>}
         <div className="student-segments">
-          <button type="button" disabled={disabled || running} onClick={() => { void tutor(prompts.daily).catch(() => {}) }}>{t('printDailySheet')}</button>
-          <button type="button" disabled={disabled || running} onClick={() => { void tutor(prompts.dictation).catch(() => {}) }}>{t('dictation')}</button>
+          <button type="button" disabled={disabled || running || pending} onClick={() => { void tutor(prompts.daily).catch(() => {}) }}>{t('printDailySheet')}</button>
+          <button type="button" disabled={disabled || running || pending} onClick={() => { void tutor(prompts.dictation).catch(() => {}) }}>{t('dictation')}</button>
         </div>
       </section>
     })()}
     {!ownSession && study.understandingReminders.length > 0 && <section><h3>{t('remindersTitle')}</h3><p className="student-muted">{t('remindersHint')}</p>
       {study.understandingReminders.map(item => <div key={`${item.code}-${item.objectiveId ?? item.title}`}>
         <p>{t(reminderKeys[item.code])} · {item.title}</p>
-        <button type="button" disabled={disabled || running} onClick={() => { void tutor(feynmanPrompt(item.title)).catch(() => {}) }}>{t('feynmanTeach')}</button>
+        <button type="button" disabled={disabled || running || pending} onClick={() => { void tutor(feynmanPrompt(item.title)).catch(() => {}) }}>{t('feynmanTeach')}</button>
       </div>)}
     </section>}
     {!ownSession && study.diagnostic && <section><h3>{t('diagnosisTitle')} · {t(subject)}</h3>
       <p>{study.diagnostic.lastAt !== undefined ? `${t('diagnosisLast')}: ${day(study.diagnostic.lastAt)} · ${t('nextCheck')}: ${day(study.diagnostic.nextAt)}` : t('diagnosisNever')} · {t('coverage')}: {study.diagnostic.coverage.probed} / {study.diagnostic.coverage.total}</p>
       <p className="student-muted">{t(study.diagnostic.due ? 'diagnosisDue' : 'diagnosisNotDue')}{study.diagnostic.samples[chosenIntensity].length > 0 ? ` · ${t('diagnosisSample')}: ${study.diagnostic.samples[chosenIntensity].map(item => item.title).join(' · ')}` : ''}</p>
       <p className="student-muted">{t('intensity')}: {t(intensityKeys[chosenIntensity])} · {t(intensityHelpKeys[chosenIntensity])} <button type="button" onClick={openCheckins}>{t('chooseIntensity')}</button></p>
-      {study.diagnostic.samples[chosenIntensity].length > 0 && <button type="button" disabled={disabled || running} onClick={() => { void startDiagnosis(subject, chosenIntensity) }}>{t(study.diagnostic.due ? 'startDiagnosis' : 'repeatDiagnosis')}</button>}
+      {study.diagnostic.samples[chosenIntensity].length > 0 && <button type="button" disabled={disabled || running || pending} onClick={() => { void startDiagnosis(subject, chosenIntensity) }}>{t(study.diagnostic.due ? 'startDiagnosis' : 'repeatDiagnosis')}</button>}
       {(() => { const last = study.checkIns.find(item => item.subject === subject); return last && last.results.length > 0 ? <details open={!study.diagnostic.due}><summary>{t('diagnosisResults')} · {day(last.startedAt)} · {t(intensityKeys[last.intensity])}</summary>
         <p className="student-muted">{t('assistIndependent')} {last.counts.independent} · {t('assistHint')} {last.counts.helped} · {t('wrong')} {last.counts.wrong}</p>
         {last.results.map(item => <div key={item.id}><p>{item.title} · {t(item.result)} · {t(assistKeys[item.assistance])}</p>
-          {item.objectiveId !== null && (item.result !== 'correct' || item.assistance !== 'independent') && <button type="button" disabled={disabled || running} aria-pressed={selectedObjectiveId === item.objectiveId} onClick={() => chooseGoal({ id: item.objectiveId ?? '', subject })}>{t('chooseGoal')} · {item.title}</button>}
+          {item.objectiveId !== null && (item.result !== 'correct' || item.assistance !== 'independent') && <button type="button" disabled={disabled || running || pending} aria-pressed={selectedObjectiveId === item.objectiveId} onClick={() => chooseGoal({ id: item.objectiveId ?? '', subject })}>{t('chooseGoal')} · {item.title}</button>}
         </div>)}
       </details> : null })()}
     </section>}
@@ -188,8 +158,13 @@ export function TodayView({ nextAction, learnerId, termId, classroomBindingId, o
 
 const continuationReasons = { 'unfinished-question': 'continueCurrentQuestion', 'pending-assessment': 'continuePendingAnswer', 'missing-evidence': 'continueMissingEvidence', 'current-gap': 'continueCurrentGap', 'prerequisite-gap': 'continuePrerequisiteGap', 'due-review': 'continueDueReview', 'new-goal': 'continueConfirmedGoal', 'confirmed-scope-required': 'continueScopeRequired', 'check-budget-exhausted': 'continueCheckEnded', 'round-paused': 'continueRoundPaused', 'no-learnable-goal': 'continueNoGoal', 'source-unavailable': 'continueSourceUnavailable', 'source-pending': 'continueSourcePending' } as const satisfies Record<LearningNextAction['reason'], Parameters<Translate>[0]>
 
-function levelKey(level: Study['weakPoints'][number]['level']) {
-  return level === 'due' ? 'levelDue' as const : level === 'weak' ? 'levelWeak' as const : level === 'stalled' ? 'levelStalled' as const : level === 'mastered' ? 'levelMastered' as const : level === 'practising' ? 'levelPractising' as const : 'levelUntouched' as const
+function sourceNotice(source: Extract<NonNullable<LearningNextAction['source']>, { kind: 'openmaic' }>['verification']): Parameters<Translate>[0] {
+  if (source.status === 'ownership-unresolved') return 'feedbackOwnerUnknown'
+  if (source.failure === 'login-required' || source.failure === 'login-challenge' || source.failure === 'permission-denied') return 'feedbackAuthorizationRequired'
+  if (source.failure === 'identity-changed') return 'classroomIdentityMismatch'
+  if (source.failure === 'operation-timeout' || source.failure === 'operation-canceled') return 'feedbackReadInterrupted'
+  if (source.failure === 'response-too-large' || source.failure === 'read-limit' || source.failure === 'incomplete-read' || source.failure === 'unsupported-version') return 'feedbackReadIncomplete'
+  return source.status === 'unavailable' ? 'feedbackSourceUnavailable' : 'feedbackSavePending'
 }
 
 function goalTitle(study: Study, objectiveId: string | undefined): string | undefined {
@@ -225,6 +200,7 @@ function Alternate({ study, subject, activity, setActivity, disabled, start, goa
   const scoped = scope.grade !== undefined || scope.term !== undefined
   return <details className="student-fold" open={open} onToggle={event => setOpen(event.currentTarget.open)}>
     <summary>{t('otherWays')}</summary>
+    {goal && <p>{t('learningGoal')}: {goal.title}</p>}
     <form onSubmit={event => { event.preventDefault(); void start(subject, mode, uiMode === 'explore' ? inquiry.trim() : undefined) }}><fieldset disabled={disabled}>
       <label>{t('mode')}<select aria-label={t('mode')} value={uiMode} onChange={event => {
         const value = event.target.value

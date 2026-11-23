@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Dashboard, MistakeStatus } from '../dashboard.ts'
 import type { Command } from '../schema.ts'
 import type { CapabilityProgress, CheckInIntensity } from '../learning/mastery.ts'
-import { StudySubmissionError, type AskTutor, type StudyPhoto } from './bridge.ts'
+import { StudySubmissionError, type AskTutor, type StudyPhoto, type StudentSessionActions } from './bridge.ts'
 import type { StudentManualActions } from './manual-actions.ts'
 import type { DraftProps } from './drafts.tsx'
 import type { TermId, BlockId, ResponseId } from '../files/schema.ts'
@@ -20,9 +20,10 @@ import { IdeasView } from './ideas-view.tsx'
 import { MapView } from './map-view.tsx'
 import { PracticeView } from './practice-view.tsx'
 import { LessonsPanel, lessonsForSubject } from './lessons-view.tsx'
-import { continuePrompt, loadLearningPrompt, dailySheetPrompt, diagnosePrompt, dictationPrompt, dueClearPrompt, explorePrompt, goalPrompt, interestPracticePrompt, openmaicGeneratePrompt, openmaicQueryPrompt, openmaicRetryPrompt, openmaicReviewPrompt, organizePrompt, nativeIntentPrompt, pendingRecordPrompt, pendingRecordsPrompt, previewPrompt, reviewPrompt, teachPrompt, teachQueuePrompt } from './prompts.ts'
+import { continuePrompt, loadLearningPrompt, dailySheetPrompt, diagnosePrompt, dictationPrompt, explorePrompt, goalPrompt, openmaicQueryPrompt, openmaicRetryPrompt, openmaicReviewPrompt, organizePrompt, nativeIntentPrompt, pendingRecordPrompt, pendingRecordsPrompt, reviewPrompt } from './prompts.ts'
 import { TodayView } from './today-view.tsx'
 import css from './desk.module.css'
+import workbenchCss from './workbench.module.css'
 
 type Study = NonNullable<Dashboard['study']>
 type Goal = { id: string; title: string }
@@ -36,7 +37,7 @@ function storeSubject(value: Subject) {
 }
 
 /** Workbench actions share the same persisted state as the native tutoring tools. */
-export function StudyDesk({ sessionId, visible, ask, running, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, inspectSubmission, openLesson, useStore, actions }: DraftProps & StudentManualActions & { sessionId: StudentSessionId; useResource: UseStudentResource; visible: boolean; ask: AskTutor; running: boolean; t: Translate; openLesson?: (lessonId: string) => Promise<import('../openmaic/playback.ts').OpenmaicPlaybackResult> }) {
+export function StudyDesk({ sessionId, visible, ask, running, pending = false, syncFeedback, cancel, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, inspectSubmission, openLesson, useStore, actions }: DraftProps & StudentManualActions & Partial<StudentSessionActions> & { sessionId: StudentSessionId; useResource: UseStudentResource; visible: boolean; ask: AskTutor; running: boolean; pending?: boolean; t: Translate; openLesson?: (lessonId: string) => Promise<import('../openmaic/playback.ts').OpenmaicPlaybackResult> }) {
   const [subject, setSubject] = useState<Subject>(storedSubject)
   const [mistakeOffset, setMistakeOffset] = useState(0)
   const [mistakeStatus, setMistakeStatus] = useState<MistakeStatus>('all')
@@ -59,6 +60,8 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
   const [localNow, setLocalNow] = useState(Date.now())
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
+  const [syncStatus, setSyncStatus] = useState<'queued' | 'coalesced' | 'paused' | 'unavailable'>()
+  const paused = useRef(false)
   useEffect(() => {
     if (!visible) return
     const timer = window.setInterval(() => setLocalNow(Date.now()), 1000)
@@ -90,16 +93,18 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
     if (command?.action === 'answer' && !responseIds.current.has(key)) responseIds.current.set(key, crypto.randomUUID())
     return { learnerId: workspace.learnerId, termId: workspace.termId, blockId: ownerId, questionId: task?.id, responseId: task?.responseId ?? responseIds.current.get(key) }
   }
-  async function tutor(text = continuePrompt, photo?: StudyPhoto, command?: Command, currentBlock = false) {
+  async function tutor(text = continuePrompt, photo?: StudyPhoto, command?: Command, currentBlock = false, continuation = false, continuationAction?: string) {
     if (readOnly) throw new Error(t('legacyFilesHelp'))
-    const ids = identity(command)
+    const previous = identity(command)
+    const next = continuation ? workspace.nextAction : null
+    if (continuation && (!workspace.contextReady || !next)) return
+    const ids = next ? { learnerId: workspace.learnerId, termId: workspace.termId, blockId: next.blockId, questionId: next.questionId, responseId: next.responseId } : previous
     if (command?.action === 'answer' && submissions.some(item => item.response?.responseId === ids.responseId && item.admission === 'unknown' && !item.inspection)) { setSendError(t('messageUnknown')); throw new Error(t('messageUnknown')) }
     setSending(true); setSendError('')
     const active = data?.study?.active
     const retainBlock = active && (currentBlock || command?.action === 'answer' || command?.action === 'hint' || command?.action === 'stuck' || command?.action === 'stop')
-    const next = currentBlock ? workspace.nextAction : null
     const selection = next ? { subject: next.subject, goalId: next.goalId, scope: next.scope } : retainBlock ? { subject: active.subject, goalId: data?.study?.task?.objectiveId, scope: active.scope } : { subject: command?.action === 'start' ? command.subject : subject, goalId: selectedObjectiveId || undefined, scope: command?.action === 'start' ? command.scope : scopeCommand(subject).scope }
-    const intent = { nativeSessionId: sessionId, ...ids, selection, nextAction: workspace.nextAction, ...(command ? { operation: command } : {}), request: text.trim() === '' ? continuePrompt : text }
+    const intent = { nativeSessionId: sessionId, ...ids, selection, nextAction: workspace.nextAction, round: workspace.round, legalActions: workspace.legalActions, ...(continuation ? { previousActivity: { blockId: previous.blockId, questionId: previous.questionId, responseId: previous.responseId }, continuationAction } : {}), ...(command ? { operation: command } : {}), request: text.trim() === '' ? continuePrompt : text }
     const retain = (requestId: string, admission: 'accepted' | 'unknown') => setSubmissions(previous => [...previous, { requestId, admission, ...(ids.questionId ? { questionId: ids.questionId } : {}), ...(command?.action === 'answer' && ids.termId && ids.blockId && ids.responseId ? { response: { termId: ids.termId as TermId, owner: { kind: 'block' as const, id: ids.blockId as BlockId }, responseId: ids.responseId as ResponseId } } : {}) }].slice(-12))
     try { const result = await ask(nativeIntentPrompt(intent, intent.request), photo); if (result) retain(result.requestId, result.admission) }
     catch (reason) { if (reason instanceof StudySubmissionError) retain(reason.requestId, 'unknown'); setSendError(reason instanceof Error ? reason.message : t('sendError')); throw reason }
@@ -129,12 +134,19 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
     return saveWorksheetRecord(sessionId, intent, baseline, workspace.termId, t)
   }
   async function act(command: Command, _withTutor = false, prompt = continuePrompt) {
-    try { await tutor(prompt, undefined, command) } catch { /* The request or tutor notice retains the failed action and its data. */ }
+    try {
+      if (command.action === 'stop') {
+        paused.current = true
+        if (currentLesson && syncFeedback) await requestSync(currentLesson.id, 'pause')
+        await cancel?.()
+      }
+      await tutor(prompt, undefined, command)
+    } catch (reason) { setSendError(reason instanceof Error ? reason.message : t('sendError')) }
   }
   function selectSubject(item: Subject) { setSubject(item); storeSubject(item) }
   const now = Math.max(localNow + workspace.offset.current, data?.serverNow ?? 0)
   const study = data?.study
-  const subjectLoading = !!study && study.confirmedSubject !== subject
+  const nativePending = pending || !!workspace.value?.native.admissions.some(item => item.status === 'pending' || item.status === 'claimed')
   const disabled = sending || workspace.stale || readOnly
   const active = study?.active
   const followedActive = useRef<{ sessionId: StudentSessionId; blockId: string }>()
@@ -144,16 +156,47 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
       selectSubject(active.subject); setActivity({ subject: active.subject, mode: active.mode })
     }
   }, [active?.id, sessionId])
-  const synchronized = useRef(new Set<string>())
+  const ownerBlockId = active?.id ?? workspace.round?.blockId
+  const currentLesson = workspace.learnerId && workspace.termId ? data?.interactiveLessons.lessons.find(item => item.blockId === ownerBlockId && item.learnerId === workspace.learnerId && item.termId === workspace.termId && item.status !== 'failed') : undefined
+  async function requestSync(lessonId: string, trigger: Parameters<StudentSessionActions['syncFeedback']>[1]) {
+    if (!syncFeedback) return
+    try { const result = await syncFeedback(lessonId, trigger); setSyncStatus(result.status) }
+    catch (reason) { setSyncStatus('unavailable'); setSendError(reason instanceof Error ? reason.message : t('classroomUnavailable')); throw reason }
+  }
+  const returnState = useRef({ currentLesson, syncFeedback, round: workspace.round, contextReady: workspace.contextReady, requestSync })
+  returnState.current = { currentLesson, syncFeedback, round: workspace.round, contextReady: workspace.contextReady, requestSync }
+  const resumed = useRef<string>()
   useEffect(() => {
-    if (!visible || disabled || running || !active || !workspace.learnerId || !workspace.termId) return
-    const lesson = data?.interactiveLessons.lessons.find(item => item.blockId === active.id && item.learnerId === workspace.learnerId && item.termId === workspace.termId && item.status !== 'failed')
-    if (!lesson) return
-    const key = JSON.stringify([sessionId, lesson.id, lesson.status, lesson.updatedAt, lesson.checkpoint])
-    if (synchronized.current.has(key)) return
-    synchronized.current.add(key)
-    void tutor(`请加载 study，阅读 references/openmaic-feedback.md。同步原课堂 id=${lesson.id}：生成中用 openmaic_generate 查询原 jobId；就绪时 prepare 并分页保存全部冻结原题及绑定，随后 read 全部有界来源页。经原生文件保存、打包 CLI 和独立消费接受后才推进 checkpoint。只同步当前原活动，不创建新课堂、不换题、不打开播放窗口；无新来源就保留状态。`, undefined, undefined, true).catch(() => {})
-  }, [visible, disabled, running, active?.id, workspace.learnerId, workspace.termId, data?.interactiveLessons.lessons, sessionId])
+    if (!visible || tab !== 'today') { resumed.current = undefined; return }
+    if (!workspace.contextReady || !currentLesson || currentLesson.status !== 'ready' || paused.current || workspace.round?.status === 'paused') return
+    const owner = JSON.stringify([sessionId, currentLesson.id])
+    if (resumed.current === owner) return
+    resumed.current = owner
+    void requestSync(currentLesson.id, 'resume').catch(() => {})
+  }, [visible, tab, currentLesson?.id, sessionId, workspace.contextReady])
+  useEffect(() => {
+    if (!visible || tab !== 'today') return
+    const returned = () => {
+      const current = returnState.current
+      if (!current.contextReady || document.visibilityState === 'hidden' || paused.current || current.round?.status === 'paused' || current.currentLesson?.status !== 'ready') return
+      void current.requestSync(current.currentLesson.id, 'return').catch(() => {})
+    }
+    window.addEventListener('focus', returned)
+    document.addEventListener('visibilitychange', returned)
+    return () => { window.removeEventListener('focus', returned); document.removeEventListener('visibilitychange', returned) }
+  }, [visible, tab, sessionId])
+  async function continueLearning(continuationAction?: string) {
+    const next = workspace.nextAction
+    if (!workspace.contextReady || !next || running || nativePending || sending) return
+    paused.current = false
+    const sourceLesson = next.source?.kind === 'openmaic' ? next.source.verification.lessonId : undefined
+    if ((!continuationAction || continuationAction === 'sync-feedback') && syncFeedback && (sourceLesson || currentLesson?.status === 'ready' && next.blockId === currentLesson.blockId)) {
+      await requestSync(sourceLesson ?? currentLesson!.id, 'continue')
+      return
+    }
+    const request = continuationAction ? `请按共享 legalActions 执行 ${continuationAction}，保留当前 round 与原作答。${continuePrompt}` : currentLesson?.status === 'generating' && next.blockId === currentLesson.blockId ? openmaicQueryPrompt(currentLesson.id) : continuePrompt
+    await tutor(request, undefined, undefined, true, true, continuationAction)
+  }
   const curriculum = study?.curriculum ?? null
   const scopeGrade = curriculum?.scope.grade ?? mapGrade ?? study?.profile.grade ?? 1
   const scopeTerm = curriculum?.scope.term ?? mapTerm ?? study?.profile.term ?? 'first'
@@ -187,49 +230,6 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
     const prompt = next === 'review' ? reviewPrompt : next === 'explore' ? explorePrompt(inquiry) : selectedObjectiveId ? goalPrompt(selectedObjectiveId) : continuePrompt
     return act({ action: 'start', id: crypto.randomUUID(), subject: target, mode: next, ...((next === 'foundation' || next === 'school') ? scopeCommand(target) : {}) }, true, prompt)
   }
-  function lessonRequest() {
-    const recommendation = study?.recommendation
-    const objectiveId = selectedObjectiveId || recommendation?.objectiveId || undefined
-    const subjectKey = selectedObjectiveId ? subject : recommendation?.objectiveId ? recommendation.subject : subject
-    const progress = study?.courses.find(item => item.subject === subjectKey)?.progress
-    const unitName = recommendation?.objectiveId ? recommendation.unitName : (progress ? curriculum?.units.find(unit => unit.id === progress.unitId)?.name : undefined)
-    return {
-      objectiveId,
-      unitName,
-      subjectLabel: t(subjectKey),
-      tags: study?.interests ?? [],
-      focus: study?.interestFocus ?? '',
-    }
-  }
-  function startInterest() {
-    const recommendation = study?.recommendation
-    if (selectedObjectiveId) { void start(subject, 'foundation'); return }
-    if (!recommendation || recommendation.kind === 'hold' || !study) return
-    const mode: Mode = resolveMode(recommendation.subject, 'foundation')
-    const request = lessonRequest()
-    selectSubject(recommendation.subject); setActivity({ subject: recommendation.subject, mode }); setSelectedObjectiveId(recommendation.objectiveId ?? ''); setMistakeOffset(0)
-    const teaching = recommendation.reason.code === 'needs-teaching' || recommendation.reason.code === 'prerequisite-gap'
-    const scene = interestPracticePrompt(request.objectiveId, request.tags, request.focus, request.unitName)
-    const prompt = teaching && recommendation.objectiveId ? `${teachPrompt(recommendation.objectiveId)}${scene}` : scene
-    void act({ action: 'start', id: crypto.randomUUID(), subject: recommendation.subject, mode }, true, prompt)
-  }
-  function startDue() {
-    const items = study?.dueToday ?? []
-    const first = items[0]
-    if (!study || !first) return
-    selectSubject(first.subject); setActivity({ subject: first.subject, mode: 'review' }); setSelectedObjectiveId(''); setMistakeOffset(0)
-    void act({ action: 'start', id: crypto.randomUUID(), subject: first.subject, mode: 'review' }, true, dueClearPrompt(items.map(item => item.id)))
-  }
-  function startRecommended() {
-    const recommendation = study?.recommendation
-    if (!recommendation || recommendation.kind === 'hold' || !study) return
-    if (recommendation.kind === 'diagnose') { void startDiagnosis(recommendation.subject, chosenIntensity(recommendation.subject)); return }
-    const mode: Mode = recommendation.kind === 'review' ? 'review' : resolveMode(recommendation.subject, 'foundation')
-    selectSubject(recommendation.subject); setActivity({ subject: recommendation.subject, mode }); setSelectedObjectiveId(mode === 'review' ? '' : recommendation.objectiveId ?? ''); setMistakeOffset(0)
-    const teaching = recommendation.reason.code === 'needs-teaching'
-    const prompt = recommendation.kind === 'review' ? reviewPrompt : teaching && recommendation.objectiveId ? teachPrompt(recommendation.objectiveId) : teaching ? teachQueuePrompt(recommendation.title ?? '') : recommendation.kind === 'preview' && recommendation.objectiveId ? previewPrompt(recommendation.objectiveId) : recommendation.objectiveId ? goalPrompt(recommendation.objectiveId) : continuePrompt
-    void act({ action: 'start', id: crypto.randomUUID(), subject: recommendation.subject, mode }, true, prompt)
-  }
   const nativeT: Translate = key => ['saved', 'gradesSaved', 'confirmPaperDone', 'teachQueued', 'workbookSaved'].includes(key) ? t('intentAdmitted') : t(key)
   const parentSettings = tab === 'parent'
   const parentVisible = tab !== 'today'
@@ -258,14 +258,16 @@ export function StudyDesk({ sessionId, visible, ask, running, t, useResource, sa
     </header>
     {readOnly && data && <p role="status">{t('legacyFilesHelp')}</p>}
     {workspace.error && !workspace.loadNeeded && <p role="alert">{t('staleData')}</p>}
+    {study && !workspace.contextReady && !workspace.stale && <p role="status">{t(workspace.contextState.readStatus === 'partial' ? 'partialLearningRecords' : 'continueWaiting')}</p>}
     {sendError && <p role="alert">{sendError}</p>}
+    {syncStatus && <p role="status">{t(syncStatus === 'queued' ? 'feedbackSyncQueued' : syncStatus === 'coalesced' ? 'feedbackSyncCoalesced' : syncStatus === 'paused' ? 'feedbackSyncPaused' : 'feedbackSyncUnavailable')}</p>}
     {submissions.length > 0 && <details className="student-fold"><summary>{t('submissionStatus')}</summary>{submissions.map(item => <div key={item.requestId}>
       <p>{t(item.admission === 'accepted' ? 'messageAdmitted' : 'messageUnknown')}</p>
       {item.response && <p>{t(item.inspection?.answer === 'saved' ? 'answerSaved' : 'answerPending')} · {t(item.inspection?.assessment === 'valid' ? 'assessmentSaved' : 'assessmentPending')}</p>}
       <button type="button" disabled={sending} onClick={() => { void inspectSubmission(sessionId, { requestId: item.requestId, ...(item.response ? { response: item.response } : {}) }).then(result => { setSubmissions(previous => previous.map(current => current.requestId === item.requestId ? { ...current, admission: result.admission, inspection: result } : current)) }).catch(reason => setSendError(reason instanceof Error ? reason.message : t('networkError'))) }}>{t('inspectSubmission')}</button>
     </div>)}</details>}
-    {!data ? workspace.loadNeeded ? <section><p>{t('continueSavedLearning')}</p><button type="button" disabled={sending || running} onClick={() => { void tutor(loadLearningPrompt).catch(() => {}) }}>{t('continueLearning')}</button></section> : workspace.value?.status === 'missing' ? <section><p>{t('setupFirst')}</p><button disabled={sending} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('setupConversation')}</button></section> : workspace.value ? <section><p>{t(workspace.value.status === 'legacy' ? 'legacyFilesHelp' : 'unavailableFilesHelp')}</p></section> : !workspace.error && <progress aria-label={t('busy')} /> : !study && tab === 'today' ? <section><p>{t('setupFirst')}</p><button disabled={sending} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('setupConversation')}</button></section> : subjectLoading && !parentSettings ? <progress aria-label={t('busy')} /> : <>
-      {study && tab === 'today' && <TodayView {...draft} draftScope={draftScope} nextAction={workspace.nextAction} learnerId={workspace.learnerId} termId={workspace.termId} classroomBindingId={workspace.classroomBindingId} onContinue={() => { void tutor(continuePrompt, undefined, undefined, true).catch(() => {}) }} study={study} subject={subject} activity={activity} setActivity={setActivity} goal={goals.find(item => item.id === selectedObjectiveId)} clearGoal={() => setSelectedObjectiveId('')} curriculum={curriculum} selectedObjectiveId={selectedObjectiveId} chooseGoal={chooseGoal} intensityLabel={`${t(intensityKeys[chosenIntensity(subject)])} · ${planOf(subject)?.samples[chosenIntensity(subject)].length ?? 0}`} openParent={() => setTab('parent')} openCheckins={() => setTab('map')} scope={activeScope} setScope={next => setScopeChoice(previous => ({ ...previous, [subject]: next }))} scopeUnits={study.scopedUnits ?? []} start={start} startRecommended={startRecommended} startDiagnosis={startDiagnosis} chosenIntensity={chosenIntensity(subject)} disabled={disabled || !workspace.contextReady} running={running} act={act} tutor={(text, currentBlock) => tutor(text, undefined, undefined, currentBlock)} t={t} prompts={{ daily: dailySheetPrompt(subject), dictation: dictationPrompt(subject) }} lessons={(data.interactiveLessons?.lessons ?? []).filter(item => active ? item.blockId === active.id || item.blockId === undefined && (item.subject === undefined || item.subject === active.subject) : item.blockId === undefined && (item.subject === undefined || item.subject === subject))} onInterestPractice={startInterest} onOpenLesson={() => { const request = lessonRequest(); void tutor(openmaicGeneratePrompt(request.subjectLabel, request.objectiveId, request.tags, request.focus, request.unitName)).catch(() => {}) }} onClearDue={startDue} onOpenClassroom={lessonId => { void openSavedLesson(lessonId).catch(() => {}) }} />}
+    {!data ? workspace.loadNeeded ? <section><p>{t('continueSavedLearning')}</p><button type="button" disabled={sending || running} onClick={() => { void tutor(loadLearningPrompt).catch(() => {}) }}>{t('continueLearning')}</button></section> : workspace.value?.status === 'missing' ? <section><p>{t('setupFirst')}</p><button disabled={sending} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('setupConversation')}</button></section> : workspace.value ? <section><p>{t(workspace.value.status === 'legacy' ? 'legacyFilesHelp' : 'unavailableFilesHelp')}</p></section> : !workspace.error && <div className={workbenchCss.empty} aria-busy="true" aria-label={t('busy')}><span className={workbenchCss.spinner} /></div> : !study && tab === 'today' ? <section><p>{t('setupFirst')}</p><button disabled={sending} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('setupConversation')}</button></section> : <>
+      {study && tab === 'today' && <TodayView {...draft} draftScope={draftScope} nextAction={workspace.nextAction} learnerId={workspace.learnerId} termId={workspace.termId} classroomBindingId={workspace.classroomBindingId} onContinue={() => { void continueLearning().catch(() => {}) }} round={workspace.round} legalActions={workspace.legalActions} onAction={action => { void continueLearning(action).catch(() => {}) }} study={study} subject={subject} activity={activity} setActivity={setActivity} goal={goals.find(item => item.id === selectedObjectiveId)} curriculum={curriculum} selectedObjectiveId={selectedObjectiveId} chooseGoal={chooseGoal} intensityLabel={`${t(intensityKeys[chosenIntensity(subject)])} · ${planOf(subject)?.samples[chosenIntensity(subject)].length ?? 0}`} openParent={() => setTab('parent')} openCheckins={() => setTab('map')} scope={activeScope} setScope={next => setScopeChoice(previous => ({ ...previous, [subject]: next }))} scopeUnits={study.scopedUnits ?? []} start={start} startDiagnosis={startDiagnosis} chosenIntensity={chosenIntensity(subject)} disabled={disabled || !workspace.contextReady} pending={nativePending} running={running} act={act} tutor={(text, currentBlock) => tutor(text, undefined, undefined, currentBlock)} t={t} prompts={{ daily: dailySheetPrompt(subject), dictation: dictationPrompt(subject) }} lessons={(data.interactiveLessons?.lessons ?? []).filter(item => active ? item.blockId === active.id || item.blockId === undefined && (item.subject === undefined || item.subject === active.subject) : item.blockId === undefined && (item.subject === undefined || item.subject === subject))} onOpenClassroom={lessonId => { void openSavedLesson(lessonId).catch(() => {}) }} />}
       {study && tab === 'lessons' && data.interactiveLessons && <LessonsPanel lessons={lessonsForSubject(data.interactiveLessons.lessons, subject)} {...(data.interactiveLessons.error !== undefined ? { error: data.interactiveLessons.error } : {})} disabled={disabled} running={running} t={t} onOpen={lessonId => { void openSavedLesson(lessonId).catch(() => {}) }} onQuery={lessonId => { void tutor(openmaicQueryPrompt(lessonId)).catch(() => {}) }} onRetry={runId => { void tutor(openmaicRetryPrompt(runId)).catch(() => {}) }} onReview={classroomId => { void tutor(openmaicReviewPrompt(classroomId)).catch(() => {}) }} />}
       {study && tab === 'map' && <nav className="student-segments" aria-label={t('parentProgress')}><button type="button" aria-pressed={knowledgeView === 'map'} onClick={() => setKnowledgeView('map')}>{t('map')}</button><button type="button" aria-pressed={knowledgeView === 'ideas'} onClick={() => setKnowledgeView('ideas')}>{t('ideas')}</button></nav>}
       {study && showMap && <MapView study={study} curriculum={curriculum} subject={subject} selectedConceptId={selectedConceptId} setSelectedConceptId={setSelectedConceptId} selectedObjectiveId={selectedObjectiveId} clearGoal={() => setSelectedObjectiveId('')} chooseGoal={chooseGoal} active={!!active} scopeGrade={scopeGrade} scopeTerm={scopeTerm} setMapGrade={setMapGrade} setMapTerm={setMapTerm} clearBrowse={() => { setMapGrade(undefined); setMapTerm(undefined) }} intensities={intensities} setIntensity={(target, level) => setIntensities(previous => ({ ...previous, [target]: level }))} scopeOf={scopeOf} setScope={(target, next) => setScopeChoice(previous => ({ ...previous, [target]: next }))} selectSubject={selectSubject} startDiagnosis={startDiagnosis} disabled={disabled} running={running} organize={() => { void tutor(organizePrompt(subject)).catch(() => {}) }} change={command => change(command).then(() => undefined)} t={t} />}

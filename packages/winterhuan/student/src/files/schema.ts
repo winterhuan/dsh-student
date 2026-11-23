@@ -57,6 +57,16 @@ export const questionSourceSchema = z.discriminatedUnion('kind', [
 ])
 /** Exact capability, family and tested scope of this frozen question instance. */
 export const capabilityBindingSchema = z.object({ goalId: knowledgeIdSchema, familyId: knowledgeIdSchema, scope: capabilityScopeSchema }).strict()
+/** A persisted allowance counts entered mothers and presented instances, independently of answer evidence. */
+export const learningRoundSchema = z.object({
+  id, kind: z.enum(['check', 'review']), startedAt: time,
+  members: z.array(capabilityBindingSchema.extend({ mistakeId: id.optional() })).min(1).max(3),
+  enteredFamilyIds: z.array(knowledgeIdSchema).max(3), presentedQuestionIds: z.array(id).max(200),
+  endedAt: time.optional(), endReason: z.enum(['complete', 'budget-exhausted', 'stopped']).optional(),
+  moreReview: z.object({ afterRoundId: id, request: text }).strict().optional(),
+}).strict()
+/** One recorded check or short review, owned by its original block. */
+export type LearningRound = z.infer<typeof learningRoundSchema>
 /** References reuse original archived responses without copying or changing their dates. */
 export const archiveEvidenceReferenceSchema = z.object({ learnerId, termId, ownerKind: z.enum(['block', 'worksheet']), ownerId: id, responseId, goalId: knowledgeIdSchema, scope: capabilityScopeSchema,
   review: z.object({ mistakeId: id, stage: z.number().int().min(0).max(4), dueAt: time, independentDays: z.array(day).max(1000) }).strict().optional(),
@@ -86,6 +96,7 @@ const pending = z.object({ sourcePath: text, row: text, fields: z.array(text).mi
 export const termSettingsSchema = z.object({ ...base, kind: z.literal('term-settings'), revision: time, updatedAt: time,
   profile: stateSchema.shape.profile.extend({ parentConfirmation: text }), materials: stateSchema.shape.materials,
   courses: z.array(stateSchema.shape.courses.element.extend({ parentConfirmation: text })).max(3),
+  learningScopes: z.array(z.object({ subject, goalIds: z.array(knowledgeIdSchema).min(1).max(100).optional(), scope: capabilityScopeSchema, parentConfirmation: text }).strict()).max(30).optional(),
   interests: stateSchema.shape.interests, openmaic: stateSchema.shape.openmaic, archivedAt: time.optional(),
   evidenceReferences: z.array(archiveEvidenceReferenceSchema).max(20000).optional(),
   migration: z.object({ sourcePath: text, sourceSha256: z.string().regex(/^[a-f0-9]{64}$/u), backupPath: text }).strict().optional(),
@@ -97,6 +108,8 @@ export const blockSchema = z.object({ ...base, kind: z.literal('block'), id: blo
   context: z.object({ profile: stateSchema.shape.profile.optional(), pendingProfile: text.optional(), scope: scope.optional(), material: stateSchema.shape.materials.element.optional() }).strict(),
   currentQuestionId: id.optional(), questions: z.array(questionSchema).max(200), responses: z.array(responseSchema).max(500),
   currentResponseId: responseId.optional(),
+  rounds: z.array(learningRoundSchema).max(100).optional(),
+  answerReveals: z.array(z.object({ questionId: id, at: time }).strict()).max(200).optional(),
   hints: z.array(z.object({ questionId: id, responseId: responseId.optional(), level: z.number().int().min(1).max(3), at: time }).strict()).max(500),
   stuckSignals: z.array(z.object({ questionId: id, at: time }).strict()).max(200).optional(),
   assessments: z.array(assessmentSchema).max(500), pendingLegacy: z.array(pending).max(500).optional(), pendingOpenmaic: z.array(pendingOpenmaicSchema).max(2000).optional(),

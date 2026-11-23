@@ -6,7 +6,8 @@ import { canonical, sameScope, scopeSelects, studyDay } from '../learning/shared
 import { builtinObjectiveAnywhere, builtinObjectiveIn, curriculumFor, subjectExercises } from '../curriculum.ts'
 import { officialFileSchemas, type OfficialFile, type TermSettings, type LearningBlock, type WorksheetFile, type CollectionsFile } from './schema.ts'
 import { customObjectiveMethods } from '../schema.ts'
-import { effectiveKnowledge, resolveLegacyReference } from '../capabilities.ts'
+import { effectiveKnowledge, resolveLegacyReference, scopeSupports } from '../capabilities.ts'
+import { answerWasExposed } from './answer-exposure.ts'
 import { errorTypesBySubject } from '../vocabulary.ts'
 
 /** Bounded, actionable durable-file failure. */
@@ -70,6 +71,50 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
   let knowledge = effectiveKnowledge()
   try { knowledge = effectiveKnowledge(workspace.collections?.knowledge) }
   catch (error) { fail('.study/collections.json', 'knowledge', 'knowledge-index', error instanceof Error ? error.message : 'Repair the capability catalog.') }
+  for (const [i, confirmation] of (settings.learningScopes ?? []).entries()) {
+    if (confirmation.goalIds && (new Set(confirmation.goalIds).size !== confirmation.goalIds.length || confirmation.goalIds.some(id => !knowledge.goals.some(goal => goal.id === id && goal.subject === confirmation.subject)))) fail('.study/settings.json', `learningScopes.${i}.goalIds`, 'confirmed-goals', 'Confirm distinct existing capabilities of this subject; omit goalIds to use the confirmed curriculum range.')
+  }
+  const rounds = blocks.flatMap(block => (block.rounds ?? []).map(round => ({ block, round }))).sort((a, b) => a.round.startedAt - b.round.startedAt || a.round.id.localeCompare(b.round.id))
+  unique('.study/blocks', 'rounds', rounds.map(item => item.round))
+  for (const [i, { block, round }] of rounds.entries()) {
+    const path = `.study/blocks/${block.id}.json`
+    const field = `rounds.${block.rounds!.indexOf(round)}`
+    const familyId = (id: string) => knowledge.familyAliases[id] ?? id
+    const memberIds = round.members.map(member => familyId(member.familyId))
+    if (new Set(memberIds).size !== memberIds.length || new Set(round.enteredFamilyIds.map(familyId)).size !== round.enteredFamilyIds.length || new Set(round.presentedQuestionIds).size !== round.presentedQuestionIds.length) fail(path, field, 'round-identity', 'Keep one membership, entry and presentation per stable identity.')
+    if (round.kind === 'check' && round.presentedQuestionIds.length > 3 || round.kind === 'review' && (round.members.length > 2 || round.enteredFamilyIds.length > 2)) fail(path, field, 'round-limit', 'A check permits three new instances; a short review permits two entered mothers. Errors, skips and help retain their entries.')
+    if ((round.endedAt === undefined) !== (round.endReason === undefined) || round.startedAt < block.startedAt || round.endedAt !== undefined && round.endedAt < round.startedAt) fail(path, field, 'round-time', 'Keep the round inside its owning activity and save an end time and reason together.')
+    if (round.enteredFamilyIds.some(id => !memberIds.includes(familyId(id)))) fail(path, field, 'round-member', 'Enter only a saved member of this round.')
+    for (const member of round.members) {
+      const goal = knowledge.goals.find(goal => goal.id === member.goalId)
+      const family = knowledge.families.find(family => family.id === familyId(member.familyId))
+      if (!goal || goal.subject !== block.subject || !family?.goalIds.includes(member.goalId) || member.mistakeId && !workspace.collections?.mistakes.some(mistake => mistake.id === member.mistakeId && mistake.subject === block.subject && mistake.objectiveId === member.goalId && mistake.confirmedAt !== undefined)) fail(path, field, 'round-member', 'Select a compatible capability and mother, with an existing confirmed mistake when specified.')
+    }
+    for (const id of round.presentedQuestionIds) {
+      const question = block.questions.find(question => question.id === id)
+      const binding = question?.capability
+      if (!question || !binding || !round.members.some(member => member.goalId === binding.goalId && familyId(member.familyId) === familyId(binding.familyId) && scopeSupports(member.scope, binding.scope) && scopeSupports(binding.scope, member.scope)) || !round.enteredFamilyIds.map(familyId).includes(familyId(binding.familyId)) || round.kind === 'check' && (question.openmaic || question.phase === 'demo')) fail(path, field, 'round-presentation', 'Present a saved instance of an entered member in its exact scope; a check counts new native instances, not demonstrations or imported questions.')
+      if ((block.rounds ?? []).filter(other => other.presentedQuestionIds.includes(id)).length > 1) fail(path, field, 'round-instance', 'A question instance belongs to one round; publish a new variant under a new identity.')
+    }
+    const previous = rounds.slice(0, i).findLast(item => item.round.kind === round.kind)
+    if (previous) {
+      const old = previous.round
+      const explicitMore = round.kind === 'review' && round.moreReview?.afterRoundId === old.id && old.endedAt !== undefined
+      const newLearning = old.endedAt !== undefined && blocks.some(owner => owner.mode !== 'review' && owner.responses.some(response => {
+        const question = owner.questions.find(question => question.id === response.questionId)
+        const date = response.answerDate
+        return question?.capability && !old.members.some(member => member.goalId === question.capability!.goalId) && !owner.rounds?.some(item => item.presentedQuestionIds.includes(question.id)) && date && (date.kind === 'instant' ? date.at >= old.endedAt! && date.at <= round.startedAt : date.kind === 'day' && date.day > studyDay(old.endedAt!) && date.day <= studyDay(round.startedAt))
+      }))
+      if (!explicitMore && !newLearning) fail(path, field, 'round-restart', 'Retain the prior allowance across activities and days. Start another round only after actual new-goal learning, or an explicit request for more review after the prior review ends.')
+    } else if (round.moreReview) fail(path, field, 'round-restart', 'An explicit more-review request references an earlier ended review round.')
+  }
+  for (const block of blocks.filter(block => block.endedAt === undefined)) {
+    const current = block.questions.find(question => question.id === block.currentQuestionId)
+    if (!current?.capability || current.openmaic || current.phase === 'demo' || block.responses.some(response => response.questionId === current.id)) continue
+    const check = rounds.findLast(item => item.round.kind === 'check' && item.round.members.some(member => member.goalId === current.capability!.goalId))
+    if (check && check.round.endedAt === undefined && check.round.presentedQuestionIds.length < 3 && !(check.block.id === block.id && check.round.presentedQuestionIds.includes(current.id))) fail(`.study/blocks/${block.id}.json`, 'currentQuestionId', 'round-presentation', 'Record this newly presented instance in its original check before answering; switching blocks retains that allowance.')
+  }
+  for (const old of prior) if (old.file.kind === 'block' && old.file.termId === settings.termId && old.file.rounds?.length && !files.some(entry => entry.path === old.path && entry.file.kind === 'block')) fail(old.path, 'rounds', 'round-history', 'Restore the original activity containing the saved round; removing its file cannot release an allowance.')
   const officialSources = new Set<string>()
   const evidenceIds = new Set<string>()
   for (const [i, reference] of (settings.evidenceReferences ?? []).entries()) {
@@ -136,6 +181,7 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
       if (!file.context.pendingProfile && (!file.context.profile || !material || !sameScope(settings.profile, material.scope) || !sameScope(settings.profile, file.context.profile) || file.context.material?.id !== material.id)) fail(path, 'context.material', 'future-course-confirmation', 'Confirm a course compatible with the current profile before starting a future school block.')
     }
     if (file.kind === 'block') {
+      for (const [i, reveal] of (file.answerReveals ?? []).entries()) if (!questions.some(question => question.id === reveal.questionId)) fail(path, `answerReveals.${i}`, 'question-reference', 'Record answer exposure against a saved frozen instance.')
       for (const [i, hint] of file.hints.entries()) {
         if (!questions.some(question => question.id === hint.questionId)) fail(path, `hints.${i}.questionId`, 'question-reference', 'Reference a saved question in this block.')
         if (hint.responseId && !file.responses.some(response => response.id === hint.responseId && response.questionId === hint.questionId)) fail(path, `hints.${i}.responseId`, 'response-reference', 'Associate the hint with a saved response to this question in this block.')
@@ -151,7 +197,7 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
         if (entry.path !== path || entry.file.kind !== file.kind || (entry.file.kind !== 'block' && entry.file.kind !== 'worksheet')) return false
         const oldQuestions = entry.file.kind === 'block' ? entry.file.questions : entry.file.items
         const old = oldQuestions.find(item => item.id === question.id)
-        const used = entry.file.kind === 'worksheet' || entry.file.responses.some(response => response.questionId === question.id)
+        const used = entry.file.kind === 'worksheet' || entry.file.responses.some(response => response.questionId === question.id) || entry.file.rounds?.some(round => round.presentedQuestionIds.includes(question.id))
         return used && canonical(old) === canonical(question)
       })
       if (file.kind === 'block' && file.mode === 'diagnose' && question.phase !== undefined) fail(path, `questions.${i}.phase`, 'diagnostic-phase', 'Omit teaching phases from diagnostic questions.')
@@ -221,6 +267,7 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
         if (officialSources.has(tuple)) fail(path, `responses.${i}.source`, 'duplicate-source-response', 'Keep one response per original binding, attempt, scene and question; correct its assessment separately.')
         officialSources.add(tuple)
       }
+      if (response.assistance === 'independent' && answerWasExposed(file, response)) fail(path, `responses.${i}.assistance`, 'answer-revealed', 'A repeated frozen instance after answer exposure is not independent; retain help or use a new constrained variant.')
       if (question?.phase === 'demo' && response.assistance !== 'worked-example') fail(path, `responses.${i}.assistance`, 'demonstration', 'A real response to a demonstration carries worked-example assistance.')
       if (response.answerDate?.kind === 'instant' && response.answerDate.basis === 'native-input' && (response.source.kind !== 'native' || response.source.receiptAt !== response.answerDate.at || response.source.inputVersion !== response.answerDate.sourceVersion)) fail(path, `responses.${i}.answerDate`, 'native-input-version', 'Use the matching consumed native input version and receipt time, or retain an unknown date.')
       if (response.answerDate?.kind === 'instant' && response.answerDate.basis === 'current-manual' && (response.source.kind !== 'manual' || response.source.entry !== 'current')) fail(path, `responses.${i}.answerDate`, 'current-manual-source', 'Use a confirmed current manual response; historical and paper entry retain day precision or an unknown date.')
@@ -250,10 +297,17 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
     for (const old of prior.filter(entry => entry.path === path && entry.file.kind === file.kind)) {
       if (old.file.kind !== 'block' && old.file.kind !== 'worksheet') continue
       if (old.file.termId !== file.termId || old.file.id !== file.id) { fail(path, 'id', 'identity-reuse', 'Preserve term and entity identity at this path.'); continue }
+      if (old.file.kind === 'block' && file.kind === 'block' && old.file.answerReveals?.some(reveal => !file.answerReveals?.some(current => canonical(current) === canonical(reveal)))) fail(path, 'answerReveals', 'answer-reveal-history', 'Retain the original frozen-instance reveal facts.')
+      if (old.file.kind === 'block' && file.kind === 'block') for (const priorRound of old.file.rounds ?? []) {
+        const currentRound = file.rounds?.find(round => round.id === priorRound.id)
+        const { enteredFamilyIds, presentedQuestionIds, endedAt, endReason, ...identity } = priorRound
+        const { enteredFamilyIds: entered, presentedQuestionIds: presented, endedAt: end, endReason: reason, ...currentIdentity } = currentRound ?? priorRound
+        if (!currentRound || canonical(identity) !== canonical(currentIdentity) || enteredFamilyIds.some(id => !entered.includes(id)) || presentedQuestionIds.some(id => !presented.includes(id)) || endedAt !== undefined && (endedAt !== end || endReason !== reason || canonical(enteredFamilyIds) !== canonical(entered) || canonical(presentedQuestionIds) !== canonical(presented))) fail(path, 'rounds', 'round-history', 'Preserve round membership, entry, presentation and ending facts; corrections to answers never release an allowance.')
+      }
       const oldQuestions = old.file.kind === 'block' ? old.file.questions : old.file.items
       if ((old.file.responses.length > 0 || (old.file.kind === 'worksheet' && old.file.items.length > 0)) && canonical(old.file.context) !== canonical(file.context)) fail(path, 'context', 'historical-context', 'Preserve the historical profile, material and selected scope of published worksheets and answered blocks.')
       for (const question of oldQuestions) {
-        const used = old.file.kind === 'worksheet' || old.file.responses.some(response => response.questionId === question.id)
+        const used = old.file.kind === 'worksheet' || old.file.responses.some(response => response.questionId === question.id) || old.file.rounds?.some(round => round.presentedQuestionIds.includes(question.id))
         if (used && canonical(question) !== canonical(questions.find(item => item.id === question.id))) fail(path, 'questions', 'frozen-content', 'Retain published worksheet and used block question content and target; publish replacements under a new identity.')
       }
       if (file.kind === 'block' && old.file.kind === 'block') for (const pending of old.file.pendingOpenmaic ?? []) {

@@ -109,7 +109,7 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
     const pendingFacts = index.entries.filter(item => (item.ownerKind !== 'worksheet' || !discardedSheets.has(item.ownerId)) && (item.answerDate.kind === 'unknown' || item.assistance === 'unknown' || item.sourceStatus === 'unknown' || !item.objectiveId))
     return { status: read.status === 'valid' ? 'valid' : 'partial', issues: read.issues, versions, refreshAfter, data: { termId: workspace.settings.termId, learnerId: workspace.settings.learnerId ?? null,
       activeBlock: active ? { id: active.id, subject: active.subject, mode: active.mode, context: active.context, currentQuestionId: active.currentQuestionId } : null, currentQuestion: currentQuestion ?? null, activeQuestions: active?.questions ?? [], responses,
-      ...learningContinuation(workspace, state, now, request.subject), archiveIssues: read.archiveIssues ?? [],
+      ...learningContinuation(workspace, state, now, request.subject, read.sourceVerification), ...(read.status !== 'valid' ? { nextAction: null, legalActions: [] } : {}), archiveIssues: read.archiveIssues ?? [],
       assessments: active?.assessments.filter(assessment => responses.some(response => response.id === assessment.responseId)) ?? [], savedResponse, savedAssessment, pendingAssessment: savedResponse !== null && savedAssessment === null,
       target: target ? { id: target.id, title: target.title, goal: target.goal, method: target.method, source: currentQuestion?.source, facts: elements?.facts ?? [] } : null,
       pendingFactCount: pendingFacts.length,
@@ -123,7 +123,6 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
       capability: capability ?? null, sourceExercise: currentQuestion?.capability ? knowledge.families.find(family => family.id === (knowledge.familyAliases[currentQuestion.capability!.familyId] ?? currentQuestion.capability!.familyId))?.representative ?? null : null,
       seeds: currentQuestion && typeof currentQuestion.objectiveId === 'string' ? subjectExercises(active!.subject).filter(item => item.objectiveId === currentQuestion.objectiveId).slice(0, 3) : [],
       elements: elements ? { ...elements, exercises: elements.exercises.slice(0, 3) } : null,
-      legalActions: active ? currentQuestion ? savedResponse ? savedAssessment ? ['next-question', 'end-block', 'switch-block'] : ['request-assessment', 'end-block', 'switch-block'] : ['answer', 'request-hint', 'end-block', 'switch-block'] : ['start-question', 'end-block', 'switch-block'] : ['start-block'],
     } }
   }
   if (request.kind === 'summary') {

@@ -80,11 +80,11 @@ it('offers only missing criteria with a three-question ceiling and leaves origin
   f.block.assessments = [{ id: 'now-a', responseId: 'now-r', result: 'correct', assistance: 'unknown', feedback: 'Sum correct; method still missing', answerEvidence: '15', criteria: ['basic'], assessedAt: NOW }]
   await f.save('.study/blocks/current.json', f.block)
   const context = queryWorkspace(await readWorkspace(f.files, new AbortController().signal), { kind: 'learning-context' }, NOW)
-  expect(context).toMatchObject({ data: { nextAction: { kind: 'supplement', supplement: { maxNewQuestions: 3, remaining: 2, missingCriteria: [{ familyId: 'math.count', criteria: ['method', 'variation'] }] } }, savedResponse: { assistance: 'unknown', answerDate: { kind: 'unknown' } }, goalProgress: expect.arrayContaining([expect.objectContaining({ id: 'm.count', independentDays: [] })]) } })
-  f.block.questions.push({ ...f.block.questions[0]!, id: 'q2' }, { ...f.block.questions[0]!, id: 'q3' })
-  f.block.responses.push(...['q2', 'q3'].map((id, i) => ({ ...f.block.responses[0]!, id: `extra-r${i}`, questionId: id })))
-  f.block.assessments.push(...['extra-r0', 'extra-r1'].map((id, i) => ({ ...f.block.assessments[0]!, id: `extra-a${i}`, responseId: id })))
-  await f.save('.study/blocks/current.json', f.block)
+  expect(context).toMatchObject({ data: { nextAction: { kind: 'supplement', supplement: { maxNewQuestions: 3, remaining: 3, missingCriteria: [{ familyId: 'math.count', criteria: ['method', 'variation'] }] } }, savedResponse: { assistance: 'unknown', answerDate: { kind: 'unknown' } }, goalProgress: expect.arrayContaining([expect.objectContaining({ id: 'm.count', independentDays: [] })]) } })
+  f.block.questions.push(...['q2', 'q3', 'q4'].map(id => ({ ...f.block.questions[0]!, id })))
+  f.block.responses.push(...['q2', 'q3', 'q4'].map((id, i) => ({ ...f.block.responses[0]!, id: `extra-r${i}`, questionId: id })))
+  f.block.assessments.push(...['extra-r0', 'extra-r1', 'extra-r2'].map((id, i) => ({ ...f.block.assessments[0]!, id: `extra-a${i}`, responseId: id })))
+  await f.save('.study/blocks/current.json', { ...f.block, rounds: [{ id: 'check', kind: 'check', startedAt: NOW, members: [f.block.questions[0]!.capability], enteredFamilyIds: ['math.count'], presentedQuestionIds: ['q2', 'q3', 'q4'] }] })
   expect(queryWorkspace(await readWorkspace(f.files, new AbortController().signal), { kind: 'learning-context' }, NOW)).toMatchObject({ data: { nextAction: { kind: 'hold' }, savedResponse: { assistance: 'unknown', answerDate: { kind: 'unknown' } } } })
 })
 
@@ -145,6 +145,7 @@ it('continues a known same-range goal gap after the selected variation is answer
 
 it('ends the two-mother review round before confirmed new learning even with remaining backlog', async () => {
   const f = await fixture()
+  await f.save('.study/settings.json', { ...f.settings, learningScopes: [{ subject: 'math', goalIds: ['m.compare'], scope, parentConfirmation: 'Confirmed next foundation target.' }] })
   const newQuestion = { ...f.block.questions[0]!, id: 'new-q', objectiveId: 'm.zero', capability: { goalId: 'm.zero', familyId: 'math.zero', scope } }
   f.block.questions.push(newQuestion)
   f.block.context.scope.objectiveIds.push('m.zero')
@@ -236,4 +237,184 @@ it.each([{ familyId: 'math.sub-basic', numberMax: 100 }, { familyId: 'math.sub-c
   const read = await readWorkspace(f.files, new AbortController().signal)
   expect(read.status).toBe('valid')
   expect(queryWorkspace(read, { kind: 'mistakes' }, NOW)).toMatchObject({ data: { items: [expect.objectContaining({ id: mother.id, stage: 0, independentDays: [], dueAt: Date.parse('2026-11-22T00:00:00+08:00') })] } })
+})
+
+it('retains a check allowance across skipped instances, block changes, midnight and a fresh reader', async () => {
+  const f = await fixture()
+  await f.save('.study/settings.json', f.settings)
+  const questions = ['check-1', 'check-2', 'check-3', 'unpresented-4'].map(id => ({ ...f.block.questions[0]!, id }))
+  const round = { id: 'check-round', kind: 'check', startedAt: NOW, members: [questions[0]!.capability], enteredFamilyIds: ['math.count'], presentedQuestionIds: ['check-1', 'check-2', 'check-3'] }
+  await f.save('.study/blocks/current.json', { ...f.block, currentQuestionId: 'check-3', questions, rounds: [round] })
+  const read = await readWorkspace(f.files, new AbortController().signal)
+  expect(read.status).toBe('valid')
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { round: { id: round.id, limit: 3, remaining: 0 }, nextAction: { kind: 'answer', questionId: 'check-3', roundId: round.id } } })
+  await f.save('.study/blocks/current.json', { ...f.block, endedAt: NOW + 1, currentQuestionId: 'check-3', questions, rounds: [{ ...round, endedAt: NOW + 1, endReason: 'budget-exhausted' }] })
+  const restarted = await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal)
+  const result = queryWorkspace(restarted, { kind: 'learning-context', subject: 'english' }, NOW + 86400000)
+  expect(result).toMatchObject({ data: { round: { id: round.id, status: 'ended', remaining: 0 }, nextAction: { kind: 'hold', reason: 'check-budget-exhausted' }, legalActions: ['request-teaching', 'switch-block', 'rest'] } })
+  expect(result.data).not.toMatchObject({ legalActions: expect.arrayContaining(['next-question']) })
+})
+
+it('rejects fourth check instances, removal of entered facts and replacement rounds without new learning', async () => {
+  const f = await fixture()
+  const questions = ['one', 'two', 'three', 'four'].map(id => ({ ...f.block.questions[0]!, id }))
+  const round = { id: 'bounded-check', kind: 'check', startedAt: NOW, members: [questions[0]!.capability], enteredFamilyIds: ['math.count'], presentedQuestionIds: ['one', 'two', 'three'] }
+  const block = { ...f.block, currentQuestionId: 'three', questions, rounds: [round] }
+  await f.save('.study/blocks/current.json', block)
+  expect((await readWorkspace(f.files, new AbortController().signal)).status).toBe('valid')
+  await f.save('.study/blocks/current.json', { ...block, rounds: [{ ...round, presentedQuestionIds: ['one', 'two'] }] })
+  expect((await readWorkspace(f.files, new AbortController().signal)).issues).toContainEqual(expect.objectContaining({ rule: 'round-history' }))
+  await f.save('.study/blocks/current.json', { ...block, currentQuestionId: 'four', rounds: [{ ...round, presentedQuestionIds: ['one', 'two', 'three', 'four'] }] })
+  expect((await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal)).issues).toContainEqual(expect.objectContaining({ rule: 'round-limit' }))
+  await f.save('.study/blocks/current.json', { ...block, endedAt: NOW + 1, rounds: [{ ...round, endedAt: NOW + 1, endReason: 'budget-exhausted' }] })
+  await f.save('.study/blocks/replacement.json', { ...block, id: 'replacement', startedAt: NOW + 2, rounds: [{ ...round, id: 'replacement-check', startedAt: NOW + 2, presentedQuestionIds: ['three'] }] })
+  expect((await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal)).issues).toContainEqual(expect.objectContaining({ rule: 'round-restart' }))
+})
+
+it('ends a two-mother round on entry despite skipped and unknown answers, then learns within one confirmed foundation range', async () => {
+  const f = await fixture()
+  await f.save('.study/settings.json', { ...f.settings, learningScopes: [{ subject: 'math', goalIds: ['m.count', 'm.zero', 'm.compose'], scope, parentConfirmation: 'Confirm written foundation work within twenty without a school book.' }] })
+  const zero = { ...f.block.questions[0]!, id: 'zero', objectiveId: 'm.zero', capability: { goalId: 'm.zero', familyId: 'math.zero', scope } }
+  const round = { id: 'review-round', kind: 'review', startedAt: NOW, members: [f.block.questions[0]!.capability, zero.capability], enteredFamilyIds: ['math.count', 'math.zero'], presentedQuestionIds: ['q1', 'zero'], endedAt: NOW + 1, endReason: 'budget-exhausted' }
+  await f.save('.study/blocks/current.json', { ...f.block, mode: 'review', endedAt: NOW + 1, questions: [f.block.questions[0], zero], context: { profile: setup.profile }, rounds: [round] })
+  const consume = async (at: number) => queryWorkspace(await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal), { kind: 'learning-context', subject: 'math' }, at)
+  const expected = { data: { nextAction: { kind: 'learn', goalId: 'm.compose', scope }, round: { id: round.id, status: 'ended', remaining: 0 }, reviewRound: { remaining: 0, usedFamilyIds: ['math.count', 'math.zero'] } } }
+  expect(await consume(NOW + 100)).toMatchObject(expected)
+  expect(await consume(NOW + 86400000)).toMatchObject(expected)
+  expect((await consume(NOW + 86400000)).data).not.toMatchObject({ nextAction: { blockId: 'current' } })
+  await f.save('.study/settings.json', { ...f.settings, learningScopes: [{ subject: 'math', goalIds: ['m.count', 'm.zero'], scope, parentConfirmation: 'Only these two goals.' }] })
+  expect(await consume(NOW + 86400000)).toMatchObject({ data: { nextAction: { kind: 'hold', reason: 'no-learnable-goal' }, legalActions: ['switch-block', 'rest', 'more-review'] } })
+})
+
+it('preserves pre-reveal credit but rejects independent repeats of the same frozen instance after an answer reveal', async () => {
+  const f = await fixture()
+  await f.save('.study/settings.json', f.settings)
+  const response = { id: 'before', questionId: 'q1', rawResponse: '15', assistance: 'independent', answerDate: { kind: 'day', day: '2026-11-21', parentConfirmation: 'Actual answer day' }, source: { kind: 'manual', entry: 'historical', parentConfirmation: 'Original answer' } }
+  const assessment = { id: 'before-a', responseId: response.id, result: 'correct', assistance: 'independent', feedback: 'Correct before seeing any answer.', criteria: ['basic', 'method', 'variation'], answerEvidence: '8 + 7 = 15', assessedAt: NOW }
+  const block = { ...f.block, responses: [response], assessments: [assessment], answerReveals: [{ questionId: 'q1', at: NOW - 86400000 }] }
+  await f.save('.study/blocks/current.json', block)
+  let read = await readWorkspace(f.files, new AbortController().signal)
+  expect(read.status).toBe('valid')
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { goalProgress: expect.arrayContaining([expect.objectContaining({ id: 'm.count', independentDays: ['2026-11-21'] })]) } })
+  await f.save('.study/blocks/current.json', { ...block, responses: [...block.responses, { ...response, id: 'after', answerDate: { ...response.answerDate, day: '2026-11-23' } }] })
+  read = await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal)
+  expect(read.issues).toContainEqual(expect.objectContaining({ rule: 'answer-revealed' }))
+  await f.save('.study/blocks/current.json', { ...block, responses: [...block.responses, { ...response, id: 'after', assistance: 'worked-example', answerDate: { ...response.answerDate, day: '2026-11-23' } }], assessments: [...block.assessments, { ...assessment, id: 'after-a', responseId: 'after', assistance: 'worked-example' }] })
+  read = await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal)
+  expect(read.status).toBe('valid')
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { goalProgress: expect.arrayContaining([expect.objectContaining({ id: 'm.count', independentDays: ['2026-11-21'] })]) } })
+  await f.save('.study/blocks/current.json', { ...block, answerReveals: [] })
+  expect((await readWorkspace(f.files, new AbortController().signal)).issues).toContainEqual(expect.objectContaining({ rule: 'answer-reveal-history' }))
+})
+
+it('does not let an unrecorded fourth instance or a new block bypass the existing check', async () => {
+  const f = await fixture()
+  const questions = ['one', 'two', 'three', 'four'].map(id => ({ ...f.block.questions[0]!, id }))
+  const round = { id: 'existing-check', kind: 'check', startedAt: NOW, members: [questions[0]!.capability], enteredFamilyIds: ['math.count'], presentedQuestionIds: ['one', 'two', 'three'] }
+  await f.save('.study/blocks/current.json', { ...f.block, questions, currentQuestionId: 'four', rounds: [round] })
+  const consume = async () => queryWorkspace(await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal), { kind: 'learning-context' }, NOW + 100)
+  expect(await consume()).toMatchObject({ data: { nextAction: { kind: 'hold', reason: 'check-budget-exhausted', roundId: round.id } } })
+  await f.save('.study/blocks/current.json', { ...f.block, endedAt: NOW + 1, questions, currentQuestionId: 'three', rounds: [{ ...round, endedAt: NOW + 1, endReason: 'budget-exhausted' }] })
+  await f.save('.study/blocks/new-block.json', { ...f.block, id: 'new-block', startedAt: NOW + 2 })
+  expect(await consume()).toMatchObject({ data: { nextAction: { kind: 'hold', reason: 'check-budget-exhausted', roundId: round.id } } })
+})
+
+it('requires a current check instance to consume its persisted allowance before answering', async () => {
+  const f = await fixture()
+  const questions = ['one', 'two'].map(id => ({ ...f.block.questions[0]!, id }))
+  const round = { id: 'open-check', kind: 'check', startedAt: NOW, members: [questions[0]!.capability], enteredFamilyIds: ['math.count'], presentedQuestionIds: ['one'] }
+  await f.save('.study/blocks/current.json', { ...f.block, questions, currentQuestionId: 'two', rounds: [round] })
+  const read = await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal)
+  expect(read.issues).toContainEqual(expect.objectContaining({ rule: 'round-presentation' }))
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW).data).toBeUndefined()
+  await f.save('.study/blocks/current.json', { ...f.block, questions, currentQuestionId: 'two', rounds: [{ ...round, presentedQuestionIds: ['one', 'two'] }] })
+  expect(queryWorkspace(await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal), { kind: 'learning-context' }, NOW)).toMatchObject({ data: { nextAction: { kind: 'answer', questionId: 'two' }, round: { remaining: 1 } } })
+})
+
+it('retains observed round ownership when an entire block is removed', async () => {
+  const f = await fixture()
+  const round = { id: 'saved-review', kind: 'review', startedAt: NOW, members: [f.block.questions[0]!.capability], enteredFamilyIds: ['math.count'], presentedQuestionIds: ['q1'], endedAt: NOW + 1, endReason: 'complete' }
+  await f.save('.study/blocks/current.json', { ...f.block, mode: 'review', endedAt: NOW + 1, rounds: [round] })
+  const saved = await readWorkspace(f.files, new AbortController().signal)
+  expect(saved.status).toBe('valid')
+  const prior = saved.files.flatMap(file => file.file ? [{ path: file.path, file: file.file }] : [])
+  await rm(join(f.cwd, '.study/blocks/current.json'))
+  const read = await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal, prior)
+  expect(read.issues).toContainEqual(expect.objectContaining({ rule: 'round-history' }))
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW).data).toBeUndefined()
+})
+
+it('leaves a completed three-instance check for confirmed new learning once its missing criteria are met', async () => {
+  const f = await fixture()
+  await f.save('.study/settings.json', { ...f.settings, learningScopes: [{ subject: 'math', goalIds: ['m.zero'], scope, parentConfirmation: 'Confirm the next foundation target.' }] })
+  const questions = ['one', 'two', 'three'].map(id => ({ ...f.block.questions[0]!, id }))
+  const responses = questions.map(question => ({ id: `r-${question.id}`, questionId: question.id, rawResponse: '15', assistance: 'independent', answerDate: { kind: 'day', day: '2026-11-23', parentConfirmation: 'Actual day' }, source: { kind: 'manual', entry: 'current', parentConfirmation: 'Actual child answer' } }))
+  const assessments = responses.map(response => ({ id: `a-${response.id}`, responseId: response.id, result: 'correct', assistance: 'independent', feedback: 'The missing criteria are now demonstrated.', answerEvidence: '8 + 2 + 5 = 15', criteria: ['basic', 'method', 'variation'], assessedAt: NOW }))
+  const round = { id: 'complete-check', kind: 'check', startedAt: NOW, members: [questions[0]!.capability], enteredFamilyIds: ['math.count'], presentedQuestionIds: questions.map(question => question.id), endedAt: NOW + 1, endReason: 'complete' }
+  await f.save('.study/blocks/current.json', { ...f.block, questions, responses, assessments, currentQuestionId: 'three', endedAt: NOW + 1, rounds: [round] })
+  const read = await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal)
+  expect(read.status).toBe('valid')
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW + 2)).toMatchObject({ data: { round: { id: round.id, remaining: 0, status: 'ended' }, nextAction: { kind: 'learn', goalId: 'm.zero' } } })
+})
+
+it('starts fresh confirmed foundation or school learning without pre-creating questions and respects school posture', async () => {
+  const f = await fixture()
+  await rm(join(f.cwd, '.study/blocks/current.json'))
+  const learningScopes = [{ subject: 'math', goalIds: ['m.sub'], scope, parentConfirmation: 'Confirm subtraction within twenty.' }]
+  await f.save('.study/settings.json', { ...f.settings, learningScopes })
+  const consume = async () => queryWorkspace(await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal), { kind: 'learning-context' }, NOW)
+  expect(await consume()).toMatchObject({ data: { activeQuestions: [], nextAction: { kind: 'learn', goalId: 'm.sub', scope } } })
+  const material = { id: 'book', subject: 'math', scope: { region: '上海市', grade: 2, term: 'first', schoolYear: '2026–2027', schoolSystem: 'five-four' }, title: 'Parent book', publisher: 'Publisher', edition: 'Confirmed edition', editionStatus: 'identified', kind: 'official-textbook', locator: 'Current page', evidence: 'Parent checked current book' }
+  const course = { subject: 'math', materialId: 'book', unit: 'Current unit', parentConfirmation: 'Confirmed course', progress: { unitId: 'm2a-u-shop', confirmedAt: NOW, posture: 'keep-up', preview: false, pace: 'teaching' } }
+  const save = async (progress: object | undefined) => f.save('.study/settings.json', { ...f.settings, materials: [material], courses: [{ ...course, progress }], learningScopes })
+  await save(course.progress)
+  expect(await consume()).toMatchObject({ data: { nextAction: { kind: 'hold', reason: 'no-learnable-goal' } } })
+  await save({ ...course.progress, posture: 'catch-up' })
+  expect(await consume()).toMatchObject({ data: { nextAction: { kind: 'learn', goalId: 'm.sub', scope } } })
+  await save({ ...course.progress, unitId: 'm2a-u-sub' })
+  expect(await consume()).toMatchObject({ data: { nextAction: { kind: 'learn', goalId: 'm.sub' } } })
+  await save({ ...course.progress, pace: 'review' })
+  expect(await consume()).toMatchObject({ data: { nextAction: { kind: 'hold', reason: 'no-learnable-goal' } } })
+  await save(undefined)
+  expect(await consume()).toMatchObject({ data: { nextAction: { kind: 'hold' } } })
+})
+
+it('requires explicit more-review intent and retains selected members when the browsing subject changes', async () => {
+  const f = await fixture()
+  const member = f.block.questions[0]!.capability
+  const round = { id: 'first-review', kind: 'review', startedAt: NOW, members: [member], enteredFamilyIds: ['math.count'], presentedQuestionIds: ['q1'], endedAt: NOW + 1, endReason: 'complete' }
+  await f.save('.study/blocks/current.json', { ...f.block, mode: 'review', endedAt: NOW + 1, rounds: [round] })
+  const next = { ...f.block, id: 'more', mode: 'review', startedAt: NOW + 2, currentQuestionId: undefined, rounds: [{ id: 'more-review', kind: 'review', startedAt: NOW + 2, members: [member], enteredFamilyIds: [], presentedQuestionIds: [] }] }
+  await f.save('.study/blocks/more.json', next)
+  expect((await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal)).issues).toContainEqual(expect.objectContaining({ rule: 'round-restart' }))
+  await f.save('.study/blocks/more.json', { ...next, rounds: next.rounds.map(round => ({ ...round, moreReview: { afterRoundId: 'first-review', request: 'I want another short review.' } })) })
+  const read = await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal)
+  expect(read.status).toBe('valid')
+  expect(queryWorkspace(read, { kind: 'learning-context', subject: 'english' }, NOW + 86400000)).toMatchObject({ data: { nextAction: { kind: 'review', subject: 'math', blockId: 'more', roundId: 'more-review', review: { familyIds: ['math.count'], remaining: 2 } } } })
+})
+
+it('holds the current owner for incomplete source reads or incomplete consumption without confusing unknown historical facts', async () => {
+  const f = await fixture()
+  const read = await readWorkspace(f.files, new AbortController().signal)
+  const source = { lessonId: 'lesson', learnerId: 'child-1', termId: 'new-term', blockId: 'current', status: 'unavailable', omitted: 0, failure: 'incomplete-read', reason: 'The original read is incomplete.' }
+  Object.assign(read, { sourceVerification: { native: [], openmaic: [source] } })
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { nextAction: { kind: 'hold', reason: 'source-unavailable', blockId: 'current', source: { kind: 'openmaic', verification: { failure: 'incomplete-read' } } }, legalActions: ['sync-feedback', 'switch-block', 'rest'] } })
+  Object.assign(read, { sourceVerification: { native: [], openmaic: [{ ...source, status: 'available', failure: undefined, consumption: 'pending', pendingCount: 1 }] } })
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { nextAction: { kind: 'hold', reason: 'source-pending', blockId: 'current' } } })
+  Object.assign(read, { sourceVerification: { native: [], openmaic: [{ ...source, status: 'available', failure: undefined, consumption: 'accepted', pendingCount: 1, conflictCount: 1 }] } })
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { nextAction: { kind: 'answer', questionId: 'q1' } } })
+  Object.assign(read, { sourceVerification: { native: [], openmaic: [{ ...source, blockId: 'another-block' }] } })
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { nextAction: { kind: 'answer', questionId: 'q1' } } })
+})
+
+it('retains the paused round owner while its original native answer source is unavailable', async () => {
+  const f = await fixture()
+  const round = { id: 'paused-check', kind: 'check', startedAt: NOW, members: [f.block.questions[0]!.capability], enteredFamilyIds: ['math.count'], presentedQuestionIds: ['q1'] }
+  const response = { id: 'native-r', questionId: 'q1', rawResponse: '15', assistance: 'unknown', answerDate: { kind: 'unknown' }, source: { kind: 'native', sessionId: 'original-session', messageId: 'original-message', inputVersion: 'original-version', receiptAt: NOW } }
+  await f.save('.study/blocks/current.json', { ...f.block, endedAt: NOW + 1, rounds: [round], responses: [response] })
+  const read = await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal)
+  expect(read.status).toBe('valid')
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW + 2)).toMatchObject({ data: { nextAction: { reason: 'round-paused', blockId: 'current', roundId: round.id }, legalActions: ['resume-round', 'switch-block', 'rest'] } })
+  Object.assign(read, { sourceVerification: { openmaic: [], native: [{ sessionId: 'original-session', status: 'unavailable', reason: 'The original Session cannot be read.' }] } })
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW + 2)).toMatchObject({ data: { nextAction: { kind: 'hold', reason: 'source-unavailable', blockId: 'current', source: { kind: 'native', verification: { sessionId: 'original-session' } } }, legalActions: ['verify-source', 'switch-block', 'rest'] } })
 })

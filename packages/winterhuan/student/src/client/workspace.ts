@@ -15,16 +15,16 @@ export type UseStudentResource = (address: string) => ResourceSnapshot<StudentQu
 export function useStudy(sessionId: StudentSessionId, visible: boolean, networkError: string, query: StudyQuery, useResource: UseStudentResource) {
   const { offset: mistakeOffset, status: mistakeStatus, ...options } = query
   const resource = useResource(visible ? studentResourceAddress(sessionId, { kind: 'dashboard', options: { ...options, mistakeOffset, mistakeStatus } }) : '')
-  const context = useResource(visible ? studentResourceAddress(sessionId, { kind: 'learning-context' }) : '')
+  const context = useResource(visible ? studentResourceAddress(sessionId, { kind: 'learning-context', subject: query.subject }) : '')
   const currentData = resource.value && dashboardValue(resource.value.data) ? resource.value.data : undefined
   const currentFacts = context.value?.data
   // Independent streams must agree on the files before an action can combine their facts.
   const contextReady = resource.status === 'live' && resource.value?.status === 'valid' && context.status === 'live' && context.value?.status === 'valid' && currentData !== undefined && currentFacts !== null && currentFacts !== undefined
     && resource.value.versions.length === context.value.versions.length && resource.value.versions.every(file => context.value!.versions.some(other => other.path === file.path && other.targetKey === file.targetKey && other.version === file.version))
-  const lastView = useRef<{ sessionId: StudentSessionId; data: StudentJsonValue & Dashboard; facts: StudentJsonValue }>()
-  if (contextReady) lastView.current = { sessionId, data: currentData, facts: currentFacts }
+  const lastView = useRef<{ sessionId: StudentSessionId; subject: StudyQuery['subject']; data: StudentJsonValue & Dashboard; facts: StudentJsonValue }>()
+  if (contextReady) lastView.current = { sessionId, subject: query.subject, data: currentData, facts: currentFacts }
   // Preserve one coherent question and draft identity while current reads disable actions.
-  const retained = lastView.current?.sessionId === sessionId ? lastView.current : undefined
+  const retained = lastView.current?.sessionId === sessionId && lastView.current.subject === query.subject ? lastView.current : undefined
   const data = contextReady ? currentData : retained?.data ?? currentData
   const facts = contextReady ? currentFacts : retained?.facts ?? currentFacts
   const offset = useRef(0)

@@ -44,16 +44,17 @@ export interface LearningContinuation { nextAction: LearningNextAction | null; g
  * @param workspace - independently validated current and explicitly referenced original term files.
  * @param state - shared evidence and review projection.
  * @param now - actual query cutoff.
- * @param subject - optional browsing subject; unfinished activity retains priority.
+ * @param subject - optional selected subject; unfinished activity within that subject retains priority.
  * @param sourceVerification - independently read source availability and consumption for the current owner.
  * @returns one permitted action, scoped progress and the current two-mother review allowance.
  */
 export function learningContinuation(workspace: ValidatedWorkspace, state: StudyState, now: number, subject?: CurriculumSubject, sourceVerification?: WorkspaceRead['sourceVerification']): LearningContinuation {
   const knowledge = effectiveKnowledge(workspace.collections?.knowledge)
   const index = evidenceOf(state)
-  const active = workspace.blocks.find(block => block.endedAt === undefined)
+  const active = workspace.blocks.find(block => block.endedAt === undefined && (!subject || block.subject === subject))
   const current = active?.questions.find(question => question.id === active.currentQuestionId)
   const ordered = workspace.blocks.slice().sort((a, b) => b.startedAt - a.startedAt || a.id.localeCompare(b.id))
+  const subjectBlocks = ordered.filter(block => !subject || block.subject === subject)
   const questionBindings = ordered.flatMap(block => block.questions.flatMap(question => question.capability ? [{ block, binding: question.capability }] : []))
   const scopeFor = (goalId: string) => current?.capability?.goalId === goalId ? current.capability.scope : questionBindings.find(item => item.binding.goalId === goalId)?.binding.scope ?? workspace.archivedEvidence?.flatMap(archive => archive.references).find(reference => reference.goalId === goalId)?.scope
   const canonicalFamily = (id: string) => knowledge.familyAliases[id] ?? id
@@ -100,14 +101,14 @@ export function learningContinuation(workspace: ValidatedWorkspace, state: Study
       const currentGoal = knowledge.goals.find(goal => goal.id === current?.capability?.goalId)
       return Number(!currentGoal?.prerequisites.includes(a.objectiveId ?? '')) - Number(!currentGoal?.prerequisites.includes(b.objectiveId ?? '')) || a.dueAt! - b.dueAt! || familyForMistake(a.id).localeCompare(familyForMistake(b.id)) || a.id.localeCompare(b.id)
     })
-  const rounds = ordered.flatMap(block => (block.rounds ?? []).map(round => ({ ...round, blockId: block.id,
+  const rounds = subjectBlocks.flatMap(block => (block.rounds ?? []).map(round => ({ ...round, blockId: block.id,
     status: round.endedAt !== undefined ? 'ended' as const : block.endedAt !== undefined ? 'paused' as const : 'active' as const,
     limit: round.kind === 'check' ? 3 as const : 2 as const,
     remaining: Math.max(0, (round.kind === 'check' ? 3 - round.presentedQuestionIds.length : 2 - round.enteredFamilyIds.length)),
   }))).sort((a, b) => b.startedAt - a.startedAt || a.id.localeCompare(b.id))
   const latestReview = rounds.find(round => round.kind === 'review')
-  const lastLearning = ordered.find(block => block.mode !== 'review' && block.responses.some(response => response.source.kind === 'manual' && response.source.entry === 'current' || response.source.kind === 'native'))
-  const legacyReview = ordered.filter(block => !block.rounds?.length && block.mode === 'review' && (!lastLearning || block.startedAt > lastLearning.startedAt))
+  const lastLearning = subjectBlocks.find(block => block.mode !== 'review' && block.responses.some(response => response.source.kind === 'manual' && response.source.entry === 'current' || response.source.kind === 'native'))
+  const legacyReview = subjectBlocks.filter(block => !block.rounds?.length && block.mode === 'review' && (!lastLearning || block.startedAt > lastLearning.startedAt))
   const used = latestReview?.enteredFamilyIds ?? [...new Set(legacyReview.flatMap(block => block.questions.filter(question => question.id === block.currentQuestionId || block.responses.some(response => response.questionId === question.id)).map(question => question.capability ? canonicalFamily(question.capability.familyId) : familyForMistake(question.mistakeId ?? question.id))))]
   const goalReviews = progress.filter(item => item.level === 'due' && item.scope && (!subject || item.subject === subject) && !due.some(mistake => mistake.objectiveId === item.id))
   const dueFamilies = [...new Set([...due.map(mistake => familyForMistake(mistake.id)), ...goalReviews.map(item => questionBindings.find(binding => binding.binding.goalId === item.id)?.binding.familyId ?? knowledge.goals.find(goal => goal.id === item.id)!.familyIds[0]!)])]
@@ -142,7 +143,7 @@ export function learningContinuation(workspace: ValidatedWorkspace, state: Study
     const ownerRound = rounds.find(round => round.blockId === active?.id && round.presentedQuestionIds.includes(current?.id ?? ''))
     return { kind, reason, subject: goal.subject, title: goal.title, goalId, familyId: family.id, ...(selectedScope ? { scope: selectedScope } : {}), ...(active && kind !== 'learn' && kind !== 'review' ? { blockId: active.id, ...(ownerRound ? { roundId: ownerRound.id } : {}) } : {}), requirement }
   }
-  const owner = active ?? workspace.blocks.find(block => block.id === rounds[0]?.blockId)
+  const owner = active ?? subjectBlocks.find(block => block.id === rounds[0]?.blockId)
   const pendingSource = sourceVerification?.openmaic.find(source => source.learnerId === workspace.settings.learnerId && source.termId === workspace.settings.termId && source.blockId === owner?.id && (source.status !== 'available' || source.consumption === 'pending' || source.omitted > 0))
   if (owner && pendingSource) return finish({ kind: 'hold', reason: pendingSource.status === 'available' ? 'source-pending' : 'source-unavailable', subject: owner.subject, title: 'Read and save the original activity feedback before continuing.', blockId: owner.id, source: { kind: 'openmaic', verification: pendingSource } })
   const nativeSource = sourceVerification?.native.find(source => source.status !== 'available' && owner?.responses.some(response => response.questionId === owner.currentQuestionId && response.source.kind === 'native' && response.source.sessionId === source.sessionId))

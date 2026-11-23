@@ -90,18 +90,20 @@ it('sends the complete original answer to native chat without a business pre-sav
   expect(screen.queryByText(`${en.answer}: ${attempt.response}`)).toBeNull()
 })
 
-it('keeps the unfinished question primary while browsing another subject', async () => {
+it('hides the unfinished question while browsing another subject and restores it on return', async () => {
   const state = updateStudy(updateStudy(updateStudy(undefined, setup, NOW), start, NOW), { action: 'task', task: { id: 'q1', sessionId: start.id, subject: 'math', topic: 'Addition', prompt: '8 + 7?' } }, NOW)
   const useResource = (address: string) => ({ status: 'live' as const, failure: undefined, value: { status: 'valid', token: 'one', readAt: NOW, refreshAfter: NOW + 1000, versions: [], native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [], data: new URL(address).searchParams.get('query')?.includes('learning-context') ? { termId: 'term-one', pendingFacts: [] } : dashboard(state, NOW, { subject: new URL(address).searchParams.get('query')?.includes('chinese') ? 'chinese' : 'math' }) } as StudentQueryResult })
   const remote = { inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() }
   render(<StudyDesk useResource={useResource} {...createStudentManualActions(remote)} sessionId="native-session" visible running={false} ask={vi.fn()} t={t} />)
   await screen.findByText('8 + 7?')
   fireEvent.click(screen.getByRole('button', { name: en.chinese }))
+  expect(screen.queryByText('8 + 7?')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: en.math }))
   expect(screen.getByText('8 + 7?')).toBeTruthy()
   expect(screen.queryByRole('button', { name: en.startNow })).toBeNull()
 })
 
-it.each(['answer', 'hint', 'continue', 'stop'] as const)('keeps the active question subject and scope in a %s intention after browsing', async action => {
+it.each(['answer', 'hint', 'continue', 'stop'] as const)('keeps the active question subject and scope in a %s intention after returning from browsing', async action => {
   const scope = { grade: 2, term: 'first' as const, units: ['m2a-u-sub'], objectiveIds: ['m2a-o-sub'] }
   const state = updateStudy(updateStudy(updateStudy(undefined, setup, NOW), { ...start, scope }, NOW), { action: 'task', task: { id: 'q1', sessionId: start.id, subject: 'math', objectiveId: 'm2a-o-sub', topic: 'Subtraction', prompt: '18 - 7?' } }, NOW)
   const useResource = (address: string) => ({ status: 'live' as const, failure: undefined, value: { status: 'valid', token: 'one', readAt: NOW, refreshAfter: NOW + 1000, versions: [], native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [], data: new URL(address).searchParams.get('query')?.includes('learning-context') ? { termId: 'term-one', pendingFacts: [], nextAction: { kind: 'answer', reason: 'unfinished-question', subject: 'math', title: 'Subtraction', goalId: 'm2a-o-sub', blockId: start.id, questionId: 'q1', scope } } : dashboard(state, NOW, { subject: new URL(address).searchParams.get('query')?.includes('chinese') ? 'chinese' : 'math' }) } as StudentQueryResult })
@@ -111,6 +113,7 @@ it.each(['answer', 'hint', 'continue', 'stop'] as const)('keeps the active quest
   fireEvent.click(screen.getByRole('button', { name: en.chinese }))
   fireEvent.click(screen.getByText(en.otherWays))
   fireEvent.change(screen.getByLabelText(en.scopeLabel), { target: { value: '1-second' } })
+  fireEvent.click(screen.getByRole('button', { name: en.math }))
   if (action === 'answer') {
     fireEvent.change(screen.getByLabelText(en.answer), { target: { value: '11' } })
     fireEvent.click(screen.getByRole('button', { name: en.submit }))

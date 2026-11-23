@@ -199,12 +199,13 @@ it('shows the shared next-action reason and continues missing evidence before an
   expect(String(ask.mock.calls[0]![0])).toContain('Only missing method evidence, at most 1 question')
 })
 
-it('keeps the shared next goal and scope when Continue is used after subject browsing without an active block', async () => {
+it('uses the shared next goal and scope after returning from subject browsing without an active block', async () => {
   const nextAction = { kind: 'learn', reason: 'new-goal', subject: 'math', title: 'Addition', goalId: 'm.add', scope: { id: 'within20', description: 'Addition within20', numberMax: 20, modality: 'written' } }
   const { ask, fixture } = mount({ learnerId: 'learner-one', termId: 'term-one', nextAction })
   fixture.replace(updateStudy(undefined, setup, NOW))
   await screen.findByText(nextAction.title)
   fireEvent.click(screen.getByRole('button', { name: en.chinese }))
+  fireEvent.click(screen.getByRole('button', { name: en.math }))
   fireEvent.click(screen.getByRole('button', { name: en.continueLearning }))
   await waitFor(() => expect(ask).toHaveBeenCalledOnce())
   const intention = JSON.parse(String(ask.mock.calls[0]![0]).split('Student intention:\n')[1]!.split('\n')[0]!)
@@ -246,11 +247,14 @@ it('shows only the saved scope and actual independent days in Parent goal progre
   expect(screen.queryByText(en.firstMasteredOn)).toBeNull()
 })
 
-it('starts the browsed subject only when the learner explicitly switches using Other ways', async () => {
+it('preserves the old draft while Other ways explicitly starts the browsed subject', async () => {
   const { ask } = mount()
   fireEvent.change(screen.getByLabelText(en.answer), { target: { value: 'Saved before switching' } })
   fireEvent.click(screen.getByRole('button', { name: en.chinese }))
+  expect(screen.queryByLabelText(en.answer)).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: en.math }))
   expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('Saved before switching')
+  fireEvent.click(screen.getByRole('button', { name: en.chinese }))
   fireEvent.click(screen.getByText(en.otherWays))
   fireEvent.click(screen.getByRole('button', { name: en.switchLearning }))
   await waitFor(() => expect(ask).toHaveBeenCalledOnce())

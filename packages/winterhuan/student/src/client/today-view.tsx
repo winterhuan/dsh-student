@@ -54,7 +54,7 @@ export function TodayView({ nextAction, round, legalActions, onAction, learnerId
   lessons: Dashboard['interactiveLessons']['lessons']
   onOpenClassroom: (lessonId: string) => void
 }) {
-  const active = study.active
+  const active = study.active?.subject === subject ? study.active : undefined
   const reflectionKey = formDraftKey(`reflection:${active?.id ?? 'none'}`, draftScope)
   const reflection = useStore(state => state.drafts[reflectionKey]) ?? ''
   const ownSession = !!active

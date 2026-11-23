@@ -117,7 +117,7 @@ it('gives assessment and current-error teaching priority over backlog and carrie
   const f = await fixture()
   f.block.responses = [{ id: 'now-r', questionId: 'q1', rawResponse: '16', assistance: 'independent', answerDate: { kind: 'day', day: '2026-11-23', parentConfirmation: 'Actual day' }, source: { kind: 'manual', entry: 'historical', parentConfirmation: 'Actual answer' } }]
   await f.save('.study/blocks/current.json', f.block)
-  expect(queryWorkspace(await readWorkspace(f.files, new AbortController().signal), { kind: 'learning-context', subject: 'english' }, NOW)).toMatchObject({ data: { nextAction: { kind: 'assess', reason: 'pending-assessment', subject: 'math', responseId: 'now-r' } } })
+  expect(queryWorkspace(await readWorkspace(f.files, new AbortController().signal), { kind: 'learning-context', subject: 'math' }, NOW)).toMatchObject({ data: { nextAction: { kind: 'assess', reason: 'pending-assessment', subject: 'math', responseId: 'now-r' } } })
   f.block.assessments = [{ id: 'now-a', responseId: 'now-r', result: 'incorrect', assistance: 'independent', feedback: 'Counted one object twice', errorType: 'calculation', answerEvidence: 'Seven objects', assessedAt: NOW }]
   await f.save('.study/blocks/current.json', f.block)
   const next = (queryWorkspace(await readWorkspace(f.files, new AbortController().signal), { kind: 'learning-context' }, NOW).data as { nextAction: { requirement: string } }).nextAction
@@ -139,7 +139,7 @@ it('continues a known same-range goal gap after the selected variation is answer
   ]
   await f.save('.study/blocks/current.json', f.block)
   const read = await readWorkspace(f.files, new AbortController().signal)
-  const result = queryWorkspace(read, { kind: 'learning-context', subject: 'english' }, NOW)
+  const result = queryWorkspace(read, { kind: 'learning-context', subject: 'math' }, NOW)
   expect(result).toMatchObject({ data: { nextAction: { kind: 'teach', reason: 'current-gap', goalId: 'm.count', scope, subject: 'math' }, goalProgress: expect.arrayContaining([expect.objectContaining({ id: 'm.count', level: 'weak', missingCriteria: [], independentDays: ['2026-11-23'] })]) } })
 })
 
@@ -250,7 +250,7 @@ it('retains a check allowance across skipped instances, block changes, midnight 
   expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { round: { id: round.id, limit: 3, remaining: 0 }, nextAction: { kind: 'answer', questionId: 'check-3', roundId: round.id } } })
   await f.save('.study/blocks/current.json', { ...f.block, endedAt: NOW + 1, currentQuestionId: 'check-3', questions, rounds: [{ ...round, endedAt: NOW + 1, endReason: 'budget-exhausted' }] })
   const restarted = await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal)
-  const result = queryWorkspace(restarted, { kind: 'learning-context', subject: 'english' }, NOW + 86400000)
+  const result = queryWorkspace(restarted, { kind: 'learning-context', subject: 'math' }, NOW + 86400000)
   expect(result).toMatchObject({ data: { round: { id: round.id, status: 'ended', remaining: 0 }, nextAction: { kind: 'hold', reason: 'check-budget-exhausted' }, legalActions: ['request-teaching', 'switch-block', 'rest'] } })
   expect(result.data).not.toMatchObject({ legalActions: expect.arrayContaining(['next-question']) })
 })
@@ -390,7 +390,7 @@ it('requires explicit more-review intent and retains selected members when the b
   await f.save('.study/blocks/more.json', { ...next, rounds: next.rounds.map(round => ({ ...round, moreReview: { afterRoundId: 'first-review', request: 'I want another short review.' } })) })
   const read = await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal)
   expect(read.status).toBe('valid')
-  expect(queryWorkspace(read, { kind: 'learning-context', subject: 'english' }, NOW + 86400000)).toMatchObject({ data: { nextAction: { kind: 'review', subject: 'math', blockId: 'more', roundId: 'more-review', review: { familyIds: ['math.count'], remaining: 2 } } } })
+  expect(queryWorkspace(read, { kind: 'learning-context', subject: 'math' }, NOW + 86400000)).toMatchObject({ data: { nextAction: { kind: 'review', subject: 'math', blockId: 'more', roundId: 'more-review', review: { familyIds: ['math.count'], remaining: 2 } } } })
 })
 
 it('holds the current owner for incomplete source reads or incomplete consumption without confusing unknown historical facts', async () => {
@@ -417,4 +417,17 @@ it('retains the paused round owner while its original native answer source is un
   expect(queryWorkspace(read, { kind: 'learning-context' }, NOW + 2)).toMatchObject({ data: { nextAction: { reason: 'round-paused', blockId: 'current', roundId: round.id }, legalActions: ['resume-round', 'switch-block', 'rest'] } })
   Object.assign(read, { sourceVerification: { openmaic: [], native: [{ sessionId: 'original-session', status: 'unavailable', reason: 'The original Session cannot be read.' }] } })
   expect(queryWorkspace(read, { kind: 'learning-context' }, NOW + 2)).toMatchObject({ data: { nextAction: { kind: 'hold', reason: 'source-unavailable', blockId: 'current', source: { kind: 'native', verification: { sessionId: 'original-session' } } }, legalActions: ['verify-source', 'switch-block', 'rest'] } })
+})
+
+
+it.each(['chinese', 'english'] as const)('keeps Math ownership and round limits out of the selected %s continuation', async subject => {
+  const f = await fixture()
+  const round = { id: 'math-check', kind: 'check', startedAt: NOW, members: [f.block.questions[0]!.capability], enteredFamilyIds: ['math.count'], presentedQuestionIds: ['q1'] }
+  await f.save('.study/blocks/current.json', { ...f.block, endedAt: NOW + 1, rounds: [round] })
+  const read = await readWorkspace(f.files, new AbortController().signal)
+  read.sourceVerification = { native: [], openmaic: [{ lessonId: 'math-classroom', learnerId: 'child-1', termId: 'new-term', blockId: f.block.id, status: 'available', consumption: 'pending', omitted: 0 }] }
+  const versions = read.files.map(file => file.version)
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW + 2)).toMatchObject({ data: { nextAction: { subject: 'math', reason: 'source-pending', blockId: f.block.id }, round: { id: round.id, status: 'paused', remaining: 2 } } })
+  expect(queryWorkspace(read, { kind: 'learning-context', subject }, NOW + 2)).toMatchObject({ data: { nextAction: { subject, reason: 'confirmed-scope-required' }, round: null, reviewRound: { remaining: 2, usedFamilyIds: [] } } })
+  expect(read.files.map(file => file.version)).toEqual(versions)
 })

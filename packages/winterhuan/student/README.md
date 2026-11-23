@@ -135,7 +135,7 @@ Ask `/study` to review progress, continue due mistakes or explore a child's ques
 <a id="understand-the-implementation"></a>
 ## Understand the implementation
 
-Ownership and trust boundaries: [Student subsystem](https://github.com/winterhuan/dsh-creative/blob/feat%2Fstudent-native-chat/docs/subsystems/student.md). From the repository root, build with `pnpm --filter @winterhuan/dsh-student build` and test with `pnpm --filter @winterhuan/dsh-student test`.
+Ownership and trust boundaries: [Student subsystem](https://github.com/winterhuan/dsh-creative/blob/codex%2Fstudent-openmaic-loop/docs/subsystems/student.md). From the repository root, build with `pnpm --filter @winterhuan/dsh-student build` and test with `pnpm --filter @winterhuan/dsh-student test`.
 
 The Host entry owns validated workspace reads, typed manual saves and configuration. The `./agent` export registers domain Skills and tools inside the `student` preset and inherited native child compositions. The preset supplies a task-specific persona and explicit native tools; it does not change the default mode. Learning uses filesystem, search, web, questions, presentation and platform-specific shell tools without delegation or creative production workflows.
 
@@ -215,7 +215,7 @@ The Student preset adds study_status, openmaic_feedback and the four official Op
 
 #### Token effect
 
-Skill bodies and references load on demand. Two read-only Student tool schemas are advertised when enabled; native tools also contribute to each request. Collection queries return 20 records with a next offset. Textbooks are not loaded as a whole. Two isolated DSH 0.2.2-rc.1 first requests with the same empty workspace and input measured a fixed-density estimate of 8,765 tokens for the baseline package and 10,744 for the official composition: +1,979 (+22.6%), including messages and tool definitions. The 24 official method bodies remained deferred. These requests made no paid model calls or academic writes; the estimate does not measure provider billing, total lesson cost, teaching quality or KV Cache performance.
+Skill bodies and references load on demand. Two read-only Student tool schemas are advertised when enabled; native tools also contribute to each request. Collection queries return 20 records with a next offset. Textbooks are not loaded as a whole. Two isolated DSH 0.2.2-rc.1 first requests with the same empty workspace, input and Web-like preset composition measured a fixed-density estimate of 8,765 tokens for the baseline package and 10,808 for the official composition: +2,043 (+23.3%), including messages and tool definitions. The separate Headless entry composes capabilities before Agent creation; native tests cover its actual invocation path. The 24 official method bodies remained deferred. These requests made no paid model calls or academic writes; the estimate does not measure provider billing, total lesson cost, teaching quality or KV Cache performance.
 
 #### KV Cache effect
 

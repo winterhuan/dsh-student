@@ -15,6 +15,8 @@ declare module '@deepseek-ai/cordis' { interface Context { /** Protected account
 export interface StudentOpenmaicConfig extends OpenmaicConnectionConfig { browserProfileRoot: string }
 /** Host defaults for the official service, credential references and private browser root. */
 export const openmaicConfig: z<StudentOpenmaicConfig> = z.object({
+  requestTimeoutMs: z.number().step(1).min(1).max(2_147_483_647).default(30000),
+  operationTimeoutMs: z.number().step(1).min(1).max(2_147_483_647).default(120000),
   browserProfileRoot: z.string().default(''),
   baseUrl: z.string().default('https://open.maic.chat'),
   accountBaseUrl: z.string().default('https://maic.chat/api'),

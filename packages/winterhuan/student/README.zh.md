@@ -57,9 +57,15 @@ dsh plugin --profile student add ./packages/winterhuan/student
 
 ### 打开互动课
 
-Student 组合固定官方 OpenMAIC 0.4.0：四个工具和四个 DSH skill，可使用完整课堂、独立 simulation/game/code 组件、课件和教学卡片。Host 默认连接官方服务，Token 剩余不足 24 小时自动续登并核对相同 learner，明确 401 最多续登重试一次。生成及时返回结构化 job 身份，重启后继续同一活动只轮询原任务。学习文件均由 agent 编写并运行只读 CLI。[24 项方法来源清单](knowledge/skills/study/openmaic/README.md)区分可复用教学方法与官网专用工作流，正文和引用按需读取。独立的已安装 Chrome 窗口通过官方登录流程核对账号后播放课堂；挑战保留同一窗口供家长登录，普通系统浏览器保持自身登录状态。
+Student 组合固定官方 OpenMAIC 0.4.0：四个工具和四个 DSH skill，可使用完整课堂、独立 simulation/game/code 组件、课件和教学卡片。Host 默认连接官方服务，Token 剩余不足 24 小时自动续登并核对相同 learner，安全读取遇到明确 401 最多续登重试一次。生成提交遇到拒绝、重定向或未知结果不会自动重发。生成及时返回结构化 job 身份，重启后继续同一活动只轮询原任务。学习文件均由 agent 编写并运行只读 CLI。[24 项方法来源清单](knowledge/skills/study/openmaic/README.md)区分可复用教学方法与官网专用工作流，正文和引用按需读取。
+
+Host 将每次网络请求（包括响应正文）限制在 `requestTimeoutMs`（默认 30 秒）内，每次授权或生成操作限制在 `operationTimeoutMs`（默认 120 秒）内；响应读取超过 8 MiB 时停止，不进入 JSON 解析。取消本地等待保留已接受的 job，不代表服务已取消。轮询地址和每次读取重定向必须保持已配置原点；原始错误及响应头不进入工具回执。
+
+独立的已安装 Chrome 窗口通过官方登录流程核对账号后播放课堂；挑战保留同一窗口供家长登录，普通系统浏览器保持自身登录状态。
 
 安装 Student 会启用 profile 已有的 DSH Credentials provider，包括 headless。保留已配置的存储，显式用户补丁仍优先；已保存引用优先于环境后备。Student 的 `openmaic` Host 配置默认引用 `OPEN_MAIC_USER`、`OPEN_MAIC_PASSWORD` 和 `OPEN_MAIC_ACCESS_CODE`，由受保护的 provider 解析值，不将值写入插件配置。账号授权与 job 恢复使用 provider 的私有 grant 记录。`browserProfileRoot` 可指定私有的持久化 Chrome 目录，默认使用 `DSH_HOME/student-openmaic-browser`（或 `~/.dsh/student-openmaic-browser`）。打开或继续课堂时核对过期时间；Host 释放时关闭所属 Chrome context，重启后复用该 profile。预构建包包含固定官方 Host 及其 npm 依赖，通过仅发布客户端的 Loader 行提供未修改的官方浏览器 bundle，并将工具和技能限定在 Student 模式内。安装无需构建或修改安装器策略；生成的 `lib/openmaic/source.json` 记录固定源码与依赖锁。
+
+Student 在 Web 和 Headless 中启用 profile 已有的 `fs-observation-policy`，先于原生文件工具注册。原生覆盖要求先读取，拒绝已改变版本和并发创建；重试前重新读取并合并。Session 重启后须重新读取。Shell 命令、外部编辑和多文件迁移不受该单文件保护，须保留备份并报告冲突或部分完成。
 
 ### 选择学习方式
 

@@ -22,6 +22,12 @@ const dsh = (...args) => execute(process.execPath, [dshBin, ...args], { cwd: pro
 const schema = yaml.DEFAULT_SCHEMA.extend(new yaml.Type('tag:yaml.org,2002:js', { kind: 'scalar', construct: value => value }))
 function entries(rows) { return rows.flatMap(row => [row, ...(row.group ? entries(row.config) : [])]) }
 async function dump(...args) { return entries(yaml.load((await dsh('--profile', 'openmaic', '--dump-config', ...args)).stdout, { schema })) }
+function observationPolicy(rows) {
+  const policy = rows.filter(row => row.id === 'fs-observation-policy')
+  assert.equal(policy.length, 1, 'Student reuses the first base filesystem intent decider')
+  assert.equal(policy[0].disabled, false)
+  assert.ok(rows.indexOf(policy[0]) < rows.findIndex(row => row.id === 'tool-fs'), 'Policy must register before native file tools')
+}
 
 try {
   await mkdir(project)
@@ -40,6 +46,7 @@ try {
   assert.equal(credentials.length, 1, 'Student must reuse the shared provider')
   assert.equal(credentials[0].disabled, false, 'First install must restore the headless credential provider')
   assert.equal(credentials[0].name, '@deepseek-ai/dsh-credentials-local')
+  observationPolicy(await dump())
 
   const overlay = join(root, 'fixture.overlay.json')
   const model = join(root, 'model.mjs')
@@ -57,7 +64,8 @@ import {credentialKey} from ${JSON.stringify(pathToFileURL(runtime.resolve('@dee
 export const inject=['llm','agentPresets','student','studentOpenmaic','credentials','skills'];
 export function apply(ctx,config){let native;ctx.on('agent/created',async({agent})=>{if(agent.session.header.origin!=='subagent'){if(config.student)await ctx.agentPresets.mount(agent.ctx,'student');native=agent;}});
 class Fixture extends LlmAdapter{index=0;requests=[];async listModels(provider){return [{provider,id:'openmaic-fixture',name:'OpenMAIC fixture',contextWindow:1000000,maxTokens:16000}];}
-async *stream(options){options.signal?.throwIfAborted();const next=config.calls[this.index++];this.requests.push({tools:(options.tools??[]).map(t=>t.name),skills:(await ctx.skills.list({scope:native})).map(skill=>skill.name)});
+async *stream(options){options.signal?.throwIfAborted();const next=config.calls[this.index++];this.requests.push({tools:(options.tools??[]).map(t=>t.name),skills:(await ctx.skills.list({scope:native})).map(skill=>skill.name),results:options.messages.filter(message=>message.role==='tool')});
+if(next?.[2]?.externalWrite)await writeFile(next[2].externalWrite.path,next[2].externalWrite.content);
 if(next){const[name,args]=next;if(!(options.tools??[]).some(t=>t.name===name))throw new Error('Missing native tool '+name);const id='openmaic-'+this.index;yield{type:'block-start',index:0,blockType:'tool-call'};yield{type:'tool-call-delta',index:0,id,name,argumentsDelta:JSON.stringify(args)};yield{type:'block-end',index:0,block:{type:'tool-call',id,name,arguments:JSON.stringify(args)}};yield{type:'finish',reason:{kind:'tool-calls'}};}
 else{if(!ctx.studentOpenmaic)throw new Error('OpenMAIC Host transport is unavailable');const key=credentialKey('student-openmaic','composition-fixture');const previous=await ctx.credentials.readRecord(key);await ctx.credentials.modifyRecord(key,async()=>({kind:'grant',payload:{fixture:true}}));const saved=await ctx.credentials.readRecord(key);
 await writeFile(config.result,JSON.stringify({requests:this.requests,previous,saved}));const text='Original OpenMAIC components completed.';yield{type:'block-start',index:0,blockType:'text'};yield{type:'text-delta',index:0,text};yield{type:'block-end',index:0,block:{type:'text',text}};yield{type:'finish',reason:{kind:'stop'}};}}}
@@ -82,7 +90,7 @@ ctx.effect(()=>ctx.llm.registerAdapter(['openmaic-fixture'],new Fixture()));}
     assert.equal(events.at(-1).reason.kind, 'completed')
     const tools = events.filter(event => event.type === 'tool_result')
     assert.equal(tools.length, calls.length)
-    for (const event of tools) assert.equal(event.status, 'completed', JSON.stringify(event))
+    for (let index = 0; index < tools.length; index++) if (!calls[index][2]?.failure) assert.equal(tools[index].status, 'completed', JSON.stringify(tools[index]))
     return JSON.parse(await readFile(result, 'utf8'))
   }
   const ordinary = await run([], false)
@@ -97,8 +105,27 @@ ctx.effect(()=>ctx.llm.registerAdapter(['openmaic-fixture'],new Fixture()));}
   // Windows does not expose POSIX credential permission bits.
   if (process.platform !== 'win32') assert.equal((await stat(store)).mode & 0o077, 0, 'Protected records must be owner-only')
   assert.deepEqual((await run([])).previous, first.saved, 'The same configured store must survive process restart')
+  const guarded = join(project, 'guarded.json')
+  const created = join(project, 'concurrent.json')
+  await writeFile(guarded, 'original')
+  const protection = await run([
+    ['write', { file_path: guarded, content: 'unread overwrite' }, { failure: true }],
+    ['read', { file_path: guarded }],
+    ['write', { file_path: guarded, content: 'stale overwrite' }, { failure: true, externalWrite: { path: guarded, content: 'parent changed' } }],
+    ['read', { file_path: guarded }],
+    ['edit', { file_path: guarded, old_string: 'parent changed', new_string: 'merged' }],
+    ['read', { file_path: created }, { failure: true }],
+    ['write', { file_path: created, content: 'clobber creator' }, { failure: true, externalWrite: { path: created, content: 'concurrent creator' } }],
+  ])
+  assert.equal(await readFile(guarded, 'utf8'), 'merged')
+  assert.equal(await readFile(created, 'utf8'), 'concurrent creator')
+  const failures = JSON.stringify(protection.requests.at(-1).results)
+  assert.match(failures, /file has not been read/u)
+  assert.match(failures, /re-read the file/u)
+  await writeFile(join(root, 'native-file-protection.json'), JSON.stringify(protection.requests, null, 2))
   await dsh('--profile', 'openmaic-web', '--from-default-profile', 'web', '--dump-config')
   await dsh('plugin', '--profile', 'openmaic-web', 'add', installSource)
+  observationPolicy(entries(yaml.load((await dsh('--profile', 'openmaic-web', '--dump-config')).stdout, { schema })))
   const clientResult = join(root, 'client.json')
   const observer = fileURLToPath(new URL('./openmaic-client-observer.mjs', import.meta.url))
   const clientOverlay = join(root, 'client.overlay.json')

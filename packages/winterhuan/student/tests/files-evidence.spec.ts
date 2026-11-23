@@ -8,8 +8,10 @@ import { expect, it, onTestFinished } from 'vitest'
 import { readWorkspace } from '../src/files/read.ts'
 import { nodeStudyFiles } from '../src/files/node.ts'
 import { queryWorkspace, queryWorkspaceDashboard } from '../src/learning/queries.ts'
+import type { NativeInputObservation } from '../src/files/validation.ts'
 import { validateStudyFiles } from '../src/files/validation.ts'
 import type { z } from 'zod'
+import { deriveEvidence } from '../src/learning/evidence.ts'
 import type { blockSchema } from '../src/files/schema.ts'
 import { collectionsSchema, worksheetSchema } from '../src/files/schema.ts'
 import { NOW, setup } from './fixtures.ts'
@@ -318,7 +320,9 @@ it('reuses version-stable summary projections while elapsed minutes and time thr
 })
 
 it('keeps native dates pending without an independently matched consumed input and rejects manual-source bypass', async () => {
-  const { files, block, save } = await workspace()
+  const { files, settings, block, save } = await workspace()
+  block.learnerId = 'learner-1'
+  await save('.study/settings.json', { ...settings, learnerId: 'learner-1' })
   block.responses[0]!.source = { kind: 'native', sessionId: 'session-1', messageId: 'message-1', inputVersion: 'version-2', receiptAt: SUMMARY_NOW }
   block.responses[0]!.answerDate = { kind: 'instant', at: SUMMARY_NOW, basis: 'native-input', sourceVersion: 'version-2' }
   block.responses[0]!.assistance = 'independent'; block.assessments[0]!.assistance = 'independent'
@@ -326,12 +330,33 @@ it('keeps native dates pending without an independently matched consumed input a
   const unmatched = await readWorkspace(files, new AbortController().signal)
   expect(queryWorkspace(unmatched, { kind: 'summary' }, SUMMARY_NOW)).toMatchObject({ data: { practisedGoals: 0 } })
   expect(queryWorkspace(unmatched, { kind: 'learning-context' }, SUMMARY_NOW)).toMatchObject({ data: { pendingFacts: [{ responseId: 'r1', fields: ['answerDate', 'source'] }] } })
-  const matched = await readWorkspace(files, new AbortController().signal, [], [{ sessionId: 'session-1', messageId: 'message-1', inputVersion: 'version-2', rawResponse: '15', receiptAt: SUMMARY_NOW }])
+  const matched = await readWorkspace(files, new AbortController().signal, [], [{ sessionId: 'session-1', messageId: 'message-1', inputVersion: 'version-2', rawResponse: '15', receiptAt: SUMMARY_NOW, learningScope: { learnerId: 'learner-1', termId: 'term-1', blockId: 'block-1', questionId: 'q1', responseId: 'r1' } }])
   expect(queryWorkspace(matched, { kind: 'summary' }, SUMMARY_NOW)).toMatchObject({ data: { practisedGoals: 1 } })
   expect(queryWorkspace(matched, { kind: 'learning-context' }, SUMMARY_NOW)).toMatchObject({ data: { pendingFacts: [] } })
   block.responses[0]!.answerDate = { kind: 'instant', at: SUMMARY_NOW, basis: 'current-manual', sourceVersion: 'version-2' }
   const validation = validateStudyFiles([{ path: '.study/settings.json', value: matched.workspace!.settings }, { path: '.study/blocks/block-1.json', value: block }])
   expect(validation.issues).toContainEqual(expect.objectContaining({ rule: 'current-manual-source' }))
+})
+
+it('credits native evidence only under its independently observed learner and response owner', async () => {
+  const { settings, block } = await workspace()
+  const learnerId = 'learner-1'
+  block.learnerId = learnerId
+  block.responses[0]!.source = { kind: 'native', sessionId: 'session-1', messageId: 'message-1', inputVersion: 'version-2', receiptAt: SUMMARY_NOW }
+  block.responses[0]!.answerDate = { kind: 'instant', at: SUMMARY_NOW, basis: 'native-input', sourceVersion: 'version-2' }
+  block.responses[0]!.assistance = 'independent'; block.assessments[0]!.assistance = 'independent'
+  const input = [{ path: '.study/settings.json', value: { ...settings, learnerId } }, { path: '.study/blocks/block-1.json', value: block }]
+  const learningScope = { learnerId, termId: 'term-1', blockId: 'block-1', questionId: 'q1', responseId: 'r1' }
+  const original = { sessionId: 'session-1', messageId: 'message-1', inputVersion: 'version-2', rawResponse: '15', receiptAt: SUMMARY_NOW, learningScope }
+  const consume = (observation: NativeInputObservation) => deriveEvidence(validateStudyFiles(input, [], [observation]).workspace!).entries[0]!
+  expect(consume(original)).toMatchObject({ sourceStatus: 'known', answerDate: { kind: 'instant', at: SUMMARY_NOW } })
+  for (const field of ['learnerId', 'termId', 'blockId', 'questionId', 'responseId'] as const) {
+    expect(consume({ ...original, learningScope: { ...learningScope, [field]: 'another-owner' } })).toMatchObject({ sourceStatus: 'unknown', answerDate: { kind: 'unknown' } })
+  }
+  const { responseId: _response, ...unidentified } = learningScope
+  expect(consume({ ...original, learningScope: unidentified })).toMatchObject({ sourceStatus: 'unknown', answerDate: { kind: 'unknown' } })
+  const { learningScope: _scope, ...unscoped } = original
+  expect(consume(unscoped)).toMatchObject({ sourceStatus: 'unknown', answerDate: { kind: 'unknown' } })
 })
 
 it('reports an unknown response source while preserving a parent-confirmed paper day without native matching', async () => {

@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createServer } from 'node:http'
-import { chromium } from 'playwright-core'
+import { chromium, type BrowserContext, type Page } from 'playwright-core'
 import { expect, it, onTestFinished } from 'vitest'
 import { OpenmaicBrowser } from '../src/openmaic/browser.ts'
 
@@ -60,4 +60,39 @@ it('reopens its persisted sign-in, renews expiring playback and disposes every o
   expect(logins).toBe(2)
   await reopened.dispose()
   expect(closed).toEqual([true, true])
+})
+
+it('disposes its Chrome while the authorized learner read is stalled and rejects queued opens', async () => {
+  let observed!: () => void
+  const entered = new Promise<void>(resolve => { observed = resolve })
+  let rejectRead!: (error: Error) => void
+  let pageClosed = false, contextClosed = false
+  const page = {
+    isClosed() { return pageClosed },
+    async goto() {},
+    async evaluate() { observed(); return new Promise((_resolve, reject) => { rejectRead = reject }) },
+    async close() { pageClosed = true; rejectRead?.(new Error('Owned page closed')) },
+  } as Page
+  const callbacks = new Set<() => void>()
+  const context = {
+    on(_event: string, callback: () => void) { callbacks.add(callback) },
+    async newPage() { return page },
+    async close() { await page.close(); contextClosed = true; for (const callback of callbacks) callback() },
+  } as BrowserContext
+  const root = await mkdtemp(join(tmpdir(), 'student-openmaic-stalled-'))
+  const baseUrl = 'https://example.test'
+  const browser = new OpenmaicBrowser({ baseUrl, async identity() { return { baseUrl, learnerKey: 'user:parent', accountId: 'parent', expiresAt: Date.now() + 7 * 86400000 } } }, { profileRoot: root, async credentials() { return undefined } }, { async launch() { return context } })
+  onTestFinished(async () => { await context.close(); await browser.dispose(); await rm(root, { recursive: true, force: true }) })
+  const active = browser.open('stage-one', new AbortController().signal).catch(error => error)
+  await entered
+  const queued = browser.open('stage-two', new AbortController().signal).catch(error => error)
+  const disposing = browser.dispose()
+  let timeout: ReturnType<typeof setTimeout> | undefined
+  try {
+    await Promise.race([disposing, new Promise<never>((_resolve, reject) => { timeout = setTimeout(() => reject(new Error('Browser disposal waited for the stalled source response')), 1000) })])
+  } finally { clearTimeout(timeout) }
+  expect(contextClosed).toBe(true)
+  expect(await active).toBeInstanceOf(Error)
+  expect(await queued).toBeInstanceOf(Error)
+  await expect(browser.open('stage-three', new AbortController().signal)).rejects.toBeInstanceOf(Error)
 })

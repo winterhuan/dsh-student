@@ -21,11 +21,14 @@ export function useStudy(sessionId: StudentSessionId, visible: boolean, networkE
   const facts = context.value?.data
   const termId = facts && typeof facts === 'object' && 'termId' in facts && typeof facts.termId === 'string' ? facts.termId : undefined
   const learnerId = facts && typeof facts === 'object' && 'learnerId' in facts && typeof facts.learnerId === 'string' ? facts.learnerId : undefined
+  const question = facts && typeof facts === 'object' && 'currentQuestion' in facts ? facts.currentQuestion : undefined
+  const source = question && typeof question === 'object' && 'openmaic' in question ? question.openmaic : undefined
+  const classroomBindingId = source && typeof source === 'object' && 'bindingId' in source && typeof source.bindingId === 'string' ? source.bindingId : undefined
   const nextAction = facts && typeof facts === 'object' && 'nextAction' in facts ? facts.nextAction as (StudentJsonValue & LearningNextAction) | null : null
   const goalProgress = facts && typeof facts === 'object' && 'goalProgress' in facts && Array.isArray(facts.goalProgress) ? facts.goalProgress as StudentJsonValue[] & CapabilityProgress[] : []
   const loadNeeded = !data && (resource.failure?.code === 'student/main-session-required' || context.failure?.code === 'student/main-session-required')
   const stale = resource.status === 'failed' || context.status === 'failed'
-  return { data, context: facts, termId, learnerId, nextAction, goalProgress, value: resource.value, loadNeeded, stale, error: stale ? networkError : '', offset }
+  return { data, context: facts, termId, learnerId, classroomBindingId, nextAction, goalProgress, value: resource.value, loadNeeded, stale, error: stale ? networkError : '', offset }
 }
 
 // The shared Host dashboard query validates all business content; this checks its wire discriminator.

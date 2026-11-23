@@ -19,6 +19,7 @@ export class OpenmaicBrowser {
   private readonly pages = new Map<string, Page>()
   private serial: Promise<unknown> = Promise.resolve()
   private disposed = false
+  private readonly lifetime = new AbortController()
   constructor(private readonly account: OpenmaicBrowserAccount, private readonly config: OpenmaicBrowserConfig, private readonly runtime: OpenmaicBrowserRuntime = {}) {}
   /**
    * Open the original classroom, renewing its browser login inside 24 hours of expiry.
@@ -27,7 +28,8 @@ export class OpenmaicBrowser {
    * @returns Safe playback or parent-sign-in outcome.
    */
   open(classroomId: string, signal: AbortSignal): Promise<OpenmaicBrowserResult> {
-    const work = this.serial.then(() => this.perform(classroomId, signal))
+    const deadline = AbortSignal.any([signal, this.lifetime.signal, AbortSignal.timeout(30_000)])
+    const work = this.serial.then(() => this.perform(classroomId, deadline))
     this.serial = work.catch((_error: unknown) => { /* The returned operation owns its failure; later opens remain available. */ })
     return work
   }
@@ -45,14 +47,15 @@ export class OpenmaicBrowser {
     if (!profileInfo.isDirectory() || profileInfo.isSymbolicLink()) throw new OpenmaicError('browser-unavailable')
     if (process.platform !== 'win32') await chmod(profile, 0o700)
     const launch = this.runtime.launch ?? ((path, options) => chromium.launchPersistentContext(path, options))
-    const context = await launch(profile, { channel: 'chrome', headless: false, viewport: null, acceptDownloads: false })
+    const context = await launch(profile, { channel: 'chrome', headless: false, viewport: null, acceptDownloads: false, timeout: 30_000 })
+    if (this.disposed) { await context.close(); throw new OpenmaicError('browser-unavailable') }
     context.on('close', () => { if (this.context === context) { this.context = undefined; this.pages.clear() } })
     this.context = context
     return context
   }
   private async learner(page: Page): Promise<string | undefined> {
     const result = await page.evaluate(async () => {
-      const response = await fetch('/api/persistence/learner-key', { credentials: 'same-origin' })
+      const response = await fetch('/api/persistence/learner-key', { credentials: 'same-origin', signal: AbortSignal.timeout(30_000) })
       if (!response.ok) return undefined
       const value: unknown = await response.json()
       return typeof value === 'object' && value !== null && 'learnerKey' in value && typeof value.learnerKey === 'string' ? value.learnerKey : undefined
@@ -77,6 +80,7 @@ export class OpenmaicBrowser {
         await page.goto(classroomUrl, { waitUntil: 'domcontentloaded', timeout: 30000 })
         signal.throwIfAborted()
         const learner = await this.learner(page)
+        signal.throwIfAborted()
         if (learner?.startsWith('user:') && learner !== identity.learnerKey) return { status: 'identity-mismatch', browser: 'dedicated-chrome', classroomUrl }
         const cookie = (await browser.cookies(identity.baseUrl)).find(item => item.name === 'auth_token')
         let expiresAt = 0
@@ -104,11 +108,12 @@ export class OpenmaicBrowser {
         catch (_error: unknown) { return { status: 'login-required', browser: 'dedicated-chrome', classroomUrl, loginUrl, reason: 'callback-pending' } }
         signal.throwIfAborted()
         const confirmed = await this.learner(page)
+        signal.throwIfAborted()
         await page.bringToFront()
         return { status: confirmed === identity.learnerKey ? 'opened' : confirmed?.startsWith('user:') ? 'identity-mismatch' : 'login-required', browser: 'dedicated-chrome', classroomUrl, ...(confirmed === identity.learnerKey ? {} : { loginUrl }) }
       } finally { signal.removeEventListener('abort', aborted) }
     } catch (error) { if (signal.aborted) { if (page && !page.isClosed()) await page.close(); signal.throwIfAborted() } if (error instanceof OpenmaicError) throw error; throw new OpenmaicError('browser-unavailable') }
   }
-  /** Await current operations and close only the Chrome instance owned by this Host. */
-  async dispose(): Promise<void> { this.disposed = true; await this.serial; await this.context?.close(); this.context = undefined; this.pages.clear() }
+  /** Cancel queued and active operations, close owned Chrome, then await quiescence. */
+  async dispose(): Promise<void> { this.disposed = true; this.lifetime.abort(new OpenmaicError('browser-unavailable')); await this.context?.close(); await this.serial; this.context = undefined; this.pages.clear() }
 }

@@ -25,7 +25,7 @@ type EvidenceState = StudyState & { [EVIDENCE]?: EvidenceIndex }
 /**
  * Derive effective facts once from validated block and worksheet owners.
  * @param workspace - current validated entity files.
- * @returns one fact per saved response, including unassessed facts and unknown dates, help or unverified native sources; confirmed paper days retain day precision.
+ * @returns one fact per saved response, including unassessed facts and unknown dates, help or native sources without a complete captured learner/term/block/question/response owner; confirmed paper days retain day precision.
  */
 export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
   const entries: EffectiveEvidence[] = []
@@ -38,7 +38,7 @@ export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
       const assessment = file.assessments.find(item => item.responseId === response.id)
       const declaredDate = response.answerDate ?? (file.kind === 'worksheet' ? file.answerDate : undefined) ?? { kind: 'unknown' }
       const source = response.source
-      const matchedNative = source.kind === 'native' ? workspace.nativeSources?.find(item => item.sessionId === source.sessionId && item.messageId === source.messageId && item.inputVersion === source.inputVersion && item.rawResponse === response.rawResponse) : undefined
+      const matchedNative = source.kind === 'native' ? workspace.nativeSources?.find(item => item.sessionId === source.sessionId && item.messageId === source.messageId && item.inputVersion === source.inputVersion && item.rawResponse === response.rawResponse && file.kind === 'block' && file.learnerId !== undefined && item.learningScope?.learnerId === file.learnerId && item.learningScope.termId === file.termId && item.learningScope.blockId === file.id && item.learningScope.questionId === question.id && item.learningScope.responseId === response.id) : undefined
       const matchedOfficial = source.kind === 'openmaic' ? workspace.openmaicSources?.find(item => matchOpenmaicResponse(item, file, response, question, assessment)) : undefined
       const officialGrade = matchedOfficial ? effectiveOpenmaicAssessment(matchedOfficial, file, response, question, assessment, workspace.nativeSources) : undefined
       const answerDate: AnswerDate = declaredDate.kind === 'instant' && declaredDate.basis === 'native-input'

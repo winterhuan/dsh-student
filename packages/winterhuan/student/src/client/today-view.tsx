@@ -17,7 +17,10 @@ type Goal = { id: string; title: string }
 type Act = (command: Command, withTutor?: boolean, prompt?: string) => Promise<void>
 
 /** The learner's page: one recommended next step, the current question, and a folded set of other ways to practise. */
-export function TodayView({ nextAction, onContinue, study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom, draftScope, useStore, actions }: DraftProps & {
+export function TodayView({ nextAction, learnerId, termId, classroomBindingId, onContinue, study, subject, activity, setActivity, goal, clearGoal, curriculum, selectedObjectiveId, chooseGoal, intensityLabel, openParent, openCheckins, scope, setScope, scopeUnits, start, startRecommended, startDiagnosis, chosenIntensity, disabled, running, act, tutor, t, prompts, lessons, onInterestPractice, onOpenLesson, onClearDue, onOpenClassroom, draftScope, useStore, actions }: DraftProps & {
+  learnerId: string | undefined
+  termId: string | undefined
+  classroomBindingId: string | undefined
   nextAction: LearningNextAction | null
   onContinue: () => void
   draftScope?: string
@@ -65,23 +68,28 @@ export function TodayView({ nextAction, onContinue, study, subject, activity, se
     ? curriculum.objectives.find(item => item.id === recommendation.objectiveId)
     : undefined
   const explain = study.understandingReminders[0]
+  const matchesCurrent = (item: typeof lessons[number]) => !!active && !!learnerId && !!termId && item.learnerId === learnerId && item.termId === termId && item.blockId === active.id && (item.subject === undefined || item.subject === (nextAction?.subject ?? active.subject))
   const generating = lessons.find(item => item.status === 'generating')
-  const ready = lessons.find(item => item.status === 'ready' && item.objectiveId !== undefined && item.objectiveId === recommendation?.objectiveId && classroomUrl(item.url))
-    ?? lessons.find(item => item.status === 'ready' && classroomUrl(item.url))
+  const ready = lessons.find(item => item.status === 'ready' && matchesCurrent(item) && classroomUrl(item.url)
+    && nextAction?.goalId !== undefined && item.feedback?.goalId === nextAction.goalId
+    && nextAction.scope !== undefined && JSON.stringify(item.feedback.scope) === JSON.stringify(nextAction.scope)
+    && (nextAction.kind === 'answer' && nextAction.blockId === active?.id && nextAction.questionId === task?.id && classroomBindingId !== undefined && item.feedback.bindingId === classroomBindingId
+      || nextAction.kind === 'learn' && !task))
   const readyUrl = classroomUrl(ready?.url)
+  const shownReady = ready ?? (!nextAction ? lessons.find(item => item.status === 'ready' && classroomUrl(item.url)) : undefined)
   const goalPractice = recommendation?.kind === 'practice' || recommendation?.kind === 'learn' || recommendation?.kind === 'preview' || (recommendation?.kind === 'review' && recommendation.objectiveId !== undefined)
   const chosen = nextAction
   const nextTitle = chosen?.title ?? goalTitle(study, task?.objectiveId) ?? recommendation?.title ?? task?.topic ?? t('todayPlan')
   const chosenReason = chosen ? continuationReasons[chosen.reason] : undefined
-  const playable = !!readyUrl && !generating && (!chosen || chosen.kind === 'answer' || chosen.kind === 'learn')
+  const playable = !!readyUrl && !lessons.some(item => item.status === 'generating' && matchesCurrent(item))
   return <>
     <section className="student-plan"><h3>{nextTitle}</h3>
       <p className="student-muted">{t(chosenReason ?? (task ? task.response === undefined ? 'continueCurrentQuestion' : study.feedback ? 'continueAfterFeedback' : 'continuePendingAnswer' : 'continueConfirmedGoal'))}</p>
       <button type="button" className="student-primary" disabled={disabled || running} onClick={playable ? () => onOpenClassroom(ready!.id) : onContinue}>{t(playable ? 'goToClass' : 'continueLearning')}</button>
     </section>
-    {(generating || readyUrl) && <section>
+    {(generating || shownReady) && <section>
       {generating && <p role="status">{t('openmaicGenerating')} · {generating.title}</p>}
-      {ready && <p className="student-muted">{ready.title}</p>}
+      {shownReady && <p className="student-muted">{shownReady.title}</p>}
     </section>}
     <section className="student-status"><div className={css.statusHeading}><p>{study.profile.nickname}{active ? ` · ${t(active.subject)} · ${t(active.mode)}` : ''}</p><p>{t('todayStars')}: {study.todayStars}</p></div>
       <details open={!ownSession}><summary>{t('studyDetails')}</summary>

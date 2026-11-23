@@ -47,7 +47,7 @@ export class OpenmaicBrowser {
     if (!profileInfo.isDirectory() || profileInfo.isSymbolicLink()) throw new OpenmaicError('browser-unavailable')
     if (process.platform !== 'win32') await chmod(profile, 0o700)
     const launch = this.runtime.launch ?? ((path, options) => chromium.launchPersistentContext(path, options))
-    const context = await launch(profile, { channel: 'chrome', headless: false, viewport: null, acceptDownloads: false, timeout: 30_000 })
+    const context = await launch(profile, { env: Object.fromEntries(Object.entries(process.env).filter(([name, value]) => value !== undefined && !/KEY|SECRET|TOKEN|PASSWORD/iu.test(name))), channel: 'chrome', headless: false, viewport: null, acceptDownloads: false, timeout: 30_000 })
     if (this.disposed) { await context.close(); throw new OpenmaicError('browser-unavailable') }
     context.on('close', () => { if (this.context === context) { this.context = undefined; this.pages.clear() } })
     this.context = context

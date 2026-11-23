@@ -36,11 +36,12 @@ export function matchOpenmaicResponse(observation: OpenmaicInputObservation, fil
 }
 function matchesStoredOpenmaic(observation: OpenmaicInputObservation, file: LearningBlock | WorksheetFile, response: LearnerResponse, question: z.infer<typeof questionSchema>, assessment?: Assessment): boolean {
   const binding = observation.binding
-  if (file.learnerId !== binding.learnerId || file.termId !== binding.termId || file.kind !== 'block' || file.id !== binding.blockId || response.id !== observation.responseId || question.id !== observation.questionId || response.questionId !== question.id || response.rawResponse !== JSON.stringify(observation.source.submittedAnswer) || canonical(response.source) !== canonical(observation.source) || canonical(question) !== canonical(openmaicAcademicQuestion(observation))) return false
+  const { mistakeId: _mistake, ...frozenQuestion } = question
+  if (file.learnerId !== binding.learnerId || file.termId !== binding.termId || file.kind !== 'block' || file.id !== binding.blockId || response.id !== observation.responseId || question.id !== observation.questionId || response.questionId !== question.id || response.rawResponse !== JSON.stringify(observation.source.submittedAnswer) || canonical(response.source) !== canonical(observation.source) || canonical(frozenQuestion) !== canonical(openmaicAcademicQuestion(observation))) return false
   if (canonical(assessment?.official) !== canonical(observation.official) || canonical(assessment?.officialHistory) !== canonical(observation.officialHistory)) return false
   return true
 }
-const correctionSchema = z.object({ learnerId: z.string().min(1), termId: z.string().min(1), blockId: z.string().min(1), responseId: z.string().min(1), questionId: z.string().min(1), snapshotHash: z.string().regex(/^[a-f0-9]{64}$/u), submittedAnswer: z.union([z.string(), z.array(z.string())]), result: z.enum(['correct', 'unassessed']), criterion: z.string().min(1).max(2000), parentConfirmation: z.string().min(1).max(2000) }).strict()
+const correctionSchema = z.object({ learnerId: z.string().min(1), termId: z.string().min(1), blockId: z.string().min(1), responseId: z.string().min(1), questionId: z.string().min(1), snapshotHash: z.string().regex(/^[a-f0-9]{64}$/u), submittedAnswer: z.union([z.string(), z.array(z.string())]), result: z.enum(['correct', 'incorrect', 'partial', 'unassessed']), criterion: z.string().min(1).max(2000), parentConfirmation: z.string().min(1).max(2000) }).strict()
 /**
  * Resolve the effective grade separately from original-source authentication.
  * @param observation - Fresh authorized original submission and frozen criterion.
@@ -58,7 +59,7 @@ export function effectiveOpenmaicAssessment(observation: OpenmaicInputObservatio
     const text = /^Student grading correction:\n([^\n]+)$/u.exec(correction.rawResponse)?.[1]
     try {
       const decision = text && correctionSchema.safeParse(JSON.parse(text))
-      if (decision && decision.success && file.kind === 'block' && decision.data.learnerId === file.learnerId && decision.data.termId === file.termId && decision.data.blockId === file.id && decision.data.responseId === response.id && decision.data.questionId === question.id && decision.data.snapshotHash === observation.question.snapshotHash && canonical(decision.data.submittedAnswer) === canonical(observation.source.submittedAnswer) && assessment.feedback === decision.data.criterion && assessment.result === decision.data.result && assessment.grading === (decision.data.result === 'correct' ? 'equivalent' : 'pending')) return { result: decision.data.result, grading: assessment.grading }
+      if (decision && decision.success && file.kind === 'block' && decision.data.learnerId === file.learnerId && decision.data.termId === file.termId && decision.data.blockId === file.id && decision.data.responseId === response.id && decision.data.questionId === question.id && decision.data.snapshotHash === observation.question.snapshotHash && canonical(decision.data.submittedAnswer) === canonical(observation.source.submittedAnswer) && assessment.feedback === decision.data.criterion && assessment.result === decision.data.result && assessment.grading === (decision.data.result === 'correct' ? 'equivalent' : decision.data.result === 'unassessed' ? 'pending' : 'aligned')) return { result: decision.data.result, grading: assessment.grading }
     } catch { /* Invalid or changed native confirmation cannot authorize grading. */ }
   }
   return assessment?.result === observation.result && assessment.grading === observation.grading ? { result: observation.result, grading: observation.grading } : { result: 'unassessed', grading: 'pending' }

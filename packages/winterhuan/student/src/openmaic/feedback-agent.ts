@@ -25,14 +25,14 @@ export function registerOpenmaicFeedback(ctx: Context): void {
     isConcurrencySafe: () => true,
     async execute(args, exec) {
       const { action, lessonId, offset = 0 } = z.object({ action: z.enum(['prepare', 'read']), lessonId: z.string().min(1).max(80), offset: z.number().int().nonnegative().optional() }).parse(args)
-      const { read, openmaic } = await readStudentWorkspace(exec)
+      const { read, openmaic } = await readStudentWorkspace(exec, undefined, lessonId)
       const lessonRead = await readLessonFile(applicationStudyFiles(exec), exec.signal)
-      const lesson = lessonRead.file?.lessons.find(lesson => lesson.id === lessonId)
+      const lesson = [...(lessonRead.status === 'valid' ? lessonRead.file!.lessons : []), ...(read.archiveSources ?? []).flatMap(archive => archive.lessons.status === 'valid' ? archive.lessons.file!.lessons.filter(lesson => lesson.termId === archive.workspace.settings.termId) : [])].find(lesson => lesson.id === lessonId)
       const workspace = read.workspace
       const unavailable = openmaic.find(fact => fact.lessonId === lessonId && fact.status === 'unavailable')
       if (action === 'read' && read.status === 'changing' && unavailable) return { status: 'unavailable', lessonId, failure: unavailable.failure ?? 'incomplete-read', reason: unavailable.reason ?? 'Original official source changed during verification.', complete: false, records: [], total: null, drafts: null, nextOffset: null }
-      if (read.status !== 'valid' || lessonRead.status !== 'valid' || !workspace?.settings.learnerId || !lesson?.learnerId || !lesson.termId || lesson.learnerId !== workspace.settings.learnerId || !lesson.blockId || !lesson.classroomId || !lesson.learnerKey || lesson.status !== 'ready') throw new Error('Confirm valid original learner, term, block and ready classroom files before reading its source.')
-      const original = [workspace, ...(workspace.archivedEvidence ?? []).map(archive => archive.workspace)].find(owner => owner.settings.termId === lesson.termId && owner.settings.learnerId === workspace.settings.learnerId)
+      if (read.status !== 'valid' || !workspace?.settings.learnerId || !lesson?.learnerId || !lesson.termId || lesson.learnerId !== workspace.settings.learnerId || !lesson.blockId || !lesson.classroomId || !lesson.learnerKey || lesson.status !== 'ready') throw new Error('Confirm valid original learner, term, block and ready classroom files before reading its source.')
+      const original = [workspace, ...(read.archiveSources ?? []).map(archive => archive.workspace)].find(owner => owner.settings.termId === lesson.termId && owner.settings.learnerId === workspace.settings.learnerId)
       const block = original?.blocks.find(block => block.id === lesson.blockId && block.learnerId === workspace.settings.learnerId)
       if (!block || !exec.agent?.session.header.cwd) throw new Error('Original classroom block ownership is unresolved.')
       let result: object

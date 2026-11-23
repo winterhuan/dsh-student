@@ -149,7 +149,10 @@ export class OpenmaicConnection {
       if (saved.success && saved.data.baseUrl === this.baseUrl && saved.data.accountBaseUrl === this.accountBaseUrl) this.loaded = saved.data
       else if (this.config.tokenRef) {
         const token = await this.store.resolve(this.config.tokenRef)
-        if (token) { const learnerKey = await this.learner(token, signal); this.loaded = { token, learnerKey, accountId: learnerKey.slice(5), expiresAt: this.expires(token), baseUrl: this.baseUrl, accountBaseUrl: this.accountBaseUrl } }
+        if (token) {
+          try { const learnerKey = await this.learner(token, signal); this.loaded = { token, learnerKey, accountId: learnerKey.slice(5), expiresAt: this.expires(token), baseUrl: this.baseUrl, accountBaseUrl: this.accountBaseUrl } }
+          catch (error) { if (!(error instanceof OpenmaicError) || error.code !== 'login-required') throw error }
+        }
       }
     }
     if (this.renewal) return this.renewal

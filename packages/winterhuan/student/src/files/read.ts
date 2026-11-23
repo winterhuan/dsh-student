@@ -2,6 +2,7 @@
 import type { FsInfo, FsTargetKey, FsVersion, FsWriteIntent } from '@deepseek-ai/dsh-fs'
 import { createHash } from 'node:crypto'
 import { stateSchema } from '../schema.ts'
+import { readLessonFile, type LessonFileRead } from './lessons.ts'
 import { scopeSupports } from '../capabilities.ts'
 import { deriveEvidence } from '../learning/evidence.ts'
 import { replayMistake } from '../learning/schedule.ts'
@@ -42,6 +43,8 @@ export interface WorkspaceRead {
   archiveIssues?: FileIssue[]
   /** Exact original archive versions participate in source and query rereads. */
   archiveFiles?: ObservedFile[]
+  /** Structurally compatible source dependencies; these never grant progress before authenticated replay. */
+  archiveSources?: { workspace: ValidatedWorkspace; references: NonNullable<ValidatedWorkspace['settings']['evidenceReferences']>; lessons: LessonFileRead }[]
   /** Independently authorized original sources remain separate from agent-authored file validity. */
   sourceVerification?: { native: NativeHistoryVerification[]; openmaic: OpenmaicSourceVerification[] }
   /** Backup inspection failures remain independent from official-file validity. */
@@ -67,7 +70,7 @@ export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?:
   for (let attempt = 0; attempt < 3; attempt++) {
     const read = await readWorkspaceFiles(fs, signal, prior ?? backupVersions(backups!.backups), nativeSources, openmaicSources, owner)
     if (!read.workspace || read.status !== 'valid') return { ...read, cache: owner, ...(backups ? { backupIssues: backups.issues } : {}) }
-    const archiveIssues: FileIssue[] = [], archiveFiles: ObservedFile[] = []
+    const archiveIssues: FileIssue[] = [], archiveFiles: ObservedFile[] = [], archiveSources: NonNullable<WorkspaceRead['archiveSources']> = []
     read.workspace.archivedEvidence = []
     const requestedTerms = [...new Set((read.workspace.settings.evidenceReferences ?? []).map(reference => reference.termId))]
     const terms = requestedTerms.slice(0, 128)
@@ -80,15 +83,22 @@ export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?:
       archiveSettings.push({ path: path('.study/settings.json'), observation: await fs.stat(path('.study/settings.json'), signal) })
       const archiveFs: StudyFiles = { cache: owner, stat: (relative, signal) => fs.stat(path(relative), signal), list: (relative, signal) => relative === '.study/archives' ? Promise.resolve([]) : fs.list(path(relative), signal), read: (relative, signal, limit) => fs.read(path(relative), signal, limit) }
       const archive = await readWorkspaceFiles(archiveFs, signal, [], nativeSources, openmaicSources, owner, Math.max(0, MAX_TOTAL_BYTES - total))
+      const archiveBytes = archive.files.reduce((sum, file) => sum + file.bytes.byteLength, 0)
+      const lessons = await readLessonFile({ ...archiveFs, read: (path, signal, limit) => archiveFs.read(path, signal, Math.max(0, Math.min(limit, MAX_TOTAL_BYTES - total - archiveBytes))) }, signal)
+      if (lessons.bytes && lessons.observation) {
+        total += lessons.bytes.byteLength
+        archiveFiles.push({ path: path('.study/openmaic-lessons.json'), targetKey: lessons.observation.targetKey, version: lessons.observation.version, bytes: lessons.bytes })
+      }
+      archiveSettings.push({ path: path('.study/openmaic-lessons.json'), observation: lessons.observation })
       const original = archive.workspace
       const references = read.workspace.settings.evidenceReferences!.filter(reference => reference.termId === term)
-      total += archive.files.reduce((sum, file) => sum + file.bytes.byteLength, 0)
+      total += archiveBytes
       archiveFiles.push(...archive.files.map(file => ({ ...file, path: path(file.path) })))
       read.membership.push(...archive.membership.filter(directory => directory.path !== '.study/archives').map(directory => ({ ...directory, path: path(directory.path) })))
       if (total > MAX_TOTAL_BYTES || archive.status !== 'archived' || !original || original.settings.termId !== term || !original.settings.learnerId || original.settings.learnerId !== read.workspace.settings.learnerId) {
         archiveIssues.push({ path: prefix, field: '', rule: 'archive-reference', correction: 'Restore a valid archived term of this same confirmed learner; unavailable history grants no progress.' }); continue
       }
-      const compatible = references.filter(reference => {
+      const structural = references.filter(reference => {
         const entity = reference.ownerKind === 'block' ? original.blocks.find(block => block.id === reference.ownerId) : original.worksheets.find(sheet => sheet.id === reference.ownerId)
         const response = entity?.responses.find(response => response.id === reference.responseId)
         const question = (entity?.kind === 'block' ? entity.questions : entity?.items)?.find(question => question.id === response?.questionId)
@@ -96,9 +106,16 @@ export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?:
           if (archiveIssues.length < 100) archiveIssues.push({ path: `${prefix}/${reference.ownerKind === 'block' ? 'blocks' : 'worksheets'}/${reference.ownerId}.json`, field: reference.responseId, rule: 'archive-reference', correction: 'Reference the original response, learner, capability and an explicitly compatible tested range.' })
           return false
         }
+        return true
+      })
+      if (structural.length) archiveSources.push({ workspace: original, references: structural, lessons })
+      const compatible = structural.filter(reference => {
         if (reference.review) {
+          const entity = reference.ownerKind === 'block' ? original.blocks.find(block => block.id === reference.ownerId)! : original.worksheets.find(sheet => sheet.id === reference.ownerId)!
+          const response = entity.responses.find(response => response.id === reference.responseId)!
+          const question = (entity.kind === 'block' ? entity.questions : entity.items).find(question => question.id === response.questionId)!
           const mistake = original.collections?.mistakes.find(mistake => mistake.id === reference.review!.mistakeId && (mistake.objectiveId === question.capability!.goalId || mistake.objectiveId === question.objectiveId) && mistake.subject === entity!.subject)
-          const replay = mistake ? replayMistake({ ...mistake, objectiveId: question.capability.goalId }, deriveEvidence(original), original.settings.archivedAt!) : undefined
+          const replay = mistake ? replayMistake({ ...mistake, objectiveId: question.capability!.goalId }, deriveEvidence(original), original.settings.archivedAt!) : undefined
           if (!replay || replay.stage !== reference.review.stage || replay.dueAt !== reference.review.dueAt || JSON.stringify(replay.independentDays) !== JSON.stringify(reference.review.independentDays)) {
             archiveIssues.push({ path: prefix, field: `${reference.responseId}.review`, rule: 'archive-review', correction: 'Retain the original independently replayed stage, due date and actual independent days.' })
             return false
@@ -115,7 +132,7 @@ export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?:
     for (const settings of archiveSettings) { const after = await fs.stat(settings.path, signal); if (after?.version !== settings.observation?.version || after?.targetKey !== settings.observation?.targetKey) changed = true }
     for (const directory of read.membership) if (JSON.stringify((await fs.list(directory.path, signal)).map(entry => `${entry.type}:${entry.name}`).sort()) !== JSON.stringify(directory.names)) changed = true
     if (changed) continue
-    return { ...read, archiveIssues, archiveFiles, cache: owner, ...(backups ? { backupIssues: backups.issues } : {}) }
+    return { ...read, archiveIssues, archiveFiles, archiveSources, cache: owner, ...(backups ? { backupIssues: backups.issues } : {}) }
   }
   return { status: 'changing', files: [], membership: [], issues: [{ path: '.study/archives', field: '', rule: 'changing-read', correction: 'Finish archive edits and read the original history again.' }], cache: owner }
 }

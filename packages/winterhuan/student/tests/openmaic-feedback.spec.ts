@@ -296,3 +296,30 @@ it('preserves original official grading extension fields in matched formal asses
   Object.assign(files[1]!.value, { assessments: [] })
   expect(consumeOpenmaicFeedback(validateStudyFiles(files).workspace!, source)).toMatchObject({ status: 'pending', missingResponseIds: [response.id] })
 })
+
+it.each(['incorrect', 'partial'] as const)('retains an authenticated parent %s grade for the same short answer', async result => {
+  const split = { ...snapshot, type: 'short_answer' as const, question: 'Explain how to split five into two parts', answer: ['1 and 4'] }
+  const f = await officialFixture(split), prepared = await f.feedback().prepare(f.lesson, f.target, signal)
+  f.setRecords([record(0, 'submitted', { [snapshot.id]: 'C' }), record(1, 'reviewed', { [snapshot.id]: 'C' }, [official.result])])
+  const sourceRead = await f.feedback().read(f.lesson, prepared.binding, signal), observation = sourceRead.observations[0]!
+  const question = openmaicAcademicQuestion(observation)
+  const response = { id: observation.responseId, questionId: question.id, rawResponse: '"C"', assistance: 'unknown', answerDate: { kind: 'unknown' }, source: observation.source }
+  const decision = { learnerId: 'child-1', termId: 'term-1', blockId: 'block-1', responseId: response.id, questionId: question.id, snapshotHash: observation.question.snapshotHash, submittedAnswer: 'C', result, criterion: 'Either order of the two positive parts is valid because 4+1=5.', parentConfirmation: 'I confirm this criterion for this original answer.' }
+  const rawResponse = `Student grading correction:\n${JSON.stringify(decision)}`
+  const native = { sessionId: 'parent-main', messageId: 'parent-message', inputVersion: 'parent-version', rawResponse, receiptAt: NOW }
+  const assessment = { id: 'a1', responseId: response.id, result, grading: 'aligned', official: observation.official, officialHistory: observation.officialHistory, assistance: 'unknown', feedback: decision.criterion, answerEvidence: question.answerEvidence, assessedAt: NOW,
+    criterionCorrection: { sessionId: native.sessionId, messageId: native.messageId, inputVersion: native.inputVersion, rawResponse } }
+  const files = input()
+  Object.assign(files[1]!.value, { questions: [question], currentQuestionId: question.id, responses: [response], assessments: [assessment] })
+  const read = validateStudyFiles(files, [], [native], sourceRead.observations)
+  expect(read.valid).toBe(true)
+  expect(deriveEvidence(read.workspace!).entries).toMatchObject([{ result, sourceStatus: 'known', official: { result: { correct: false } }, answerDate: { kind: 'unknown' }, assistance: 'unknown' }])
+  expect(consumeOpenmaicFeedback(read.workspace!, sourceRead)).toMatchObject({ status: 'accepted', missingResponseIds: [], conflicts: [] })
+  const replay = validateStudyFiles(files, read.files, [native], sourceRead.observations)
+  expect(replay.workspace!.blocks[0]!.responses).toHaveLength(1)
+  expect(replay.workspace!.blocks[0]!.assessments).toHaveLength(1)
+  expect(consumeOpenmaicFeedback(replay.workspace!, sourceRead)).toEqual(consumeOpenmaicFeedback(read.workspace!, sourceRead))
+  expect(deriveEvidence(validateStudyFiles(files, [], [], sourceRead.observations).workspace!).entries).toMatchObject([{ result: 'unassessed', sourceStatus: 'known' }])
+  expect(deriveEvidence(validateStudyFiles(files, [], [{ ...native, rawResponse: 'model-authored confirmation' }], sourceRead.observations).workspace!).entries).toMatchObject([{ result: 'unassessed', sourceStatus: 'known' }])
+  expect(deriveEvidence(validateStudyFiles(files, [], [native], [{ ...observation, sourceStatus: 'unknown' }]).workspace!).entries).toMatchObject([{ result: 'unassessed', sourceStatus: 'unknown' }])
+})

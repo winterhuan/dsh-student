@@ -96,3 +96,20 @@ it('disposes its Chrome while the authorized learner read is stalled and rejects
   expect(await queued).toBeInstanceOf(Error)
   await expect(browser.open('stage-three', new AbortController().signal)).rejects.toBeInstanceOf(Error)
 })
+
+
+it('scrubs credential environment names before launching external classroom content', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'student-openmaic-env-'))
+  const original = { ...process.env }
+  const baseUrl = 'https://example.test'
+  let received: Record<string, string | number | boolean> | undefined
+  const browser = new OpenmaicBrowser({ baseUrl, async identity() { return { baseUrl, learnerKey: 'user:parent', accountId: 'parent', expiresAt: 0 } } }, { profileRoot: root, async credentials() { return undefined } }, { async launch(_path, options) { received = options.env; throw new Error('Launch boundary reached') } })
+  onTestFinished(async () => { await browser.dispose(); await rm(root, { recursive: true, force: true }) })
+  try {
+    Object.assign(process.env, { STUDENT_API_KEY: 'secret', student_secret: 'secret', STUDENT_TOKEN: 'secret', STUDENT_PASSWORD: 'secret', STUDENT_BROWSER_SAFE: 'kept' })
+    await expect(browser.open('stage-one', new AbortController().signal)).rejects.toMatchObject({ code: 'browser-unavailable' })
+  } finally { for (const name of Object.keys(process.env)) if (!(name in original)) delete process.env[name]; Object.assign(process.env, original) }
+  expect(received).toBeDefined()
+  expect(received?.STUDENT_BROWSER_SAFE).toBe('kept')
+  expect(Object.keys(received ?? {}).filter(name => /KEY|SECRET|TOKEN|PASSWORD/iu.test(name))).toEqual([])
+})

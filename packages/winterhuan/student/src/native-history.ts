@@ -24,9 +24,15 @@ export async function readNativeHistory(agent: Agent, read: WorkspaceRead, signa
   const observations: NativeInputObservation[] = [], verification: NativeHistoryVerification[] = []
   const allows = async (id: SessionId) => invocation ? await invocation.get('remoteAccess')?.allows({ kind: 'session', id }) ?? false : true
   if (!workspace) return { observations, verification, recheck: async () => {} }
-  const owners = [{ workspace, references: undefined }, ...(workspace.archivedEvidence ?? [])]
-  const references = owners.flatMap(owner => [...owner.workspace.blocks, ...owner.workspace.worksheets].flatMap(file => file.responses.flatMap(response => response.source.kind === 'native' && response.source.sessionId !== agent.session.id && (!owner.references || owner.references.some(reference => reference.learnerId === file.learnerId && reference.termId === file.termId && reference.ownerKind === file.kind && reference.ownerId === file.id && reference.responseId === response.id)) ? [{ file, response, source: response.source }] : [])))
-  const corrections = owners.flatMap(owner => owner.workspace.blocks.flatMap(file => file.assessments.flatMap(assessment => assessment.criterionCorrection && assessment.criterionCorrection.sessionId !== agent.session.id && (!owner.references || owner.references.some(reference => reference.learnerId === file.learnerId && reference.termId === file.termId && reference.ownerKind === file.kind && reference.ownerId === file.id && reference.responseId === assessment.responseId)) ? [assessment.criterionCorrection] : [])))
+  const owners = [{ workspace, references: undefined }, ...(read.archiveSources ?? workspace.archivedEvidence ?? [])]
+  const needed = (owner: typeof owners[number], file: typeof workspace.blocks[number] | typeof workspace.worksheets[number], responseId: string): boolean => {
+    if (!owner.references) return true
+    const response = file.responses.find(response => response.id === responseId)
+    const question = (file.kind === 'block' ? file.questions : file.items).find(question => question.id === response?.questionId)
+    return owner.references.some(reference => reference.learnerId === file.learnerId && reference.termId === file.termId && (reference.ownerKind === file.kind && reference.ownerId === file.id && reference.responseId === responseId || reference.review && reference.review.mistakeId === question?.mistakeId && (question?.capability?.goalId ?? question?.objectiveId) === reference.goalId))
+  }
+  const references = owners.flatMap(owner => [...owner.workspace.blocks, ...owner.workspace.worksheets].flatMap(file => file.responses.flatMap(response => response.source.kind === 'native' && response.source.sessionId !== agent.session.id && needed(owner, file, response.id) ? [{ file, response, source: response.source }] : [])))
+  const corrections = owners.flatMap(owner => owner.workspace.blocks.flatMap(file => file.assessments.flatMap(assessment => assessment.criterionCorrection && assessment.criterionCorrection.sessionId !== agent.session.id && needed(owner, file, assessment.responseId) ? [assessment.criterionCorrection] : [])))
   const ids = [...new Set([...references.map(reference => reference.source.sessionId), ...corrections.map(correction => correction.sessionId)])]
   const deadline = AbortSignal.any([signal, AbortSignal.timeout(30_000)])
   let physicalBytes = 0, replayBytes = 0

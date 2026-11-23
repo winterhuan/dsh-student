@@ -23,6 +23,7 @@ import { readStudentWorkspace } from '../src/transport.ts'
 import { deriveEvidence } from '../src/learning/evidence.ts'
 import { resolveNativeSources } from '../src/native-source.ts'
 import { validateStudyFiles } from '../src/files/validation.ts'
+import { queryWorkspace } from '../src/learning/queries.ts'
 import { NOW, setup } from './fixtures.ts'
 
 class Replies extends LlmAdapter {
@@ -332,4 +333,69 @@ it('releases failed or canceled admissions and admits explicit Continue through 
   expect(syncMessages).toHaveLength(1)
   expect(JSON.stringify(syncMessages[0])).toContain('explicit Continue request may follow the shared study_status nextAction and legalActions')
   expect((await f.read()).native.inputs).toEqual([])
+})
+
+
+it('releases each disposed Agent capture while the shared Student registration remains active', async () => {
+  const f = await fixture()
+  const capture = f.agent.ctx.studentNativeCapture
+  expect(capture.owner(f.agent)?.scope.blockId).toBe('block-1')
+  await f.handle.dispose()
+  expect(capture.owner(f.agent)).toBeUndefined()
+  const later = await f.ctx.agents.create({ sessionId: SessionId('disposal-main'), agentOptions: { provider: 'native-fixture', model: 'native-fixture' }, meta: { cwd: f.cwd }, setup: async ctx => { await ctx.plugin(Student) } })
+  expect(later.agent.ctx.studentNativeCapture.owner(later.agent)?.scope.blockId).toBe('block-1')
+  later.agent.followup(createUserMessage({ source: { kind: 'user' }, content: [{ type: 'text', text: '24' }] }))
+  await later.agent.whenIdle()
+  expect((await readStudentWorkspace({ agent: later.agent, signal: new AbortController().signal })).native.observations[0]?.learningScope?.blockId).toBe('block-1')
+})
+
+
+it('reauthenticates every original native answer before accepting a sole archived review reference', async () => {
+  const f = await fixture()
+  const scope = { id: 'within100', description: 'Written subtraction within one hundred', modality: 'written', numberMax: 100 }
+  const days = ['2026-10-01', '2026-10-08', '2026-10-24']
+  const mistake = { id: 'm1', subject: 'math', objectiveId: 'm.sub', topic: 'Subtract', prompt: '62 - 38?', learnerAnswer: '34', correction: '24', explanation: 'Regroup', answerEvidence: '24 + 38 = 62', uncertainties: '', confirmedAt: Date.parse('2026-09-30T09:00:00+08:00'), userConfirmation: 'Original error checked' }
+  const collections = { format: 2, kind: 'collections', learnerId: 'child-1', termId: 'term-1', mistakes: [mistake], rewards: [], teachingQueue: [] }
+  await writeFile(join(f.cwd, '.study/collections.json'), JSON.stringify(collections))
+  const questions = days.map((_day, i) => ({ ...f.block.questions[0], ...(i < 2 ? { prompt: '18 - 3?', answer: '15', explanation: 'Subtract three', answerEvidence: '15 + 3 = 18' } : {}), id: `q${i}`, objectiveId: 'm.sub', mistakeId: 'm1', capability: { goalId: 'm.sub', familyId: 'math.sub-column', scope: i < 2 ? { ...scope, id: 'within20', numberMax: 20 } : scope } }))
+  const responses: object[] = [], assessments: object[] = []
+  for (const [i, day] of days.entries()) {
+    await writeFile(f.blockPath, JSON.stringify({ ...f.block, questions, currentQuestionId: `q${i}` }))
+    await f.read()
+    await f.answer(questions[i]!.answer)
+    const observed = (await f.read()).native.observations.at(-1)!
+    const responseId = observed.learningScope!.responseId!
+    responses.push({ id: responseId, questionId: `q${i}`, rawResponse: questions[i]!.answer, assistance: 'independent', answerDate: { kind: 'day', day, parentConfirmation: 'Actual original answer day checked' }, source: { kind: 'native', sessionId: observed.sessionId, messageId: observed.messageId, inputVersion: observed.inputVersion, receiptAt: observed.receiptAt } })
+    assessments.push({ id: `a${i}`, responseId, result: 'correct', assistance: 'independent', feedback: 'Correct', answerEvidence: questions[i]!.answerEvidence, assessedAt: NOW })
+  }
+  const old = join(f.cwd, '.study/archives/term-1')
+  await mkdir(join(old, 'blocks'), { recursive: true })
+  await writeFile(join(old, 'settings.json'), JSON.stringify({ ...f.settings, archivedAt: Date.parse('2026-11-01T12:00:00+08:00') }))
+  await writeFile(join(old, 'collections.json'), JSON.stringify(collections))
+  await writeFile(join(old, 'blocks/block-1.json'), JSON.stringify({ ...f.block, questions, currentQuestionId: 'q2', responses, assessments, endedAt: Date.parse('2026-11-01T11:00:00+08:00') }))
+  await rm(f.blockPath); await rm(join(f.cwd, '.study/collections.json'))
+  const latest = (responses.at(-1)! as { id: string }).id
+  const review = { mistakeId: 'm1', stage: 3, dueAt: Date.parse('2026-11-09T00:00:00+08:00'), independentDays: days }
+  const settings = { ...f.settings, termId: 'term-2', evidenceReferences: [{ learnerId: 'child-1', termId: 'term-1', ownerKind: 'block', ownerId: 'block-1', responseId: latest, goalId: 'm.sub', scope, review }] }
+  await writeFile(f.settingsPath, JSON.stringify(settings))
+  await f.handle.dispose()
+  const later = await f.ctx.agents.create({ sessionId: SessionId('archive-reader'), agentOptions: { provider: 'native-fixture', model: 'native-fixture' }, meta: { cwd: f.cwd }, setup: async ctx => { await ctx.plugin(Student) } })
+  const read = () => readStudentWorkspace({ agent: later.agent, signal: new AbortController().signal })
+  const result = await read()
+  expect(result.read.status).toBe('valid')
+  expect(result.read.archiveIssues).toEqual([])
+  expect(deriveEvidence(result.read.workspace!).entries).toHaveLength(3)
+  expect(deriveEvidence(result.read.workspace!).entries.every(entry => entry.sourceStatus === 'known')).toBe(true)
+  expect(queryWorkspace(result.read, { kind: 'mistakes' }, Date.parse('2026-11-23T12:00:00+08:00'))).toMatchObject({ data: { items: [{ id: 'm1', stage: 3, dueAt: review.dueAt, independentDays: days }] } })
+  expect(queryWorkspace(result.read, { kind: 'learning-context' }, Date.parse('2026-11-23T12:00:00+08:00'))).toMatchObject({ data: { goalProgress: expect.arrayContaining([expect.objectContaining({ id: 'm.sub', independentDays: ['2026-10-24'], baseline: false })]) } })
+  const invocation = new Context()
+  onTestFinished(() => invocation.fiber.dispose())
+  let historicalChecks = 0
+  invocation.provide('remoteAccess', { async allows(resource: { id: string }) { return resource.id === later.agent.session.id || ++historicalChecks < 3 } } as Context['remoteAccess'])
+  const revoked = await readStudentWorkspace({ agent: later.agent, signal: new AbortController().signal }, invocation)
+  expect(historicalChecks).toBe(3)
+  expect(revoked.read.workspace?.archivedEvidence).toEqual([])
+  expect(revoked.read.sourceVerification?.native).toMatchObject([{ status: 'unavailable', reason: 'Original Session ownership or access changed before publication.' }])
+  await writeFile(f.settingsPath, JSON.stringify({ ...settings, evidenceReferences: [{ ...settings.evidenceReferences[0], review: { ...review, stage: 4 } }] }))
+  expect((await read()).read.workspace?.archivedEvidence).toEqual([])
 })

@@ -53,8 +53,10 @@ const legacySchema = z.object({
 /** Effective catalog records aliases of equivalent workspace mothers rather than exposing duplicate mothers. */
 export interface EffectiveKnowledge extends KnowledgeExtension { familyAliases: Record<string, string> }
 const moduleUrl = import.meta.url
-let shipped: KnowledgeExtension | undefined
-let legacy: z.infer<typeof legacySchema> | undefined
+function immutable<T>(value: T): T {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) { for (const child of Object.values(value)) immutable(child); Object.freeze(value) }
+  return value
+}
 const read = (name: string): unknown => JSON.parse(readFileSync(new URL(`../knowledge/curriculum/capabilities/${name}.json`, moduleUrl), 'utf8'))
 function signature(family: QuestionFamily): string {
   return JSON.stringify([family.subject, [...family.signature.capabilityIds].sort(), family.signature.coreMethod.trim(), family.signature.problemStructure.trim()])
@@ -94,11 +96,10 @@ function validateCatalog(catalog: KnowledgeExtension): void {
 /**
  * Resolve built-in and workspace content into one effective capability/family index.
  * @param extension - content in the existing workspace collection, without learner facts.
- * @returns validated content and canonical family aliases; incompatible duplicates throw.
+ * @returns deeply frozen borrowed content and canonical family aliases; incompatible duplicates throw.
  */
 export function effectiveKnowledge(extension?: KnowledgeExtension): EffectiveKnowledge {
-  if (!shipped) { shipped = catalogSchema.parse(read('catalog')); validateCatalog(shipped) }
-  if (!extension) return { goals: shipped.goals, families: shipped.families, familyAliases: {} }
+  if (!extension) return immutable({ goals: shipped.goals, families: shipped.families, familyAliases: {} })
   const parsed = knowledgeExtensionSchema.parse(extension)
   const goals = new Map(shipped.goals.map(goal => [goal.id, goal]))
   for (const goal of parsed.goals) {
@@ -116,7 +117,7 @@ export function effectiveKnowledge(extension?: KnowledgeExtension): EffectiveKno
   }
   const catalog = { goals: [...goals.values()].map(goal => ({ ...goal, familyIds: [...new Set(goal.familyIds.map(id => familyAliases[id] ?? id).concat(families.filter(family => family.goalIds.includes(goal.id)).map(family => family.id)))] })), families }
   validateCatalog(catalog)
-  return { ...catalog, familyAliases }
+  return immutable({ ...catalog, familyAliases })
 }
 /** Explicit old-ID routes never grant whole-goal mastery or guess unknown workspace content. */
 export interface LegacyReference { kind: 'objective' | 'exercise'; oldId: string; status: 'pending' | 'review-required'; candidateGoalIds: string[]; routes: z.infer<typeof routeSchema>[]; pendingReasons: string[]; originalPrompt?: string }
@@ -124,17 +125,16 @@ export interface LegacyReference { kind: 'objective' | 'exercise'; oldId: string
  * Resolve an old course or exercise identity, retaining uncertainty for unenumerated workspace banks.
  * @param kind - course objective or concrete source exercise.
  * @param oldId - exact preserved identity.
- * @returns candidate routes and evidence requirements, never automatic mastery credit.
+ * @returns deeply frozen borrowed candidate routes and evidence requirements, never mastery credit.
  */
 export function resolveLegacyReference(kind: LegacyReference['kind'], oldId: string): LegacyReference {
-  legacy ??= legacySchema.parse(read('legacy-map'))
   if (kind === 'objective') {
     const item = legacy.objectives.find(item => item.oldObjectiveId === oldId)
-    return { kind, oldId, status: 'pending', candidateGoalIds: item?.candidateGoalIds ?? [], routes: [], pendingReasons: [item?.inheritance ?? 'Unknown legacy objective; inspect the preserved source before assigning a capability.'] }
+    return immutable({ kind, oldId, status: 'pending', candidateGoalIds: item?.candidateGoalIds ?? [], routes: [], pendingReasons: [item?.inheritance ?? 'Unknown legacy objective; inspect the preserved source before assigning a capability.'] })
   }
   const item = legacy.exercises.find(item => item.oldExerciseId === oldId)
-  return { kind, oldId, status: item?.routes.length ? 'review-required' : 'pending', candidateGoalIds: [...new Set(item?.routes.map(route => route.goalId) ?? [])], routes: item?.routes ?? [],
-    pendingReasons: item?.pendingReasons ?? ['Unknown workspace exercise; inspect its method, structure and tested scope.'], ...(item ? { originalPrompt: item.originalPrompt } : {}) }
+  return immutable({ kind, oldId, status: item?.routes.length ? 'review-required' : 'pending', candidateGoalIds: [...new Set(item?.routes.map(route => route.goalId) ?? [])], routes: item?.routes ?? [],
+    pendingReasons: item?.pendingReasons ?? ['Unknown workspace exercise; inspect its method, structure and tested scope.'], ...(item ? { originalPrompt: item.originalPrompt } : {}) })
 }
 
 /**
@@ -155,9 +155,12 @@ const sourceCatalogSchema = z.object({ retrievedOn: text,
   sources: z.array(z.object({ id: knowledgeIdSchema, label: text, url: text.optional(), sha256: text.optional(), pdfPages: z.number().int().positive().optional(), retrievedOn: text.optional(), paths: z.array(text).optional(), status: text.optional() }).strict()),
   coverage: z.array(z.json()), quantitativeCoverageLedgers: z.array(z.json()), scopeCaveats: z.array(text),
 }).strict()
-let sources: z.infer<typeof sourceCatalogSchema> | undefined
+const sources = immutable(sourceCatalogSchema.parse(read('sources')))
+const legacy = immutable(legacySchema.parse(read('legacy-map')))
+const shipped = immutable(catalogSchema.parse(read('catalog')))
+validateCatalog(shipped)
 /**
- * Read the packaged curriculum sources, capability decomposition and quantitative activity limits on demand.
- * @returns source locators and coverage policies; these are learning content, never learner evidence.
+ * Read immutable packaged curriculum sources, capability decomposition and quantitative activity limits.
+ * @returns deeply frozen borrowed source locators and coverage policies, never learner evidence.
  */
-export function knowledgeSources(): z.infer<typeof sourceCatalogSchema> { return sources ??= sourceCatalogSchema.parse(read('sources')) }
+export function knowledgeSources(): z.infer<typeof sourceCatalogSchema> { return sources }

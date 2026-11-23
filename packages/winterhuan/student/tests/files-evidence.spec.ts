@@ -184,7 +184,7 @@ it('keeps the selected goal and current response while distinguishing pending an
   expect(pending).toMatchObject({ data: { savedResponse: { id: 'r1', rawResponse: '15' }, pendingAssessment: true, target: { id: 'm2a-o-sub', method: 'verify' }, legalActions: ['request-assessment', 'end-block', 'switch-block'] } })
   block.assessments = [{ id: 'a1', responseId: 'r1', result: 'correct', assistance: 'unknown', feedback: 'Correct', answerEvidence: '8 + 7 = 15', assessedAt: NOW }]
   await save('.study/blocks/block-1.json', block)
-  expect(queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'learning-context' }, NOW)).toMatchObject({ data: { pendingAssessment: false, legalActions: ['next-question', 'end-block', 'switch-block'] } })
+  expect(queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'learning-context' }, NOW)).toMatchObject({ data: { pendingAssessment: false, nextAction: { kind: 'hold', reason: 'confirmed-scope-required' }, legalActions: ['switch-block', 'rest', 'more-review'] } })
 })
 
 it('retains an explicitly selected original response outside the recent response window', async () => {

@@ -4,6 +4,7 @@ import type { ValidatedWorkspace } from '../files/validation.ts'
 import type { AnswerDate, Assessment, LearnerResponse, LearningBlock } from '../files/schema.ts'
 import { matchOpenmaicResponse, effectiveOpenmaicAssessment } from '../openmaic/feedback-consumer.ts'
 import { canonical, studyDay } from './shared.ts'
+import { answerWasExposed } from '../files/answer-exposure.ts'
 import { scopeSupports } from '../capabilities.ts'
 
 /** Effective assessment of one original response; corrections retain its identity and answer date. */
@@ -51,7 +52,7 @@ export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
         ...(question.capability ? { capability: question.capability } : {}),
         ...(assessment ? { feedback: assessment.feedback, criteria: assessment.criteria ?? [question.phase === 'vary' ? 'variation' : question.phase === 'guide' ? 'method' : 'basic'], ...(assessment.errorType ? { errorType: assessment.errorType } : {}) } : {}),
         result: question.basisStatus ? 'unassessed' : source.kind === 'openmaic' ? officialGrade?.result ?? 'unassessed' : assessment?.result ?? 'unassessed',
-        ...(assessment?.official ? { official: assessment.official } : {}), ...(assessment?.officialHistory ? { officialHistory: assessment.officialHistory } : {}), ...(source.kind === 'openmaic' ? { grading: officialGrade?.grading ?? 'pending' } : assessment?.grading ? { grading: assessment.grading } : {}), assistance: source.kind === 'openmaic' && (matchedOfficial?.answerExposure || !response.assistanceConfirmation) ? 'unknown' : response.assistance, source: response.source,
+        ...(assessment?.official ? { official: assessment.official } : {}), ...(assessment?.officialHistory ? { officialHistory: assessment.officialHistory } : {}), ...(source.kind === 'openmaic' ? { grading: officialGrade?.grading ?? 'pending' } : assessment?.grading ? { grading: assessment.grading } : {}), assistance: source.kind === 'openmaic' && (matchedOfficial?.answerExposure || !response.assistanceConfirmation) || response.assistance === 'independent' && answerWasExposed(file, response) ? 'unknown' : response.assistance, source: response.source,
         sourceStatus: source.kind === 'unknown' || source.kind === 'openmaic' && !matchedOfficial || source.kind === 'native' && (!matchedNative || source.receiptAt !== undefined && source.receiptAt !== matchedNative.receiptAt) ? 'unknown' : 'known',
         answerDate,
         ...(assessment ? { assessedAt: assessment.assessedAt } : {}) })

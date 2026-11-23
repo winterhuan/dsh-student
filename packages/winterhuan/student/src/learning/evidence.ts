@@ -2,7 +2,7 @@
 import type { StudyState } from '../schema.ts'
 import type { ValidatedWorkspace } from '../files/validation.ts'
 import type { AnswerDate, Assessment, LearnerResponse, LearningBlock } from '../files/schema.ts'
-import { matchOpenmaicResponse } from '../openmaic/feedback-consumer.ts'
+import { matchOpenmaicResponse, effectiveOpenmaicAssessment } from '../openmaic/feedback-consumer.ts'
 import { studyDay } from './shared.ts'
 import { scopeSupports } from '../capabilities.ts'
 
@@ -40,6 +40,7 @@ export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
       const source = response.source
       const matchedNative = source.kind === 'native' ? workspace.nativeSources?.find(item => item.sessionId === source.sessionId && item.messageId === source.messageId && item.inputVersion === source.inputVersion && item.rawResponse === response.rawResponse) : undefined
       const matchedOfficial = source.kind === 'openmaic' ? workspace.openmaicSources?.find(item => matchOpenmaicResponse(item, file, response, question, assessment)) : undefined
+      const officialGrade = matchedOfficial ? effectiveOpenmaicAssessment(matchedOfficial, file, response, question, assessment, workspace.nativeSources) : undefined
       const answerDate: AnswerDate = declaredDate.kind === 'instant' && declaredDate.basis === 'native-input'
         ? matchedNative && matchedNative.receiptAt === declaredDate.at ? declaredDate : { kind: 'unknown' }
         : declaredDate
@@ -49,8 +50,8 @@ export function deriveEvidence(workspace: ValidatedWorkspace): EvidenceIndex {
         ...(question.mistakeId ? { mistakeId: question.mistakeId } : {}), rawResponse: response.rawResponse,
         ...(question.capability ? { capability: question.capability } : {}),
         ...(assessment ? { feedback: assessment.feedback, criteria: assessment.criteria ?? [question.phase === 'vary' ? 'variation' : question.phase === 'guide' ? 'method' : 'basic'], ...(assessment.errorType ? { errorType: assessment.errorType } : {}) } : {}),
-        result: question.basisStatus ? 'unassessed' : source.kind === 'openmaic' ? matchedOfficial?.result ?? 'unassessed' : assessment?.result ?? 'unassessed',
-        ...(assessment?.official ? { official: assessment.official } : {}), ...(assessment?.officialHistory ? { officialHistory: assessment.officialHistory } : {}), ...(assessment?.grading ? { grading: assessment.grading } : {}), assistance: source.kind === 'openmaic' && (matchedOfficial?.answerExposure || !response.assistanceConfirmation) ? 'unknown' : response.assistance, source: response.source,
+        result: question.basisStatus ? 'unassessed' : source.kind === 'openmaic' ? officialGrade?.result ?? 'unassessed' : assessment?.result ?? 'unassessed',
+        ...(assessment?.official ? { official: assessment.official } : {}), ...(assessment?.officialHistory ? { officialHistory: assessment.officialHistory } : {}), ...(source.kind === 'openmaic' ? { grading: officialGrade?.grading ?? 'pending' } : assessment?.grading ? { grading: assessment.grading } : {}), assistance: source.kind === 'openmaic' && (matchedOfficial?.answerExposure || !response.assistanceConfirmation) ? 'unknown' : response.assistance, source: response.source,
         sourceStatus: source.kind === 'unknown' || source.kind === 'openmaic' && !matchedOfficial || source.kind === 'native' && (!matchedNative || source.receiptAt !== undefined && source.receiptAt !== matchedNative.receiptAt) ? 'unknown' : 'known',
         answerDate,
         ...(assessment ? { assessedAt: assessment.assessedAt } : {}) })

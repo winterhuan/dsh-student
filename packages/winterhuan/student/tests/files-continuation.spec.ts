@@ -124,6 +124,25 @@ it('gives assessment and current-error teaching priority over backlog and carrie
   expect(JSON.parse(next.requirement)).toMatchObject({ action: 'teach', feedback: expect.arrayContaining([expect.objectContaining({ result: 'incorrect', feedback: 'Counted one object twice', errorType: 'calculation' })]) })
 })
 
+it('continues a known same-range goal gap after the selected variation is answered instead of requesting a new range', async () => {
+  const f = await fixture()
+  await f.save('.study/settings.json', f.settings)
+  f.block.questions.push({ ...f.block.questions[0]!, id: 'q2', prompt: '9 + 5?', answer: '14' })
+  f.block.currentQuestionId = 'q2'
+  f.block.responses = [
+    { id: 'old-error', questionId: 'q1', rawResponse: '16', assistance: 'unknown', answerDate: { kind: 'unknown' }, source: { kind: 'manual', entry: 'historical', parentConfirmation: 'Original answer confirmed, date and help unknown.' } },
+    { id: 'variant', questionId: 'q2', rawResponse: '14', assistance: 'independent', answerDate: { kind: 'day', day: '2026-11-23', parentConfirmation: 'Actual answer day.' }, source: { kind: 'manual', entry: 'current', parentConfirmation: 'Actual variant answer.' } },
+  ]
+  f.block.assessments = [
+    { id: 'old-a', responseId: 'old-error', result: 'incorrect', assistance: 'unknown', feedback: 'Original counted sum differs by one.', criteria: ['basic'], answerEvidence: '8+7=15', assessedAt: NOW },
+    { id: 'variant-a', responseId: 'variant', result: 'correct', assistance: 'independent', feedback: 'Checks the sum, method and constrained variation.', criteria: ['basic', 'method', 'variation'], answerEvidence: '9+1+4=14', assessedAt: NOW },
+  ]
+  await f.save('.study/blocks/current.json', f.block)
+  const read = await readWorkspace(f.files, new AbortController().signal)
+  const result = queryWorkspace(read, { kind: 'learning-context', subject: 'english' }, NOW)
+  expect(result).toMatchObject({ data: { nextAction: { kind: 'teach', reason: 'current-gap', goalId: 'm.count', scope, subject: 'math' }, goalProgress: expect.arrayContaining([expect.objectContaining({ id: 'm.count', level: 'weak', missingCriteria: [], independentDays: ['2026-11-23'] })]) } })
+})
+
 it('ends the two-mother review round before confirmed new learning even with remaining backlog', async () => {
   const f = await fixture()
   const newQuestion = { ...f.block.questions[0]!, id: 'new-q', objectiveId: 'm.zero', capability: { goalId: 'm.zero', familyId: 'math.zero', scope } }
@@ -199,4 +218,22 @@ it('does not borrow future method or variation evidence at an earlier query cuto
   await f.save('.study/blocks/current.json', f.block)
   const read = await readWorkspace(f.files, new AbortController().signal)
   expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { goalProgress: expect.arrayContaining([expect.objectContaining({ id: 'm.count', level: 'practising', independentDays: ['2026-11-19', '2026-11-20', '2026-11-21'], missingCriteria: [{ familyId: 'math.count', criteria: ['method', 'variation'] }] })]) } })
+})
+
+it.each([{ familyId: 'math.sub-basic', numberMax: 100 }, { familyId: 'math.sub-column', numberMax: 1000 }])('keeps an original frozen mother stage for incompatible review target $familyId/$numberMax', async ({ familyId, numberMax }) => {
+  const f = await fixture()
+  await f.save('.study/settings.json', f.settings)
+  const confirmedAt = NOW - 2 * 86400000
+  const mother = { id: 'original-subtraction', subject: 'math', objectiveId: 'm.sub', topic: 'Column subtraction', prompt: '62 − 28 using columns?', learnerAnswer: '44', correction: '34', explanation: 'Borrow one ten', answerEvidence: '62 − 28 = 34', uncertainties: '', confirmedAt, userConfirmation: 'Original column error confirmed' }
+  await f.save('.study/collections.json', collectionsSchema.parse({ format: 2, learnerId: 'child-1', kind: 'collections', termId: 'new-term', mistakes: [mother], rewards: [], teachingQueue: [] }))
+  const columnScope = { ...scope, id: 'column100', numberMax: 100 }
+  const original = { ...f.block.questions[0]!, id: 'column-original', objectiveId: 'm.sub', mistakeId: mother.id, capability: { goalId: 'm.sub', familyId: 'math.sub-column', scope: columnScope }, topic: mother.topic, prompt: mother.prompt, answer: mother.correction, explanation: mother.explanation, answerEvidence: mother.answerEvidence }
+  const response = { id: 'original-wrong', questionId: original.id, rawResponse: '44', assistance: 'independent', answerDate: { kind: 'day', day: '2026-11-20', parentConfirmation: 'Original day' }, source: { kind: 'manual', entry: 'historical', parentConfirmation: 'Original answer' } }
+  const targetScope = { ...columnScope, id: `target-${numberMax}`, numberMax }
+  const next = { ...original, id: 'new-variant', prompt: '51 − 20?', answer: '31', answerEvidence: '51 − 20 = 31', capability: { goalId: 'm.sub', familyId, scope: targetScope } }
+  const current = { ...f.block, context: { profile: setup.profile, scope: { grade: 2, term: 'first', objectiveIds: ['m.sub'] } }, currentQuestionId: next.id, currentResponseId: 'new-correct', questions: [original, next], responses: [response, { ...response, id: 'new-correct', questionId: next.id, rawResponse: '31', answerDate: { kind: 'day', day: '2026-11-23', parentConfirmation: 'Actual new day' } }], assessments: [{ id: 'old-grade', responseId: response.id, result: 'incorrect', assistance: 'independent', feedback: 'Original column error', answerEvidence: original.answerEvidence, assessedAt: confirmedAt }, { id: 'new-grade', responseId: 'new-correct', result: 'correct', assistance: 'independent', feedback: 'New answer correct in its own target', answerEvidence: next.answerEvidence, assessedAt: NOW }] }
+  await f.save('.study/blocks/current.json', current)
+  const read = await readWorkspace(f.files, new AbortController().signal)
+  expect(read.status).toBe('valid')
+  expect(queryWorkspace(read, { kind: 'mistakes' }, NOW)).toMatchObject({ data: { items: [expect.objectContaining({ id: mother.id, stage: 0, independentDays: [], dueAt: Date.parse('2026-11-22T00:00:00+08:00') })] } })
 })

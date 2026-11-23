@@ -19,6 +19,8 @@
 
 ## 评分与未知事实
 
-保留原官方结果与 Student 有效结果。明确选项值或数值等价可核验；equivalent 返回的依据须保留。未解决的官方评分冲突为 conflict，文本题或缺少判据为 pending；不要用总分替代目标评价。题面修订不一致、历史题面不可取得、原 submitted 缺失或同 attempt 回答冲突时，原回答仍保存，但来源未知且有效结果未评价。
+保留原官方结果与 Student 有效结果。明确选项值或数值等价可核验；equivalent 返回的依据须保留。无法自动比较的文字选项、文本题或缺少判据为 pending，未解决的官方评分冲突为 conflict；不要用总分替代目标评价。题面修订不一致、历史题面不可取得、原 submitted 缺失或同 attempt 回答冲突时，原回答仍保存，但来源未知且有效结果未评价。
 
 官网作答时间戳是记录生命周期，不能推断实际作答日。默认 answerDate.kind 为 unknown，assistance 为 unknown；家长明确核对后才补实际日期或帮助声明。同题看过答案后的重答可能有答案揭示，不能贡献独立作答；本地补题不能回填历史。点击、截图、观看、自报成绩和课堂完成报告均不直接形成掌握。
+
+家长可在原生对话明确核对原回答的等价判据。确认消息必须仅有两行：第一行是 `Student grading correction:`，第二行是 JSON，包含 `learnerId`、`termId`、`blockId`、`responseId`、`questionId`、原 `snapshotHash`、原 `submittedAnswer`、`result`（`correct` 或 `unassessed`）、`criterion` 和 `parentConfirmation`。先展示原题、原回答和官方评分供家长核对，不能替家长发送确认。把独立消费返回的该消息 `sessionId`、`messageId`、`inputVersion` 和完整原文保存在原 assessment 的 `criterionCorrection`；保留原 official 与 officialHistory，feedback 等于确认的 criterion，正确时 grading 为 equivalent，仍有歧义时为 pending。Student 重读真实消费过的原生输入、原题哈希和原提交后才接受有效更正；模型自写确认无效。更正不新增 response，也不确认作答日期、帮助或独立性；原来源失效时仍不接受证据。

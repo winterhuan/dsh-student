@@ -36,8 +36,11 @@ export function normalizeOpenmaicBase(value: string): string | undefined {
 }
 
 /**
- * Parent setting wins, then OPENMAIC_BASE, then the localhost default.
+ * Parent setting wins, then OPENMAIC_BASE, then the default origin.
  * An invalid saved or environment value is skipped rather than failing a status read.
+ * @param saved - the parent's saved base, when present.
+ * @param env - the OPENMAIC_BASE environment value, when present.
+ * @returns the first valid base or the default origin.
  */
 export function effectiveOpenmaicBase(saved: string | undefined, env: string | undefined): string {
   const fromSaved = saved !== undefined && saved !== '' ? normalizeOpenmaicBase(saved) : ''
@@ -47,7 +50,11 @@ export function effectiveOpenmaicBase(saved: string | undefined, env: string | u
   return DEFAULT_OPENMAIC_BASE
 }
 
-/** An http(s) URL with no embedded credentials, or undefined when the browser must not open it. */
+/**
+ * Validate a lesson URL before opening it in the browser.
+ * @param value - the recorded lesson address.
+ * @returns an http(s) URL with no embedded credentials, or undefined when it is unsafe or invalid.
+ */
 export function lessonHttpUrl(value: string): string | undefined {
   let url: URL
   try { url = new URL(value) } catch { return undefined }
@@ -125,7 +132,13 @@ export interface InteractiveLessons {
   error?: string
 }
 
-/** Build the settings half of the projection before a file read. */
+/**
+ * Build the settings half of the projection before a file read.
+ * @param savedBase - the parent's saved base, when present.
+ * @param lessons - the lesson rows to display; defaults to an empty list.
+ * @param error - a read failure to display alongside the remaining workbench.
+ * @returns the lesson rows, resolved base and workspace file paths.
+ */
 export function interactiveLessonsView(savedBase: string | undefined, lessons: InteractiveLesson[] = [], error?: string): InteractiveLessons {
   return {
     baseUrl: effectiveOpenmaicBase(savedBase, process.env.OPENMAIC_BASE),
@@ -166,6 +179,10 @@ type LessonFs = Pick<FileSystem, 'resolve' | 'contains' | 'stat' | 'readBytes'>
  * Read the lesson log from the session workspace.
  * A missing file is an empty list. A bad file sets `error` and does not fail the workspace request.
  * The shared reader checks actual versions on both sides; the desk displays at most twenty valid rows.
+ * @param agent - the session workspace and its filesystem service.
+ * @param signal - cancels filesystem reads; cancellation rejects the request.
+ * @param savedBase - the parent's saved base, when present.
+ * @returns the lesson projection, with an error for an unreadable file.
  */
 export async function readInteractiveLessons(agent: { ctx?: { get(name: string): unknown }; session?: { header?: { cwd?: string } } }, signal: AbortSignal, savedBase: string | undefined): Promise<InteractiveLessons> {
   const empty = interactiveLessonsView(savedBase)

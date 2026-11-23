@@ -3,7 +3,7 @@ import { stateSchema, type StudyState } from '../schema.ts'
 import type { ValidatedWorkspace } from './validation.ts'
 import { attachEvidence, deriveEvidence } from '../learning/evidence.ts'
 import { scheduleMistakes } from '../learning/schedule.ts'
-import { effectiveKnowledge } from '../capabilities.ts'
+import { effectiveKnowledge, scopeSupports } from '../capabilities.ts'
 import { createHash } from 'node:crypto'
 
 /**
@@ -30,17 +30,20 @@ export function projectWorkspace(workspace: ValidatedWorkspace, now: number): St
     const goal = entry?.capability && (mistake.objectiveId === question?.objectiveId || mistake.objectiveId === entry.capability.goalId) ? entry.capability.goalId : mistake.objectiveId
     const scope = entry?.capability?.scope
     const range = scope ? [scope.modality, scope.numberMax ?? null, scope.vocabulary?.slice().sort() ?? null, scope.numberMax === undefined && scope.vocabulary === undefined ? [scope.id, scope.description] : null] : undefined
-    return { goal, key: entry?.capability && goal === entry.capability.goalId ? JSON.stringify([mistake.subject, goal, knowledge.familyAliases[entry.capability.familyId] ?? entry.capability.familyId, range]) : JSON.stringify([termId, mistake.id]) }
+    return { goal, binding: entry?.capability, key: entry?.capability && goal === entry.capability.goalId ? JSON.stringify([mistake.subject, goal, knowledge.familyAliases[entry.capability.familyId] ?? entry.capability.familyId, range]) : JSON.stringify([termId, mistake.id]) }
   }
   for (const { mistake, termId } of declarations) {
-    const { key, goal } = keyFor(mistake, termId)
+    const { key, goal, binding } = keyFor(mistake, termId)
     let id = mothers.get(key)
     if (!id) {
       id = collections?.mistakes.find(current => keyFor(current, settings.termId).key === key)?.id ?? mistake.id
       if (mistakes.some(existing => existing.id === id)) id = `archive-${createHash('sha256').update(key).digest('hex').slice(0, 32)}`
       mothers.set(key, id); mistakes.push({ ...mistake, id, ...(goal ? { objectiveId: goal } : {}) })
     }
-    for (const entry of index.entries) if (entry.termId === termId && entry.mistakeId === mistake.id) entry.mistakeId = id
+    for (const entry of index.entries) if (entry.termId === termId && entry.mistakeId === mistake.id) {
+      if (binding && (!entry.capability || (knowledge.familyAliases[entry.capability.familyId] ?? entry.capability.familyId) !== (knowledge.familyAliases[binding.familyId] ?? binding.familyId) || !scopeSupports(binding.scope, entry.capability.scope) || !scopeSupports(entry.capability.scope, binding.scope))) delete entry.mistakeId
+      else entry.mistakeId = id
+    }
   }
   const state = stateSchema.parse({ format: 1, revision: settings.revision, updatedAt: settings.updatedAt,
     profile: settings.profile, materials: settings.materials, courses: settings.courses, interests: settings.interests, openmaic: settings.openmaic,

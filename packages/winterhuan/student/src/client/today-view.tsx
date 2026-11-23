@@ -184,7 +184,7 @@ export function TodayView({ nextAction, learnerId, termId, classroomBindingId, o
   </>
 }
 
-const continuationReasons = { 'unfinished-question': 'continueCurrentQuestion', 'pending-assessment': 'continuePendingAnswer', 'missing-evidence': 'continueMissingEvidence', 'current-gap': 'continueCurrentGap', 'prerequisite-gap': 'continuePrerequisiteGap', 'due-review': 'continueDueReview', 'new-goal': 'continueConfirmedGoal', 'confirmed-scope-required': 'continueScopeRequired' } as const satisfies Record<LearningNextAction['reason'], Parameters<Translate>[0]>
+const continuationReasons = { 'unfinished-question': 'continueCurrentQuestion', 'pending-assessment': 'continuePendingAnswer', 'missing-evidence': 'continueMissingEvidence', 'current-gap': 'continueCurrentGap', 'prerequisite-gap': 'continuePrerequisiteGap', 'due-review': 'continueDueReview', 'new-goal': 'continueConfirmedGoal', 'confirmed-scope-required': 'continueScopeRequired', 'check-budget-exhausted': 'continueCheckEnded', 'round-paused': 'continueRoundPaused', 'no-learnable-goal': 'continueNoGoal', 'source-unavailable': 'continueSourceUnavailable', 'source-pending': 'continueSourcePending' } as const satisfies Record<LearningNextAction['reason'], Parameters<Translate>[0]>
 
 function levelKey(level: Study['weakPoints'][number]['level']) {
   return level === 'due' ? 'levelDue' as const : level === 'weak' ? 'levelWeak' as const : level === 'stalled' ? 'levelStalled' as const : level === 'mastered' ? 'levelMastered' as const : level === 'practising' ? 'levelPractising' as const : 'levelUntouched' as const

@@ -89,6 +89,13 @@ case 17:if(!config.online){this.followup={...${JSON.stringify(block)},id:'fixtur
 case 18:if(!config.online)next=['study_status',{kind:'learning-context'}];break;
 case 19:if(!config.online){if(value.status!=='valid')throw new Error('Followup formal files must be independently valid');next=['openmaic_generate',{...${JSON.stringify(owner)},blockId:'fixture-followup',requirement:this.requirement}];}break;
 case 20:if(!config.online)next=['openmaic_generate',{...${JSON.stringify(owner)},blockId:'fixture-followup',jobId:value.jobId}];break;
+case 21:if(!config.online){const questions=['check-1','check-2','check-3'].map(id=>({...${JSON.stringify(seed)},id}));this.followup={...this.followup,currentQuestionId:'check-3',questions:[...this.followup.questions,...questions],rounds:[{id:'native-check',kind:'check',startedAt:${now},members:[${JSON.stringify(seed.capability)}],enteredFamilyIds:[${JSON.stringify(seed.capability.familyId)}],presentedQuestionIds:questions.map(question=>question.id)}]};next=write('.study/blocks/fixture-followup.json',this.followup);}break;
+case 22:if(!config.online)next=validate;break;
+case 23:if(!config.online)next=['study_status',{kind:'learning-context'}];break;
+case 24:if(!config.online){if(value.data.round?.remaining!==0||value.data.nextAction.kind!=='answer')throw new Error('The third presented instance must retain its answer action without granting a fourth');this.followup={...this.followup,endedAt:${now+1},rounds:this.followup.rounds.map(round=>({...round,endedAt:${now+1},endReason:'budget-exhausted'}))};next=write('.study/blocks/fixture-followup.json',this.followup);}break;
+case 25:if(!config.online)next=validate;break;
+case 26:if(!config.online)next=['study_status',{kind:'learning-context'}];break;
+case 27:if(!config.online&&value.data.nextAction.reason!=='check-budget-exhausted')throw new Error('Ending the block must preserve the exhausted check allowance');break;
 
 }
 this.index++;await appendFile(config.telemetry,JSON.stringify({index:this.index,action:next?.[0]??'final',messages:options.messages,tools:options.tools??[],promptCharacters:JSON.stringify(options.messages).length})+'\\n');if(next){const [name,args]=next;if(!(options.tools??[]).some(tool=>tool.name===name))throw new Error('Missing native '+name);const id='feedback-'+this.index;yield {type:'block-start',index:0,blockType:'tool-call'};yield {type:'tool-call-delta',index:0,id,name,argumentsDelta:JSON.stringify(args)};yield {type:'block-end',index:0,block:{type:'tool-call',id,name,arguments:JSON.stringify(args)}};yield {type:'finish',reason:{kind:'tool-calls'}};}else{const text='Native source import and independent file consumption finished.';yield {type:'block-start',index:0,blockType:'text'};yield {type:'text-delta',index:0,text};yield {type:'block-end',index:0,block:{type:'text',text}};yield {type:'finish',reason:{kind:'stop'}};}}}ctx.effect(()=>ctx.llm.registerAdapter(['student-feedback-fixture'],new Fixture()));}`)
@@ -124,7 +131,7 @@ this.index++;await appendFile(config.telemetry,JSON.stringify({index:this.index,
   const lessons = JSON.parse(await readFile(join(project, '.study/openmaic-lessons.json'), 'utf8'))
   if (!online) assert.deepEqual(lessons.lessons[0].checkpoint.attempts, [{ attemptId: 'attempt-1', seq: 2 }]); else assert.ok(lessons.lessons[0].checkpoint.attempts.length)
   const cli = (await readFile(join(root, 'cli.jsonl'), 'utf8')).trim().split('\n').map(JSON.parse)
-  assert.equal(cli.length, 2)
+  assert.equal(cli.length, online ? 2 : 4)
   assert.ok(cli.every(row => row.bytesAndVersionsInvariant))
   assert.equal(generations, online ? 0 : 2)
   if (!online) {
@@ -135,8 +142,13 @@ this.index++;await appendFile(config.telemetry,JSON.stringify({index:this.index,
     assert.ok(requirement.feedback.some(item => item.result === 'correct' && item.assistance === 'unknown' && item.answerDate.kind === 'unknown'))
     assert.equal(read.workspace.blocks.find(item => item.id === 'fixture-followup').responses.length, 0)
     assert.notEqual(generationRequirements[0], generationRequirements[1])
+    const continuation = queryWorkspace(read, { kind: 'learning-context', subject: 'english' }, now + 86400000).data
+    assert.equal(continuation.round.id, 'native-check')
+    assert.equal(continuation.round.remaining, 0)
+    assert.equal(continuation.nextAction.reason, 'check-budget-exhausted')
+    assert.deepEqual(continuation.legalActions, ['request-teaching', 'switch-block', 'rest'])
   }
-  const summary = { runs, generations, sourceReads: online ? 'Authorized original transport rereads; private native receipts retained.' : sourceReads, cliInvocations: cli.length, nativeAuthoring: true, feedbackDrivenNextGeneration: !online, restartIndependentRead: true, checkpointAfterIndependentAcceptance: true, unknownDatesAndHelpPreserved: true, agentOnlyAcademicWrites: true, sourceWithoutAuthorizationExcluded: true, networkAndModel: online ? 'Actual authorized official records with a scripted native model. Protected original job/capture metadata is seeded; academic writes are exclusively native tools. Original classroom generation is validated separately.' : 'Synthetic HTTP source and scripted model; all native tools, protected transport, formal writer, built CLI and independent Student reader are real.', cleanup: 'Awaited subprocess and server closure before temporary directory removal.' }
+  const summary = { runs, generations, sourceReads: online ? 'Authorized original transport rereads; private native receipts retained.' : sourceReads, cliInvocations: cli.length, nativeAuthoring: true, feedbackDrivenNextGeneration: !online, restartIndependentRead: true, persistedNativeCheckAllowance: !online, checkpointAfterIndependentAcceptance: true, unknownDatesAndHelpPreserved: true, agentOnlyAcademicWrites: true, sourceWithoutAuthorizationExcluded: true, networkAndModel: online ? 'Actual authorized official records with a scripted native model. Protected original job/capture metadata is seeded; academic writes are exclusively native tools. Original classroom generation is validated separately.' : 'Synthetic HTTP source and scripted model; all native tools, protected transport, formal writer, built CLI and independent Student reader are real.', cleanup: 'Awaited subprocess and server closure before temporary directory removal.' }
   if (outputRoot) { await writeFile(join(outputRoot, 'summary.json'), JSON.stringify(summary, null, 2)); await writeFile(join(outputRoot, 'cli.jsonl'), await readFile(join(root, 'cli.jsonl'))); await writeFile(join(outputRoot, 'final-block.json'), JSON.stringify(saved)); await writeFile(join(outputRoot, 'final-lessons.json'), JSON.stringify(lessons)) }
   console.log(JSON.stringify(summary, null, 2))
 } finally {

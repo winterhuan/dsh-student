@@ -1,11 +1,14 @@
 import type { ErrorType, StudyState } from '../schema.ts'
-import { builtinObjectives, builtinObjectivesIn, builtinObjectiveAnywhere, curriculumFor, type CurriculumMethod, type CurriculumScope, type CurriculumSubject } from '../curriculum.ts'
+import { builtinObjectives, builtinObjectivesIn, curriculumFor, type CurriculumMethod, type CurriculumScope, type CurriculumSubject } from '../curriculum.ts'
 import { evidenceOf, evidenceDay, evidenceAtCutoff, demonstrablyAfter } from './evidence.ts'
 import { dayStart, replayMistake } from './schedule.ts'
 import { DAY, schoolGate, scopeSelects, studyDay, taughtUnit, type ObjectiveBase, type Outcome } from './shared.ts'
 import { effectiveKnowledge, scopeSupports, type CapabilityScope } from '../capabilities.ts'
 import type { ValidatedWorkspace } from '../files/validation.ts'
-import type { Assessment } from '../files/schema.ts'
+import type { Assessment, LearningRound } from '../files/schema.ts'
+import type { WorkspaceRead } from '../files/read.ts'
+import type { OpenmaicSourceVerification } from '../openmaic/feedback-schema.ts'
+import type { NativeHistoryVerification } from '../native-history.ts'
 import type { EffectiveEvidence } from './evidence.ts'
 
 /** Subject display order shared by check-in plans and history. */
@@ -24,14 +27,17 @@ export interface CapabilityProgress {
 /** One continuation selected from validated files for the native tutor and workbench. */
 export interface LearningNextAction {
   kind: 'answer' | 'assess' | 'supplement' | 'teach' | 'review' | 'learn' | 'hold'
-  reason: 'unfinished-question' | 'pending-assessment' | 'missing-evidence' | 'current-gap' | 'prerequisite-gap' | 'due-review' | 'new-goal' | 'confirmed-scope-required'
+  reason: 'unfinished-question' | 'pending-assessment' | 'missing-evidence' | 'current-gap' | 'prerequisite-gap' | 'due-review' | 'new-goal' | 'confirmed-scope-required' | 'check-budget-exhausted' | 'round-paused' | 'no-learnable-goal' | 'source-unavailable' | 'source-pending'
   subject: CurriculumSubject; title: string; goalId?: string; familyId?: string; scope?: CapabilityScope
-  blockId?: string; questionId?: string; responseId?: string; requirement?: string
+  blockId?: string; roundId?: string; questionId?: string; responseId?: string; requirement?: string
+  source?: { kind: 'openmaic'; verification: OpenmaicSourceVerification } | { kind: 'native'; verification: NativeHistoryVerification }
   supplement?: { missingFamilyIds: string[]; missingCriteria: CapabilityProgress['missingCriteria']; maxNewQuestions: number; remaining: number }
   review?: { mistakeIds: string[]; familyIds: string[]; remaining: number }
 }
-/** The short-review round is reconstructed from completed formal blocks and actual answer days. */
-export interface LearningContinuation { nextAction: LearningNextAction | null; goalProgress: CapabilityProgress[]; reviewRound: { limit: 2; usedFamilyIds: string[]; remaining: number; backlog: number } }
+/** The persisted round retains its owning block, including when that block has ended. */
+export interface LearningRoundView extends LearningRound { blockId: string; status: 'active' | 'paused' | 'ended'; limit: 2 | 3; remaining: number }
+/** Actions and allowances are projected together; consumers do not select a second next step. */
+export interface LearningContinuation { nextAction: LearningNextAction | null; goalProgress: CapabilityProgress[]; round: LearningRoundView | null; legalActions: string[]; reviewRound: { limit: 2; usedFamilyIds: string[]; remaining: number; backlog: number } }
 
 /**
  * Continue one current activity, bounded evidence check or review round without a workflow file.
@@ -39,9 +45,10 @@ export interface LearningContinuation { nextAction: LearningNextAction | null; g
  * @param state - shared evidence and review projection.
  * @param now - actual query cutoff.
  * @param subject - optional browsing subject; unfinished activity retains priority.
+ * @param sourceVerification - independently read source availability and consumption for the current owner.
  * @returns one permitted action, scoped progress and the current two-mother review allowance.
  */
-export function learningContinuation(workspace: ValidatedWorkspace, state: StudyState, now: number, subject?: CurriculumSubject): LearningContinuation {
+export function learningContinuation(workspace: ValidatedWorkspace, state: StudyState, now: number, subject?: CurriculumSubject, sourceVerification?: WorkspaceRead['sourceVerification']): LearningContinuation {
   const knowledge = effectiveKnowledge(workspace.collections?.knowledge)
   const index = evidenceOf(state)
   const active = workspace.blocks.find(block => block.endedAt === undefined)
@@ -93,17 +100,35 @@ export function learningContinuation(workspace: ValidatedWorkspace, state: Study
       const currentGoal = knowledge.goals.find(goal => goal.id === current?.capability?.goalId)
       return Number(!currentGoal?.prerequisites.includes(a.objectiveId ?? '')) - Number(!currentGoal?.prerequisites.includes(b.objectiveId ?? '')) || a.dueAt! - b.dueAt! || familyForMistake(a.id).localeCompare(familyForMistake(b.id)) || a.id.localeCompare(b.id)
     })
-  const lastNew = ordered.find(block => block.mode !== 'review' && block.endedAt !== undefined)
-  const reviewed = ordered.filter(block => block.mode === 'review' && block.endedAt !== undefined && (!lastNew || block.endedAt! > lastNew.endedAt!))
-  const used = [...new Set(reviewed.flatMap(block => index.entries.filter(entry => entry.termId === workspace.settings.termId && entry.ownerId === block.id && entry.result !== 'unassessed' && entry.sourceStatus === 'known' && evidenceDay(entry) === studyDay(now)).map(entry => entry.capability ? canonicalFamily(entry.capability.familyId) : familyForMistake(entry.mistakeId ?? entry.questionId))))]
+  const rounds = ordered.flatMap(block => (block.rounds ?? []).map(round => ({ ...round, blockId: block.id,
+    status: round.endedAt !== undefined ? 'ended' as const : block.endedAt !== undefined ? 'paused' as const : 'active' as const,
+    limit: round.kind === 'check' ? 3 as const : 2 as const,
+    remaining: Math.max(0, (round.kind === 'check' ? 3 - round.presentedQuestionIds.length : 2 - round.enteredFamilyIds.length)),
+  }))).sort((a, b) => b.startedAt - a.startedAt || a.id.localeCompare(b.id))
+  const latestReview = rounds.find(round => round.kind === 'review')
+  const lastLearning = ordered.find(block => block.mode !== 'review' && block.responses.some(response => response.source.kind === 'manual' && response.source.entry === 'current' || response.source.kind === 'native'))
+  const legacyReview = ordered.filter(block => !block.rounds?.length && block.mode === 'review' && (!lastLearning || block.startedAt > lastLearning.startedAt))
+  const used = latestReview?.enteredFamilyIds ?? [...new Set(legacyReview.flatMap(block => block.questions.filter(question => question.id === block.currentQuestionId || block.responses.some(response => response.questionId === question.id)).map(question => question.capability ? canonicalFamily(question.capability.familyId) : familyForMistake(question.mistakeId ?? question.id))))]
   const goalReviews = progress.filter(item => item.level === 'due' && item.scope && (!subject || item.subject === subject) && !due.some(mistake => mistake.objectiveId === item.id))
   const dueFamilies = [...new Set([...due.map(mistake => familyForMistake(mistake.id)), ...goalReviews.map(item => questionBindings.find(binding => binding.binding.goalId === item.id)?.binding.familyId ?? knowledge.goals.find(goal => goal.id === item.id)!.familyIds[0]!)])]
-  const reviewRound = { limit: 2 as const, usedFamilyIds: used, remaining: Math.max(0, 2 - used.length), backlog: dueFamilies.length }
-  const finish = (nextAction: LearningNextAction | null): LearningContinuation => ({ nextAction, goalProgress: progress.filter(item => item.scope !== null || item.feedback.length > 0), reviewRound })
-  const actionFor = (goalId: string, kind: LearningNextAction['kind'], reason: LearningNextAction['reason'], scope?: CapabilityScope): LearningNextAction => {
+  const reviewRound = { limit: 2 as const, usedFamilyIds: used, remaining: latestReview?.endedAt !== undefined ? 0 : Math.max(0, 2 - used.length), backlog: dueFamilies.length }
+  const finish = (nextAction: LearningNextAction | null): LearningContinuation => {
+    const round = rounds.find(round => nextAction?.roundId === round.id) ?? rounds[0] ?? null
+    const legalActions = nextAction?.reason === 'source-unavailable' || nextAction?.reason === 'source-pending' ? [nextAction.source?.kind === 'native' ? 'verify-source' : 'sync-feedback', 'switch-block', 'rest']
+      : nextAction?.kind === 'answer' ? ['answer', 'request-hint', 'end-block', 'switch-block']
+      : nextAction?.kind === 'assess' ? ['request-assessment', 'end-block', 'switch-block']
+      : nextAction?.reason === 'check-budget-exhausted' ? ['request-teaching', 'switch-block', 'rest']
+      : nextAction?.reason === 'round-paused' ? ['resume-round', 'switch-block', 'rest']
+      : nextAction?.kind === 'teach' ? ['request-teaching', 'end-block', 'switch-block', 'rest']
+      : nextAction?.kind === 'hold' ? ['switch-block', 'rest', 'more-review']
+      : nextAction?.kind === 'learn' ? ['start-block', 'rest', 'more-review']
+      : ['next-question', 'end-block', 'switch-block']
+    return { nextAction, goalProgress: progress.filter(item => item.scope !== null || item.feedback.length > 0), round, legalActions, reviewRound }
+  }
+  const actionFor = (goalId: string, kind: LearningNextAction['kind'], reason: LearningNextAction['reason'], scope?: CapabilityScope, selectedFamilyId?: string): LearningNextAction => {
     const goal = knowledge.goals.find(goal => goal.id === goalId)!
     const item = progress.find(item => item.id === goalId)!
-    const familyId = item.missingFamilyIds[0] ?? questionBindings.find(item => item.binding.goalId === goalId)?.binding.familyId ?? goal.familyIds[0]!
+    const familyId = selectedFamilyId ?? item.missingFamilyIds[0] ?? questionBindings.find(item => item.binding.goalId === goalId)?.binding.familyId ?? goal.familyIds[0]!
     const family = knowledge.families.find(family => family.id === canonicalFamily(familyId))!
     const selectedScope = scope ?? item.scope ?? undefined
     const feedback = progress.filter(item => item.subject === goal.subject).flatMap(item => item.feedback).sort((a, b) => {
@@ -114,15 +139,25 @@ export function learningContinuation(workspace: ValidatedWorkspace, state: Study
     const requirement = JSON.stringify({ goalId, title: goal.title.slice(0, 200), criterion: goal.criterion.slice(0, 600), scope: boundedScope, familyId: family.id, method: family.coreMethod.slice(0, 200), structure: family.structure.slice(0, 200), variationAxes: family.variationAxes.slice(0, 4).map(axis => axis.slice(0, 100)), rubric: family.representative.rubric.slice(0, 400), action: kind,
       missingCriteria: item.missingCriteria.slice(0, 3), omittedCriteria: Math.max(0, item.missingCriteria.length - 3), feedback: feedback.slice(-3).map(row => ({ ...row, feedback: row.feedback.slice(0, 200), answerDate: row.answerDate.kind === 'day' ? { kind: 'day', day: row.answerDate.day } : row.answerDate.kind === 'instant' ? { kind: 'instant', at: row.answerDate.at } : { kind: 'unknown' } })), omittedFeedback: Math.max(0, feedback.length - 3), reviewFindings: state.mistakes.filter(mistake => mistake.subject === goal.subject).slice(0, 4).map(mistake => ({ topic: mistake.topic.slice(0, 100), errorType: mistake.errorType ?? null, stage: mistake.stage, dueAt: mistake.dueAt ?? null })),
       teaching: 'Use the appropriate official direct component, short content or full classroom. Ask one question at a time; address the saved error before a constrained variant. Preserve unknown facts; clicks and scores create no evidence. Reuse accepted responses; add at most three targeted native questions for missing criteria.' })
-    return { kind, reason, subject: goal.subject, title: goal.title, goalId, familyId: family.id, ...(selectedScope ? { scope: selectedScope } : {}), ...(active ? { blockId: active.id } : {}), requirement }
+    const ownerRound = rounds.find(round => round.blockId === active?.id && round.presentedQuestionIds.includes(current?.id ?? ''))
+    return { kind, reason, subject: goal.subject, title: goal.title, goalId, familyId: family.id, ...(selectedScope ? { scope: selectedScope } : {}), ...(active && kind !== 'learn' && kind !== 'review' ? { blockId: active.id, ...(ownerRound ? { roundId: ownerRound.id } : {}) } : {}), requirement }
   }
-  if (active && current) {
+  const owner = active ?? workspace.blocks.find(block => block.id === rounds[0]?.blockId)
+  const pendingSource = sourceVerification?.openmaic.find(source => source.learnerId === workspace.settings.learnerId && source.termId === workspace.settings.termId && source.blockId === owner?.id && (source.status !== 'available' || source.consumption === 'pending' || source.omitted > 0))
+  if (owner && pendingSource) return finish({ kind: 'hold', reason: pendingSource.status === 'available' ? 'source-pending' : 'source-unavailable', subject: owner.subject, title: 'Read and save the original activity feedback before continuing.', blockId: owner.id, source: { kind: 'openmaic', verification: pendingSource } })
+  const nativeSource = sourceVerification?.native.find(source => source.status !== 'available' && owner?.responses.some(response => response.questionId === owner.currentQuestionId && response.source.kind === 'native' && response.source.sessionId === source.sessionId))
+  if (owner && nativeSource) return finish({ kind: 'hold', reason: 'source-unavailable', subject: owner.subject, title: 'Verify the original answer source before continuing.', blockId: owner.id, source: { kind: 'native', verification: nativeSource } })
+  if (active && current && !rounds.some(round => round.blockId === active.id && round.endedAt !== undefined && round.presentedQuestionIds.includes(current.id))) {
     const originals = active.responses.filter(response => response.questionId === current.id)
     const selected = originals.find(response => response.id === active.currentResponseId) ?? originals.at(-1)
     const base = current.capability ? actionFor(current.capability.goalId, 'answer', 'unfinished-question') : { kind: 'answer' as const, reason: 'unfinished-question' as const, subject: active.subject, title: current.topic }
+    const currentRound = rounds.find(round => round.blockId === active.id && round.presentedQuestionIds.includes(current.id))
+    const previousCheck = rounds.find(round => round.kind === 'check' && round.members.some(member => member.goalId === current.capability?.goalId))
+    if (!selected && previousCheck && !currentRound && (previousCheck.remaining === 0 || previousCheck.endedAt !== undefined)) return finish({ ...base, kind: 'hold', reason: 'check-budget-exhausted', blockId: previousCheck.blockId, roundId: previousCheck.id })
+    if (!selected && currentRound?.endedAt === undefined) return finish({ ...base, blockId: active.id, questionId: current.id, ...(currentRound ? { roundId: currentRound.id } : {}) })
+    const effective = index.entries.find(entry => entry.termId === active.termId && entry.ownerId === active.id && entry.responseId === selected?.id)
     if (!selected) return finish({ ...base, blockId: active.id, questionId: current.id })
-    const effective = index.entries.find(entry => entry.termId === active.termId && entry.ownerId === active.id && entry.responseId === selected.id)
-    if (!active.assessments.some(assessment => assessment.responseId === selected.id)) return finish({ ...base, kind: 'assess', reason: 'pending-assessment', blockId: active.id, questionId: current.id, responseId: selected.id })
+    if (!active.assessments.some(assessment => assessment.responseId === selected?.id)) return finish({ ...base, kind: 'assess', reason: 'pending-assessment', blockId: active.id, questionId: current.id, responseId: selected.id })
     if (current.capability) {
       const item = progress.find(item => item.id === current.capability!.goalId)!
       if (effective?.sourceStatus === 'known' && (['incorrect', 'partial', 'stuck'].includes(effective.result) || ['hint', 'worked-example'].includes(effective.assistance))) return finish(actionFor(item.id, 'teach', 'current-gap'))
@@ -132,18 +167,29 @@ export function learningContinuation(workspace: ValidatedWorkspace, state: Study
         return rows.some(entry => entry.sourceStatus === 'known' && ['incorrect', 'partial', 'stuck'].includes(entry.result)) && !rows.some(entry => independent(entry) && rows.filter(row => ['incorrect', 'partial', 'stuck'].includes(row.result)).every(row => demonstrablyAfter(entry, row)))
       })
       if (prerequisite) return finish(actionFor(prerequisite, 'teach', 'prerequisite-gap', current.capability.scope))
-      if (item.missingCriteria.length || effective?.result === 'unassessed' || effective?.sourceStatus === 'unknown' || effective?.assistance === 'unknown' || effective?.answerDate.kind === 'unknown') {
-        const nativeQuestions = active.questions.filter(question => question.capability?.goalId === item.id && !question.openmaic && question.phase !== 'demo').length
-        const remaining = Math.max(0, 3 - nativeQuestions)
-        if (remaining) return finish({ ...actionFor(item.id, 'supplement', 'missing-evidence'), supplement: { missingFamilyIds: item.missingFamilyIds, missingCriteria: item.missingCriteria, maxNewQuestions: 3, remaining } })
+      if (active.mode !== 'review' && (item.missingCriteria.length || effective?.result === 'unassessed' || effective?.sourceStatus === 'unknown' || effective?.assistance === 'unknown' || effective?.answerDate.kind === 'unknown')) {
+        const check = rounds.find(round => round.kind === 'check' && round.members.some(member => member.goalId === item.id && scopeSupports(member.scope, current.capability!.scope)))
+        const remaining = check?.endedAt !== undefined ? 0 : check?.remaining ?? 3
+        if (remaining) return finish({ ...actionFor(item.id, 'supplement', 'missing-evidence'), ...(check ? { roundId: check.id, blockId: check.blockId } : {}), supplement: { missingFamilyIds: item.missingFamilyIds, missingCriteria: item.missingCriteria, maxNewQuestions: 3, remaining } })
+        return finish({ ...actionFor(item.id, 'hold', 'check-budget-exhausted'), ...(check ? { roundId: check.id } : {}) })
       }
     }
-    const next = active.questions.find(question => !active.responses.some(response => response.questionId === question.id))
+    const next = active.questions.find(question => !active.responses.some(response => response.questionId === question.id) && !rounds.some(round => round.blockId === active.id && (round.endedAt !== undefined || round.remaining === 0 && !round.presentedQuestionIds.includes(question.id)) && round.members.some(member => member.goalId === question.capability?.goalId)))
     if (next) return finish({ ...(next.capability ? actionFor(next.capability.goalId, 'answer', 'unfinished-question') : base), blockId: active.id, questionId: next.id })
     if (current.capability) {
       const item = progress.find(item => item.id === current.capability!.goalId)!
       if (item.level === 'weak' && item.scope) return finish(actionFor(item.id, 'teach', 'current-gap'))
     }
+  }
+  const latestRound = rounds[0]
+  if (latestRound?.kind === 'check' && (latestRound.remaining === 0 || latestRound.endedAt !== undefined) && (latestRound.endReason !== 'complete' || latestRound.members.some(member => progress.find(item => item.id === member.goalId)?.missingCriteria.length))) {
+    const member = latestRound.members[0]!
+    return finish({ ...actionFor(member.goalId, 'hold', 'check-budget-exhausted', member.scope), roundId: latestRound.id, blockId: latestRound.blockId })
+  }
+  if (latestRound?.status === 'paused') return finish({ kind: 'hold', reason: 'round-paused', subject: workspace.blocks.find(block => block.id === latestRound.blockId)!.subject, title: 'Resume the saved round or rest.', roundId: latestRound.id, blockId: latestRound.blockId })
+  if (latestReview?.status === 'active' && latestReview.remaining) {
+    const member = latestReview.members.find(member => !latestReview.enteredFamilyIds.includes(member.familyId))
+    if (member) return finish({ ...actionFor(member.goalId, 'review', 'due-review', member.scope, member.familyId), blockId: latestReview.blockId, roundId: latestReview.id, review: { mistakeIds: member.mistakeId ? [member.mistakeId] : [], familyIds: [member.familyId], remaining: latestReview.remaining } })
   }
   const remainingDue = due.filter(mistake => !used.includes(familyForMistake(mistake.id)))
   if (reviewRound.remaining && remainingDue.length) {
@@ -160,14 +206,25 @@ export function learningContinuation(workspace: ValidatedWorkspace, state: Study
     return finish({ ...action, review: { mistakeIds: [], familyIds: [action.familyId!], remaining: reviewRound.remaining } })
   }
   const selectedSubject = active?.subject ?? subject
-  const newGoal = progress.find(item => (!selectedSubject || item.subject === selectedSubject) && item.level === 'untouched' && item.scope && questionBindings.some(binding => binding.binding.goalId === item.id && binding.block.context.scope?.objectiveIds?.includes(item.id)))
-  if (newGoal) return finish(actionFor(newGoal.id, 'learn', 'new-goal'))
-  const schoolGoal = knowledge.goals.find(goal => (!selectedSubject || goal.subject === selectedSubject) && progress.find(item => item.id === goal.id)?.level === 'untouched' && workspace.settings.courses.some(course => course.subject === goal.subject && course.progress?.pace !== 'review' && goal.curriculumAssociationIds.some(id => { const old = builtinObjectiveAnywhere(id); return old && taughtUnit(state, goal.subject, old.unit) })))
-  if (schoolGoal) {
-    const scope = scopeFor(schoolGoal.id)
-    if (scope) return finish(actionFor(schoolGoal.id, 'learn', 'new-goal', scope))
+  const confirmations = (workspace.settings.learningScopes ?? []).filter(item => !selectedSubject || item.subject === selectedSubject)
+  const enteredGoals = new Set(rounds.flatMap(round => round.members.filter(member => round.enteredFamilyIds.includes(member.familyId)).map(member => member.goalId)))
+  for (const confirmation of confirmations) {
+    const course = workspace.settings.courses.find(course => course.subject === confirmation.subject)
+    const gate = schoolGate(state, confirmation.subject)
+    if (course && (!gate || gate.pace === 'review')) continue
+    const candidate = knowledge.goals.find(goal => {
+      if (goal.subject !== confirmation.subject || enteredGoals.has(goal.id) || progress.find(item => item.id === goal.id)?.level !== 'untouched') return false
+      if (confirmation.goalIds && !confirmation.goalIds.includes(goal.id)) return false
+      const associations = builtinObjectives(state.profile).filter(old => old.subject === goal.subject).filter(old => goal.curriculumAssociationIds.includes(old.id))
+      if (course ? !associations.some(old => gate!.posture === 'catch-up' ? gate!.taught.has(old.unit) : old.unit === gate!.current) : !confirmation.goalIds && !associations.length) return false
+      const modality = confirmation.scope.modality
+      const oral = goal.id.startsWith('e.speak') || ['c.read-aloud', 'c.recite', 'c.retell', 'c.describe', 'c.interact'].includes(goal.id)
+      const listening = goal.id.startsWith('e.listen') || goal.id === 'c.listen'
+      return oral ? modality === 'oral' : listening ? modality === 'listening' : goal.id === 'e.sound' ? ['oral', 'listening'].includes(modality) : goal.id === 'e.view-listen' ? modality === 'audiovisual' : modality === 'written' || modality === 'performed'
+    })
+    if (candidate) return finish(actionFor(candidate.id, 'learn', 'new-goal', confirmation.scope))
   }
-  return finish({ kind: 'hold', reason: 'confirmed-scope-required', subject: selectedSubject ?? 'math', title: 'Confirm the next learning range or choose another allowed activity.' })
+  return finish({ kind: 'hold', reason: confirmations.length ? 'no-learnable-goal' : 'confirmed-scope-required', subject: selectedSubject ?? 'math', title: confirmations.length ? 'No new goal is available in the confirmed range. Rest or explicitly request more review.' : 'Confirm the next learning range or choose another allowed activity.' })
 }
 
 /** Why an objective needs attention; codes are localized by the workbench and read by the model. */

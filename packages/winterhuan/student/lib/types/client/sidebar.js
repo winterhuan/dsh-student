@@ -6,12 +6,11 @@ import { NS, zh, en } from "./locales.js";
 import { tutorBridge, studentSessionBridge } from "./bridge.js";
 import { StudyDesk } from "./desk.js";
 import { registerTeachingAids } from "./teaching-aids.js";
-import { registerWorkbench } from "./workbench.js";
 import { mountStudentResource } from "./resource.js";
 import { createStudentDraftStore } from "./drafts.js";
 import { createStudentManualActions } from "./manual-actions.js";
 export const name = 'student';
-export const inject = ['slots', 'sessions', 'uiSession', 'locale', 'sidebarRightTabs', 'remote', 'resources', 'workspaces', 'uiWorkspace', 'conversation'];
+export const inject = ['slots', 'sessions', 'uiSession', 'locale', 'sidebarRightTabs', 'remote', 'resources', 'conversation'];
 function studentCallbacks(scope) {
     const t = scope.locale.bind(NS);
     return {
@@ -44,7 +43,6 @@ export async function apply(context) {
     }), 'student: sidebar');
     context.inject(['remote.student', 'remote.studentOpenmaicPlayback'], scope => {
         const store = createStudentDraftStore();
-        registerWorkbench(scope, store);
         scope.slots.inject('sidebar.right.pane.tab', () => scope.slots.register({ name: 'sidebar.right.pane.tab', key: '@winterhuan/dsh-student', locale: NS, store, inject: () => studentCallbacks(scope) }, Sidebar));
     });
 }

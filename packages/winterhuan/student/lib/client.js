@@ -12,14 +12,14 @@ window.__ModuleLoader__.load({
 		let _deepseek_ai_dsh_api_gateway_client = require("@deepseek-ai/dsh-api-gateway/client");
 		require("@deepseek-ai/cordis");
 		let react_dom = require("react-dom");
-		//#region \0dsh-global-css:/Users/winter/dsh-creative/.worktrees/student-openmaic-integration/packages/winterhuan/student/src/client/plugin.css.mjs
-		const css$2 = ".student-desk{box-sizing:border-box;min-width:0;height:100%;min-height:0;color:var(--dsw-alias-label-primary);background:color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));font:14px/22px var(--dsw-font-family);flex-direction:column;gap:14px;padding:12px 12px 28px;display:flex;overflow:auto}.student-top{z-index:2;background:color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));flex-direction:column;gap:8px;padding:0 0 12px;display:flex;position:sticky;top:-12px}.student-toolbar{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-toolbar>.student-muted{border-radius:var(--dsw-radius-sm);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);margin-left:auto;padding:2px 8px;font-size:12px;line-height:20px}.student-tabs{border-radius:var(--dsw-radius-lg);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);max-width:100%;box-shadow:var(--dsw-elevation-soft);backdrop-filter:blur(24px)saturate(160%);flex-wrap:wrap;align-self:flex-start;gap:2px;padding:4px;display:inline-flex}.student-subjects{border-radius:var(--dsw-radius-md);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);box-shadow:var(--dsw-elevation-soft);backdrop-filter:blur(24px)saturate(160%);gap:2px;padding:4px;display:inline-flex}.student-subjects button{background:0 0;border:0}.student-quiet{background:0 0;border:0;flex:none;padding:6px 8px}.student-desk section{border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-bg-layer-2);box-shadow:var(--dsw-elevation-soft);flex-direction:column;gap:8px;padding:18px 20px;display:flex}.student-desk details{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);padding:12px 14px}.student-desk>details{border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-bg-layer-2);box-shadow:var(--dsw-elevation-soft);padding:14px 18px}.student-desk section section{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);box-shadow:none;padding:12px 14px}.student-desk h3{margin:0;font-size:14px;font-weight:500;line-height:22px}.student-desk pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}.student-desk p{overflow-wrap:anywhere;white-space:pre-wrap;margin:0}.student-desk form,.student-desk fieldset,.student-desk label{flex-direction:column;gap:8px;min-width:0;display:flex}.student-desk fieldset{border:0;margin:0;padding:0}.student-desk button,.student-desk input,.student-desk select,.student-desk textarea{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);box-sizing:border-box;min-width:0;max-width:100%;padding:8px 12px}.student-desk button{cursor:pointer;justify-content:center;align-items:center;gap:6px;min-height:36px;font-size:13px;line-height:20px;transition:background .15s,border-color .15s;display:inline-flex}.student-desk input,.student-desk select,.student-desk textarea{background:var(--dsw-alias-interactive-bg-hover);border-color:#0000}.student-desk .student-tabs button{min-height:32px;color:var(--dsw-alias-label-secondary);white-space:nowrap;background:0 0;border:0;padding:6px 13px}.student-desk .student-subjects button{border-radius:var(--dsw-radius-sm);min-height:28px;color:var(--dsw-alias-label-secondary);padding:4px 12px;font-size:12px}.student-desk .student-subjects button,.student-desk .student-quiet{background:0 0;border:0}.student-desk button:hover:enabled:not([aria-pressed=true]):not(.student-primary){background:var(--dsw-alias-interactive-bg-hover)}.student-desk .student-tabs button[aria-pressed=true],.student-desk .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-inverted);border-color:#0000}.student-desk .student-tabs button[aria-pressed=true]:hover:enabled,.student-desk .student-primary:hover:enabled{background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-inverted)}.student-desk .student-subjects button[aria-pressed=true],.student-desk .student-segments button[aria-pressed=true],.student-desk .student-segments button[aria-checked=true]{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);box-shadow:var(--dsw-elevation-soft)}.student-desk :disabled{opacity:.6;cursor:default}.student-desk :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.student-desk textarea{resize:vertical;min-height:72px}.student-desk .student-check{flex-direction:row;align-items:flex-start}.student-desk .student-check input{flex:none}.student-desk img{object-fit:contain;background:var(--dsw-alias-bg-base);border-radius:8px;width:100%;max-height:240px}.student-desk .student-status{padding:12px 16px;font-size:13px;line-height:20px}.student-desk .student-status details{border-top:.5px solid var(--dsw-alias-border-l2);background:0 0;border-radius:0;padding:8px 0 0}.student-desk .student-focus>h3{font-size:20px;font-weight:400;line-height:28px}.student-desk .student-question{font-size:16px;line-height:1.65}.student-desk summary{cursor:pointer;overflow-wrap:anywhere;font-weight:500}.student-desk .student-pages{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-plan{border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-1))}.student-desk details>details,.student-desk details>div,.student-desk details>p{margin-top:8px}.student-muted{color:var(--dsw-alias-label-secondary)}.student-unit{border-top:1px solid var(--dsw-alias-border-l2);padding-top:8px}.student-choices{flex-direction:column;gap:8px;display:flex}.student-choices button{text-align:left;width:100%;padding:12px 14px;font-size:15px}.student-result{font-size:15px;font-weight:500}.student-scope{flex-wrap:wrap;align-items:flex-end;gap:8px;display:flex}.student-scope label{flex:120px}.student-segments{flex-wrap:wrap;gap:6px;display:flex}.student-desk .student-grade{border-top:1px solid var(--dsw-alias-border-l2);padding:8px 0}.student-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px;height:8px;display:flex;overflow:hidden}.student-bar span{height:100%;display:block}.student-level-mastered,.student-fill-mastered{background:var(--dsw-alias-state-success-primary)}.student-level-practising,.student-fill-practising{background:var(--dsw-alias-state-business-primary)}.student-level-stalled,.student-fill-stalled{background:var(--dsw-alias-state-warn-primary)}.student-level-weak,.student-fill-weak{background:var(--dsw-alias-state-error-primary)}.student-level-due,.student-fill-due{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, var(--dsw-alias-state-warn-primary))}.student-level-untouched,.student-fill-untouched{background:var(--dsw-alias-label-tertiary)}.student-legend{flex-wrap:wrap;gap:8px 12px;display:flex}.student-dot{vertical-align:middle;border-radius:50%;width:8px;height:8px;margin-right:4px;display:inline-block}.student-chips{flex-direction:column;gap:6px;display:flex}.student-chip{text-align:left;border-radius:8px;align-items:center;gap:6px;width:100%;padding:8px 10px;display:flex}.student-pair{grid-template-columns:1fr 1fr;gap:8px;display:grid}.student-mastery{align-items:center;gap:6px;display:flex}.student-mastery span{border-radius:50%;width:10px;height:10px}.student-simon{flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-simon li{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 8px}.student-simon-done{opacity:.7}.student-simon-current{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, var(--dsw-alias-bg-base));font-weight:500}.student-steps{flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-map-inline{border:1px solid var(--dsw-alias-border-l2);border-left:3px solid var(--dsw-alias-state-business-primary);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base));border-radius:8px;margin:4px 0 8px;padding:8px 10px}.student-map-links{margin-top:8px}.student-mindmap-unit{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:8px;margin:8px 0;padding:10px}.student-mindmap-unit>summary{cursor:pointer;font-weight:500}.student-mindmap-branch{border-left:2px solid var(--dsw-alias-border-l2);flex-direction:column;gap:6px;margin:8px 0 0;padding:0 0 0 12px;list-style:none;display:flex}.student-mindmap-node{flex-direction:column;gap:4px;display:flex}.student-mindmap-concept{text-align:left;align-items:center;gap:6px;width:100%;display:flex}.student-mindmap-concept[aria-pressed=true]{background:var(--dsw-alias-bg-layer-2,transparent)}.student-mindmap-concept.student-level-mastered{box-shadow:inset 3px 0 0 var(--dsw-alias-state-success-primary)}.student-mindmap-concept.student-level-practising{box-shadow:inset 3px 0 0 var(--dsw-alias-state-business-primary)}.student-mindmap-concept.student-level-stalled{box-shadow:inset 3px 0 0 var(--dsw-alias-state-warn-primary)}.student-mindmap-concept.student-level-weak,.student-mindmap-concept.student-level-due{box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}.student-figure svg{width:100%;height:auto;max-height:220px;color:var(--dsw-alias-label-primary)}.student-figure circle,.student-figure rect,.student-figure line,.student-figure path,.student-figure polyline,.student-figure polygon{fill:none;stroke:currentColor;stroke-width:1.4px}.student-figure text{fill:currentColor;stroke:none}.student-figure .student-fill{fill:currentColor}.student-desk progress{width:100%;height:8px}.student-desk progress::-webkit-progress-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px}.student-desk progress::-webkit-progress-value{background:var(--dsw-alias-state-business-primary);border-radius:999px}.student-sheet-portal{font:13px/20px var(--dsw-font-family)}.student-sheet-portal button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);cursor:pointer;padding:8px 14px}.student-sheet-portal .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-inverted);border-color:#0000}.student-sheet-portal .student-quiet{background:0 0;border:0}.student-sheet-backdrop{z-index:1000;box-sizing:border-box;background:color-mix(in srgb, var(--dsw-alias-label-primary) 32%, transparent);justify-content:center;align-items:flex-start;padding:32px 16px;display:flex;position:fixed;inset:0;overflow:auto}.student-sheet-dialog{box-sizing:border-box;border-radius:var(--dsw-radius-panel);background:var(--dsw-alias-bg-layer-2);width:min(720px,100%);box-shadow:var(--dsw-elevation-prominent);flex-direction:column;gap:8px;padding:16px;display:flex}.student-sheet-toolbar{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.student-sheet-toolbar .student-muted{flex:200px;margin:0}.student-sheet-scroll{overflow:auto}.student-sheet{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);color:#333;font:14px/1.6 var(--dsw-font-family);background:#fff;border-radius:8px;flex-direction:column;gap:12px;padding:24px;display:flex}.student-url{user-select:text;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.student-sheet h2{text-align:center;margin:0;font-size:18px;font-weight:500}.student-sheet-meta{text-align:center;margin:0;font-size:12px}.student-sheet-item{break-inside:avoid;flex-direction:column;gap:8px;display:flex}.student-sheet-item>p{white-space:pre-wrap;margin:0}.student-sheet .student-figure svg{color:#333;width:100%;height:auto;max-height:260px}.student-sheet-lines{flex-direction:column;display:flex}.student-sheet-rule{border-bottom:1px solid #b9c0c7;height:22px}.student-sheet-box{border:1px dashed #b9c0c7;border-radius:4px;height:84px}@page{size:A4;margin:12mm 14mm}@media print{body>:not(.student-sheet-portal){display:none!important}.student-sheet-backdrop{background:0 0;padding:0;display:block;position:static;overflow:visible}.student-sheet-dialog{display:contents}.student-sheet-toolbar{display:none}.student-sheet-scroll{overflow:visible}.student-sheet{border:0;border-radius:0;width:100%;padding:0}.student-sheet-item{page-break-inside:avoid}}.student-teaching-aids{width:100%;min-width:0;color:var(--dsw-alias-text-primary);gap:12px;margin-top:12px;display:grid}.student-teaching-aids>h3{margin:0;font-size:14px;font-weight:500}.student-teaching-aids>p{color:var(--dsw-alias-text-secondary);margin:0;font-size:13px}";
-		const tagId$2 = "@winterhuan/dsh-student/plugin.css";
-		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId$2) + "]") === null) {
+		//#region \0dsh-global-css:/Users/winter/dsh-creative/plugins/dsh-student/packages/winterhuan/student/src/client/plugin.css.mjs
+		const css$1 = ".student-desk{box-sizing:border-box;min-width:0;height:100%;min-height:0;color:var(--dsw-alias-label-primary);background:color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));font:14px/22px var(--dsw-font-family);flex-direction:column;gap:14px;padding:12px 12px 28px;display:flex;overflow:auto}.student-top{z-index:2;background:color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));flex-direction:column;gap:8px;padding:0 0 12px;display:flex;position:sticky;top:-12px}.student-toolbar{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-toolbar>.student-muted{border-radius:var(--dsw-radius-sm);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);margin-left:auto;padding:2px 8px;font-size:12px;line-height:20px}.student-tabs{border-radius:var(--dsw-radius-lg);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);max-width:100%;box-shadow:var(--dsw-elevation-soft);backdrop-filter:blur(24px)saturate(160%);flex-wrap:wrap;align-self:flex-start;gap:2px;padding:4px;display:inline-flex}.student-subjects{border-radius:var(--dsw-radius-md);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);box-shadow:var(--dsw-elevation-soft);backdrop-filter:blur(24px)saturate(160%);gap:2px;padding:4px;display:inline-flex}.student-subjects button{background:0 0;border:0}.student-quiet{background:0 0;border:0;flex:none;padding:6px 8px}.student-desk section{border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-bg-layer-2);box-shadow:var(--dsw-elevation-soft);flex-direction:column;gap:8px;padding:18px 20px;display:flex}.student-desk details{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);padding:12px 14px}.student-desk>details{border-radius:var(--dsw-radius-xl);background:var(--dsw-alias-bg-layer-2);box-shadow:var(--dsw-elevation-soft);padding:14px 18px}.student-desk section section{border-radius:var(--dsw-radius-md);background:var(--dsw-alias-interactive-bg-hover);box-shadow:none;padding:12px 14px}.student-desk h3{margin:0;font-size:14px;font-weight:500;line-height:22px}.student-desk pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}.student-desk p{overflow-wrap:anywhere;white-space:pre-wrap;margin:0}.student-desk form,.student-desk fieldset,.student-desk label{flex-direction:column;gap:8px;min-width:0;display:flex}.student-desk fieldset{border:0;margin:0;padding:0}.student-desk button,.student-desk input,.student-desk select,.student-desk textarea{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);box-sizing:border-box;min-width:0;max-width:100%;padding:8px 12px}.student-desk button{cursor:pointer;justify-content:center;align-items:center;gap:6px;min-height:36px;font-size:13px;line-height:20px;transition:background .15s,border-color .15s;display:inline-flex}.student-desk input,.student-desk select,.student-desk textarea{background:var(--dsw-alias-interactive-bg-hover);border-color:#0000}.student-desk .student-tabs button{min-height:32px;color:var(--dsw-alias-label-secondary);white-space:nowrap;background:0 0;border:0;padding:6px 13px}.student-desk .student-subjects button{border-radius:var(--dsw-radius-sm);min-height:28px;color:var(--dsw-alias-label-secondary);padding:4px 12px;font-size:12px}.student-desk .student-subjects button,.student-desk .student-quiet{background:0 0;border:0}.student-desk button:hover:enabled:not([aria-pressed=true]):not(.student-primary){background:var(--dsw-alias-interactive-bg-hover)}.student-desk .student-tabs button[aria-pressed=true],.student-desk .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-inverted);border-color:#0000}.student-desk .student-tabs button[aria-pressed=true]:hover:enabled,.student-desk .student-primary:hover:enabled{background:var(--dsw-alias-button-primary-hover);color:var(--dsw-alias-label-primary-inverted)}.student-desk .student-subjects button[aria-pressed=true],.student-desk .student-segments button[aria-pressed=true],.student-desk .student-segments button[aria-checked=true]{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);box-shadow:var(--dsw-elevation-soft)}.student-desk :disabled{opacity:.6;cursor:default}.student-desk :focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}.student-desk textarea{resize:vertical;min-height:72px}.student-desk .student-check{flex-direction:row;align-items:flex-start}.student-desk .student-check input{flex:none}.student-desk img{object-fit:contain;background:var(--dsw-alias-bg-base);border-radius:8px;width:100%;max-height:240px}.student-desk .student-status{padding:12px 16px;font-size:13px;line-height:20px}.student-desk .student-status details{border-top:.5px solid var(--dsw-alias-border-l2);background:0 0;border-radius:0;padding:8px 0 0}.student-desk .student-focus>h3{font-size:20px;font-weight:400;line-height:28px}.student-desk .student-question{font-size:16px;line-height:1.65}.student-desk summary{cursor:pointer;overflow-wrap:anywhere;font-weight:500}.student-desk .student-pages{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;display:flex}.student-plan{border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-1))}.student-desk details>details,.student-desk details>div,.student-desk details>p{margin-top:8px}.student-muted{color:var(--dsw-alias-label-secondary)}.student-unit{border-top:1px solid var(--dsw-alias-border-l2);padding-top:8px}.student-choices{flex-direction:column;gap:8px;display:flex}.student-choices button{text-align:left;width:100%;padding:12px 14px;font-size:15px}.student-result{font-size:15px;font-weight:500}.student-scope{flex-wrap:wrap;align-items:flex-end;gap:8px;display:flex}.student-scope label{flex:120px}.student-segments{flex-wrap:wrap;gap:6px;display:flex}.student-desk .student-grade{border-top:1px solid var(--dsw-alias-border-l2);padding:8px 0}.student-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px;height:8px;display:flex;overflow:hidden}.student-bar span{height:100%;display:block}.student-level-mastered,.student-fill-mastered{background:var(--dsw-alias-state-success-primary)}.student-level-practising,.student-fill-practising{background:var(--dsw-alias-state-business-primary)}.student-level-stalled,.student-fill-stalled{background:var(--dsw-alias-state-warn-primary)}.student-level-weak,.student-fill-weak{background:var(--dsw-alias-state-error-primary)}.student-level-due,.student-fill-due{background:color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, var(--dsw-alias-state-warn-primary))}.student-level-untouched,.student-fill-untouched{background:var(--dsw-alias-label-tertiary)}.student-legend{flex-wrap:wrap;gap:8px 12px;display:flex}.student-dot{vertical-align:middle;border-radius:50%;width:8px;height:8px;margin-right:4px;display:inline-block}.student-chips{flex-direction:column;gap:6px;display:flex}.student-chip{text-align:left;border-radius:8px;align-items:center;gap:6px;width:100%;padding:8px 10px;display:flex}.student-pair{grid-template-columns:1fr 1fr;gap:8px;display:grid}.student-mastery{align-items:center;gap:6px;display:flex}.student-mastery span{border-radius:50%;width:10px;height:10px}.student-simon{flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-simon li{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 8px}.student-simon-done{opacity:.7}.student-simon-current{color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-state-business-primary);background:color-mix(in srgb, var(--dsw-alias-state-business-primary) 12%, var(--dsw-alias-bg-base));font-weight:500}.student-steps{flex-direction:column;gap:6px;margin:0;padding:0;list-style:none;display:flex}.student-map-inline{border:1px solid var(--dsw-alias-border-l2);border-left:3px solid var(--dsw-alias-state-business-primary);background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base));border-radius:8px;margin:4px 0 8px;padding:8px 10px}.student-map-links{margin-top:8px}.student-mindmap-unit{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);border-radius:8px;margin:8px 0;padding:10px}.student-mindmap-unit>summary{cursor:pointer;font-weight:500}.student-mindmap-branch{border-left:2px solid var(--dsw-alias-border-l2);flex-direction:column;gap:6px;margin:8px 0 0;padding:0 0 0 12px;list-style:none;display:flex}.student-mindmap-node{flex-direction:column;gap:4px;display:flex}.student-mindmap-concept{text-align:left;align-items:center;gap:6px;width:100%;display:flex}.student-mindmap-concept[aria-pressed=true]{background:var(--dsw-alias-bg-layer-2,transparent)}.student-mindmap-concept.student-level-mastered{box-shadow:inset 3px 0 0 var(--dsw-alias-state-success-primary)}.student-mindmap-concept.student-level-practising{box-shadow:inset 3px 0 0 var(--dsw-alias-state-business-primary)}.student-mindmap-concept.student-level-stalled{box-shadow:inset 3px 0 0 var(--dsw-alias-state-warn-primary)}.student-mindmap-concept.student-level-weak,.student-mindmap-concept.student-level-due{box-shadow:inset 3px 0 0 var(--dsw-alias-state-error-primary)}.student-figure svg{width:100%;height:auto;max-height:220px;color:var(--dsw-alias-label-primary)}.student-figure circle,.student-figure rect,.student-figure line,.student-figure path,.student-figure polyline,.student-figure polygon{fill:none;stroke:currentColor;stroke-width:1.4px}.student-figure text{fill:currentColor;stroke:none}.student-figure .student-fill{fill:currentColor}.student-desk progress{width:100%;height:8px}.student-desk progress::-webkit-progress-bar{background:var(--dsw-alias-bg-layer-2);border-radius:999px}.student-desk progress::-webkit-progress-value{background:var(--dsw-alias-state-business-primary);border-radius:999px}.student-sheet-portal{font:13px/20px var(--dsw-font-family)}.student-sheet-portal button{font:inherit;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);cursor:pointer;padding:8px 14px}.student-sheet-portal .student-primary{background:var(--dsw-alias-button-primary-fill);color:var(--dsw-alias-label-primary-inverted);border-color:#0000}.student-sheet-portal .student-quiet{background:0 0;border:0}.student-sheet-backdrop{z-index:1000;box-sizing:border-box;background:color-mix(in srgb, var(--dsw-alias-label-primary) 32%, transparent);justify-content:center;align-items:flex-start;padding:32px 16px;display:flex;position:fixed;inset:0;overflow:auto}.student-sheet-dialog{box-sizing:border-box;border-radius:var(--dsw-radius-panel);background:var(--dsw-alias-bg-layer-2);width:min(720px,100%);box-shadow:var(--dsw-elevation-prominent);flex-direction:column;gap:8px;padding:16px;display:flex}.student-sheet-toolbar{flex-wrap:wrap;align-items:center;gap:8px;display:flex}.student-sheet-toolbar .student-muted{flex:200px;margin:0}.student-sheet-scroll{overflow:auto}.student-sheet{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2);color:#333;font:14px/1.6 var(--dsw-font-family);background:#fff;border-radius:8px;flex-direction:column;gap:12px;padding:24px;display:flex}.student-url{user-select:text;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.student-sheet h2{text-align:center;margin:0;font-size:18px;font-weight:500}.student-sheet-meta{text-align:center;margin:0;font-size:12px}.student-sheet-item{break-inside:avoid;flex-direction:column;gap:8px;display:flex}.student-sheet-item>p{white-space:pre-wrap;margin:0}.student-sheet .student-figure svg{color:#333;width:100%;height:auto;max-height:260px}.student-sheet-lines{flex-direction:column;display:flex}.student-sheet-rule{border-bottom:1px solid #b9c0c7;height:22px}.student-sheet-box{border:1px dashed #b9c0c7;border-radius:4px;height:84px}@page{size:A4;margin:12mm 14mm}@media print{body>:not(.student-sheet-portal){display:none!important}.student-sheet-backdrop{background:0 0;padding:0;display:block;position:static;overflow:visible}.student-sheet-dialog{display:contents}.student-sheet-toolbar{display:none}.student-sheet-scroll{overflow:visible}.student-sheet{border:0;border-radius:0;width:100%;padding:0}.student-sheet-item{page-break-inside:avoid}}.student-teaching-aids{width:100%;min-width:0;color:var(--dsw-alias-text-primary);gap:12px;margin-top:12px;display:grid}.student-teaching-aids>h3{margin:0;font-size:14px;font-weight:500}.student-teaching-aids>p{color:var(--dsw-alias-text-secondary);margin:0;font-size:13px}";
+		const tagId$1 = "@winterhuan/dsh-student/plugin.css";
+		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId$1) + "]") === null) {
 			const tag = document.createElement("style");
 			tag.dataset.plugin = "@winterhuan/dsh-student";
-			tag.dataset.pluginCss = tagId$2;
-			tag.textContent = css$2;
+			tag.dataset.pluginCss = tagId$1;
+			tag.textContent = css$1;
 			document.head.appendChild(tag);
 		}
 		//#endregion
@@ -89,29 +89,12 @@ window.__ModuleLoader__.load({
 			"feedbackSavePending": "课堂记录尚未核对保存完成，当前题目已保留",
 			"legacyFilesHelp": "正在查看旧版学习档案，原记录保持不变；继续保存前，请在辅导对话中让助手检查迁移方案，再由家长确认",
 			"unavailableFilesHelp": "当前学期档案尚无法完整读取，请在辅导对话中检查档案状态并修复",
-			"workbenchHelp": "选择孩子的工作区，学习记录和辅导对话一起打开",
-			"workbenchPanels": "学习与辅导",
-			"learningContent": "学习内容",
 			"liveUpdates": "自动更新",
 			"updatePaused": "更新已暂停",
 			"studyDetails": "学习情况与方法",
 			"taskDetails": "本题目标与学习步骤",
 			"uploadHomework": "上传作业或错题",
 			"exerciseBankDetails": "查看习题库",
-			"learnerWorkspace": "学习工作区",
-			"learningConversation": "学习对话",
-			"noLearningConversation": "还没有学习对话",
-			"newLearningConversation": "新建学习对话",
-			"openConversation": "打开完整对话",
-			"hideTutor": "收起辅导助手",
-			"showTutor": "显示辅导助手",
-			"tutorConversation": "辅导助手",
-			"createConversationError": "学习对话创建失败，请重试",
-			"createdLearningConversation": "学习对话已创建",
-			"openConversationError": "学习对话暂时无法打开，请重试",
-			"noLearnerWorkspace": "请先在左侧创建孩子的学习工作区，再回来开始学习",
-			"welcomeWorkbench": "从这里开始今天的学习",
-			"createLearningHelp": "新建学习对话后，家长先确认学生资料，再选择科目开始学习",
 			"feedback": "评估反馈",
 			"manualWorksheet": "可选：修订已保存练习记录",
 			"manualWorksheetHelp": "保留原答和题目依据；仅保存你修改的评估、帮助或实际作答日期",
@@ -708,29 +691,12 @@ window.__ModuleLoader__.load({
 			"feedbackSavePending": "Classroom records are still being verified and saved; your question is retained",
 			"legacyFilesHelp": "Viewing previous-format learning records with the originals preserved. Before saving, ask the tutor to inspect a migration plan and let a parent confirm it",
 			"unavailableFilesHelp": "The current term records cannot be read in full. Ask the tutor to check the record status and repair it",
-			"workbenchHelp": "Choose the learner’s workspace to open study records and tutoring together",
-			"workbenchPanels": "Study and tutoring",
-			"learningContent": "Study content",
 			"liveUpdates": "Updates automatically",
 			"updatePaused": "Updates paused",
 			"studyDetails": "Study progress and methods",
 			"taskDetails": "Question goal and learning steps",
 			"uploadHomework": "Upload homework or a mistake",
 			"exerciseBankDetails": "View exercise bank",
-			"learnerWorkspace": "Learning workspace",
-			"learningConversation": "Learning conversation",
-			"noLearningConversation": "No learning conversations yet",
-			"newLearningConversation": "New learning conversation",
-			"openConversation": "Open full conversation",
-			"hideTutor": "Hide tutor",
-			"showTutor": "Show tutor",
-			"tutorConversation": "Tutor",
-			"createConversationError": "Cannot create the learning conversation. Try again",
-			"createdLearningConversation": "Learning conversation created",
-			"openConversationError": "Cannot open the learning conversation. Try again",
-			"noLearnerWorkspace": "Create the learner’s workspace in the sidebar, then return to start learning",
-			"welcomeWorkbench": "Start today’s learning here",
-			"createLearningHelp": "Create a learning conversation, confirm the learner’s profile, then choose a subject to begin",
 			"feedback": "Assessment feedback",
 			"manualWorksheet": "Optional: correct saved worksheet records",
 			"manualWorksheetHelp": "Keep the original answer and question basis; save only the assessment, assistance or actual answer day you edit",
@@ -9750,26 +9716,29 @@ window.__ModuleLoader__.load({
 			}), document.body);
 		}
 		//#endregion
-		//#region \0dsh-css:/Users/winter/dsh-creative/.worktrees/student-openmaic-integration/packages/winterhuan/student/src/client/desk.module.css.mjs
-		const css$1 = ".-\\35 LDPq_desk{container-type:inline-size}.-\\35 LDPq_taskLayout{gap:20px;min-width:0;display:grid}.-\\35 LDPq_taskPrompt{min-width:0}.-\\35 LDPq_answerArea{border-radius:var(--dsw-radius-lg);background:var(--dsw-alias-interactive-bg-hover);flex-direction:column;gap:8px;min-width:0;padding:16px;display:flex}.-\\35 LDPq_answerArea form fieldset{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;display:grid}.-\\35 LDPq_answerArea form label,.-\\35 LDPq_answerArea form button[type=submit]{grid-column:1/-1}.-\\35 LDPq_taskLayout.-\\35 LDPq_withFigure{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.-\\35 LDPq_taskPrompt .student-figure{max-width:320px;margin:16px auto 0}.-\\35 LDPq_desk .-\\35 LDPq_taskDetails{border-top:.5px solid var(--dsw-alias-border-l2);background:0 0;border-radius:0;margin-top:12px;padding:12px 0 0}.-\\35 LDPq_taskDetails>p{margin-top:8px}.-\\35 LDPq_statusHeading{flex-wrap:wrap;justify-content:space-between;gap:8px;display:flex}.-\\35 LDPq_practiceActions{flex-wrap:wrap;gap:8px;display:flex}.-\\35 LDPq_practiceActions button{flex:160px}@container (width<=460px){.-\\35 LDPq_desk .-\\35 LDPq_navigation{box-sizing:border-box;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;display:grid}}@container (width<=620px){.-\\35 LDPq_taskLayout.-\\35 LDPq_withFigure{grid-template-columns:minmax(0,1fr)}.-\\35 LDPq_taskPrompt .student-figure svg{max-height:160px}}";
-		const tagId$1 = "@winterhuan/dsh-student/desk.module.css";
-		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId$1) + "]") === null) {
+		//#region \0dsh-css:/Users/winter/dsh-creative/plugins/dsh-student/packages/winterhuan/student/src/client/desk.module.css.mjs
+		const css = "._hwI2a_desk{container-type:inline-size}._hwI2a_taskLayout{gap:20px;min-width:0;display:grid}._hwI2a_taskPrompt{min-width:0}._hwI2a_answerArea{border-radius:var(--dsw-radius-lg);background:var(--dsw-alias-interactive-bg-hover);flex-direction:column;gap:8px;min-width:0;padding:16px;display:flex}._hwI2a_answerArea form fieldset{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;display:grid}._hwI2a_answerArea form label,._hwI2a_answerArea form button[type=submit]{grid-column:1/-1}._hwI2a_taskLayout._hwI2a_withFigure{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}._hwI2a_taskPrompt .student-figure{max-width:320px;margin:16px auto 0}._hwI2a_desk ._hwI2a_taskDetails{border-top:.5px solid var(--dsw-alias-border-l2);background:0 0;border-radius:0;margin-top:12px;padding:12px 0 0}._hwI2a_taskDetails>p{margin-top:8px}._hwI2a_statusHeading{flex-wrap:wrap;justify-content:space-between;gap:8px;display:flex}._hwI2a_practiceActions{flex-wrap:wrap;gap:8px;display:flex}._hwI2a_practiceActions button{flex:160px}@container (width<=460px){._hwI2a_desk ._hwI2a_navigation{box-sizing:border-box;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;display:grid}}@container (width<=620px){._hwI2a_taskLayout._hwI2a_withFigure{grid-template-columns:minmax(0,1fr)}._hwI2a_taskPrompt .student-figure svg{max-height:160px}}._hwI2a_empty{text-align:center;flex-direction:column;flex:1;justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}._hwI2a_spinner{border:2px solid var(--dsw-alias-border-l2);border-top-color:var(--dsw-alias-label-primary);border-radius:50%;width:24px;height:24px;animation:.8s linear infinite _hwI2a_spin}@keyframes _hwI2a_spin{to{transform:rotate(360deg)}}";
+		const tagId = "@winterhuan/dsh-student/desk.module.css";
+		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
 			const tag = document.createElement("style");
 			tag.dataset.plugin = "@winterhuan/dsh-student";
-			tag.dataset.pluginCss = tagId$1;
-			tag.textContent = css$1;
+			tag.dataset.pluginCss = tagId;
+			tag.textContent = css;
 			document.head.appendChild(tag);
 		}
 		var desk_module_css_default = {
-			"answerArea": "-5LDPq_answerArea",
-			"desk": "-5LDPq_desk",
-			"navigation": "-5LDPq_navigation",
-			"practiceActions": "-5LDPq_practiceActions",
-			"statusHeading": "-5LDPq_statusHeading",
-			"taskDetails": "-5LDPq_taskDetails",
-			"taskLayout": "-5LDPq_taskLayout",
-			"taskPrompt": "-5LDPq_taskPrompt",
-			"withFigure": "-5LDPq_withFigure"
+			"answerArea": "_hwI2a_answerArea",
+			"desk": "_hwI2a_desk",
+			"empty": "_hwI2a_empty",
+			"navigation": "_hwI2a_navigation",
+			"practiceActions": "_hwI2a_practiceActions",
+			"spin": "_hwI2a_spin",
+			"spinner": "_hwI2a_spinner",
+			"statusHeading": "_hwI2a_statusHeading",
+			"taskDetails": "_hwI2a_taskDetails",
+			"taskLayout": "_hwI2a_taskLayout",
+			"taskPrompt": "_hwI2a_taskPrompt",
+			"withFigure": "_hwI2a_withFigure"
 		};
 		//#endregion
 		//#region lib/types/client/practice-view.js
@@ -11818,32 +11787,6 @@ window.__ModuleLoader__.load({
 			] });
 		}
 		//#endregion
-		//#region \0dsh-css:/Users/winter/dsh-creative/.worktrees/student-openmaic-integration/packages/winterhuan/student/src/client/workbench.module.css.mjs
-		const css = ".mC5xpG_workbench{height:100%;min-height:0;color:var(--dsw-alias-label-primary);background:radial-gradient(ellipse at 12% 0%, color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, transparent), transparent 55%), radial-gradient(ellipse at 100% 90%, color-mix(in srgb, var(--dsw-alias-state-success-primary) 5%, transparent), transparent 50%), color-mix(in srgb, var(--dsw-alias-label-primary) 3.5%, var(--dsw-alias-bg-base));font:14px/22px var(--dsw-font-family);flex-direction:column;display:flex;container-type:inline-size}.mC5xpG_header{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;padding:28px 28px 12px;display:flex}[data-platform=darwin] .mC5xpG_header{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}.mC5xpG_heading h1{letter-spacing:-.015em;margin:0;font-size:34px;font-weight:300;line-height:44px}.mC5xpG_heading p{color:var(--dsw-alias-label-secondary);margin:4px 0 0;font-size:13px;line-height:20px}.mC5xpG_controls{flex-wrap:wrap;align-items:center;gap:8px;min-width:0;max-width:100%;display:flex}.mC5xpG_controls label{min-width:0;max-width:300px;color:var(--dsw-alias-label-secondary);align-items:center;gap:8px;font-size:12px;display:flex}.mC5xpG_controls select,.mC5xpG_controls button,.mC5xpG_empty button{font:13px/20px var(--dsw-font-family);color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2);border:.5px solid var(--dsw-alias-border-l4);border-radius:var(--dsw-radius-md);min-width:0;max-width:100%;padding:8px 12px}.mC5xpG_controls button,.mC5xpG_empty button{cursor:pointer}.mC5xpG_controls button:hover:enabled,.mC5xpG_empty button:hover:enabled{background:var(--dsw-alias-interactive-bg-hover)}.mC5xpG_controls button[aria-pressed=true]{background:var(--dsw-alias-interactive-bg-active)}.mC5xpG_controls :disabled{opacity:.5;cursor:default}.mC5xpG_conversationControls{min-width:0;max-width:240px}.mC5xpG_conversationControls summary{cursor:pointer;color:var(--dsw-alias-label-secondary);border-radius:var(--dsw-radius-md);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);box-shadow:var(--dsw-elevation-soft);text-overflow:ellipsis;white-space:nowrap;padding:8px 12px;font-size:13px;line-height:20px;overflow:hidden}.mC5xpG_conversationControls[open]{flex-basis:100%;max-width:100%}.mC5xpG_conversationControls[open]>.mC5xpG_controls{padding-top:12px}.mC5xpG_body{flex:1;gap:12px;min-width:0;min-height:0;padding:0 16px 16px;display:grid}.mC5xpG_withChat{grid-template-columns:minmax(0,1fr) 336px}.mC5xpG_panes{display:none}.mC5xpG_study{min-width:0;min-height:0}.mC5xpG_study .student-desk{background:0 0}.mC5xpG_chat{border-radius:var(--dsw-radius-panel);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 92%, transparent);min-width:0;min-height:0;box-shadow:var(--dsw-elevation-soft);flex-direction:column;margin-top:12px;display:flex;overflow:hidden}.mC5xpG_chat h2{border-bottom:.5px solid var(--dsw-alias-border-l2);margin:0;padding:16px 18px 12px;font-size:15px;font-weight:500;line-height:22px}.mC5xpG_empty{text-align:center;flex-direction:column;flex:1;justify-content:center;align-items:center;gap:12px;padding:24px;display:flex}.mC5xpG_empty h2{margin:0;font-size:16px;font-weight:500}.mC5xpG_empty p{margin:0}.mC5xpG_spinner{border:2px solid var(--dsw-alias-border-l2);border-top-color:var(--dsw-alias-label-primary);border-radius:50%;width:24px;height:24px;animation:.8s linear infinite mC5xpG_spin}.mC5xpG_controls :focus-visible,.mC5xpG_panes button:focus-visible,.mC5xpG_conversationControls summary:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:2px}@keyframes mC5xpG_spin{to{transform:rotate(360deg)}}@container (width<=900px){.mC5xpG_header{padding-left:24px;padding-right:24px}.mC5xpG_heading p{display:none}.mC5xpG_heading{flex:180px}.mC5xpG_header>.mC5xpG_controls{flex:360px}.mC5xpG_controls{align-items:center}.mC5xpG_controls label{flex-direction:row;align-items:center}.mC5xpG_body,.mC5xpG_withChat{grid-template-rows:auto minmax(0,1fr);grid-template-columns:minmax(0,1fr);gap:0;padding:0 12px 12px}.mC5xpG_panes{border-radius:var(--dsw-radius-lg);background:color-mix(in srgb, var(--dsw-alias-bg-layer-2) 72%, transparent);box-shadow:var(--dsw-elevation-soft);gap:2px;margin:4px 12px 8px;padding:4px;display:flex}.mC5xpG_panes button{font:13px/20px var(--dsw-font-family);border-radius:var(--dsw-radius-md);color:var(--dsw-alias-label-secondary);cursor:pointer;background:0 0;border:0;flex:1;padding:6px 12px}.mC5xpG_panes button[aria-pressed=true]{color:var(--dsw-alias-label-primary-inverted);background:var(--dsw-alias-button-primary-fill)}.mC5xpG_body[data-pane=chat] .mC5xpG_study,.mC5xpG_body[data-pane=study] .mC5xpG_chat{display:none}.mC5xpG_chat{margin-top:0}}@container (width<=460px){.mC5xpG_heading h1{font-size:25px;line-height:35px}.mC5xpG_controls label,.mC5xpG_conversationControls{max-width:100%}}";
-		const tagId = "@winterhuan/dsh-student/workbench.module.css";
-		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
-			const tag = document.createElement("style");
-			tag.dataset.plugin = "@winterhuan/dsh-student";
-			tag.dataset.pluginCss = tagId;
-			tag.textContent = css;
-			document.head.appendChild(tag);
-		}
-		var workbench_module_css_default = {
-			"body": "mC5xpG_body",
-			"chat": "mC5xpG_chat",
-			"controls": "mC5xpG_controls",
-			"conversationControls": "mC5xpG_conversationControls",
-			"empty": "mC5xpG_empty",
-			"header": "mC5xpG_header",
-			"heading": "mC5xpG_heading",
-			"panes": "mC5xpG_panes",
-			"spin": "mC5xpG_spin",
-			"spinner": "mC5xpG_spinner",
-			"study": "mC5xpG_study",
-			"withChat": "mC5xpG_withChat",
-			"workbench": "mC5xpG_workbench"
-		};
-		//#endregion
 		//#region lib/types/client/desk.js
 		const subjectPreference = "student-desk:subject";
 		function storedSubject() {
@@ -12399,10 +12342,10 @@ window.__ModuleLoader__.load({
 						},
 						children: t("setupConversation")
 					})] }) : workspace.value ? (0, react_jsx_runtime.jsx)("section", { children: (0, react_jsx_runtime.jsx)("p", { children: t(workspace.value.status === "legacy" ? "legacyFilesHelp" : "unavailableFilesHelp") }) }) : !workspace.error && (0, react_jsx_runtime.jsx)("div", {
-						className: workbench_module_css_default.empty,
+						className: desk_module_css_default.empty,
 						"aria-busy": "true",
 						"aria-label": t("busy"),
-						children: (0, react_jsx_runtime.jsx)("span", { className: workbench_module_css_default.spinner })
+						children: (0, react_jsx_runtime.jsx)("span", { className: desk_module_css_default.spinner })
 					}) : !study && tab === "today" ? (0, react_jsx_runtime.jsxs)("section", { children: [(0, react_jsx_runtime.jsx)("p", { children: t("setupFirst") }), (0, react_jsx_runtime.jsx)("button", {
 						disabled: sending,
 						onClick: () => {
@@ -13068,351 +13011,6 @@ window.__ModuleLoader__.load({
 			};
 		}
 		//#endregion
-		//#region lib/types/client/workbench.js
-		const sessionSlot = "student.workbench.session";
-		/** Create browser preferences independent of learning records.
-		* @returns a registration-owned store persisting workspace, conversation and assistant visibility.
-		*/
-		function createWorkbenchStore() {
-			return (0, _deepseek_ai_dsh_client_store.defineStore)({
-				init: () => ({
-					workspaceId: "",
-					sessionId: "",
-					chatVisible: true
-				}),
-				persist: "dsh.student.workbench.v1",
-				actions: {
-					selectWorkspace: (draft, id) => {
-						draft.workspaceId = id;
-						draft.sessionId = "";
-					},
-					selectSession: (draft, id) => {
-						draft.sessionId = id;
-					},
-					toggleChat: (draft) => {
-						draft.chatVisible = !draft.chatVisible;
-						draft.pane = draft.chatVisible ? "chat" : "study";
-					},
-					showTutor: (draft) => {
-						draft.chatVisible = true;
-						draft.pane = "chat";
-					},
-					selectPane: (draft, pane) => {
-						draft.pane = pane;
-						if (pane === "chat") draft.chatVisible = true;
-					}
-				}
-			});
-		}
-		/** Select live main Student conversations within one learner workspace.
-		* @param props - framework catalogs, preferences and native Session callbacks.
-		* @returns the global workbench with the selected Session's learning and chat panels.
-		*/
-		function Workbench({ useSessions, useWorkspaces, useStore, actions, retainSession, createSession, openSession, reportCreate, SessionProvider, renderSlot, t }) {
-			const catalog = useSessions((state) => state);
-			const workspaces = useWorkspaces((state) => state);
-			const preferences = useStore((state) => state);
-			const [creating, setCreating] = (0, react.useState)(false);
-			const remembered = workspaces.items.find((item) => item.sessionIds.some((id) => id === preferences.sessionId));
-			const workspace = workspaces.items.find((item) => item.workspaceId === preferences.workspaceId) ?? remembered ?? workspaces.items.find((item) => item.sessionIds.some((id) => catalog.byId[id]?.projectionValues?.agentPreset === "student")) ?? workspaces.items[0];
-			const sessions = (workspace?.sessionIds ?? []).flatMap((id) => {
-				const row = catalog.byId[id];
-				return row && catalog.ids.includes(id) && row.projectionValues?.agentPreset === "student" && !row.parentId && row.origin !== "subagent" && !workspaces.archivedSessionIds.includes(id) ? [row] : [];
-			}).sort((a, b) => b.updatedAt - a.updatedAt);
-			const selected = sessions.find((item) => item.id === preferences.sessionId) ?? sessions[0];
-			const sessionId = selected?.id;
-			const pending = catalog.phase !== "ready" || workspaces.phase !== "ready";
-			async function create() {
-				if (!workspace || creating) return;
-				setCreating(true);
-				try {
-					const id = await createSession(workspace.workspaceId);
-					actions.selectWorkspace(workspace.workspaceId);
-					actions.selectSession(id);
-					reportCreate(true);
-				} catch {
-					reportCreate(false);
-				} finally {
-					setCreating(false);
-				}
-			}
-			return (0, react_jsx_runtime.jsxs)("div", {
-				className: workbench_module_css_default.workbench,
-				children: [(0, react_jsx_runtime.jsxs)("header", {
-					className: workbench_module_css_default.header,
-					children: [(0, react_jsx_runtime.jsxs)("div", {
-						className: workbench_module_css_default.heading,
-						children: [(0, react_jsx_runtime.jsx)("h1", { children: t("title") }), (0, react_jsx_runtime.jsx)("p", { children: t("workbenchHelp") })]
-					}), (0, react_jsx_runtime.jsxs)("div", {
-						className: workbench_module_css_default.controls,
-						children: [
-							(0, react_jsx_runtime.jsxs)("label", { children: [t("learnerWorkspace"), (0, react_jsx_runtime.jsx)("select", {
-								value: workspace?.workspaceId ?? "",
-								disabled: pending || creating,
-								onChange: (event) => {
-									const next = workspaces.items.find((item) => item.workspaceId === event.target.value);
-									if (next) actions.selectWorkspace(next.workspaceId);
-								},
-								children: workspaces.items.map((item) => (0, react_jsx_runtime.jsx)("option", {
-									value: item.workspaceId,
-									children: item.title
-								}, item.workspaceId))
-							})] }),
-							sessionId && (0, react_jsx_runtime.jsx)("button", {
-								type: "button",
-								"aria-pressed": preferences.chatVisible,
-								onClick: actions.toggleChat,
-								children: t(preferences.chatVisible ? "hideTutor" : "showTutor")
-							}),
-							(0, react_jsx_runtime.jsxs)("details", {
-								className: workbench_module_css_default.conversationControls,
-								open: !sessionId,
-								children: [(0, react_jsx_runtime.jsxs)("summary", { children: [t("learningConversation"), selected ? ` · ${selected.displayTitle}` : ""] }), (0, react_jsx_runtime.jsxs)("div", {
-									className: workbench_module_css_default.controls,
-									children: [
-										(0, react_jsx_runtime.jsxs)("label", { children: [t("learningConversation"), (0, react_jsx_runtime.jsxs)("select", {
-											value: sessionId ?? "",
-											disabled: pending || creating || !sessions.length,
-											onChange: (event) => {
-												const next = sessions.find((item) => item.id === event.target.value);
-												if (next) actions.selectSession(next.id);
-											},
-											children: [!sessions.length && (0, react_jsx_runtime.jsx)("option", {
-												value: "",
-												children: t("noLearningConversation")
-											}), sessions.map((item) => (0, react_jsx_runtime.jsx)("option", {
-												value: item.id,
-												children: item.displayTitle
-											}, item.id))]
-										})] }),
-										(0, react_jsx_runtime.jsx)("button", {
-											type: "button",
-											disabled: pending || creating || !workspace,
-											onClick: () => {
-												create();
-											},
-											children: t("newLearningConversation")
-										}),
-										sessionId && (0, react_jsx_runtime.jsx)("button", {
-											type: "button",
-											onClick: () => openSession(sessionId),
-											children: t("openConversation")
-										})
-									]
-								})]
-							})
-						]
-					})]
-				}), pending ? (0, react_jsx_runtime.jsx)(Loading, {}) : !workspace ? (0, react_jsx_runtime.jsx)("div", {
-					className: workbench_module_css_default.empty,
-					children: (0, react_jsx_runtime.jsx)("p", { children: t("noLearnerWorkspace") })
-				}) : !sessionId ? (0, react_jsx_runtime.jsxs)("div", {
-					className: workbench_module_css_default.empty,
-					children: [(0, react_jsx_runtime.jsx)("h2", { children: t("welcomeWorkbench") }), (0, react_jsx_runtime.jsx)("p", { children: t("createLearningHelp") })]
-				}) : (0, react_jsx_runtime.jsx)(SelectedSession, {
-					sessionId,
-					chatVisible: preferences.chatVisible,
-					pane: preferences.pane ?? "study",
-					showTutor: actions.showTutor,
-					selectPane: actions.selectPane,
-					retainSession,
-					SessionProvider,
-					renderSlot,
-					t
-				}, sessionId)]
-			});
-		}
-		function Loading() {
-			return (0, react_jsx_runtime.jsx)("div", {
-				className: workbench_module_css_default.empty,
-				"aria-busy": "true",
-				children: (0, react_jsx_runtime.jsx)("span", { className: workbench_module_css_default.spinner })
-			});
-		}
-		function SelectedSession({ sessionId, chatVisible, pane, showTutor, selectPane, retainSession, SessionProvider, renderSlot, t }) {
-			const [binding, setBinding] = (0, react.useState)(null);
-			const [failed, setFailed] = (0, react.useState)(false);
-			const [retry, setRetry] = (0, react.useState)(0);
-			(0, react.useEffect)(() => {
-				let alive = true;
-				const reference = retainSession(sessionId);
-				reference.ready.then(() => {
-					if (alive) setBinding(reference);
-				}).catch(() => {
-					if (alive) setFailed(true);
-				});
-				return () => {
-					alive = false;
-					reference.release();
-				};
-			}, [
-				sessionId,
-				retainSession,
-				retry
-			]);
-			if (failed) return (0, react_jsx_runtime.jsxs)("div", {
-				className: workbench_module_css_default.empty,
-				children: [(0, react_jsx_runtime.jsx)("p", {
-					role: "alert",
-					children: t("openConversationError")
-				}), (0, react_jsx_runtime.jsx)("button", {
-					type: "button",
-					onClick: () => {
-						setFailed(false);
-						setBinding(null);
-						setRetry((value) => value + 1);
-					},
-					children: t("reload")
-				})]
-			});
-			return binding ? (0, react_jsx_runtime.jsx)(SessionProvider, {
-				session: binding,
-				children: renderSlot(sessionSlot, {
-					chatVisible,
-					pane,
-					showTutor,
-					selectPane
-				})
-			}) : (0, react_jsx_runtime.jsx)(Loading, {});
-		}
-		function LearningSession({ sessionId, chatVisible, pane, showTutor, selectPane, ask, useSession, useConversation, renderFactorySlot, useResource, useStore, actions, saveSettings, saveWorksheet, inspectSubmission, openLesson, syncFeedback, cancel, t }) {
-			const session = useSession((state) => state);
-			const conversation = useConversation((state) => state);
-			const settling = session.openState === "loading" && !conversation.activeTargets.size;
-			return (0, react_jsx_runtime.jsxs)("div", {
-				className: `${workbench_module_css_default.body} ${chatVisible ? workbench_module_css_default.withChat : ""}`,
-				"data-pane": pane,
-				children: [
-					(0, react_jsx_runtime.jsxs)("nav", {
-						className: workbench_module_css_default.panes,
-						"aria-label": t("workbenchPanels"),
-						children: [(0, react_jsx_runtime.jsx)("button", {
-							type: "button",
-							"aria-pressed": pane === "study",
-							onClick: () => selectPane("study"),
-							children: t("learningContent")
-						}), (0, react_jsx_runtime.jsxs)("button", {
-							type: "button",
-							"aria-pressed": pane === "chat",
-							onClick: () => selectPane("chat"),
-							children: [t("tutorConversation"), session.running ? ` · ${t("busy")}` : ""]
-						})]
-					}),
-					(0, react_jsx_runtime.jsx)("div", {
-						className: workbench_module_css_default.study,
-						children: (0, react_jsx_runtime.jsx)(StudyDesk, {
-							sessionId,
-							visible: true,
-							running: !!session.running,
-							pending: session.pendingSubmissions.length > 0 || session.awaitingFirstTurn,
-							syncFeedback,
-							cancel,
-							ask: (text, photo) => {
-								showTutor();
-								return ask(text, photo);
-							},
-							t,
-							useResource,
-							openLesson,
-							useStore,
-							actions,
-							saveSettings,
-							saveWorksheet,
-							inspectSubmission
-						})
-					}),
-					chatVisible && (0, react_jsx_runtime.jsxs)("aside", {
-						className: workbench_module_css_default.chat,
-						"aria-label": t("tutorConversation"),
-						children: [(0, react_jsx_runtime.jsx)("h2", { children: t("tutorConversation") }), renderFactorySlot("conversation.content", {
-							variant: "embedded",
-							phase: settling ? "settling" : "active",
-							hero: false
-						})]
-					})
-				]
-			});
-		}
-		function PanelIcon({ size }) {
-			return (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.IconPlayOutlineRegular, { size });
-		}
-		function WorkbenchNotice({ useNotice, dismissNotice, t }) {
-			const notice = useNotice((value) => value);
-			return notice ? (0, react_jsx_runtime.jsx)(_deepseek_ai_dsh_client_ui_primitives.Toast, {
-				text: t(notice.success ? "createdLearningConversation" : "createConversationError"),
-				...notice.success ? { tone: "success" } : {},
-				onDone: dismissNotice
-			}, notice.sequence) : null;
-		}
-		/** Register the global entry and its strict Session child through native services.
-		* @param context - mounted Student client services.
-		* @param draftStore - shared learning-form drafts for both workbench and sidebar.
-		*/
-		function registerWorkbench(context, draftStore) {
-			const t = context.locale.bind(NS);
-			const notice = (0, _deepseek_ai_dsh_client_store.createSnapshotStore)(null);
-			let sequence = 0;
-			context.slots.inject("main", () => context.slots.register({
-				name: "main",
-				key: "student",
-				locale: NS,
-				store: createWorkbenchStore(),
-				children: { [sessionSlot]: {
-					kind: "single",
-					scope: "session"
-				} },
-				inject: () => ({
-					retainSession: (id) => context.sessions.retain(id, { source: "studentWorkbench" }),
-					createSession: (workspaceId) => context.sessions.create({
-						workspaceId,
-						agentPreset: "student"
-					}),
-					openSession: (id) => {
-						context.uiWorkspace.openSession(id);
-					},
-					reportCreate: (success) => {
-						notice.set({
-							success,
-							sequence: ++sequence
-						});
-					}
-				})
-			}, Workbench));
-			context.slots.inject(sessionSlot, () => context.slots.register({
-				name: sessionSlot,
-				locale: NS,
-				store: draftStore,
-				inject: (sessionId) => ({
-					...studentSessionBridge(context, sessionId, t("sessionError")),
-					ask: tutorBridge(context, sessionId, t("sessionError"), t("sendError")),
-					openLesson: async (lessonId) => {
-						const result = await context.remote.studentOpenmaicPlayback.open(sessionId, lessonId, new AbortController().signal);
-						if (!result.ok) throw new Error(result.error.message);
-						return result.value;
-					},
-					...createStudentManualActions(context.remote.student)
-				})
-			}, LearningSession));
-			context.slots.inject("sidebar.panellist", () => context.slots.register({
-				name: "sidebar.panellist",
-				id: "student",
-				order: 6,
-				locale: NS,
-				label: () => t("title")
-			}, PanelIcon));
-			context.slots.inject("shell.overlay", () => context.slots.register({
-				name: "shell.overlay",
-				id: "student.workbench.notice",
-				locale: NS,
-				inject: () => ({
-					hooks: { notice },
-					dismissNotice: () => {
-						notice.set(null);
-					}
-				})
-			}, WorkbenchNotice));
-		}
-		//#endregion
 		//#region lib/types/client/sidebar.js
 		const name = "student";
 		const inject = [
@@ -13423,8 +13021,6 @@ window.__ModuleLoader__.load({
 			"sidebarRightTabs",
 			"remote",
 			"resources",
-			"workspaces",
-			"uiWorkspace",
 			"conversation"
 		];
 		function studentCallbacks(scope) {
@@ -13488,7 +13084,6 @@ window.__ModuleLoader__.load({
 			}), "student: sidebar");
 			context.inject(["remote.student", "remote.studentOpenmaicPlayback"], (scope) => {
 				const store = createStudentDraftStore();
-				registerWorkbench(scope, store);
 				scope.slots.inject("sidebar.right.pane.tab", () => scope.slots.register({
 					name: "sidebar.right.pane.tab",
 					key: "@winterhuan/dsh-student",

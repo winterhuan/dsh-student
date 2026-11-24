@@ -11,14 +11,13 @@ import { NS, zh, en } from './locales.ts'
 import { tutorBridge, studentSessionBridge, type StudentSessionActions, type StudyPhoto } from './bridge.ts'
 import { StudyDesk } from './desk.tsx'
 import { registerTeachingAids } from './teaching-aids.tsx'
-import { registerWorkbench } from './workbench.tsx'
 import { mountStudentResource } from './resource.ts'
 import { createStudentDraftStore } from './drafts.tsx'
 import { createStudentManualActions } from './manual-actions.ts'
 import type { StudentSessionId } from '../types.ts'
 
 export const name = 'student'
-export const inject = ['slots', 'sessions', 'uiSession', 'locale', 'sidebarRightTabs', 'remote', 'resources', 'workspaces', 'uiWorkspace', 'conversation']
+export const inject = ['slots', 'sessions', 'uiSession', 'locale', 'sidebarRightTabs', 'remote', 'resources', 'conversation']
 function studentCallbacks(scope: Context) {
   const t = scope.locale.bind(NS)
   return {
@@ -51,7 +50,6 @@ export async function apply(context: Context): Promise<void> {
   }), 'student: sidebar')
   context.inject(['remote.student', 'remote.studentOpenmaicPlayback'], scope => {
     const store = createStudentDraftStore()
-    registerWorkbench(scope, store)
     scope.slots.inject('sidebar.right.pane.tab', () => scope.slots.register({ name: 'sidebar.right.pane.tab', key: '@winterhuan/dsh-student', locale: NS, store, inject: () => studentCallbacks(scope) }, Sidebar))
   })
 }

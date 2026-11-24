@@ -9,7 +9,7 @@ import { en } from '../src/client/locales.ts'
 import type { OpenmaicPlaybackResult } from '../src/openmaic/playback.ts'
 import type { StudentSessionId } from '../src/types.ts'
 
-it.each(['student.workbench.session', 'sidebar.right.pane.tab'] as const)('opens playback through the registered %s callback', async slot => {
+it('keeps playback in the current Session sidebar without a global workbench entry', async () => {
   const ctx = new Context()
   onTestFinished(() => ctx.fiber.dispose())
   const value: OpenmaicPlaybackResult = { status: 'unavailable', reason: 'offline test' }
@@ -35,14 +35,16 @@ it.each(['student.workbench.session', 'sidebar.right.pane.tab'] as const)('opens
   ctx.provide('sessions', { list: createSnapshotStore({ byId: {} }) })
   ctx.provide('uiSession', { adapter: { current: createSnapshotStore({ key: undefined }) } })
   ctx.provide('sidebarRightTabs', { register: () => () => {} })
-  for (const service of ['workspaces', 'uiWorkspace', 'conversation']) ctx.provide(service, {})
+  ctx.provide('conversation', {})
   await ctx.plugin({ inject, apply })
 
-  const entry = ctx.slots.entries(slot).find(entry => slot === 'student.workbench.session' || entry.options.key === '@winterhuan/dsh-student')
+  expect(ctx.slots.entries('main').some(entry => entry.options.key === 'student')).toBe(false)
+  expect(ctx.slots.entries('sidebar.panellist').some(entry => entry.options.id === 'student')).toBe(false)
+  const entry = ctx.slots.entries('sidebar.right.pane.tab').find(entry => entry.options.key === '@winterhuan/dsh-student')
   expect(entry?.inject).toBeTypeOf('function')
-  const factory = entry!.inject as (sessionId?: StudentSessionId) => { openLesson: (...args: string[]) => Promise<OpenmaicPlaybackResult> }
+  const factory = entry!.inject as () => { openLesson: (sessionId: StudentSessionId, lessonId: string) => Promise<OpenmaicPlaybackResult> }
   const sessionId = 'playback-session' as StudentSessionId
-  const open = slot === 'student.workbench.session' ? factory(sessionId).openLesson('playback-lesson') : factory().openLesson(sessionId, 'playback-lesson')
+  const open = factory().openLesson(sessionId, 'playback-lesson')
   await expect(open).resolves.toEqual(value)
   expect(call).toHaveBeenCalledExactlyOnceWith('/api', 'studentOpenmaicPlayback/open', { args: { sessionId: 'playback-session', lessonId: 'playback-lesson' } }, expect.any(AbortSignal))
 })

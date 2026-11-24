@@ -1,5 +1,5 @@
-import { t as applicationStudyFiles } from "./application-CqpzE1NY.js";
-import { At as officialRuntimePayloadSchema, C as consumeOpenmaicFeedback, Dt as officialQuestionSchema, G as canonical, Mt as openmaicQuestionSchema, St as normalizeOpenmaicBase, Tt as feedbackCheckpointSchema, ht as readLessonFile, jt as officialRuntimeRecordSchema, l as readBackups, r as backupVersions, t as readWorkspace, u as retainObservedBackups, wt as feedbackBindingSchema } from "./read-YvE7arze.js";
+import { t as applicationStudyFiles } from "./application-BNH-KAtu.js";
+import { At as officialRuntimeRecordSchema, C as consumeOpenmaicFeedback, Ct as feedbackBindingSchema, Et as officialQuestionSchema, W as canonical, jt as openmaicQuestionSchema, kt as officialRuntimePayloadSchema, l as readBackups, mt as readLessonFile, r as backupVersions, t as readWorkspace, u as retainObservedBackups, wt as feedbackCheckpointSchema, xt as normalizeOpenmaicBase } from "./read-BbJWwvjD.js";
 import { z } from "zod";
 import { constants, createHash, publicEncrypt } from "node:crypto";
 import { KNOWN_SESSION_EVENT_TYPES, SessionId, pluginRecordOf } from "@deepseek-ai/dsh-session";

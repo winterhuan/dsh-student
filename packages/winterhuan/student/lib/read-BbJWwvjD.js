@@ -44,6 +44,12 @@ const capabilityScopeSchema = z.object({
 	numberMax: z.number().int().positive().max(1e4).optional(),
 	vocabulary: z.array(text$4.max(240)).max(2e3).optional()
 }).strict();
+/** Reviewed capability, mother and learning range; classification alone grants no answer evidence. */
+const capabilityBindingSchema = z.object({
+	goalId: knowledgeIdSchema,
+	familyId: knowledgeIdSchema,
+	scope: capabilityScopeSchema
+}).strict();
 /** Source-backed capability with criteria, prerequisites and independent course associations. */
 const capabilityGoalSchema = z.object({
 	id: knowledgeIdSchema,
@@ -1121,6 +1127,7 @@ const stateSchema = z.object({
 	mistakes: z.array(mistake.extend({
 		confirmedAt: time$1.optional(),
 		userConfirmation: text$3.optional(),
+		capability: capabilityBindingSchema.optional(),
 		dueAt: time$1.optional(),
 		source: z.object({
 			worksheetId: id$1,
@@ -1138,7 +1145,8 @@ const stateSchema = z.object({
 	relations: z.array(relation).max(2e3).default([]),
 	worksheets: z.array(worksheet.extend({
 		createdAt: time$1,
-		discardedAt: time$1.optional()
+		discardedAt: time$1.optional(),
+		archivedAt: time$1.optional()
 	}).strict()).max(500).default([]),
 	paperResults: z.array(paperResult.extend({ receivedAt: time$1 }).strict()).max(4e3).default([]),
 	paperDrafts: z.array(paperDraft.extend({ receivedAt: time$1 }).strict()).max(500).default([]),
@@ -2443,12 +2451,6 @@ const questionSourceSchema = z.discriminatedUnion("kind", [
 		row: text
 	}).strict()
 ]);
-/** Exact capability, family and tested scope of this frozen question instance. */
-const capabilityBindingSchema = z.object({
-	goalId: knowledgeIdSchema,
-	familyId: knowledgeIdSchema,
-	scope: capabilityScopeSchema
-}).strict();
 /** A persisted allowance counts entered mothers and presented instances, independently of answer evidence. */
 const learningRoundSchema = z.object({
 	id,
@@ -2644,6 +2646,7 @@ const worksheetSchema = z.object({
 	origin: z.enum(["prepared", "workbook"]),
 	createdAt: time,
 	discardedAt: time.optional(),
+	archivedAt: time.optional(),
 	context: z.object({
 		profile: stateSchema.shape.profile.optional(),
 		pendingProfile: text.optional(),
@@ -3381,6 +3384,12 @@ function validateStudyFiles(input, prior = [], nativeSources = [], openmaicSourc
 				if (!from || !to || from.id === to.id || from.subject !== to.subject || from.confirmedAt === void 0 || to.confirmedAt === void 0 || !from.userConfirmation || !to.userConfirmation) fail(path, "relations", "concept-reference", "Reference two distinct confirmed concepts of the same subject.");
 			}
 			for (const mistake of file.mistakes) {
+				if (mistake.capability) {
+					const binding = mistake.capability;
+					const goal = knowledge.goals.find((goal) => goal.id === binding.goalId);
+					const family = knowledge.families.find((family) => family.id === (knowledge.familyAliases[binding.familyId] ?? binding.familyId));
+					if (mistake.objectiveId !== binding.goalId || goal?.subject !== mistake.subject || family?.subject !== mistake.subject || !family.goalIds.includes(binding.goalId)) fail(path, "mistakes.capability", "capability-family", "Classify the original mistake under a compatible capability, mother and reviewed learning range of the same subject.");
+				}
 				if (mistake.errorType && !errorTypesBySubject[mistake.subject].includes(mistake.errorType)) fail(path, "mistakes.errorType", "subject-cause", "Use a cause belonging to the mistake subject.");
 				if (mistake.confirmedAt !== void 0 && (!mistake.userConfirmation || mistake.uncertainties !== "")) fail(path, "mistakes", "mistake-confirmation", "Retain a parent statement and resolve transcription uncertainty before confirmation.");
 			}
@@ -3530,6 +3539,7 @@ function validateStudyFiles(input, prior = [], nativeSources = [], openmaicSourc
 			if (file.kind === "worksheet" && !assessment.userConfirmation) fail(path, `assessments.${i}.userConfirmation`, "parent-confirmation", "Record the parent statement confirming this paper result.");
 		}
 		if (file.kind === "worksheet") {
+			if (file.archivedAt !== void 0 && (file.discardedAt !== void 0 || file.drafts.length > 0 || questions.some((question) => !file.responses.some((response) => response.questionId === question.id && file.assessments.some((assessment) => assessment.responseId === response.id && !["unassessed", "stuck"].includes(assessment.result)))))) fail(path, "archivedAt", "worksheet-archive", "Archive only fully assessed worksheets without pending drafts; retain original questions, responses and assessments.");
 			unique(path, "drafts", file.drafts);
 			for (const draft of file.drafts) if (!questions.some((question) => question.id === draft.questionId)) fail(path, "drafts.questionId", "question-reference", "Retain the published question used by transcription.");
 		}
@@ -4996,4 +5006,4 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
 	};
 }
 //#endregion
-export { schoolGate as $, StudyReadCache as $t, assessmentSchema as A, officialRuntimePayloadSchema as At, responseSourceSchema as B, commandSchema as Bt, consumeOpenmaicFeedback as C, readInteractiveLessons as Ct, answerDateSchema as D, officialQuestionSchema as Dt, openmaicAcademicQuestion as E, officialAnswerSchema as Et, learningRoundSchema as F, snapshotRevisionSchema as Ft, canonical as G, DEFAULT_INTEREST_TAGS as Gt, worksheetSchema as H, figureSchema as Ht, officialFileSchemas as I, effectiveKnowledge as It, formatDuration as J, capabilityGoalSchema as Jt, choiceMismatch as K, interestFocus as Kt, questionSchema as L, knowledgeSources as Lt, blockSchema as M, openmaicQuestionSchema as Mt, capabilityBindingSchema as N, openmaicResponseSourceSchema as Nt, archiveEvidencePath as O, officialResultSchema as Ot, collectionsSchema as P, pendingOpenmaicSchema as Pt, sameScope as Q, questionFamilySchema as Qt, questionSourceSchema as R, resolveLegacyReference as Rt, evidenceOf as S, normalizeOpenmaicBase as St, matchOpenmaicResponse as T, feedbackCheckpointSchema as Tt, DAY as U, stateSchema as Ut, termSettingsSchema as V, customObjectiveMethods as Vt, activeSession as W, errorTypesBySubject as Wt, requireValue as X, knowledgeExtensionSchema as Xt, matchChoice as Y, capabilityScopeSchema as Yt, sameSavedAnswer as Z, knowledgeIdSchema as Zt, attachEvidence as _, OPENMAIC_LESSONS_PATH as _t, describeKnowledgeMigration as a, todaySpent as at, evidenceAtCutoff as b, lessonFileSchema as bt, migrationOutputPaths as c, builtinObjectiveIn as ct, sourceSha256 as d, curriculumFor as dt, scopeSelects as et, validateStudyFiles as f, exercisesForObjective as ft, scheduleMistakes as g, OPENMAIC_COOKIE_PATH as gt, replayMistake as h, readLessonFile as ht, describeArchive as i, taughtUnit as it, assistanceSchema as j, officialRuntimeRecordSchema as jt, archiveEvidenceReferenceSchema as k, officialReviewSchema as kt, readBackups as l, builtinObjectives as lt, dayStart as m, subjectIdeas as mt, backupSchema as n, spent as nt, describeMigration as o, builtinObjective as ot, migrateStudyFile as p, subjectExercises as pt, foldText as q, interestTagsOf as qt, backupVersions as r, studyDay as rt, describeRestore as s, builtinObjectiveAnywhere as st, readWorkspace as t, showValue as tt, retainObservedBackups as u, builtinObjectivesIn as ut, demonstrablyAfter as v, effectiveOpenmaicBase as vt, effectiveOpenmaicAssessment as w, feedbackBindingSchema as wt, evidenceDay as x, lessonSchema as xt, deriveEvidence as y, interactiveLessonsView as yt, responseSchema as z, scopeSupports as zt };
+export { scopeSelects as $, StudyReadCache as $t, assessmentSchema as A, officialRuntimeRecordSchema as At, termSettingsSchema as B, customObjectiveMethods as Bt, consumeOpenmaicFeedback as C, feedbackBindingSchema as Ct, answerDateSchema as D, officialResultSchema as Dt, openmaicAcademicQuestion as E, officialQuestionSchema as Et, officialFileSchemas as F, effectiveKnowledge as Ft, choiceMismatch as G, interestFocus as Gt, DAY as H, stateSchema as Ht, questionSchema as I, knowledgeSources as It, matchChoice as J, capabilityGoalSchema as Jt, foldText as K, interestTagsOf as Kt, questionSourceSchema as L, resolveLegacyReference as Lt, blockSchema as M, openmaicResponseSourceSchema as Mt, collectionsSchema as N, pendingOpenmaicSchema as Nt, archiveEvidencePath as O, officialReviewSchema as Ot, learningRoundSchema as P, snapshotRevisionSchema as Pt, schoolGate as Q, questionFamilySchema as Qt, responseSchema as R, scopeSupports as Rt, evidenceOf as S, readInteractiveLessons as St, matchOpenmaicResponse as T, officialAnswerSchema as Tt, activeSession as U, errorTypesBySubject as Ut, worksheetSchema as V, figureSchema as Vt, canonical as W, DEFAULT_INTEREST_TAGS as Wt, sameSavedAnswer as X, knowledgeExtensionSchema as Xt, requireValue as Y, capabilityScopeSchema as Yt, sameScope as Z, knowledgeIdSchema as Zt, attachEvidence as _, effectiveOpenmaicBase as _t, describeKnowledgeMigration as a, builtinObjective as at, evidenceAtCutoff as b, lessonSchema as bt, migrationOutputPaths as c, builtinObjectives as ct, sourceSha256 as d, exercisesForObjective as dt, showValue as et, validateStudyFiles as f, subjectExercises as ft, scheduleMistakes as g, OPENMAIC_LESSONS_PATH as gt, replayMistake as h, OPENMAIC_COOKIE_PATH as ht, describeArchive as i, todaySpent as it, assistanceSchema as j, openmaicQuestionSchema as jt, archiveEvidenceReferenceSchema as k, officialRuntimePayloadSchema as kt, readBackups as l, builtinObjectivesIn as lt, dayStart as m, readLessonFile as mt, backupSchema as n, studyDay as nt, describeMigration as o, builtinObjectiveAnywhere as ot, migrateStudyFile as p, subjectIdeas as pt, formatDuration as q, capabilityBindingSchema as qt, backupVersions as r, taughtUnit as rt, describeRestore as s, builtinObjectiveIn as st, readWorkspace as t, spent as tt, retainObservedBackups as u, curriculumFor as ut, demonstrablyAfter as v, interactiveLessonsView as vt, effectiveOpenmaicAssessment as w, feedbackCheckpointSchema as wt, evidenceDay as x, normalizeOpenmaicBase as xt, deriveEvidence as y, lessonFileSchema as yt, responseSourceSchema as z, commandSchema as zt };

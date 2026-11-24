@@ -13,7 +13,7 @@ export declare function objectiveOf(state: StudyState, objectiveId: string): {
     title: string;
     goal: string;
     conceptIds: string[];
-    method: "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "listen" | "speak";
+    method: "context" | "listen" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "speak";
     errorTypes?: ("carry-borrow" | "place-value" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "pattern" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
     questionPoints?: string[] | undefined;
     variationAxes?: ("context" | "numbers" | "representation" | "reverse" | "explain")[] | undefined;

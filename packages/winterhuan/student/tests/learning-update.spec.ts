@@ -313,7 +313,9 @@ describe('subject knowledge and paper practice', () => {
     state = updateStudy(state, { action: 'confirm-mistake', ...confirm, subject: 'math', learnerAnswer: '14', objectiveId: 'm2a-o-sub' }, NOW)
     const published = { id: 'frozen', subject: 'math' as const, items: [{ ...sheet.items[0]!, mistakeId: mistake.id }] }
     state = updateStudy(state, { action: 'worksheet', worksheet: published }, NOW)
+    state.mistakes[0]!.capability = { goalId: 'm.sub', familyId: 'math.sub-column', scope: { id: 'within100', description: 'Written within100', modality: 'written', numberMax: 100 } }
     state = updateStudy(state, { action: 'link-mistake', mistakeId: mistake.id, objectiveId: 'm2a-o-shop' }, NOW)
+    expect(state.mistakes[0]!.capability).toBeUndefined()
     expect(state.worksheets[0]?.items[0]?.objectiveId).toBe('m2a-o-sub')
     state = updateStudy(state, { action: 'delete-mistake', id: mistake.id }, NOW)
     state = updateStudy(state, { action: 'grade-sheet', grade: { worksheetId: published.id, results: [{ itemId: 'q1', result: 'correct', response: '15' }], userConfirmation: '家长核对原答案。' } }, NOW)

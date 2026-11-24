@@ -18,7 +18,7 @@ export function WorksheetCorrections({ sessionId, termId, draftScope, useResourc
   const resource = useResource(studentResourceAddress(sessionId, { kind: 'files' }))
   const value = resource.value?.data
   const candidates = value && typeof value === 'object' && 'worksheets' in value && Array.isArray(value.worksheets) ? value.worksheets : []
-  const sheets = candidates.flatMap(candidate => { const parsed = worksheetSchema.safeParse(candidate); return parsed.success && parsed.data.termId === termId && parsed.data.discardedAt === undefined ? [parsed.data] : [] }).slice(-20)
+  const sheets = candidates.flatMap(candidate => { const parsed = worksheetSchema.safeParse(candidate); return parsed.success && parsed.data.termId === termId && parsed.data.discardedAt === undefined && parsed.data.archivedAt === undefined ? [parsed.data] : [] }).slice(-20)
   return <details className="student-fold"><summary>{t('manualWorksheet')}</summary>
     <p>{t('manualWorksheetHelp')}</p>
     {resource.status === 'failed' && <p role="alert">{t('staleData')}</p>}

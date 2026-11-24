@@ -14,6 +14,8 @@ export const capabilityScopeSchema = z.object({
 }).strict()
 /** One concrete demonstrated range, separate from grade and textbook association. */
 export type CapabilityScope = z.infer<typeof capabilityScopeSchema>
+/** Reviewed capability, mother and learning range; classification alone grants no answer evidence. */
+export const capabilityBindingSchema = z.object({ goalId: knowledgeIdSchema, familyId: knowledgeIdSchema, scope: capabilityScopeSchema }).strict()
 /** Source-backed capability with criteria, prerequisites and independent course associations. */
 export const capabilityGoalSchema = z.object({
   id: knowledgeIdSchema, subject, domain: knowledgeIdSchema, title: text, scope: text, criterion: text,

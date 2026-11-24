@@ -63,8 +63,8 @@ export declare const nativeOwnerCaptureSchema: z.ZodObject<{
     messageHash: z.ZodString;
     scope: z.ZodObject<{
         questionId: z.ZodString;
-        termId: z.ZodString;
         learnerId: z.ZodString;
+        termId: z.ZodString;
         blockId: z.ZodString;
     }, z.core.$strip>;
     questionSnapshot: z.ZodString;

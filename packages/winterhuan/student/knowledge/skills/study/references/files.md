@@ -36,7 +36,7 @@ node "$STUDY_CLI" validate --workspace '<当前工作区绝对路径>'
 
 能力内容在 `../../../knowledge/curriculum/capabilities/`，不写入学生回答。通过共享 `queryWorkspace` 的 capabilities、families、knowledge-sources 查询按需读取；完整目标、方法、变式约束与来源保留在目录。旧教材地图继续提供教材位置；整单元旧评分不授予拆分后的所有能力。工作区内容扩展写在既有 collections 的 knowledge 字段；相同能力、核心解法和结构只有一个有效母题，数字或情境变式保留为实例。
 
-新能力题的 objectiveId 是稳定能力 ID，并保存 capability 的 goalId、familyId 和 scope；scope 包含独立 id、描述、表现形式及适用数域或词表。听、说、视听和实际操作分别保留对应证据。保持当时的题面、选项、答案依据和范围；母题更新不改写已使用实例。
+新能力题的 objectiveId 是稳定能力 ID，并保存 capability 的 goalId、familyId 和 scope；scope 包含独立 id、描述、表现形式及适用数域或词表。核对后的旧错题可在 collections.mistakes 的声明上保存相同 capability，objectiveId 必须等于 goalId；按同科同目标、母题和等价范围归并显示，所有原实例继续保留。这项归类不改写冻结旧题，不补授作答证据；改题面或目标后需重新核对归类。已全部评分且无待核对草稿的练习单可原位保存 archivedAt；日常列表收起，worksheets 查询指定 id 可查原记录，原题与作答证据继续保留。听、说、视听和实际操作分别保留对应证据。保持当时的题面、选项、答案依据和范围；母题更新不改写已使用实例。
 
 settings 的 evidenceReferences 引用原 learnerId、termId、ownerKind、ownerId、responseId、goalId 与 scope；可保留复习的 mistakeId、stage、dueAt 和 independentDays。原文件位于 `.study/archives/<termId>/blocks|worksheets/<ownerId>.json`。先独立核对原学生、原回答和兼容范围，不能仅凭结构校验继承掌握。数域或词表扩展重新检查；未完成复习保留原到期日与阶段。
 

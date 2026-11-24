@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { knowledgeIdSchema } from "./capability-schema.js";
+import { knowledgeIdSchema, capabilityBindingSchema } from "./capability-schema.js";
 import { INTEREST_TAG } from "./interests.js";
 import { chineseErrorTypes, chineseFocus, englishErrorTypes, englishFocus, mathErrorTypes, mathFocus } from "./vocabulary.js";
 const text = z.string().trim().min(1).max(2000);
@@ -267,6 +267,7 @@ export const stateSchema = z.object({
     attempts: z.array(attempt.extend({ feedback: z.string().max(2000), at: time, materialId: id.optional(), rawResponse: text.optional(), questionId: id.optional(), responseId: id.optional() }).strict()).max(20000),
     mistakes: z.array(mistake.extend({
         confirmedAt: time.optional(), userConfirmation: text.optional(),
+        capability: capabilityBindingSchema.optional(),
         // Derived by replay on read; persisted copies are legacy and ignored.
         dueAt: time.optional(),
         source: z.object({ worksheetId: id, itemId: id }).strict().optional(),
@@ -276,7 +277,7 @@ export const stateSchema = z.object({
     concepts: z.array(concept.extend({ confirmedAt: time.optional(), userConfirmation: text.optional() }).strict()).max(1000).default([]),
     objectives: z.array(objective).max(1000).default([]),
     relations: z.array(relation).max(2000).default([]),
-    worksheets: z.array(worksheet.extend({ createdAt: time, discardedAt: time.optional() }).strict()).max(500).default([]),
+    worksheets: z.array(worksheet.extend({ createdAt: time, discardedAt: time.optional(), archivedAt: time.optional() }).strict()).max(500).default([]),
     paperResults: z.array(paperResult.extend({ receivedAt: time }).strict()).max(4000).default([]),
     paperDrafts: z.array(paperDraft.extend({ receivedAt: time }).strict()).max(500).default([]),
     workbookDrafts: z.array(workbookDraft.extend({ receivedAt: time }).strict()).max(500).default([]),

@@ -1,5 +1,5 @@
-import { Bt as commandSchema, G as canonical, Gt as DEFAULT_INTEREST_TAGS, K as choiceMismatch, Q as sameScope, S as evidenceOf, St as normalizeOpenmaicBase, U as DAY, Ut as stateSchema, Vt as customObjectiveMethods, W as activeSession, Wt as errorTypesBySubject, X as requireValue, Y as matchChoice, Z as sameSavedAnswer, _ as attachEvidence, ct as builtinObjectiveIn, dt as curriculumFor, et as scopeSelects, f as validateStudyFiles, g as scheduleMistakes, m as dayStart, nt as spent, q as foldText, rt as studyDay, t as readWorkspace, tt as showValue, u as retainObservedBackups } from "./read-YvE7arze.js";
-import { c as itemObjectiveId, l as objectiveOf, s as projectWorkspace, u as sheetOpen } from "./queries-BmflTqpv.js";
+import { $ as scopeSelects, Bt as customObjectiveMethods, G as choiceMismatch, H as DAY, Ht as stateSchema, J as matchChoice, K as foldText, S as evidenceOf, U as activeSession, Ut as errorTypesBySubject, W as canonical, Wt as DEFAULT_INTEREST_TAGS, X as sameSavedAnswer, Y as requireValue, Z as sameScope, _ as attachEvidence, et as showValue, f as validateStudyFiles, g as scheduleMistakes, m as dayStart, nt as studyDay, st as builtinObjectiveIn, t as readWorkspace, tt as spent, u as retainObservedBackups, ut as curriculumFor, xt as normalizeOpenmaicBase, zt as commandSchema } from "./read-BbJWwvjD.js";
+import { c as itemObjectiveId, l as objectiveOf, s as projectWorkspace, u as sheetOpen } from "./queries-Da9yyi2n.js";
 import { z } from "zod";
 //#region lib/types/learning/update/context.js
 function alignRecord(task, attempt) {
@@ -478,6 +478,7 @@ function applyMistake(ctx) {
 		const same = Object.entries(command.mistake).every(([key, value]) => canonical(Reflect.get(existing, key)) === canonical(value));
 		requireValue(pending || same, "这条错题已确认。要改正请用 confirm-mistake，新题请换一个编号。");
 		if (!pending) return previous;
+		if (existing.objectiveId !== command.mistake.objectiveId || existing.prompt !== command.mistake.prompt) delete existing.capability;
 		Object.assign(existing, command.mistake);
 		return state;
 	}
@@ -525,6 +526,7 @@ function applyConfirmMistake(ctx) {
 	const nextTopic = command.topic ?? mistake.topic;
 	if (mistake.confirmedAt !== void 0 && mistake.topic === nextTopic && mistake.objectiveId === nextObjectiveId && (command.learnerAnswer === void 0 || mistake.learnerAnswer === command.learnerAnswer) && mistake.prompt === command.prompt && mistake.correction === command.correction && mistake.explanation === command.explanation && mistake.answerEvidence === command.answerEvidence && (command.errorType === void 0 || mistake.errorType === command.errorType) && mistake.userConfirmation === command.userConfirmation) return previous;
 	mistake.topic = nextTopic;
+	if (mistake.objectiveId !== nextObjectiveId || mistake.prompt !== command.prompt) delete mistake.capability;
 	mistake.prompt = command.prompt;
 	if (command.learnerAnswer !== void 0) mistake.learnerAnswer = command.learnerAnswer;
 	mistake.correction = command.correction;
@@ -626,6 +628,7 @@ function applyLinkMistake(ctx) {
 	const objective = objectiveOf(state, command.objectiveId);
 	requireValue(mistake && objective && mistake.confirmedAt !== void 0 && mistake.subject === objective.subject, "错题与学习目标必须已确认且属于同一科目。");
 	if (mistake.objectiveId === objective.id) return previous;
+	delete mistake.capability;
 	mistake.objectiveId = objective.id;
 	return state;
 }

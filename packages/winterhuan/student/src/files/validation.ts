@@ -160,6 +160,12 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
         if (!from || !to || from.id === to.id || from.subject !== to.subject || from.confirmedAt === undefined || to.confirmedAt === undefined || !from.userConfirmation || !to.userConfirmation) fail(path, 'relations', 'concept-reference', 'Reference two distinct confirmed concepts of the same subject.')
       }
       for (const mistake of file.mistakes) {
+        if (mistake.capability) {
+          const binding = mistake.capability
+          const goal = knowledge.goals.find(goal => goal.id === binding.goalId)
+          const family = knowledge.families.find(family => family.id === (knowledge.familyAliases[binding.familyId] ?? binding.familyId))
+          if (mistake.objectiveId !== binding.goalId || goal?.subject !== mistake.subject || family?.subject !== mistake.subject || !family.goalIds.includes(binding.goalId)) fail(path, 'mistakes.capability', 'capability-family', 'Classify the original mistake under a compatible capability, mother and reviewed learning range of the same subject.')
+        }
         if (mistake.errorType && !errorTypesBySubject[mistake.subject].includes(mistake.errorType)) fail(path, 'mistakes.errorType', 'subject-cause', 'Use a cause belonging to the mistake subject.')
         if (mistake.confirmedAt !== undefined && (!mistake.userConfirmation || mistake.uncertainties !== '')) fail(path, 'mistakes', 'mistake-confirmation', 'Retain a parent statement and resolve transcription uncertainty before confirmation.')
       }
@@ -291,6 +297,7 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
       if (file.kind === 'worksheet' && !assessment.userConfirmation) fail(path, `assessments.${i}.userConfirmation`, 'parent-confirmation', 'Record the parent statement confirming this paper result.')
     }
     if (file.kind === 'worksheet') {
+      if (file.archivedAt !== undefined && (file.discardedAt !== undefined || file.drafts.length > 0 || questions.some(question => !file.responses.some(response => response.questionId === question.id && file.assessments.some(assessment => assessment.responseId === response.id && !['unassessed', 'stuck'].includes(assessment.result)))))) fail(path, 'archivedAt', 'worksheet-archive', 'Archive only fully assessed worksheets without pending drafts; retain original questions, responses and assessments.')
       unique(path, 'drafts', file.drafts)
       for (const draft of file.drafts) if (!questions.some(question => question.id === draft.questionId)) fail(path, 'drafts.questionId', 'question-reference', 'Retain the published question used by transcription.')
     }

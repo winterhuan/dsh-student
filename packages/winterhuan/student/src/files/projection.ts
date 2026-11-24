@@ -27,10 +27,11 @@ export function projectWorkspace(workspace: ValidatedWorkspace, now: number): St
     const original = [workspace, ...(workspace.archivedEvidence ?? []).map(archive => archive.workspace)].find(owner => owner.settings.termId === termId)
     const file = entry ? [...original?.blocks ?? [], ...original?.worksheets ?? []].find(file => file.id === entry.ownerId && file.kind === entry.ownerKind) : undefined
     const question = (file?.kind === 'block' ? file.questions : file?.items)?.find(question => question.id === entry?.questionId)
-    const goal = entry?.capability && (mistake.objectiveId === question?.objectiveId || mistake.objectiveId === entry.capability.goalId) ? entry.capability.goalId : mistake.objectiveId
-    const scope = entry?.capability?.scope
+    const binding = mistake.capability ?? entry?.capability
+    const goal = mistake.capability?.goalId ?? (entry?.capability && (mistake.objectiveId === question?.objectiveId || mistake.objectiveId === entry.capability.goalId) ? entry.capability.goalId : mistake.objectiveId)
+    const scope = binding?.scope
     const range = scope ? [scope.modality, scope.numberMax ?? null, scope.vocabulary?.slice().sort() ?? null, scope.numberMax === undefined && scope.vocabulary === undefined ? [scope.id, scope.description] : null] : undefined
-    return { goal, binding: entry?.capability, key: entry?.capability && goal === entry.capability.goalId ? JSON.stringify([mistake.subject, goal, knowledge.familyAliases[entry.capability.familyId] ?? entry.capability.familyId, range]) : JSON.stringify([termId, mistake.id]) }
+    return { goal, binding, key: binding && goal === binding.goalId ? JSON.stringify([mistake.subject, goal, knowledge.familyAliases[binding.familyId] ?? binding.familyId, range]) : JSON.stringify([termId, mistake.id]) }
   }
   for (const { mistake, termId } of declarations) {
     const { key, goal, binding } = keyFor(mistake, termId)
@@ -42,7 +43,7 @@ export function projectWorkspace(workspace: ValidatedWorkspace, now: number): St
       mothers.set(key, id); mistakes.push({ ...mistake, id, ...(goal ? { objectiveId: goal } : {}) })
     }
     for (const entry of index.entries) if (entry.termId === termId && entry.mistakeId === mistake.id) {
-      if (!inheritedReview && binding && (!entry.capability || (knowledge.familyAliases[entry.capability.familyId] ?? entry.capability.familyId) !== (knowledge.familyAliases[binding.familyId] ?? binding.familyId) || !scopeSupports(binding.scope, entry.capability.scope) || !scopeSupports(entry.capability.scope, binding.scope))) delete entry.mistakeId
+      if (!inheritedReview && binding && (!entry.capability || entry.capability.goalId !== binding.goalId || (knowledge.familyAliases[entry.capability.familyId] ?? entry.capability.familyId) !== (knowledge.familyAliases[binding.familyId] ?? binding.familyId) || !scopeSupports(binding.scope, entry.capability.scope) || !scopeSupports(entry.capability.scope, binding.scope))) delete entry.mistakeId
       else entry.mistakeId = id
     }
   }
@@ -61,7 +62,7 @@ export function projectWorkspace(workspace: ValidatedWorkspace, now: number): St
         at: assessment?.assessedAt ?? block.startedAt, ...(typeof question.objectiveId === 'string' ? { objectiveId: question.objectiveId } : {}), ...(question.mistakeId ? { mistakeId: question.mistakeId } : {}) }
     })),
     worksheets: worksheets.map(sheet => ({ id: sheet.id, subject: sheet.subject, createdAt: sheet.createdAt,
-      ...(sheet.worksheetKind ? { kind: sheet.worksheetKind } : {}), ...(sheet.discardedAt !== undefined ? { discardedAt: sheet.discardedAt } : {}),
+      ...(sheet.worksheetKind ? { kind: sheet.worksheetKind } : {}), ...(sheet.discardedAt !== undefined ? { discardedAt: sheet.discardedAt } : {}), ...(sheet.archivedAt !== undefined ? { archivedAt: sheet.archivedAt } : {}),
       items: sheet.items.map(item => ({ id: item.id, prompt: item.prompt, answer: item.answer, explanation: item.explanation, answerEvidence: item.answerEvidence,
         ...(typeof item.objectiveId === 'string' ? { objectiveId: item.objectiveId } : {}), ...(item.mistakeId ? { mistakeId: item.mistakeId } : {}), ...(item.figure ? { figure: item.figure } : {}), ...(item.space ? { space: item.space } : {}) })) })),
     paperResults: worksheets.flatMap(sheet => sheet.assessments.map(assessment => {

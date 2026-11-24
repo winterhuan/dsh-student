@@ -18,6 +18,7 @@ export function applyMistake(ctx: UpdateContext<'mistake'>): StudyState {
     const same = Object.entries(command.mistake).every(([key, value]) => canonical(Reflect.get(existing, key)) === canonical(value))
     requireValue(pending || same, '这条错题已确认。要改正请用 confirm-mistake，新题请换一个编号。')
     if (!pending) return previous
+    if (existing.objectiveId !== command.mistake.objectiveId || existing.prompt !== command.mistake.prompt) delete existing.capability
     Object.assign(existing, command.mistake)
     return state
   }
@@ -63,6 +64,7 @@ export function applyConfirmMistake(ctx: UpdateContext<'confirm-mistake'>): Stud
   if (mistake.confirmedAt !== undefined && mistake.topic === nextTopic && mistake.objectiveId === nextObjectiveId && (command.learnerAnswer === undefined || mistake.learnerAnswer === command.learnerAnswer) && mistake.prompt === command.prompt && mistake.correction === command.correction
     && mistake.explanation === command.explanation && mistake.answerEvidence === command.answerEvidence && (command.errorType === undefined || mistake.errorType === command.errorType) && mistake.userConfirmation === command.userConfirmation) return previous
   mistake.topic = nextTopic
+  if (mistake.objectiveId !== nextObjectiveId || mistake.prompt !== command.prompt) delete mistake.capability
   mistake.prompt = command.prompt
   if (command.learnerAnswer !== undefined) mistake.learnerAnswer = command.learnerAnswer
   mistake.correction = command.correction
@@ -171,6 +173,7 @@ export function applyLinkMistake(ctx: UpdateContext<'link-mistake'>): StudyState
   const objective = objectiveOf(state, command.objectiveId)
   requireValue(mistake && objective && mistake.confirmedAt !== undefined && mistake.subject === objective.subject, '错题与学习目标必须已确认且属于同一科目。')
   if (mistake.objectiveId === objective.id) return previous
+  delete mistake.capability
   mistake.objectiveId = objective.id
   return state
 }

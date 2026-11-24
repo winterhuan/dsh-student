@@ -4916,6 +4916,12 @@ window.__ModuleLoader__.load({
 			numberMax: zod.z.number().int().positive().max(1e4).optional(),
 			vocabulary: zod.z.array(text$2.max(240)).max(2e3).optional()
 		}).strict();
+		/** Reviewed capability, mother and learning range; classification alone grants no answer evidence. */
+		const capabilityBindingSchema = zod.z.object({
+			goalId: knowledgeIdSchema,
+			familyId: knowledgeIdSchema,
+			scope: capabilityScopeSchema
+		}).strict();
 		/** Source-backed capability with criteria, prerequisites and independent course associations. */
 		const capabilityGoalSchema = zod.z.object({
 			id: knowledgeIdSchema,
@@ -6067,6 +6073,7 @@ window.__ModuleLoader__.load({
 			mistakes: zod.z.array(mistake.extend({
 				confirmedAt: time$1.optional(),
 				userConfirmation: text$1.optional(),
+				capability: capabilityBindingSchema.optional(),
 				dueAt: time$1.optional(),
 				source: zod.z.object({
 					worksheetId: id$1,
@@ -6084,7 +6091,8 @@ window.__ModuleLoader__.load({
 			relations: zod.z.array(relation).max(2e3).default([]),
 			worksheets: zod.z.array(worksheet.extend({
 				createdAt: time$1,
-				discardedAt: time$1.optional()
+				discardedAt: time$1.optional(),
+				archivedAt: time$1.optional()
 			}).strict()).max(500).default([]),
 			paperResults: zod.z.array(paperResult.extend({ receivedAt: time$1 }).strict()).max(4e3).default([]),
 			paperDrafts: zod.z.array(paperDraft.extend({ receivedAt: time$1 }).strict()).max(500).default([]),
@@ -6227,12 +6235,6 @@ window.__ModuleLoader__.load({
 				row: text
 			}).strict()
 		]);
-		/** Exact capability, family and tested scope of this frozen question instance. */
-		const capabilityBindingSchema = zod.z.object({
-			goalId: knowledgeIdSchema,
-			familyId: knowledgeIdSchema,
-			scope: capabilityScopeSchema
-		}).strict();
 		/** A persisted allowance counts entered mothers and presented instances, independently of answer evidence. */
 		const learningRoundSchema = zod.z.object({
 			id,
@@ -6426,6 +6428,7 @@ window.__ModuleLoader__.load({
 			origin: zod.z.enum(["prepared", "workbook"]),
 			createdAt: time,
 			discardedAt: time.optional(),
+			archivedAt: time.optional(),
 			context: zod.z.object({
 				profile: stateSchema.shape.profile.optional(),
 				pendingProfile: text.optional(),
@@ -7441,7 +7444,7 @@ window.__ModuleLoader__.load({
 			const value = resource.value?.data;
 			const sheets = (value && typeof value === "object" && "worksheets" in value && Array.isArray(value.worksheets) ? value.worksheets : []).flatMap((candidate) => {
 				const parsed = worksheetSchema.safeParse(candidate);
-				return parsed.success && parsed.data.termId === termId && parsed.data.discardedAt === void 0 ? [parsed.data] : [];
+				return parsed.success && parsed.data.termId === termId && parsed.data.discardedAt === void 0 && parsed.data.archivedAt === void 0 ? [parsed.data] : [];
 			}).slice(-20);
 			return (0, react_jsx_runtime.jsxs)("details", {
 				className: "student-fold",

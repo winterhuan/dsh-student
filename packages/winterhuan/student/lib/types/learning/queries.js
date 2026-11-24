@@ -250,7 +250,7 @@ export function queryStudy(state, kind, offset, options = {}, now = Date.now()) 
         pending: () => state.mistakes.filter(item => item.confirmedAt === undefined),
         progress: () => studyStatus(state, now).progress,
         concepts: () => state.concepts, objectives: () => state.objectives, relations: () => state.relations,
-        worksheets: () => state.worksheets.map(sheet => ({ ...sheet, drafts: state.paperDrafts.filter(draft => draft.worksheetId === sheet.id) })),
+        worksheets: () => state.worksheets.filter(sheet => id || sheet.archivedAt === undefined).map(sheet => ({ ...sheet, drafts: state.paperDrafts.filter(draft => draft.worksheetId === sheet.id) })),
         'paper-results': () => state.paperResults, materials: () => state.materials, mistakes: () => state.mistakes,
         sessions: () => state.sessions, attempts: () => state.attempts,
     };

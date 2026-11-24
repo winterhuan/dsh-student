@@ -1,4 +1,4 @@
-import { $ as schoolGate, $t as StudyReadCache, G as canonical, It as effectiveKnowledge, J as formatDuration, Kt as interestFocus, Lt as knowledgeSources, S as evidenceOf, U as DAY, Ut as stateSchema, W as activeSession, _ as attachEvidence, _t as OPENMAIC_LESSONS_PATH, at as todaySpent, b as evidenceAtCutoff, dt as curriculumFor, et as scopeSelects, ft as exercisesForObjective, g as scheduleMistakes, gt as OPENMAIC_COOKIE_PATH, h as replayMistake, it as taughtUnit, lt as builtinObjectives, m as dayStart, mt as subjectIdeas, ot as builtinObjective, p as migrateStudyFile, pt as subjectExercises, qt as interestTagsOf, rt as studyDay, st as builtinObjectiveAnywhere, ut as builtinObjectivesIn, v as demonstrablyAfter, vt as effectiveOpenmaicBase, x as evidenceDay, y as deriveEvidence, yt as interactiveLessonsView, zt as scopeSupports } from "./read-YvE7arze.js";
+import { $ as scopeSelects, $t as StudyReadCache, Ft as effectiveKnowledge, Gt as interestFocus, H as DAY, Ht as stateSchema, It as knowledgeSources, Kt as interestTagsOf, Q as schoolGate, Rt as scopeSupports, S as evidenceOf, U as activeSession, W as canonical, _ as attachEvidence, _t as effectiveOpenmaicBase, at as builtinObjective, b as evidenceAtCutoff, ct as builtinObjectives, dt as exercisesForObjective, ft as subjectExercises, g as scheduleMistakes, gt as OPENMAIC_LESSONS_PATH, h as replayMistake, ht as OPENMAIC_COOKIE_PATH, it as todaySpent, lt as builtinObjectivesIn, m as dayStart, nt as studyDay, ot as builtinObjectiveAnywhere, p as migrateStudyFile, pt as subjectIdeas, q as formatDuration, rt as taughtUnit, ut as curriculumFor, v as demonstrablyAfter, vt as interactiveLessonsView, x as evidenceDay, y as deriveEvidence } from "./read-BbJWwvjD.js";
 import { z } from "zod";
 import { createHash } from "node:crypto";
 //#region lib/types/learning/mastery.js
@@ -114,7 +114,8 @@ function learningContinuation(workspace, state, now, subject, sourceVerification
 	});
 	const familyForMistake = (id) => {
 		const entry = index.entries.find((entry) => entry.mistakeId === id && entry.capability);
-		return entry?.capability ? canonicalFamily(entry.capability.familyId) : `mistake:${id}`;
+		const binding = state.mistakes.find((mistake) => mistake.id === id)?.capability ?? entry?.capability;
+		return binding ? canonicalFamily(binding.familyId) : `mistake:${id}`;
 	};
 	const due = state.mistakes.filter((mistake) => mistake.confirmedAt !== void 0 && mistake.dueAt !== void 0 && mistake.dueAt <= now && (!subject || mistake.subject === subject)).sort((a, b) => {
 		const currentGoal = knowledge.goals.find((goal) => goal.id === current?.capability?.goalId);
@@ -407,9 +408,9 @@ function learningContinuation(workspace, state, now, subject, sourceVerification
 		const selectedFamilies = [...new Set(remainingDue.map((mistake) => familyForMistake(mistake.id)))].slice(0, reviewRound.remaining);
 		const selected = remainingDue.filter((mistake) => selectedFamilies.includes(familyForMistake(mistake.id)));
 		const first = selected[0];
-		const scope = index.entries.find((entry) => entry.mistakeId === first.id && entry.capability)?.capability?.scope;
+		const binding = first.capability ?? index.entries.find((entry) => entry.mistakeId === first.id && entry.capability)?.capability;
 		return finish({
-			...first.objectiveId && knowledge.goals.some((goal) => goal.id === first.objectiveId) ? actionFor(first.objectiveId, "review", "due-review", scope) : {
+			...first.objectiveId && knowledge.goals.some((goal) => goal.id === first.objectiveId) ? actionFor(first.objectiveId, "review", "due-review", binding?.scope, binding?.familyId) : {
 				kind: "review",
 				reason: "due-review",
 				subject: first.subject,
@@ -1597,7 +1598,7 @@ function dashboard(state, now, options = {}, interactiveLessons = interactiveLes
 			concepts: state.concepts.filter((item) => item.subject === subject).slice(-20).reverse(),
 			objectives: state.objectives.filter((item) => item.subject === subject).slice(-20).reverse(),
 			relations: state.relations.filter((item) => state.concepts.some((concept) => concept.id === item.fromId && concept.subject === subject)).slice(-20),
-			worksheets: state.worksheets.filter((item) => item.subject === subject && item.discardedAt === void 0).slice(-20).reverse().map((sheet) => {
+			worksheets: state.worksheets.filter((item) => item.subject === subject && item.discardedAt === void 0 && item.archivedAt === void 0).slice(-20).reverse().map((sheet) => {
 				const titles = [...new Set(sheet.items.map((item) => objectiveInfo(state, itemObjectiveId(state, sheet, item) ?? "")?.title).filter((title) => title !== void 0))];
 				return {
 					...sheet,
@@ -1745,8 +1746,9 @@ function projectWorkspace(workspace, now) {
 		const original = [workspace, ...(workspace.archivedEvidence ?? []).map((archive) => archive.workspace)].find((owner) => owner.settings.termId === termId);
 		const file = entry ? [...original?.blocks ?? [], ...original?.worksheets ?? []].find((file) => file.id === entry.ownerId && file.kind === entry.ownerKind) : void 0;
 		const question = (file?.kind === "block" ? file.questions : file?.items)?.find((question) => question.id === entry?.questionId);
-		const goal = entry?.capability && (mistake.objectiveId === question?.objectiveId || mistake.objectiveId === entry.capability.goalId) ? entry.capability.goalId : mistake.objectiveId;
-		const scope = entry?.capability?.scope;
+		const binding = mistake.capability ?? entry?.capability;
+		const goal = mistake.capability?.goalId ?? (entry?.capability && (mistake.objectiveId === question?.objectiveId || mistake.objectiveId === entry.capability.goalId) ? entry.capability.goalId : mistake.objectiveId);
+		const scope = binding?.scope;
 		const range = scope ? [
 			scope.modality,
 			scope.numberMax ?? null,
@@ -1755,11 +1757,11 @@ function projectWorkspace(workspace, now) {
 		] : void 0;
 		return {
 			goal,
-			binding: entry?.capability,
-			key: entry?.capability && goal === entry.capability.goalId ? JSON.stringify([
+			binding,
+			key: binding && goal === binding.goalId ? JSON.stringify([
 				mistake.subject,
 				goal,
-				knowledge.familyAliases[entry.capability.familyId] ?? entry.capability.familyId,
+				knowledge.familyAliases[binding.familyId] ?? binding.familyId,
 				range
 			]) : JSON.stringify([termId, mistake.id])
 		};
@@ -1779,7 +1781,7 @@ function projectWorkspace(workspace, now) {
 			});
 		}
 		for (const entry of index.entries) if (entry.termId === termId && entry.mistakeId === mistake.id) {
-			if (!inheritedReview && binding && (!entry.capability || (knowledge.familyAliases[entry.capability.familyId] ?? entry.capability.familyId) !== (knowledge.familyAliases[binding.familyId] ?? binding.familyId) || !scopeSupports(binding.scope, entry.capability.scope) || !scopeSupports(entry.capability.scope, binding.scope))) delete entry.mistakeId;
+			if (!inheritedReview && binding && (!entry.capability || entry.capability.goalId !== binding.goalId || (knowledge.familyAliases[entry.capability.familyId] ?? entry.capability.familyId) !== (knowledge.familyAliases[binding.familyId] ?? binding.familyId) || !scopeSupports(binding.scope, entry.capability.scope) || !scopeSupports(entry.capability.scope, binding.scope))) delete entry.mistakeId;
 			else entry.mistakeId = id;
 		}
 	}
@@ -1839,6 +1841,7 @@ function projectWorkspace(workspace, now) {
 			createdAt: sheet.createdAt,
 			...sheet.worksheetKind ? { kind: sheet.worksheetKind } : {},
 			...sheet.discardedAt !== void 0 ? { discardedAt: sheet.discardedAt } : {},
+			...sheet.archivedAt !== void 0 ? { archivedAt: sheet.archivedAt } : {},
 			items: sheet.items.map((item) => ({
 				id: item.id,
 				prompt: item.prompt,
@@ -2387,7 +2390,7 @@ function queryStudy(state, kind, offset, options = {}, now = Date.now()) {
 		concepts: () => state.concepts,
 		objectives: () => state.objectives,
 		relations: () => state.relations,
-		worksheets: () => state.worksheets.map((sheet) => ({
+		worksheets: () => state.worksheets.filter((sheet) => id || sheet.archivedAt === void 0).map((sheet) => ({
 			...sheet,
 			drafts: state.paperDrafts.filter((draft) => draft.worksheetId === sheet.id)
 		})),

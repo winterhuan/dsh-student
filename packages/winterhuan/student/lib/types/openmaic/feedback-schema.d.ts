@@ -206,8 +206,8 @@ export declare const feedbackCheckpointSchema: z.ZodObject<{
 export declare const officialQuestionSchema: z.ZodObject<{
     id: z.ZodString;
     type: z.ZodEnum<{
-        single: "single";
         multiple: "multiple";
+        single: "single";
         short_answer: "short_answer";
     }>;
     question: z.ZodString;

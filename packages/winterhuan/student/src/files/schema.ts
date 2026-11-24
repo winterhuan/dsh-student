@@ -1,7 +1,7 @@
 /** Strict official Student files. Entity identity is independent of file observation and business revision. */
 import { z } from 'zod'
 import { openmaicResponseSourceSchema, openmaicQuestionSchema, officialReviewSchema, pendingOpenmaicSchema } from '../openmaic/feedback-schema.ts'
-import { knowledgeIdSchema, capabilityScopeSchema, knowledgeExtensionSchema } from '../capability-schema.ts'
+import { knowledgeIdSchema, capabilityScopeSchema, knowledgeExtensionSchema, capabilityBindingSchema } from '../capability-schema.ts'
 import type { Branded } from '@deepseek-ai/dsh-brand'
 import { stateSchema, figureSchema, phaseSchema, variantSchema, errorTypeSchema, sheetKindSchema } from '../schema.ts'
 
@@ -55,8 +55,7 @@ export const questionSourceSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('mistake'), mistakeId: id, description: text }).strict(),
   z.object({ kind: z.literal('legacy'), sourcePath: text, row: text }).strict(),
 ])
-/** Exact capability, family and tested scope of this frozen question instance. */
-export const capabilityBindingSchema = z.object({ goalId: knowledgeIdSchema, familyId: knowledgeIdSchema, scope: capabilityScopeSchema }).strict()
+export { capabilityBindingSchema }
 /** A persisted allowance counts entered mothers and presented instances, independently of answer evidence. */
 export const learningRoundSchema = z.object({
   id, kind: z.enum(['check', 'review']), startedAt: time,
@@ -116,7 +115,7 @@ export const blockSchema = z.object({ ...base, kind: z.literal('block'), id: blo
 }).strict()
 /** One worksheet owns frozen question targets, photo drafts and all confirmed workbook outcomes. */
 export const worksheetSchema = z.object({ ...base, kind: z.literal('worksheet'), id: worksheetId, subject,
-  worksheetKind: sheetKindSchema.optional(), origin: z.enum(['prepared', 'workbook']), createdAt: time, discardedAt: time.optional(),
+  worksheetKind: sheetKindSchema.optional(), origin: z.enum(['prepared', 'workbook']), createdAt: time, discardedAt: time.optional(), archivedAt: time.optional(),
   context: z.object({ profile: stateSchema.shape.profile.optional(), pendingProfile: text.optional(), scope: scope.optional() }).strict(),
   answerDate: answerDateSchema.optional(), items: z.array(questionSchema).min(1).max(8), responses: z.array(responseSchema).max(500),
   assessments: z.array(assessmentSchema).max(500), drafts: z.array(z.object({ id, questionId: id, response: text, result: assessmentSchema.shape.result,

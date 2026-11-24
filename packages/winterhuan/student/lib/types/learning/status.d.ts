@@ -296,7 +296,7 @@ export declare function studyStatus(state: StudyState, now: number): {
     } | null;
     feedback: {
         result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
-        assistance: "unknown" | "independent" | "hint" | "worked-example";
+        assistance: "unknown" | "hint" | "independent" | "worked-example";
         id: string;
         sessionId: string;
         subject: "chinese" | "math" | "english";

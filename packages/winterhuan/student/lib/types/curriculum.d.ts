@@ -6,8 +6,8 @@ declare const subjectSchema: z.ZodEnum<{
     english: "english";
 }>;
 declare const methodSchema: z.ZodEnum<{
-    listen: "listen";
     context: "context";
+    listen: "listen";
     recognize: "recognize";
     "read-evidence": "read-evidence";
     express: "express";
@@ -346,8 +346,8 @@ export declare const exerciseCatalogSchema: z.ZodObject<{
                 y: z.ZodNumber;
                 label: z.ZodString;
                 align: z.ZodOptional<z.ZodEnum<{
-                    left: "left";
                     center: "center";
+                    left: "left";
                 }>>;
             }, z.core.$strict>, z.ZodObject<{
                 draw: z.ZodLiteral<"arrow">;
@@ -366,14 +366,13 @@ export declare const exerciseCatalogSchema: z.ZodObject<{
         explanation: z.ZodString;
         answerEvidence: z.ZodString;
         errorType: z.ZodOptional<z.ZodEnum<{
-            pattern: "pattern";
-            listening: "listening";
             "carry-borrow": "carry-borrow";
             "place-value": "place-value";
             "operation-choice": "operation-choice";
             calculation: "calculation";
             "unit-quantity": "unit-quantity";
             "reading-task": "reading-task";
+            pattern: "pattern";
             "geometry-feature": "geometry-feature";
             "money-measure": "money-measure";
             "reasoning-incomplete": "reasoning-incomplete";
@@ -385,6 +384,7 @@ export declare const exerciseCatalogSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
+            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -448,8 +448,8 @@ export declare const curriculumSchema: z.ZodObject<{
         goal: z.ZodString;
         conceptIds: z.ZodArray<z.ZodString>;
         method: z.ZodEnum<{
-            listen: "listen";
             context: "context";
+            listen: "listen";
             recognize: "recognize";
             "read-evidence": "read-evidence";
             express: "express";
@@ -459,14 +459,13 @@ export declare const curriculumSchema: z.ZodObject<{
             speak: "speak";
         }>;
         errorTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
-            pattern: "pattern";
-            listening: "listening";
             "carry-borrow": "carry-borrow";
             "place-value": "place-value";
             "operation-choice": "operation-choice";
             calculation: "calculation";
             "unit-quantity": "unit-quantity";
             "reading-task": "reading-task";
+            pattern: "pattern";
             "geometry-feature": "geometry-feature";
             "money-measure": "money-measure";
             "reasoning-incomplete": "reasoning-incomplete";
@@ -478,6 +477,7 @@ export declare const curriculumSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
+            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -487,10 +487,10 @@ export declare const curriculumSchema: z.ZodObject<{
         }>>>;
         questionPoints: z.ZodOptional<z.ZodArray<z.ZodString>>;
         variationAxes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
-            reverse: "reverse";
             context: "context";
             numbers: "numbers";
             representation: "representation";
+            reverse: "reverse";
             explain: "explain";
         }>>>;
     }, z.core.$strict>>;

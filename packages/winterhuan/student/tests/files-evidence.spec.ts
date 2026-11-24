@@ -33,6 +33,50 @@ async function workspace() {
   return { cwd, settings, block, save, files: nodeStudyFiles(cwd) }
 }
 
+it('groups reviewed legacy mistakes without rewriting frozen questions or granting answer evidence', async () => {
+  const f = await workspace()
+  const capability = { goalId: 'm.sub', familyId: 'math.sub-column', scope: { id: 'within100', description: 'Written subtraction within one hundred', modality: 'written', numberMax: 100 } }
+  const mistakes = ['m1', 'm2'].map((id, i) => ({ id, subject: 'math', objectiveId: 'm.sub', capability, topic: 'Column subtraction', prompt: `${52 + i * 10} - 28?`, learnerAnswer: '44', correction: `${24 + i * 10}`, explanation: 'Borrow one ten', answerEvidence: 'Add twenty eight to check', uncertainties: '', confirmedAt: NOW - 2 * 86400000, userConfirmation: 'Original error checked' }))
+  await f.save('.study/collections.json', { format: 2, kind: 'collections', termId: 'term-1', mistakes, rewards: [] })
+  for (const mistake of mistakes) {
+    const sheet = worksheetSchema.parse({ format: 2, kind: 'worksheet', termId: 'term-1', id: `sheet-${mistake.id}`, subject: 'math', origin: 'prepared', createdAt: NOW - 86400000, context: f.block.context,
+      items: [{ ...f.block.questions[0]!, id: mistake.id, objectiveId: { kind: 'pending', reason: 'Original worksheet target unresolved' }, mistakeId: mistake.id, source: { kind: 'legacy', sourcePath: '.study/state.json', row: mistake.id }, prompt: mistake.prompt }],
+      responses: [{ ...f.block.responses[0]!, id: mistake.id, questionId: mistake.id, rawResponse: '44' }], assessments: [], drafts: [] })
+    await f.save(`.study/worksheets/${sheet.id}.json`, sheet)
+  }
+  const read = await readWorkspace(f.files, new AbortController().signal)
+  expect(read.status).toBe('valid')
+  expect(read.workspace!.collections!.mistakes).toHaveLength(2)
+  expect(read.workspace!.worksheets.map(sheet => sheet.items[0]!.objectiveId)).toEqual([{ kind: 'pending', reason: 'Original worksheet target unresolved' }, { kind: 'pending', reason: 'Original worksheet target unresolved' }])
+  expect(deriveEvidence(read.workspace!).entries).toHaveLength(3)
+  expect(queryWorkspace(read, { kind: 'mistakes' }, NOW)).toMatchObject({ data: { items: [expect.objectContaining({ id: 'm1', capability, stage: 0, independentDays: [] })], total: 1 } })
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { reviewRound: { backlog: 1 }, goalProgress: [] } })
+  await f.save('.study/blocks/block-1.json', { ...f.block, endedAt: NOW })
+  expect(queryWorkspace(await readWorkspace(f.files, new AbortController().signal), { kind: 'learning-context' }, NOW)).toMatchObject({ data: { nextAction: { kind: 'review', goalId: capability.goalId, familyId: capability.familyId, scope: capability.scope, review: { mistakeIds: ['m1'], familyIds: [capability.familyId], remaining: 2 } } } })
+  mistakes[1]!.capability = { ...capability, scope: { ...capability.scope, numberMax: 1000 } }
+  await f.save('.study/collections.json', { format: 2, kind: 'collections', termId: 'term-1', mistakes, rewards: [] })
+  expect(queryWorkspace(await readWorkspace(f.files, new AbortController().signal), { kind: 'mistakes' }, NOW)).toMatchObject({ data: { total: 2 } })
+  mistakes[1]!.capability = { ...capability, familyId: 'math.count' }
+  await f.save('.study/collections.json', { format: 2, kind: 'collections', termId: 'term-1', mistakes, rewards: [] })
+  expect(await readWorkspace(f.files, new AbortController().signal)).toMatchObject({ status: 'invalid' })
+})
+
+it('archives fully assessed worksheets from daily lists while retaining original evidence and direct lookup', async () => {
+  const f = await workspace()
+  const sheet = worksheetSchema.parse({ format: 2, kind: 'worksheet', termId: 'term-1', id: 'completed', subject: 'math', origin: 'prepared', createdAt: NOW, archivedAt: NOW + 1, context: f.block.context,
+    items: f.block.questions, responses: f.block.responses, assessments: [{ ...f.block.assessments[0]!, userConfirmation: 'Checked original worksheet' }], drafts: [] })
+  await f.save('.study/worksheets/completed.json', sheet)
+  const read = await readWorkspace(f.files, new AbortController().signal)
+  expect(read.status).toBe('valid')
+  expect(read.workspace!.worksheets[0]).toEqual(sheet)
+  expect(deriveEvidence(read.workspace!).entries).toHaveLength(2)
+  expect(queryWorkspace(read, { kind: 'worksheets' }, NOW)).toMatchObject({ data: { total: 0 } })
+  expect(queryWorkspace(read, { kind: 'worksheets', id: sheet.id }, NOW)).toMatchObject({ data: { total: 1, items: [expect.objectContaining({ archivedAt: NOW + 1 })] } })
+  expect(queryWorkspaceDashboard(read, NOW, { subject: 'math' }).data?.study?.worksheets).toEqual([])
+  await f.save('.study/worksheets/completed.json', { ...sheet, assessments: [] })
+  expect((await readWorkspace(f.files, new AbortController().signal)).issues).toContainEqual(expect.objectContaining({ rule: 'worksheet-archive' }))
+})
+
 it('reads saved original answers without turning unknown dates or assistance into independent evidence', async () => {
   const { files } = await workspace()
   const read = await readWorkspace(files, new AbortController().signal)

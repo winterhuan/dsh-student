@@ -94,7 +94,8 @@ export function learningContinuation(workspace: ValidatedWorkspace, state: Study
   })
   const familyForMistake = (id: string) => {
     const entry = index.entries.find(entry => entry.mistakeId === id && entry.capability)
-    return entry?.capability ? canonicalFamily(entry.capability.familyId) : `mistake:${id}`
+    const binding = state.mistakes.find(mistake => mistake.id === id)?.capability ?? entry?.capability
+    return binding ? canonicalFamily(binding.familyId) : `mistake:${id}`
   }
   const due = state.mistakes.filter(mistake => mistake.confirmedAt !== undefined && mistake.dueAt !== undefined && mistake.dueAt <= now && (!subject || mistake.subject === subject))
     .sort((a, b) => {
@@ -197,8 +198,8 @@ export function learningContinuation(workspace: ValidatedWorkspace, state: Study
     const selectedFamilies = [...new Set(remainingDue.map(mistake => familyForMistake(mistake.id)))].slice(0, reviewRound.remaining)
     const selected = remainingDue.filter(mistake => selectedFamilies.includes(familyForMistake(mistake.id)))
     const first = selected[0]!
-    const scope = index.entries.find(entry => entry.mistakeId === first.id && entry.capability)?.capability?.scope
-    const base = first.objectiveId && knowledge.goals.some(goal => goal.id === first.objectiveId) ? actionFor(first.objectiveId, 'review', 'due-review', scope) : { kind: 'review' as const, reason: 'due-review' as const, subject: first.subject, title: first.topic }
+    const binding = first.capability ?? index.entries.find(entry => entry.mistakeId === first.id && entry.capability)?.capability
+    const base = first.objectiveId && knowledge.goals.some(goal => goal.id === first.objectiveId) ? actionFor(first.objectiveId, 'review', 'due-review', binding?.scope, binding?.familyId) : { kind: 'review' as const, reason: 'due-review' as const, subject: first.subject, title: first.topic }
     return finish({ ...base, review: { mistakeIds: selected.map(mistake => mistake.id), familyIds: selectedFamilies, remaining: reviewRound.remaining } })
   }
   const goalReview = goalReviews.find(item => !used.includes(questionBindings.find(binding => binding.binding.goalId === item.id)?.binding.familyId ?? knowledge.goals.find(goal => goal.id === item.id)!.familyIds[0]!))

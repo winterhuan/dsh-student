@@ -44,7 +44,7 @@ export function dashboard(state: StudyState | undefined, now: number, options: {
     concepts: state.concepts.filter(item => item.subject === subject).slice(-20).reverse(),
     objectives: state.objectives.filter(item => item.subject === subject).slice(-20).reverse(),
     relations: state.relations.filter(item => state.concepts.some(concept => concept.id === item.fromId && concept.subject === subject)).slice(-20),
-    worksheets: state.worksheets.filter(item => item.subject === subject && item.discardedAt === undefined).slice(-20).reverse().map(sheet => {
+    worksheets: state.worksheets.filter(item => item.subject === subject && item.discardedAt === undefined && item.archivedAt === undefined).slice(-20).reverse().map(sheet => {
       const titles = [...new Set(sheet.items.map(item => objectiveInfo(state, itemObjectiveId(state, sheet, item) ?? '')?.title).filter(title => title !== undefined))]
       return {
         ...sheet,

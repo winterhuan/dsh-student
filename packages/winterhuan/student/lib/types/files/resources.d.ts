@@ -116,8 +116,8 @@ declare const schemas: {
         lessons: z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             status: z.ZodEnum<{
-                ready: "ready";
                 generating: "generating";
+                ready: "ready";
                 failed: "failed";
             }>;
             createdAt: z.ZodString;
@@ -570,8 +570,8 @@ declare const schemas: {
             learnerId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").LearnerId, string>>;
             termId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").TermId, string>>;
             ownerKind: z.ZodEnum<{
-                block: "block";
                 worksheet: "worksheet";
+                block: "block";
             }>;
             ownerId: z.ZodString;
             responseId: z.ZodPipe<z.ZodString, z.ZodTransform<import("./schema.ts").ResponseId, string>>;
@@ -1057,8 +1057,8 @@ declare const schemas: {
             legacyRecord: z.ZodOptional<z.ZodJSONSchema>;
             assistance: z.ZodEnum<{
                 unknown: "unknown";
-                independent: "independent";
                 hint: "hint";
+                independent: "independent";
                 "worked-example": "worked-example";
             }>;
             assistanceConfirmation: z.ZodOptional<z.ZodString>;
@@ -1181,8 +1181,8 @@ declare const schemas: {
             }>;
             assistance: z.ZodEnum<{
                 unknown: "unknown";
-                independent: "independent";
                 hint: "hint";
+                independent: "independent";
                 "worked-example": "worked-example";
             }>;
             feedback: z.ZodString;
@@ -1259,10 +1259,10 @@ declare const schemas: {
                 }, z.core.$catchall<z.ZodType<import("../types.ts").StudentJsonValue, unknown, z.core.$ZodTypeInternals<import("../types.ts").StudentJsonValue, unknown>>>>>;
             }, z.core.$strict>>>;
             grading: z.ZodOptional<z.ZodEnum<{
+                pending: "pending";
                 aligned: "aligned";
                 equivalent: "equivalent";
                 conflict: "conflict";
-                pending: "pending";
             }>>;
         }, z.core.$strict>>;
         pendingLegacy: z.ZodOptional<z.ZodArray<z.ZodObject<{
@@ -1340,8 +1340,8 @@ declare const schemas: {
         }>;
         worksheetKind: z.ZodOptional<z.ZodEnum<{
             review: "review";
-            practice: "practice";
             daily: "daily";
+            practice: "practice";
         }>>;
         origin: z.ZodEnum<{
             prepared: "prepared";
@@ -1349,6 +1349,7 @@ declare const schemas: {
         }>;
         createdAt: z.ZodNumber;
         discardedAt: z.ZodOptional<z.ZodNumber>;
+        archivedAt: z.ZodOptional<z.ZodNumber>;
         context: z.ZodObject<{
             profile: z.ZodOptional<z.ZodObject<{
                 region: z.ZodString;
@@ -1755,8 +1756,8 @@ declare const schemas: {
             legacyRecord: z.ZodOptional<z.ZodJSONSchema>;
             assistance: z.ZodEnum<{
                 unknown: "unknown";
-                independent: "independent";
                 hint: "hint";
+                independent: "independent";
                 "worked-example": "worked-example";
             }>;
             assistanceConfirmation: z.ZodOptional<z.ZodString>;
@@ -1826,8 +1827,8 @@ declare const schemas: {
             }>;
             assistance: z.ZodEnum<{
                 unknown: "unknown";
-                independent: "independent";
                 hint: "hint";
+                independent: "independent";
                 "worked-example": "worked-example";
             }>;
             feedback: z.ZodString;
@@ -1904,10 +1905,10 @@ declare const schemas: {
                 }, z.core.$catchall<z.ZodType<import("../types.ts").StudentJsonValue, unknown, z.core.$ZodTypeInternals<import("../types.ts").StudentJsonValue, unknown>>>>>;
             }, z.core.$strict>>>;
             grading: z.ZodOptional<z.ZodEnum<{
+                pending: "pending";
                 aligned: "aligned";
                 equivalent: "equivalent";
                 conflict: "conflict";
-                pending: "pending";
             }>>;
         }, z.core.$strict>>;
         drafts: z.ZodArray<z.ZodObject<{
@@ -1923,8 +1924,8 @@ declare const schemas: {
             }>;
             assistance: z.ZodEnum<{
                 unknown: "unknown";
-                independent: "independent";
                 hint: "hint";
+                independent: "independent";
                 "worked-example": "worked-example";
             }>;
             confidence: z.ZodEnum<{
@@ -2010,8 +2011,8 @@ declare const schemas: {
         }, z.core.$strict>>>;
         legacyReferences: z.ZodOptional<z.ZodArray<z.ZodObject<{
             kind: z.ZodEnum<{
-                objective: "objective";
                 exercise: "exercise";
+                objective: "objective";
             }>;
             oldId: z.ZodString;
             status: z.ZodEnum<{
@@ -2032,17 +2033,10 @@ declare const schemas: {
                 math: "math";
                 english: "english";
             }>;
-            materialId: z.ZodOptional<z.ZodString>;
-            confirmedAt: z.ZodOptional<z.ZodNumber>;
-            topic: z.ZodString;
-            prompt: z.ZodString;
-            answerEvidence: z.ZodString;
             objectiveId: z.ZodOptional<z.ZodString>;
-            learnerAnswer: z.ZodString;
-            correction: z.ZodString;
+            prompt: z.ZodString;
             explanation: z.ZodString;
-            imagePath: z.ZodOptional<z.ZodString>;
-            uncertainties: z.ZodString;
+            answerEvidence: z.ZodString;
             errorType: z.ZodOptional<z.ZodEnum<{
                 "carry-borrow": "carry-borrow";
                 "place-value": "place-value";
@@ -2070,10 +2064,34 @@ declare const schemas: {
                 "spoken-response": "spoken-response";
                 "writing-complete": "writing-complete";
             }>>;
+            materialId: z.ZodOptional<z.ZodString>;
+            topic: z.ZodString;
+            learnerAnswer: z.ZodString;
+            correction: z.ZodString;
+            imagePath: z.ZodOptional<z.ZodString>;
+            uncertainties: z.ZodString;
             userConfirmation: z.ZodOptional<z.ZodString>;
             source: z.ZodOptional<z.ZodObject<{
                 worksheetId: z.ZodString;
                 itemId: z.ZodString;
+            }, z.core.$strict>>;
+            confirmedAt: z.ZodOptional<z.ZodNumber>;
+            capability: z.ZodOptional<z.ZodObject<{
+                goalId: z.ZodString;
+                familyId: z.ZodString;
+                scope: z.ZodObject<{
+                    id: z.ZodString;
+                    description: z.ZodString;
+                    modality: z.ZodEnum<{
+                        listening: "listening";
+                        written: "written";
+                        oral: "oral";
+                        audiovisual: "audiovisual";
+                        performed: "performed";
+                    }>;
+                    numberMax: z.ZodOptional<z.ZodNumber>;
+                    vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+                }, z.core.$strict>;
             }, z.core.$strict>>;
         }, z.core.$strict>>;
         exercises: z.ZodDefault<z.ZodArray<z.ZodObject<{
@@ -2085,11 +2103,11 @@ declare const schemas: {
             }>;
             objectiveId: z.ZodString;
             role: z.ZodEnum<{
+                daily: "daily";
                 diagnose: "diagnose";
                 demo: "demo";
                 try: "try";
                 vary: "vary";
-                daily: "daily";
             }>;
             variant: z.ZodEnum<{
                 numeric: "numeric";
@@ -2433,13 +2451,13 @@ declare const schemas: {
             conceptIds: z.ZodArray<z.ZodString>;
             method: z.ZodEnum<{
                 context: "context";
+                listen: "listen";
                 recognize: "recognize";
                 "read-evidence": "read-evidence";
                 express: "express";
                 represent: "represent";
                 reason: "reason";
                 verify: "verify";
-                listen: "listen";
                 speak: "speak";
             }>;
             errorTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<{

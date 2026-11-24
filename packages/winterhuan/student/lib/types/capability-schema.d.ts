@@ -18,6 +18,24 @@ export declare const capabilityScopeSchema: z.ZodObject<{
 }, z.core.$strict>;
 /** One concrete demonstrated range, separate from grade and textbook association. */
 export type CapabilityScope = z.infer<typeof capabilityScopeSchema>;
+/** Reviewed capability, mother and learning range; classification alone grants no answer evidence. */
+export declare const capabilityBindingSchema: z.ZodObject<{
+    goalId: z.ZodString;
+    familyId: z.ZodString;
+    scope: z.ZodObject<{
+        id: z.ZodString;
+        description: z.ZodString;
+        modality: z.ZodEnum<{
+            written: "written";
+            oral: "oral";
+            listening: "listening";
+            audiovisual: "audiovisual";
+            performed: "performed";
+        }>;
+        numberMax: z.ZodOptional<z.ZodNumber>;
+        vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+    }, z.core.$strict>;
+}, z.core.$strict>;
 /** Source-backed capability with criteria, prerequisites and independent course associations. */
 export declare const capabilityGoalSchema: z.ZodObject<{
     id: z.ZodString;

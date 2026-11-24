@@ -11,6 +11,8 @@ export const capabilityScopeSchema = z.object({
     modality: z.enum(['written', 'oral', 'listening', 'audiovisual', 'performed']),
     numberMax: z.number().int().positive().max(10000).optional(), vocabulary: z.array(text.max(240)).max(2000).optional(),
 }).strict();
+/** Reviewed capability, mother and learning range; classification alone grants no answer evidence. */
+export const capabilityBindingSchema = z.object({ goalId: knowledgeIdSchema, familyId: knowledgeIdSchema, scope: capabilityScopeSchema }).strict();
 /** Source-backed capability with criteria, prerequisites and independent course associations. */
 export const capabilityGoalSchema = z.object({
     id: knowledgeIdSchema, subject, domain: knowledgeIdSchema, title: text, scope: text, criterion: text,

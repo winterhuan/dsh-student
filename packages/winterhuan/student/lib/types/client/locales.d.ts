@@ -216,7 +216,6 @@ export declare const zh: {
     archiveEvidencePending: string;
     archiveEvidenceHelp: string;
     learningEntry: string;
-    parentEntry: string;
     lessonHistory: string;
     classroomLoginRequired: string;
     classroomIdentityMismatch: string;

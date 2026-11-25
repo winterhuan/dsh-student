@@ -12,10 +12,6 @@ import { updateStudy } from './fixtures.ts'
 import { en, zh } from '../src/client/locales.ts'
 import { NOW, MINUTE, DAY, setup, material, course, start, attempt, mistake, confirm } from './fixtures.ts'
 
-function openParent() {
-  if (!screen.queryByRole('navigation', { name: en.parentEntry })) fireEvent.click(screen.getByRole('button', { name: en.parentEntry }))
-}
-
 const t = (key: keyof typeof en) => en[key]
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.useRealTimers(); window.localStorage.clear(); window.sessionStorage.clear() })
 const answerTask = { id: attempt.id, sessionId: attempt.sessionId, subject: attempt.subject, topic: attempt.topic, prompt: attempt.prompt }
@@ -28,7 +24,6 @@ function StudyDesk(props: Omit<ComponentProps<typeof RealStudyDesk>, 'useResourc
 }
 
 async function openDesk(tab: 'Knowledge map' | 'Mistakes' | 'Parent setup') {
-  openParent()
   fireEvent.click(await screen.findByRole('button', { name: tab === 'Knowledge map' ? en.parentProgress : tab === 'Parent setup' ? en.parentProfile : en.parentPractice, exact: false }))
 }
 
@@ -55,7 +50,6 @@ describe('learning workbench', () => {
     expect(answer.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(screen.queryByText(en.studyDetails)).toBeNull()
     expect(screen.getByRole('main').innerHTML).toMatchSnapshot()
-    openParent()
     fireEvent.click(screen.getByRole('button', { name: en.parentPractice }))
     expect(await screen.findByRole('heading', { name: `${en.worksheets} · 1` })).toBeTruthy()
     expect(screen.getByText(en.uploadHomework).closest('details')!.open).toBe(false)
@@ -433,7 +427,6 @@ it('keeps math goals and lessons off the Chinese today page', async () => {
   render(<StudyDesk sessionId="subjects" visible running={false} ask={ask} t={t} />)
   expect(screen.queryByText(/数学乘法课/)).toBeNull()
   expect(screen.queryByText('语文识字课')).toBeNull()
-  openParent()
   fireEvent.click(screen.getByRole('button', { name: en.lessonHistory }))
   expect(screen.getByText(/数学乘法课/)).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: en.chinese }))

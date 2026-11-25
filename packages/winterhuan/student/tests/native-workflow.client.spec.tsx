@@ -13,10 +13,6 @@ import { NOW, setup, start, attempt } from './fixtures.ts'
 import { en } from '../src/client/locales.ts'
 import type { StudentQueryResult } from '../src/types.ts'
 
-function openParent() {
-  if (!screen.queryByRole('navigation', { name: en.parentEntry })) fireEvent.click(screen.getByRole('button', { name: en.parentEntry }))
-}
-
 const t = (key: keyof typeof en) => en[key]
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); window.localStorage.clear(); window.sessionStorage.clear() })
 
@@ -100,7 +96,7 @@ it('hides the unfinished question while browsing another subject and restores it
   const remote = { inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() }
   render(<StudyDesk useResource={useResource} {...createStudentManualActions(remote)} sessionId="native-session" visible running={false} ask={vi.fn()} t={t} />)
   await screen.findByText('8 + 7?')
-  openParent()
+  fireEvent.click(screen.getByRole('button', { name: en.parentProgress }))
   fireEvent.click(screen.getByRole('button', { name: en.chinese }))
   expect(screen.queryByText('8 + 7?')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: en.math }))
@@ -116,7 +112,7 @@ it.each(['answer', 'hint', 'stop'] as const)('keeps the active question subject 
   state.task!.hintLevel = 1
   const ask = vi.fn().mockResolvedValue({ requestId: 'native-1', admission: 'accepted' })
   render(<StudyDesk useResource={useResource} {...createStudentManualActions({ inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() })} sessionId="browse-native" visible running={false} ask={ask} t={t} />)
-  openParent()
+  fireEvent.click(screen.getByRole('button', { name: en.parentProgress }))
   fireEvent.click(screen.getByRole('button', { name: en.chinese }))
   fireEvent.click(screen.getByRole('button', { name: en.math }))
   fireEvent.click(screen.getByRole('button', { name: en.learningEntry }))
@@ -139,12 +135,10 @@ it('retains a parent nickname draft across navigation and saves only its origina
   const saveManual = vi.fn().mockResolvedValue({ ok: true, value: { status: 'conflict', current: { 'profile:nickname': 'Current name' }, versions: [], readStatus: 'valid', issues: [] } })
   const ask = vi.fn()
   render(<StudyDesk {...{ useResource, ask }} {...createStudentManualActions({ manualContext, saveManual, inspectSubmission: vi.fn() })} sessionId="parent-native" visible running={false} t={t} />)
-  openParent()
   fireEvent.click(screen.getByRole('button', { name: en.parentProfile }))
   fireEvent.click(screen.getByText(en.manualForms))
   fireEvent.change(screen.getByLabelText(en.nickname), { target: { value: 'My draft name' } })
   fireEvent.click(screen.getByRole('button', { name: en.learningEntry }))
-  openParent()
   fireEvent.click(screen.getByRole('button', { name: en.parentProfile }))
   fireEvent.click(screen.getByText(en.manualForms))
   expect((screen.getByLabelText(en.nickname) as HTMLInputElement).value).toBe('My draft name')
@@ -167,14 +161,12 @@ it('retains a worksheet correction draft and separates its original assessment, 
   const saveManual = vi.fn().mockResolvedValue({ ok: true, value: { status: 'conflict', current: { 'assessment:paper-response': { ...assessment, feedback: 'Current feedback' } }, versions: [], readStatus: 'valid', issues: [] } })
   const ask = vi.fn()
   render(<StudyDesk {...{ useResource, ask }} {...createStudentManualActions({ manualContext, saveManual, inspectSubmission: vi.fn() })} sessionId="paper-native" visible running={false} t={t} />)
-  openParent()
   fireEvent.click(screen.getByRole('button', { name: en.parentPractice, exact: false }))
   fireEvent.click(screen.getByText('Optional: correct saved worksheet records'))
   fireEvent.change(screen.getByLabelText(en.feedback), { target: { value: 'My retained feedback' } })
   fireEvent.change(screen.getByLabelText('Help used'), { target: { value: 'hint' } })
   fireEvent.change(screen.getByLabelText('Actual answer day'), { target: { value: '2026-11-10' } })
   fireEvent.click(screen.getByRole('button', { name: en.learningEntry }))
-  openParent()
   fireEvent.click(screen.getByRole('button', { name: en.parentPractice, exact: false }))
   fireEvent.click(screen.getByText('Optional: correct saved worksheet records'))
   expect((screen.getByLabelText(en.feedback) as HTMLTextAreaElement).value).toBe('My retained feedback')
@@ -208,7 +200,6 @@ it.each(['block', 'worksheet'] as const)('keeps incomplete historical facts in a
   const saveManual = vi.fn()
   render(<StudyDesk {...{ useResource, ask }} {...createStudentManualActions({ inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual })} sessionId="current-native" visible running={false} t={t} />)
   expect(screen.queryByText(en.pendingFacts)).toBeNull()
-  openParent()
   fireEvent.click(screen.getByRole('button', { name: en.parentProfile }))
   const fold = screen.getByText(en.pendingFacts).closest('details')!
   expect(fold.open).toBe(false)
@@ -239,12 +230,10 @@ it('keeps a large history backlog optional and submits one request to check all 
   const saveManual = vi.fn()
   render(<StudyDesk {...{ useResource, ask }} {...createStudentManualActions({ inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual })} sessionId="current-native" visible running={false} t={t} />)
   expect(screen.queryByText(en.pendingFacts)).toBeNull()
-  openParent()
   for (const name of [en.parentProgress, en.parentPractice]) {
     fireEvent.click(screen.getByRole('button', { name }))
     expect(screen.queryByText(en.pendingFacts)).toBeNull()
   }
-  openParent()
   fireEvent.click(screen.getByRole('button', { name: en.parentProfile }))
   const summary = screen.getByText(en.pendingFacts)
   const fold = summary.closest('details')!

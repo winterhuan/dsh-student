@@ -22,16 +22,19 @@ function mount(context?: import('../src/types.ts').StudentJsonValue, options: { 
   return { ask, fixture, syncFeedback, rerender: () => view.rerender(<Desk />) }
 }
 
-it('has only Learning and Parent main entries and preserves an answer draft through parent browsing', async () => {
-  mount()
+it('opens each functional destination directly and preserves the original answer draft', async () => {
+  const { ask } = mount()
   const main = screen.getByRole('navigation', { name: en.title })
-  expect(within(main).getAllByRole('button').map(button => button.textContent)).toEqual(['Learning', 'Parent'])
+  expect(within(main).getAllByRole('button').map(button => button.textContent)).toEqual([en.learningEntry, en.parentProgress, en.parentPractice, en.lessonHistory, en.parentProfile])
   fireEvent.change(screen.getByLabelText(en.answer), { target: { value: '15 with ten first' } })
-  fireEvent.click(within(main).getByRole('button', { name: 'Parent' }))
-  fireEvent.click(screen.getByRole('button', { name: en.parentPractice }))
-  expect(screen.getByText(en.uploadHomework)).toBeTruthy()
-  fireEvent.click(within(main).getByRole('button', { name: 'Learning' }))
-  expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('15 with ten first')
+  for (const name of [en.parentProgress, en.parentPractice, en.lessonHistory, en.parentProfile]) {
+    fireEvent.click(within(main).getByRole('button', { name }))
+    expect(within(main).getAllByRole('button', { pressed: true })).toHaveLength(1)
+    expect(within(main).getByRole('button', { name, pressed: true })).toBeTruthy()
+    fireEvent.click(within(main).getByRole('button', { name: en.learningEntry }))
+    expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('15 with ten first')
+  }
+  expect(ask).not.toHaveBeenCalled()
   expect(screen.queryByText(en.openmaicTitle)).toBeNull()
 })
 
@@ -57,7 +60,7 @@ it('keeps the question draft visible and waits for matching dashboard and learni
 
 it('continues the original block after browsing another subject without starting a new block', async () => {
   const { ask } = mount()
-  fireEvent.click(screen.getByRole('button', { name: en.parentEntry }))
+  fireEvent.click(screen.getByRole('button', { name: en.parentProfile }))
   fireEvent.click(screen.getByRole('button', { name: en.chinese }))
   fireEvent.click(screen.getByRole('button', { name: en.learningEntry }))
   fireEvent.change(screen.getByLabelText(en.answer), { target: { value: '15' } })
@@ -85,9 +88,9 @@ it('preserves learner identity and the shared next action when the child submits
   expect(text).not.toContain('curl')
 })
 
-it('shows original answers, original grade history and effective grades in the Parent entry', () => {
+it('shows original answers, original grade history and effective grades in Learning profile', () => {
   mount({ learnerId: 'learner-one', termId: 'term-one', officialFeedback: [{ responseId: 'official-one', prompt: '8 + 7?', rawResponse: '"15"', result: 'correct', sourceStatus: 'known', grading: 'equivalent', feedback: 'Two equivalent options', assistance: 'unknown', answerDate: { kind: 'unknown' }, official: { seq: 5, result: { status: 'correct', earned: 10, aiComment: 'Correct after review' } }, officialHistory: [{ seq: 4, result: { status: 'incorrect', earned: 0, aiComment: 'Original mark' } }] }] })
-  fireEvent.click(screen.getByRole('button', { name: en.parentEntry }))
+  fireEvent.click(screen.getByRole('button', { name: en.parentProfile }))
   expect(screen.getByText('"15"')).toBeTruthy()
   expect(screen.getByText('Original mark')).toBeTruthy()
   expect(screen.getByText('Two equivalent options')).toBeTruthy()
@@ -175,7 +178,7 @@ it('requests original-classroom synchronization without a learner message or foc
   expect(ask).not.toHaveBeenCalled()
   expect(document.activeElement).toBe(answer)
   expect((answer as HTMLInputElement).value).toBe('Keep this draft')
-  fireEvent.click(screen.getByRole('button', { name: en.parentEntry }))
+  fireEvent.click(screen.getByRole('button', { name: en.parentProfile }))
   fixture.replace(fixture.read())
   expect(syncFeedback).toHaveBeenCalledOnce()
   expect(ask).not.toHaveBeenCalled()
@@ -230,9 +233,9 @@ it('continues the projected prerequisite goal and capability scope while preserv
   expect(intention.previousActivity).toMatchObject({ blockId: start.id, questionId: 'current-question' })
 })
 
-it('shows only the saved scope and actual independent days in Parent goal progress', () => {
+it('shows only the saved scope and actual independent days in Learning profile goal progress', () => {
   mount({ goalProgress: [{ id: 'm.add', title: 'Calculate sums', subject: 'math', level: 'practising', scope: { id: 'within20', description: 'Written sums within20', numberMax: 20, modality: 'written' }, independentDays: ['2026-11-19', '2026-11-20'], baseline: true, missingFamilyIds: [], missingCriteria: [], feedback: [] }] })
-  fireEvent.click(screen.getByRole('button', { name: en.parentEntry }))
+  fireEvent.click(screen.getByRole('button', { name: en.parentProfile }))
   expect(screen.getByText('Written sums within20')).toBeTruthy()
   expect(screen.getByText(/2026-11-19 · 2026-11-20/)).toBeTruthy()
   expect(screen.getByText(en.referencedEvidence)).toBeTruthy()

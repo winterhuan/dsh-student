@@ -242,7 +242,7 @@ export function StudyDesk({ sessionId, visible, ask, running, pending = false, s
   }
   const nativeT: Translate = key => ['saved', 'gradesSaved', 'confirmPaperDone', 'teachQueued', 'workbookSaved'].includes(key) ? t('intentAdmitted') : t(key)
   const parentSettings = tab === 'parent'
-  const parentVisible = tab !== 'today'
+  const browsing = tab !== 'today'
   const draft = { useStore, actions }
   const draftScope = `student:draft:${workspace.learnerId ?? sessionId}:${workspace.termId ?? 'setup'}`
   const context = workspace.context
@@ -253,18 +253,15 @@ export function StudyDesk({ sessionId, visible, ask, running, pending = false, s
     <header className="student-top">
       <nav className={`student-tabs ${css.navigation}`} aria-label={t('title')}>
         <button type="button" aria-pressed={tab === 'today'} onClick={() => setTab('today')}>{t('learningEntry')}</button>
-        <button type="button" aria-pressed={parentVisible} onClick={() => setTab('parent')}>{t('parentEntry')}</button>
-      </nav>
-      {parentVisible && <nav className="student-segments" aria-label={t('parentEntry')}>
-        <button type="button" aria-pressed={tab === 'parent'} onClick={() => setTab('parent')}>{t('parentProfile')}</button>
         <button type="button" aria-pressed={tab === 'map'} onClick={() => setTab('map')}>{t('parentProgress')}</button>
         <button type="button" aria-pressed={tab === 'mistakes'} onClick={() => setTab('mistakes')}>{t('parentPractice')}</button>
         <button type="button" aria-pressed={tab === 'lessons'} onClick={() => setTab('lessons')}>{t('lessonHistory')}</button>
-      </nav>}
+        <button type="button" aria-pressed={tab === 'parent'} onClick={() => { setScopeStep(undefined); setTab('parent') }}>{t('parentProfile')}</button>
+      </nav>
       <div className="student-toolbar">
-        {study && (parentVisible || scene === 'home') && <nav className="student-subjects" aria-label={t('subject')}>
-          {!parentVisible && <button type="button" aria-pressed={homeSubject === 'all'} onClick={() => setHomeSubject('all')}>{t('dailyRecommendations')}</button>}
-          {subjects.map(item => <button key={item} type="button" aria-pressed={(parentVisible ? subject : homeSubject) === item} onClick={() => { if (!parentVisible) setHomeSubject(item); selectSubject(item); setMistakeOffset(0); setMistakeStatus('all') }}>{t(item)}</button>)}</nav>}
+        {study && (browsing || scene === 'home') && <nav className="student-subjects" aria-label={t('subject')}>
+          {!browsing && <button type="button" aria-pressed={homeSubject === 'all'} onClick={() => setHomeSubject('all')}>{t('dailyRecommendations')}</button>}
+          {subjects.map(item => <button key={item} type="button" aria-pressed={(browsing ? subject : homeSubject) === item} onClick={() => { if (!browsing) setHomeSubject(item); selectSubject(item); setMistakeOffset(0); setMistakeStatus('all') }}>{t(item)}</button>)}</nav>}
         <span className="student-muted">{t(workspace.loadNeeded ? 'readyToContinue' : workspace.stale ? 'updatePaused' : 'liveUpdates')}</span>
       </div>
     </header>

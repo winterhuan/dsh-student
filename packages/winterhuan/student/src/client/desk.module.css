@@ -11,9 +11,8 @@
 .statusHeading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
 .practiceActions { display: flex; flex-wrap: wrap; gap: 8px; }
 .practiceActions button { flex: 1 1 160px; }
-@container (max-width: 460px) {
-  .desk .navigation { display: grid; width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); box-sizing: border-box; }
-}
+.desk .navigation { width: 100%; box-sizing: border-box; }
+.desk .navigation button { flex: 1 1 100px; white-space: normal; }
 @container (max-width: 620px) {
   .taskLayout.withFigure { grid-template-columns: minmax(0, 1fr); }
   .taskPrompt :global(.student-figure svg) { max-height: 160px; }

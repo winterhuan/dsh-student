@@ -2,7 +2,7 @@ import { intensityKeys } from "./display.js";
 /** Natural-language tutor requests. The study skill owns the teaching rules. */
 export const continuePrompt = '请加载 study，读取 references/continuation.md 和独立 learning-context，按 nextAction、round、legalActions 处理明确的下一步。执行身份仅来自 nextAction，保留 previousActivity 的原题和回答；不另排目标或重置轮次。按需选择官方课堂或独立组件，沿 requirement 教学。原生写入后运行随包只读 CLI，再独立读取确认；来源未接受时保留状态。';
 /** Read initial learning records through the native tutor before the resource can follow them. */
-export const loadLearningPrompt = '请加载 study 技能，只读 study_status kind=status 和 kind=learning-context，核对已有档案与当前 nextAction。仅显示当前学习目标、保留的题目和下一步；无档案时说明可以先在家长页确认资料。此请求只读，不修改学习文件、不建立学习段、不生成课堂或题目、不记录回答或掌握。';
+export const loadLearningPrompt = '请加载 study 技能，只读 study_status kind=status 和 kind=learning-context，核对已有档案与当前 nextAction。仅显示当前学习目标、保留的题目和下一步；无档案时说明可以先在学习档案页确认资料。此请求只读，不修改学习文件、不建立学习段、不生成课堂或题目、不记录回答或掌握。';
 /** Verify one saved response without replacing the current learning question. */
 export function pendingRecordPrompt(kind, ownerId, responseId) {
     const path = `.study/${kind === 'block' ? 'blocks' : 'worksheets'}/${ownerId}.json`;

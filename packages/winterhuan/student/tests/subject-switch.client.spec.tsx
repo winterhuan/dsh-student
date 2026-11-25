@@ -43,6 +43,15 @@ it('browses subjects only at Home and returns to the original English question a
   await screen.findByText('play ____')
   fireEvent.change(screen.getByLabelText(en.answer), { target: { value: 'Original English draft' } })
   expect(screen.queryByRole('navigation', { name: en.subject })).toBeNull()
+  for (const name of [en.parentProgress, en.parentPractice, en.lessonHistory, en.parentProfile]) {
+    fireEvent.click(screen.getByRole('button', { name }))
+    fireEvent.click(screen.getByRole('button', { name: en.math }))
+    expect(screen.queryByLabelText(en.answer)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: en.learningEntry }))
+    await screen.findByText('play ____')
+    expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('Original English draft')
+    expect(screen.queryByRole('navigation', { name: en.subject })).toBeNull()
+  }
   fireEvent.click(screen.getByRole('button', { name: en.backHome }))
   for (const subject of ['chinese', 'math'] as const) {
     pendingSubject = subject

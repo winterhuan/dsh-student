@@ -13,10 +13,6 @@ import { dashboard } from '../src/dashboard.ts'
 import { updateStudy } from '../src/learning/update/index.ts'
 import { NOW, setup, start } from './fixtures.ts'
 
-function openParent() {
-  if (!screen.queryByRole('navigation', { name: en.parentEntry })) fireEvent.click(screen.getByRole('button', { name: en.parentEntry }))
-}
-
 const t = (key: keyof typeof en) => en[key]
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); window.sessionStorage.clear() })
 
@@ -116,7 +112,6 @@ describe('interactive lesson desk', () => {
       summary: undefined, runId: 'run-paused', pollUrl: '/api/generate-classroom/run-paused', retryable: true,
     }] })
     render(<StudyDesk sessionId="retry-lesson" visible running={false} ask={ask} t={t} />)
-    openParent()
     fireEvent.click(screen.getByRole('button', { name: en.lessonHistory }))
     fireEvent.click(await screen.findByRole('button', { name: en.openmaicRetry }))
     await waitFor(() => expect(ask).toHaveBeenCalledOnce())

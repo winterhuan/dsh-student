@@ -9,10 +9,6 @@ import type { StudentQueryResult } from '../src/types.ts'
 import { dashboard } from '../src/dashboard.ts'
 import { updateStudy, setup, start, NOW } from './fixtures.ts'
 
-function openParent() {
-  if (!screen.queryByRole('navigation', { name: en.parentEntry })) fireEvent.click(screen.getByRole('button', { name: en.parentEntry }))
-}
-
 afterEach(() => { cleanup(); window.localStorage.clear(); window.sessionStorage.clear() })
 const id = (value: string) => value as SessionId
 
@@ -44,10 +40,8 @@ it('displays a legacy learning profile with browsing controls and guards saves u
   expect(screen.getByText(en.legacyFilesHelp)).toBeTruthy()
   expect(screen.getByText(setup.profile.nickname, { exact: false })).toBeTruthy()
   expect((screen.getByRole('button', { name: en.continueLearning }) as HTMLButtonElement).disabled).toBe(true)
-  openParent()
   fireEvent.click(screen.getByRole('button', { name: en.parentPractice, exact: false }))
   expect(screen.getByRole('button', { name: en.addMistake }).matches(':disabled')).toBe(true)
-  openParent()
   fireEvent.click(screen.getByRole('button', { name: en.parentProfile }))
   expect((screen.getByRole('button', { name: en.profileConversation }) as HTMLButtonElement).disabled).toBe(true)
   expect(ask).not.toHaveBeenCalled()
@@ -59,7 +53,6 @@ it('keeps the browsed subject when an unchanged active legacy block reloads', ()
   let current: StudentQueryResult | undefined = value
   function Desk() { return <StudyDesk {...useDraftFixture()} sessionId={id('first')} visible running={false} t={key => en[key]} ask={vi.fn()} useResource={() => ({ status: 'live', value: current, failure: undefined })} saveSettings={vi.fn()} saveWorksheet={vi.fn()} inspectSubmission={vi.fn()} /> }
   const rendered = render(<Desk />)
-  openParent()
   fireEvent.click(screen.getByRole('button', { name: en.parentProgress }))
   fireEvent.click(screen.getByRole('button', { name: en.math }))
   current = undefined

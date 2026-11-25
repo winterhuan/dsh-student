@@ -8,20 +8,21 @@ import { SaveForm, DraftInput, DraftSelect, DraftTextarea } from './forms.tsx'
 import { studentResourceAddress } from './resource.ts'
 import type { UseStudentResource } from './workspace.ts'
 import type { Translate } from './locales.ts'
+import type { Subject } from './display.ts'
 
 type ManualSave = (intent: ManualSaveRequest['intent'], baseline: Record<string, StudentJsonValue>) => Promise<StudentManualReply | void>
 
 /** Optional corrections edit confirmed records; the original response and frozen question stay visible. */
-export function WorksheetCorrections({ sessionId, termId, draftScope, useResource, save, t, disabled, useStore, actions }: DraftProps & {
-  sessionId: StudentSessionId; termId: string; draftScope: string; useResource: UseStudentResource; save: ManualSave; t: Translate; disabled: boolean
+export function WorksheetCorrections({ sessionId, termId, subject, draftScope, useResource, save, t, disabled, useStore, actions }: DraftProps & {
+  sessionId: StudentSessionId; termId: string; subject: Subject; draftScope: string; useResource: UseStudentResource; save: ManualSave; t: Translate; disabled: boolean
 }) {
   const resource = useResource(studentResourceAddress(sessionId, { kind: 'files' }))
   const value = resource.value?.data
   const candidates = value && typeof value === 'object' && 'worksheets' in value && Array.isArray(value.worksheets) ? value.worksheets : []
-  const sheets = candidates.flatMap(candidate => { const parsed = worksheetSchema.safeParse(candidate); return parsed.success && parsed.data.termId === termId && parsed.data.discardedAt === undefined && parsed.data.archivedAt === undefined ? [parsed.data] : [] }).slice(-20)
+  const sheets = candidates.flatMap(candidate => { const parsed = worksheetSchema.safeParse(candidate); return parsed.success && parsed.data.termId === termId && parsed.data.subject === subject && parsed.data.discardedAt === undefined && parsed.data.archivedAt === undefined ? [parsed.data] : [] }).slice(-20)
   return <details className="student-fold"><summary>{t('manualWorksheet')}</summary>
     <p>{t('manualWorksheetHelp')}</p>
-    {resource.status === 'failed' && <p role="alert">{t('staleData')}</p>}
+    {resource.status === 'failed' && <p role="alert">{t(resource.failure?.code === 'student/invalid-records' ? 'recordsNeedCheck' : 'staleData')}</p>}
     {sheets.map(sheet => <section key={sheet.id}>
       <SaveForm useStore={useStore} actions={actions} observation={resource.value?.versions.find(file => file.path === `.study/worksheets/${sheet.id}.json`)?.version} entity={`worksheet:${sheet.id}:date`} {...{ draftScope, t }} disabled={disabled || resource.status !== 'live'} currentValues={{ answerDay: sheet.answerDate?.kind === 'day' ? sheet.answerDate.day : '' }} revision={0} baseline={JSON.stringify(sheet.answerDate ?? null)} submit={async (form, _revision, retained) => {
         const original = JSON.parse(retained)

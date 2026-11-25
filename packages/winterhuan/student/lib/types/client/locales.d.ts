@@ -43,14 +43,9 @@ export declare const zh: {
     readyToContinue: string;
     continueSavedLearning: string;
     staleData: string;
-    submissionStatus: string;
-    messageAdmitted: string;
+    recordsNeedCheck: string;
     messageUnknown: string;
-    answerSaved: string;
-    answerPending: string;
-    assessmentSaved: string;
     assessmentPending: string;
-    inspectSubmission: string;
     switchLearning: string;
     setupConversation: string;
     setupIntent: string;
@@ -58,6 +53,11 @@ export declare const zh: {
     parentProgress: string;
     parentProfile: string;
     manualForms: string;
+    profileSettings: string;
+    learningRecords: string;
+    masteryDetails: string;
+    reviewPlanDetails: string;
+    manageMistake: string;
     sendIntent: string;
     intentAdmitted: string;
     switchBlock: string;

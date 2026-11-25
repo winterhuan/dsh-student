@@ -129,7 +129,7 @@ export function MapView({ study, curriculum, subject, selectedConceptId, setSele
     <details className="student-fold">
       <summary>{t('diagnosisTitle')}</summary>
       <p className="student-muted">{t('checkinHelp')}</p>
-      {study.diagnostics.map(plan => {
+      {study.diagnostics.filter(plan => plan.subject === subject).map(plan => {
         const target = plan.subject
         const scope = scopeOf(target)
         const scoped = scope.grade !== undefined || scope.term !== undefined

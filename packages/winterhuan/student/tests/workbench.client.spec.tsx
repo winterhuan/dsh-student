@@ -199,7 +199,7 @@ it('allows editing and explicitly confirming an image transcription including th
   fireEvent.change(within(pending).getByLabelText('Question'), { target: { value: '8 + 7?' } })
   fireEvent.change(within(pending).getByLabelText('Original answer'), { target: { value: '13' } })
   fireEvent.click(within(pending).getByRole('button', { name: 'Confirm and schedule review' }))
-  await screen.findByRole('heading', { name: 'Awaiting confirmation · 0' })
+  await waitFor(() => expect(screen.queryByRole('heading', { name: /^Awaiting confirmation/ })).toBeNull())
   expect(screen.getByRole('heading', { name: 'Confirmed mistakes · Math · 1' })).toBeTruthy()
   fireEvent.click(screen.getByText('Blurry addition'))
   expect(screen.getByText('Question: 8 + 7?')).toBeTruthy()
@@ -220,7 +220,7 @@ it('keeps separate subject notebooks with their own counts and pages', async () 
   expect(screen.getByRole('heading', { name: 'Confirmed mistakes · Math · 21' })).toBeTruthy()
   expect(screen.getByRole('button', { name: 'Chinese' })).toBeTruthy()
   expect(screen.getByRole('button', { name: 'English' })).toBeTruthy()
-  expect(screen.getByRole('heading', { name: 'Due for review · 0' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Due · 0' })).toBeTruthy()
   const entry = screen.getByText('Topic 20').closest('details')!
   fireEvent.click(within(entry).getByText('Topic 20'))
   expect(within(entry).getByText(`Corrected answer: ${mistake.correction}`)).toBeTruthy()
@@ -757,17 +757,21 @@ it('shows the class frontier and saves a parent confirmation of the same unit', 
   await waitFor(() => expect(backend.read().courses.find(item => item.subject === 'math')?.progress?.confirmedAt).toBe(NOW))
 })
 
-it('lists every subject on the check-in tab and starts a light check-in', async () => {
+it('scopes check-ins to the selected subject and starts a light check-in', async () => {
   vi.spyOn(Date, 'now').mockReturnValue(NOW)
   const backend = installResource(updateStudy(undefined, setup, NOW - DAY))
   const ask = vi.fn().mockResolvedValue(undefined)
   render(<StudyDesk sessionId="tab" visible running={false} ask={ask} t={t} />)
   await openDesk('Knowledge map')
-  await screen.findByRole('heading', { name: 'Chinese · A check-in is suggested' })
-  expect(screen.getByRole('heading', { name: 'English · A check-in is suggested' })).toBeTruthy()
-  expect(screen.getByText('Coverage: 0 / 9')).toBeTruthy()
-  expect(screen.getAllByRole('button', { name: 'Standard · 6 · Recommended' })).toHaveLength(3)
-  fireEvent.click(screen.getAllByRole('button', { name: 'Light · 3' })[1]!)
+  for (const name of ['Chinese', 'English', 'Math']) {
+    fireEvent.click(screen.getByRole('button', { name, exact: true }))
+    await screen.findByRole('heading', { name: `${name} · A check-in is suggested` })
+    for (const other of ['Chinese', 'Math', 'English'].filter(item => item !== name)) {
+      expect(screen.queryByRole('heading', { name: `${other} · A check-in is suggested` })).toBeNull()
+    }
+    expect(screen.getAllByRole('button', { name: 'Standard · 6 · Recommended' })).toHaveLength(1)
+  }
+  fireEvent.click(screen.getByRole('button', { name: 'Light · 3' }))
   expect(screen.getByText('3 choice questions, a few minutes')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'Start check-in · Math' }))
   await waitFor(() => expect(ask).toHaveBeenCalledWith(expect.stringContaining(en.intensityLight), undefined))
@@ -876,4 +880,31 @@ it('renders pending assessment feedback from the selected Chinese dictionary', a
   render(<StudyDesk sessionId="pending-copy" visible running={false} ask={vi.fn()} t={key => zh[key]} />)
   await screen.findByText(zh.assessmentPending)
   expect(screen.queryByText('Pending assessment')).toBeNull()
+})
+
+it('puts the weekly summary before folded records and settings on the parent page', async () => {
+  installResource(worksheetState())
+  render(<StudyDesk sessionId="parent-order" visible running={false} ask={vi.fn()} t={t} />)
+  await openDesk('Parent setup')
+  const weekly = screen.getByRole('heading', { name: en.weeklyTitle })
+  for (const name of [en.learningRecords, en.manualForms, `${en.evidence} · ${en.math}`]) {
+    const fold = screen.getByText(name).closest('details')!
+    expect(fold.open).toBe(false)
+    expect(weekly.compareDocumentPosition(fold) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  }
+  expect(screen.getByText(en.archiveConversation).closest('details')?.querySelector('summary')?.textContent).toBe(en.archiveTerm)
+  fireEvent.click(screen.getByRole('button', { name: en.english, exact: true }))
+  await screen.findByRole('heading', { name: `${en.masteryOverview} · ${en.english}` })
+})
+
+it('keeps practice actions visible and folds review guidance and mistake management', async () => {
+  installResource(worksheetState())
+  render(<StudyDesk sessionId="practice-order" visible running={false} ask={vi.fn()} t={t} />)
+  await openDesk('Mistakes')
+  expect(screen.getByRole('button', { name: en.createWorksheet })).toBeTruthy()
+  expect(screen.getByText(en.reviewPlanDetails).closest('details')!.open).toBe(false)
+  expect(screen.getByText(en.manageMistake).closest('details')!.open).toBe(false)
+  expect(screen.getByText(en.addMistake, { selector: 'summary' }).closest('details')!.parentElement!.closest('details')!.querySelector('summary')!.textContent).toBe(en.uploadHomework)
+  expect(screen.queryByRole('heading', { name: /^Due for review/ })).toBeNull()
+  expect(screen.queryByRole('heading', { name: /^Awaiting confirmation/ })).toBeNull()
 })

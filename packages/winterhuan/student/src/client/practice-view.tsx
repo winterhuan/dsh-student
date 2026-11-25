@@ -34,20 +34,22 @@ export function PracticeView({ study, now, subject, goals, mistakeStatus, setMis
 }) {
   return <>
     <section><h3>{t('worksheets')} · {study.worksheets.length}</h3>
-      <p className="student-muted">{t('reviewSheetHelp')}</p>
-      <p>{t('reviewReady')}: {study.reviewPlan.picks}{study.reviewPlan.remaining > 0 ? ` · ${t('reviewLater')}: ${study.reviewPlan.remaining}` : ''}{study.reviewPlan.unlinkedDue > 0 ? ` · ${t('reviewUnlinked')}: ${study.reviewPlan.unlinkedDue}` : ''}{study.reviewPlan.openSheets > 0 ? ` · ${t('reviewOpenSheets')}: ${study.reviewPlan.openSheets}` : ''}</p>
       <div className={css.practiceActions}><button type="button" className="student-primary" disabled={disabled || running || goals.length === 0} onClick={() => { void ask(practiceSheetPrompt(subject)).catch(() => {}) }}>{t('createWorksheet')}</button>
       <button type="button" disabled={disabled || running || study.reviewPlan.picks === 0} onClick={() => { void ask(reviewSheetPrompt(subject)).catch(() => {}) }}>{t('printConsolidation')}</button></div>
-      {study.worksheets.length === 0 && <p>{t('empty')}</p>}
+      <details><summary>{t('reviewPlanDetails')}</summary>
+      <p>{t('reviewReady')}: {study.reviewPlan.picks}{study.reviewPlan.remaining > 0 ? ` · ${t('reviewLater')}: ${study.reviewPlan.remaining}` : ''}{study.reviewPlan.unlinkedDue > 0 ? ` · ${t('reviewUnlinked')}: ${study.reviewPlan.unlinkedDue}` : ''}{study.reviewPlan.openSheets > 0 ? ` · ${t('reviewOpenSheets')}: ${study.reviewPlan.openSheets}` : ''}</p>
+        <p className="student-muted">{t('reviewSheetHelp')}</p>
+      </details>
       {study.worksheets.map(sheet => <WorksheetActions key={sheet.id} worksheet={sheet} revision={revision} change={change} ask={ask} disabled={disabled || running} t={t} />)}
     </section>
-    <details open={study.workbookDrafts.length > 0 || study.teachingQueue.length > 0}><summary>{t('uploadHomework')}</summary>
+    <details className="student-fold" open={study.workbookDrafts.length > 0 || study.teachingQueue.length > 0}><summary>{t('uploadHomework')}</summary>
     <PhotoIntake ask={ask} disabled={disabled || running} t={t} />
     <WorkbookIntake study={study} goals={goals} revision={revision} disabled={disabled || running} change={change} ask={ask} t={t} />
-    </details>
     <fieldset disabled={disabled}><MistakeEditor subject={subject} goals={goals} revision={revision} change={change} t={t} /></fieldset>
+    </details>
     <section><h3>{t('notebook')} · {t(subject)} · {study.confirmedCount}</h3>
       <nav className="student-segments" aria-label={t('mistakeStatus')}>{(['all', 'due', 'reviewing', 'mastered'] as const).map(name => <button key={name} type="button" aria-pressed={mistakeStatus === name} onClick={() => { setMistakeStatus(name); setMistakeOffset(0) }}>{t(name === 'all' ? 'all' : name === 'due' ? 'bookDue' : name === 'reviewing' ? 'bookReviewing' : 'bookMastered')}{name === 'all' ? '' : ` · ${study.mistakeBook[name]}`}</button>)}</nav>
+      {study.dueSubjects.map(item => <button key={item} disabled={disabled || running} onClick={() => onReview(item)}>{t('review')} · {t(item)}</button>)}
       {study.confirmedMistakes.length === 0 && <p>{t('empty')}</p>}
       {study.confirmedMistakes.map(item => <details key={item.id}><summary>{item.topic}{item.stage >= 4 ? ` · ${t('bookMastered')}` : item.dueAt !== undefined && item.dueAt <= now ? ` · ${t('dueNow')}` : ''}</summary>
         <p>{t('prompt')}: {item.prompt}</p><p>{t('learnerAnswer')}: {item.learnerAnswer}</p>
@@ -56,7 +58,7 @@ export function PracticeView({ study, now, subject, goals, mistakeStatus, setMis
         <p>{t('errorTypeLabel')}: {item.errorType !== undefined ? t(item.errorType) : t('errorTypeNone')}</p>
         <p>{t('reviewStage')}: {item.stage + 1} / 5{item.dueAt !== undefined ? ` · ${t('nextReview')}: ${item.dueAt <= now ? t('dueNow') : new Date(item.dueAt).toLocaleString()}` : ''}</p>
         {study.worksheets.filter(sheet => sheet.sources.some(source => source.mistakeId === item.id)).map(sheet => <p key={sheet.id} className="student-muted">{t('relatedWorksheets')}: {sheet.objectiveTitle} · {t('graded')} {sheet.results.length}/{sheet.items.length}</p>)}
-        <fieldset disabled={disabled}>
+        <details><summary>{t('manageMistake')}</summary><fieldset disabled={disabled}>
         <MistakeObjective mistake={item} objectives={goals} change={change} t={t} />
         <MistakeEditor subject={subject} goals={goals} revision={revision} change={change} t={t} existing={item} />
         <div className="student-segments">
@@ -84,7 +86,7 @@ export function PracticeView({ study, now, subject, goals, mistakeStatus, setMis
             }, revision).catch(() => {})
           }}>{t('saveToExerciseBank')}</button>}
         </div>
-        </fieldset>
+        </fieldset></details>
       </details>)}
       {study.confirmedCount > 20 && <div className="student-pages">
         <button type="button" disabled={study.confirmedOffset === 0} onClick={() => setMistakeOffset(study.confirmedOffset - 20)}>{t('previousPage')}</button>
@@ -101,13 +103,10 @@ export function PracticeView({ study, now, subject, goals, mistakeStatus, setMis
         <button type="button" disabled={disabled} onClick={() => { void change({ action: 'delete-exercise', id: item.id }, revision).catch(() => {}) }}>{t('deleteExercise')}</button>
       </details>)}
     </details>
-    <section><h3>{t('due')} · {study.dueCount}</h3>{study.dueMistakes.length === 0 && <p>{t('empty')}</p>}
-      {study.dueMistakes.map(item => <p key={item.id}>{t(item.subject)} · {item.topic}</p>)}
-      {study.dueSubjects.map(item => <button key={item} disabled={disabled || running} onClick={() => onReview(item)}>{t('review')} · {t(item)}</button>)}
-    </section>
-    <section><h3>{t('pending')} · {study.pendingCount}</h3>{study.pendingMistakes.length === 0 && <p>{t('empty')}</p>}
+    {study.pendingCount > 0 && <section><h3>{t('pending')} · {study.pendingCount}</h3>
       {study.pendingMistakes.map(item => <fieldset disabled={disabled} key={item.id}><MistakeConfirmation useStore={useStore} actions={actions} mistake={item} revision={revision} change={change} t={t} /></fieldset>)}
-    </section><p>{t('mistakeBounded')}</p>
+      <p className="student-muted">{t('mistakeBounded')}</p>
+    </section>}
   </>
 }
 
@@ -270,7 +269,7 @@ function WorksheetActions({ worksheet, revision, change, ask, disabled, t }: { w
     try { await change({ action: 'discard-sheet', worksheetId: worksheet.id }, revision) }
     catch (reason) { setError(reason instanceof Error ? reason.message : t('networkError')) }
   }
-  return <details><summary>{worksheet.objectiveTitle} · {worksheet.items.length} {t('questions')} · {worksheet.open ? `${t('notGraded')} ${worksheet.items.length - worksheet.results.length}` : `${t('graded')} ${worksheet.results.length}/${worksheet.items.length}`}</summary>
+  return <details open={worksheet.drafts.length > 0}><summary>{worksheet.objectiveTitle} · {worksheet.items.length} {t('questions')} · {worksheet.open ? `${t('notGraded')} ${worksheet.items.length - worksheet.results.length}` : `${t('graded')} ${worksheet.results.length}/${worksheet.items.length}`}</summary>
     <p className="student-muted">{t('createdAt')}: {new Date(worksheet.createdAt).toLocaleDateString()} · {t('gradeHelp')}</p>
     <button type="button" onClick={() => { setPreviewing(true); setMessage('') }}>{t('previewPrintSheet')}</button>
     {previewing && <WorksheetPrint worksheet={worksheet} onClose={() => setPreviewing(false)} t={t} />}

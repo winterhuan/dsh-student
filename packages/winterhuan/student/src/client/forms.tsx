@@ -124,13 +124,14 @@ export function SaveForm({ revision, baseline, submit, children, t, disabled = f
 }
 
 /** Parent-confirmed setup or in-place profile update, plus an atomic textbook/course update. */
-export function ParentSettings({ data, change, t, curriculum = null, subject = 'math', onSubject, draftScope, observation, useStore, actions }: DraftProps & {
+export function ParentSettings({ data, change, t, curriculum = null, subject = 'math', onSubject, onArchive, draftScope, observation, useStore, actions }: DraftProps & {
   data: Dashboard
   change: ChangeStudy
   t: Translate
   curriculum?: NonNullable<Dashboard['study']>['curriculum']
   subject?: typeof subjects[number]
   onSubject?: (subject: typeof subjects[number]) => void
+  onArchive?: () => void
   draftScope?: string | undefined
   observation?: string | undefined
 }) {
@@ -146,7 +147,7 @@ export function ParentSettings({ data, change, t, curriculum = null, subject = '
   const currentYear = today.getUTCFullYear() - (today.getUTCMonth() < 8 ? 1 : 0)
   const years = Array.from({ length: 7 }, (_, index) => `${currentYear + 1 - index}–${currentYear + 2 - index}`)
   return <section>
-    <p>{t('parentHelp')}</p>
+    <details className="student-fold"><summary>{t('profileSettings')}</summary><p>{t('parentHelp')}</p>
     <SaveForm {...draft} observation={observation} draftScope={draftScope} entity="profile" currentValues={profile ?? {}} revision={data.revision} baseline={profileBaseline} t={t} submit={(form, revision, original) => change({
       action: 'setup',
       profile: {
@@ -173,8 +174,9 @@ export function ParentSettings({ data, change, t, curriculum = null, subject = '
       <p>{t('schoolAliasHelp')}</p>
       <label>{t('schoolSystem')}<DraftSelect {...field('profile', profileBaseline)} name="schoolSystem" aria-label={t('schoolSystem')} defaultValue={profile?.schoolSystem ?? 'five-four'}><option value="five-four">{t('five-four')}</option><option value="six-three">{t('six-three')}</option></DraftSelect></label>
     </SaveForm>
+    </details>
     {profile && <>
-      <h3>{t('curriculum')}</h3><p>{t('materialHelp')}</p>
+      <details className="student-fold"><summary>{t('curriculum')} · {t(subject)}</summary><p>{t('materialHelp')}</p>
       {study.courses.map(course => <p key={course.subject}>{t(course.subject)} · {study.materials.find(item => item.id === course.materialId)?.title} · {course.unit}</p>)}
       <SaveForm {...draft} observation={observation} draftScope={draftScope} entity={`course:${subject}`} currentValues={{ subject, unitId: study.courses.find(item => item.subject === subject)?.progress?.unitId ?? '', unit: study.courses.find(item => item.subject === subject)?.unit ?? '' }} revision={data.revision} baseline={courseBaseline} t={t} submit={async (form, revision, original) => {
         const materialId = crypto.randomUUID()
@@ -195,7 +197,6 @@ export function ParentSettings({ data, change, t, curriculum = null, subject = '
       {curriculum?.scope.current && <>
         <h3>{t('schoolFrontier')}</h3>
         <p>{t('schoolProgressHelp')}</p>
-        {onSubject && <nav className="student-segments" aria-label={t('schoolFrontier')}>{subjects.map(item => <button key={item} type="button" aria-pressed={subject === item} onClick={() => onSubject(item)}>{t(item)}</button>)}</nav>}
         {study.courses.some(course => course.subject === subject) ? <SaveForm {...draft} observation={observation} draftScope={draftScope} entity={`progress:${subject}`} currentValues={study.courses.find(course => course.subject === subject)?.progress ?? {}} revision={data.revision} baseline={progressBaseline} t={t} button={false} submit={(form, revision, original) => {
           const move = form.get('move') ?? 'stay'
           const units = curriculum.units
@@ -218,22 +219,24 @@ export function ParentSettings({ data, change, t, curriculum = null, subject = '
           </div>
         </SaveForm> : <p>{t('schoolProgressNeedsCourse')}</p>}
       </>}
-      <InterestsForm {...draft} tags={study.interests} revision={data.revision} change={change} t={t} draftScope={draftScope} observation={observation} />
-      <h3>{t('openmaicTitle')}</h3>
+      </details>
+      <details className="student-fold"><summary>{t('interestsTitle')}</summary><InterestsForm {...draft} tags={study.interests} revision={data.revision} change={change} t={t} draftScope={draftScope} observation={observation} /></details>
+      <details className="student-fold"><summary>{t('openmaicTitle')}</summary>
       <p className="student-muted">{t('openmaicBaseHelp')}</p>
       <p>{t('openmaicEffective')}: {data.interactiveLessons.baseUrl}</p>
       <SaveForm {...draft} observation={observation} draftScope={draftScope} entity="openmaic" currentValues={{ baseUrl: study.openmaic?.savedBaseUrl ?? '' }} revision={data.revision} baseline={study.openmaic?.savedBaseUrl ?? ''} t={t} submit={(form, revision, original) => change({ action: 'openmaic-settings', baseUrl: read(form, 'baseUrl'), parentConfirmation: t('openmaicConfirm') }, revision, original).then(result => savedSettingsForm(result, 'openmaic', original))}>
         <Field {...field('openmaic', study.openmaic?.savedBaseUrl ?? '')} name="baseUrl" label={t('openmaicBase')} value={study.openmaic?.savedBaseUrl ?? ''} required={false} />
         <p className="student-muted">{t('openmaicAccessHint')}</p>
       </SaveForm>
-      {data.study && <div>
-        <h3>{t('archiveTerm')}</h3>
+      </details>
+      {data.study && <details className="student-fold"><summary>{t('archiveTerm')}</summary>
+        {onArchive && <button type="button" onClick={onArchive}>{t('archiveConversation')}</button>}
         <p className="student-muted">{t('archiveTermHelp')}</p>
         <button type="button" disabled={!!study.active} onClick={() => {
           if (!window.confirm(t('archiveTermConfirm'))) return
           void change({ action: 'archive-term', parentConfirmation: t('archiveTermConfirmation') }, data.revision).catch(() => {})
         }}>{t('archiveTerm')}</button>
-      </div>}
+      </details>}
     </>}
   </section>
 }

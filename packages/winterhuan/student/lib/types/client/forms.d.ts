@@ -47,13 +47,14 @@ export declare function SaveForm({ revision, baseline, submit, children, t, disa
     observation?: string | undefined;
 }): import("react/jsx-runtime").JSX.Element;
 /** Parent-confirmed setup or in-place profile update, plus an atomic textbook/course update. */
-export declare function ParentSettings({ data, change, t, curriculum, subject, onSubject, draftScope, observation, useStore, actions }: DraftProps & {
+export declare function ParentSettings({ data, change, t, curriculum, subject, onSubject, onArchive, draftScope, observation, useStore, actions }: DraftProps & {
     data: Dashboard;
     change: ChangeStudy;
     t: Translate;
     curriculum?: NonNullable<Dashboard['study']>['curriculum'];
     subject?: typeof subjects[number];
     onSubject?: (subject: typeof subjects[number]) => void;
+    onArchive?: () => void;
     draftScope?: string | undefined;
     observation?: string | undefined;
 }): import("react/jsx-runtime").JSX.Element;

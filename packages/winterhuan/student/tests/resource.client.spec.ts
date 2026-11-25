@@ -52,7 +52,7 @@ it('retains visibly stale data after a current invalid read and drops late frame
   onTestFinished(unsubscribe)
   await waitFor(() => expect(source.getSnapshot()).toMatchObject({ status: 'live', value: { token: 'one' } }))
   next.resolve({ kind: 'snapshot', value: snapshot('invalid', 'invalid') })
-  await waitFor(() => expect(source.getSnapshot()).toMatchObject({ status: 'failed', value: { token: 'one' } }))
+  await waitFor(() => expect(source.getSnapshot()).toMatchObject({ status: 'failed', value: { token: 'one' }, failure: { code: 'student/invalid-records' } }))
   next.resolve({ kind: 'snapshot', value: snapshot('two') })
   await waitFor(() => expect(source.getSnapshot()).toMatchObject({ status: 'live', value: { token: 'two' } }))
   unsubscribe()

@@ -41,7 +41,8 @@ export function useStudy(sessionId: StudentSessionId, visible: boolean, networkE
   const goalProgress = facts && typeof facts === 'object' && 'goalProgress' in facts && Array.isArray(facts.goalProgress) ? facts.goalProgress as StudentJsonValue[] & CapabilityProgress[] : []
   const loadNeeded = !data && (resource.failure?.code === 'student/main-session-required' || context.failure?.code === 'student/main-session-required')
   const stale = resource.status === 'failed' || context.status === 'failed'
-  return { data, context: facts, contextState: { status: context.status, readStatus: context.value?.status, versions: context.value?.versions ?? [], issues: context.value?.issues ?? [], failure: context.failure }, contextReady, termId, learnerId, classroomBindingId, nextAction, round, legalActions, sourceVerification, goalProgress, value: resource.value, loadNeeded, stale, error: stale ? networkError : '', offset }
+  const invalidRecords = resource.status === 'failed' && resource.failure?.code === 'student/invalid-records' || context.status === 'failed' && context.failure?.code === 'student/invalid-records'
+  return { data, context: facts, contextState: { status: context.status, readStatus: context.value?.status, versions: context.value?.versions ?? [], issues: context.value?.issues ?? [], failure: context.failure }, contextReady, termId, learnerId, classroomBindingId, nextAction, round, legalActions, sourceVerification, goalProgress, value: resource.value, loadNeeded, stale, invalidRecords, error: stale ? networkError : '', offset }
 }
 
 // The shared Host dashboard query validates all business content; this checks its wire discriminator.

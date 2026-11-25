@@ -18,6 +18,8 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
         'student/invalid-address': Record<string, never>;
         /** Current official files cannot supply this projection; the last display remains stale. */
         'student/unavailable': Record<string, never>;
+        /** Formal records failed validation; reconnecting cannot repair their content. */
+        'student/invalid-records': Record<string, never>;
     }
 }
 /** The generated stream and its native reconnect supervisor are the resource's transport seam. */

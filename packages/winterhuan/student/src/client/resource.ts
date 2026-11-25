@@ -22,6 +22,8 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     'student/invalid-address': Record<string, never>
     /** Current official files cannot supply this projection; the last display remains stale. */
     'student/unavailable': Record<string, never>
+    /** Formal records failed validation; reconnecting cannot repair their content. */
+    'student/invalid-records': Record<string, never>
   }
 }
 /** The generated stream and its native reconnect supervisor are the resource's transport seam. */
@@ -91,7 +93,7 @@ export function createStudentResourceOwner(remote: StudentResourceRemote): Stude
             if (frame.kind === 'failure') { yield { ok: false, error: new RemoteError(frame.reason === 'main-session-required' ? 'student/main-session-required' : 'student/unavailable', frame.message, {}) }; continue }
             const value = frame.value
             if (value.status !== 'valid' && value.status !== 'partial' && value.status !== 'missing' && value.status !== 'legacy' && value.status !== 'archived') {
-              yield { ok: false, error: new RemoteError('student/unavailable', value.issues?.[0]?.correction ?? 'Current Student files are unavailable.', {}) }
+              yield { ok: false, error: new RemoteError(value.status === 'invalid' ? 'student/invalid-records' : 'student/unavailable', value.issues?.[0]?.correction ?? 'Current Student files are unavailable.', {}) }
             } else yield { ok: true, value }
           }
         } catch (error) {

@@ -71,7 +71,7 @@ export function createStudentResourceOwner(remote) {
                         }
                         const value = frame.value;
                         if (value.status !== 'valid' && value.status !== 'partial' && value.status !== 'missing' && value.status !== 'legacy' && value.status !== 'archived') {
-                            yield { ok: false, error: new RemoteError('student/unavailable', value.issues?.[0]?.correction ?? 'Current Student files are unavailable.', {}) };
+                            yield { ok: false, error: new RemoteError(value.status === 'invalid' ? 'student/invalid-records' : 'student/unavailable', value.issues?.[0]?.correction ?? 'Current Student files are unavailable.', {}) };
                         }
                         else
                             yield { ok: true, value };

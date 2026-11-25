@@ -88,6 +88,10 @@ it('sends the complete original answer to native chat without a business pre-sav
   expect(message).toContain('responseId')
   expect(fetch.mock.calls.every(call => call.length === 1)).toBe(true)
   expect(screen.queryByText(`${en.answer}: ${attempt.response}`)).toBeNull()
+  await waitFor(() => expect(window.sessionStorage.getItem('student:submissions:native-session')).toContain('native-1'))
+  expect(screen.queryByText('Message and saving status')).toBeNull()
+  expect(screen.queryByText('Native message admitted')).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Inspect original message and saved result' })).toBeNull()
 })
 
 it('hides the unfinished question while browsing another subject and restores it on return', async () => {
@@ -185,7 +189,7 @@ it('shows the inherited worksheet day and saves an explicit unknown override wit
   const sheet = { format: 2, kind: 'worksheet', termId: 'term-one', id: 'sheet-one', subject: 'math', origin: 'prepared', createdAt: NOW, context: {}, answerDate: { kind: 'day', day: '2026-11-10', parentConfirmation: 'Confirmed day' }, items: [{ id: 'q1', objectiveId: 'm2a-o-sub', source: { kind: 'authored', description: 'Original' }, topic: 'Subtraction', prompt: '52 - 28?', answer: '24', explanation: 'Subtract', answerEvidence: '24 + 28 = 52' }], responses: [response], assessments: [], drafts: [] }
   const useResource = () => ({ status: 'live' as const, failure: undefined, value: { versions: [], data: { worksheets: [sheet] } } as StudentQueryResult })
   const save = vi.fn().mockResolvedValue(undefined)
-  render(<WorksheetCorrections sessionId="native-paper" termId="term-one" draftScope="inherited-day" {...{ useResource, save, t }} disabled={false} />)
+  render(<WorksheetCorrections subject="math" sessionId="native-paper" termId="term-one" draftScope="inherited-day" {...{ useResource, save, t }} disabled={false} />)
   fireEvent.click(screen.getByText(en.manualWorksheet))
   expect((screen.getByLabelText(en.actualAnswerDay) as HTMLInputElement).value).toBe('2026-11-10')
   fireEvent.change(screen.getByLabelText(en.actualAnswerDay), { target: { value: '' } })
@@ -245,7 +249,7 @@ it('keeps a large history backlog optional and submits one request to check all 
   const fold = summary.closest('details')!
   expect(fold.open).toBe(false)
   expect(summary.textContent).not.toContain('57')
-  expect(screen.getByText(en.evidence).compareDocumentPosition(fold) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(screen.getByText(`${en.evidence} · ${en.math}`).compareDocumentPosition(fold) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   fireEvent.click(summary)
   expect(screen.getByText(`${en.pendingFactsDetails} · 57`).closest('details')!.open).toBe(false)
   fireEvent.click(screen.getByRole('button', { name: en.organizeSavedResponses }))
@@ -260,7 +264,7 @@ it('saves a worksheet-wide answer day while retaining per-response overrides', a
   const sheet = { format: 2, kind: 'worksheet', termId: 'term-one', id: 'sheet-one', subject: 'math', origin: 'prepared', createdAt: NOW, context: {}, answerDate: { kind: 'unknown' }, items: [{ id: 'q1', objectiveId: 'm2a-o-sub', source: { kind: 'authored', description: 'Original' }, topic: 'Subtraction', prompt: '52 - 28?', answer: '24', explanation: 'Subtract', answerEvidence: '24 + 28 = 52' }], responses: [{ id: 'r1', questionId: 'q1', rawResponse: '24', assistance: 'unknown', answerDate: { kind: 'unknown' }, source: { kind: 'paper', imagePaths: [], parentConfirmation: 'Confirmed answer' } }], assessments: [], drafts: [] }
   const useResource = () => ({ status: 'live' as const, failure: undefined, value: { versions: [], data: { worksheets: [sheet] } } as StudentQueryResult })
   const save = vi.fn().mockResolvedValue(undefined)
-  render(<WorksheetCorrections sessionId="native-paper" termId="term-one" draftScope="whole-sheet-day" {...{ useResource, save, t }} disabled={false} />)
+  render(<WorksheetCorrections subject="math" sessionId="native-paper" termId="term-one" draftScope="whole-sheet-day" {...{ useResource, save, t }} disabled={false} />)
   fireEvent.click(screen.getByText(en.manualWorksheet))
   fireEvent.change(screen.getByLabelText('Worksheet answer day'), { target: { value: '2026-11-11' } })
   fireEvent.submit(screen.getByLabelText('Worksheet answer day').closest('form')!)
@@ -285,3 +289,37 @@ function SaveForm(props: Omit<import('react').ComponentProps<typeof RealSaveForm
   }
   return <RealSaveForm {...props} {...draft}>{Children.map(props.children, controls)}</RealSaveForm>
 }
+
+it('shows saved worksheet corrections only for the selected subject', () => {
+  const sheet = (subject: 'math' | 'chinese' | 'english') => ({ format: 2, kind: 'worksheet', termId: 'term-one', id: `${subject}-sheet`, subject, origin: 'prepared', createdAt: NOW, context: {}, items: [{ id: 'q1', objectiveId: 'goal', source: { kind: 'authored', description: 'Original' }, topic: subject, prompt: subject, answer: 'answer', explanation: 'explanation', answerEvidence: 'evidence' }], responses: [], assessments: [], drafts: [] })
+  const useResource = () => ({ status: 'live' as const, failure: undefined, value: { versions: [], data: { worksheets: ['math', 'chinese', 'english'].map(subject => sheet(subject as 'math' | 'chinese' | 'english')) } } as StudentQueryResult })
+  const props = { sessionId: 'native-paper', termId: 'term-one', draftScope: 'subjects', useResource, save: vi.fn(), t, disabled: false }
+  const mounted = render(<WorksheetCorrections {...props} subject="math" />)
+  fireEvent.click(screen.getByText(en.manualWorksheet))
+  for (const subject of ['math', 'chinese', 'english'] as const) {
+    mounted.rerender(<WorksheetCorrections {...props} subject={subject} />)
+    expect(screen.getAllByLabelText(en.worksheetAnswerDay)).toHaveLength(1)
+    expect(screen.getByText(`${en.worksheetAnswerDay} · ${subject}-sheet`)).toBeTruthy()
+  }
+})
+
+it('distinguishes invalid records from a connection failure and retains the answer draft until recovery', async () => {
+  const state = updateStudy(updateStudy(updateStudy(undefined, setup, NOW), start, NOW), { action: 'task', task: { id: 'q1', sessionId: start.id, subject: 'math', topic: 'Addition', prompt: '8 + 7?' } }, NOW)
+  const body = dashboard(state, NOW)
+  let failed = false
+  const useResource = (address: string) => ({ status: failed ? 'failed' as const : 'live' as const, failure: failed ? { code: 'student/invalid-records', message: 'Invalid worksheet source', details: {} } : undefined, value: { status: 'valid', token: 'one', readAt: NOW, refreshAfter: NOW + 1000, versions: [], native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [], data: new URL(address).searchParams.get('query')?.includes('learning-context') ? { termId: 'term-one', pendingFacts: [] } : body } as StudentQueryResult })
+  const props = { useResource, ...createStudentManualActions({ inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() }), sessionId: 'invalid-records', visible: true, running: false, ask: vi.fn(), t }
+  const mounted = render(<StudyDesk {...props} />)
+  fireEvent.change(screen.getByLabelText(en.answer), { target: { value: '15' } })
+  failed = true
+  mounted.rerender(<StudyDesk {...props} />)
+  expect(screen.getByRole('alert').textContent).toBe(en.recordsNeedCheck)
+  expect(screen.queryByText(en.staleData)).toBeNull()
+  expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('15')
+  expect(screen.getByRole('button', { name: en.submit }).matches(':disabled')).toBe(true)
+  failed = false
+  mounted.rerender(<StudyDesk {...props} />)
+  expect(screen.queryByRole('alert')).toBeNull()
+  expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('15')
+  expect(screen.getByRole('button', { name: en.submit }).matches(':disabled')).toBe(false)
+})

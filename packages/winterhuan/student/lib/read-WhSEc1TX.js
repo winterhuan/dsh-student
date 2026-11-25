@@ -3299,11 +3299,77 @@ function migrateStudyFile(parsed) {
 	return next;
 }
 //#endregion
+//#region lib/types/learning/scopes.js
+/** Use existing school progress or the grade map without inventing a new parent confirmation. */
+function automaticLearningScopes(workspace) {
+	const { settings } = workspace;
+	const knowledge = effectiveKnowledge(workspace.collections?.knowledge);
+	return [
+		"chinese",
+		"math",
+		"english"
+	].flatMap((subject) => {
+		const course = settings.courses.find((item) => item.subject === subject);
+		const map = curriculumFor(settings.profile, subject);
+		const current = map?.units.findIndex((unit) => unit.id === course?.progress?.unitId) ?? -1;
+		const objectives = builtinObjectivesIn(settings.profile, subject).filter((objective) => current < 0 || (course?.progress?.posture === "catch-up" ? map.units.findIndex((unit) => unit.id === objective.unit) <= current : objective.unit === course.progress.unitId));
+		return knowledge.goals.filter((goal) => goal.subject === subject && writtenGoal(goal.id)).flatMap((goal) => {
+			const objective = objectives.find((item) => goal.curriculumAssociationIds.includes(item.id));
+			return objective ? [{
+				subject,
+				goalIds: [goal.id],
+				scope: {
+					id: `auto-${objective.id}-${goal.id}`,
+					description: [
+						objective.title,
+						objective.goal,
+						...objective.questionPoints ?? []
+					].join("；").slice(0, 4e3),
+					modality: "written"
+				}
+			}] : [];
+		});
+	});
+}
+/** Explicit family choices override inferred defaults only for their own subject. */
+function effectiveLearningScopes(workspace) {
+	const selected = workspace.settings.learningScopes ?? [];
+	const previous = [...workspace.blocks, ...workspace.worksheets].flatMap((file) => (file.kind === "block" ? file.questions : file.items).flatMap((question) => question.capability ? [{
+		subject: file.subject,
+		goalIds: [question.capability.goalId],
+		scope: question.capability.scope
+	}] : []));
+	const reviews = (workspace.collections?.mistakes ?? []).flatMap((mistake) => mistake.capability ? [{
+		subject: mistake.subject,
+		goalIds: [mistake.capability.goalId],
+		scope: mistake.capability.scope
+	}] : []);
+	return [...selected, ...[
+		...previous,
+		...reviews,
+		...automaticLearningScopes(workspace)
+	].filter((item) => !selected.some((scope) => scope.subject === item.subject))];
+}
+function writtenGoal(id) {
+	return !id.startsWith("e.speak") && !id.startsWith("e.listen") && ![
+		"c.read-aloud",
+		"c.recite",
+		"c.retell",
+		"c.describe",
+		"c.interact",
+		"c.listen",
+		"e.sound",
+		"e.view-listen",
+		"e.perform"
+	].includes(id);
+}
+//#endregion
 //#region lib/types/files/plans.js
 /** Check arrangement ownership and original references without creating learning evidence. */
 function validateDailyPlans(workspace, prior, fail) {
 	const { settings, blocks, plans = [] } = workspace;
 	const knowledge = effectiveKnowledge(workspace.collections?.knowledge);
+	const scopes = effectiveLearningScopes(workspace);
 	const owners = /* @__PURE__ */ new Map();
 	const pending = (task) => [
 		"ready",
@@ -3323,12 +3389,12 @@ function validateDailyPlans(workspace, prior, fail) {
 			const field = `tasks.${i}`;
 			const goal = knowledge.goals.find((goal) => goal.id === task.goalId);
 			if (!plan.subjects.includes(task.subject) || task.goalId && (!goal || goal.subject !== task.subject) || task.familyIds.some((id) => !knowledge.families.some((family) => family.id === (knowledge.familyAliases[id] ?? id) && family.goalIds.includes(task.goalId ?? "")))) issue(field, "plan-goal", "Use compatible goals and families of a participating subject.");
-			if (task.purpose !== "resume" && (!task.goalId || !task.scope)) issue(field, "plan-scope", "Save a concrete capability and confirmed range for a new activity.");
-			if (["ready", "active"].includes(task.state) && plan.createdAt >= settings.updatedAt && task.scope && !settings.learningScopes?.some((scope) => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(task.goalId)) && scopeSupports(scope.scope, task.scope))) issue(field, "plan-scope", "Defer this unstarted task or confirm its learning scope before starting it.");
+			if (task.purpose !== "resume" && (!task.goalId || !task.scope)) issue(field, "plan-scope", "Save a concrete capability and learning range for a new activity.");
+			if (["ready", "active"].includes(task.state) && plan.createdAt >= settings.updatedAt && task.scope && !scopes.some((scope) => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(task.goalId)) && scopeSupports(scope.scope, task.scope))) issue(field, "plan-scope", "Defer this unstarted task or adjust its learning scope before starting it.");
 			const block = task.activity ? blocks.find((block) => block.id === task.activity.blockId) : void 0;
 			if (task.activity && (!block || block.subject !== task.subject || task.activity.questionId && !block.questions.some((question) => question.id === task.activity.questionId) || task.activity.responseId && !block.responses.some((response) => response.id === task.activity.responseId && (!task.activity.questionId || response.questionId === task.activity.questionId)) || task.activity.roundId && !block.rounds?.some((round) => round.id === task.activity.roundId))) issue(field, "plan-activity", "Restore the original activity, question, response and round before continuing; do not recreate them.");
 			const previousBlocks = prior.flatMap((entry) => entry.file.kind === "block" && entry.file.id === block?.id ? [entry.file] : []);
-			if (block && task.scope && plan.createdAt < settings.updatedAt && previousBlocks.length && block.questions.some((question) => !previousBlocks.some((old) => old.questions.some((saved) => saved.id === question.id)) && question.capability && !settings.learningScopes?.some((scope) => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(question.capability.goalId)) && scopeSupports(scope.scope, question.capability.scope)))) issue(field, "plan-scope", "Preserve the original questions and confirm the changed learning range before adding new questions.");
+			if (block && task.scope && plan.createdAt < settings.updatedAt && previousBlocks.length && block.questions.some((question) => !previousBlocks.some((old) => old.questions.some((saved) => saved.id === question.id)) && question.capability && !scopes.some((scope) => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(question.capability.goalId)) && scopeSupports(scope.scope, question.capability.scope)))) issue(field, "plan-scope", "Preserve the original questions and check the changed learning range before adding new questions.");
 			if (block && task.goalId && task.scope && block.questions.length && !block.questions.some((question) => question.capability?.goalId === task.goalId && scopeSupports(task.scope, question.capability.scope))) issue(field, "plan-activity", "Bind a task only to its original capability and learning range.");
 			for (const reference of [...task.basis, ...task.outcomes]) {
 				const owner = reference.ownerKind === "block" ? workspace.blocks.find((block) => block.id === reference.ownerId) : workspace.worksheets.find((sheet) => sheet.id === reference.ownerId);
@@ -5296,4 +5362,4 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
 	};
 }
 //#endregion
-export { sameScope as $, knowledgeIdSchema as $t, assessmentSchema as A, officialReviewSchema as At, responseSchema as B, scopeSupports as Bt, consumeOpenmaicFeedback as C, normalizeOpenmaicBase as Ct, answerDateSchema as D, officialAnswerSchema as Dt, openmaicAcademicQuestion as E, feedbackCheckpointSchema as Et, dailyTaskSchema as F, pendingOpenmaicSchema as Ft, activeSession as G, errorTypesBySubject as Gt, termSettingsSchema as H, customObjectiveMethods as Ht, learningRoundSchema as I, snapshotRevisionSchema as It, foldText as J, interestTagsOf as Jt, canonical as K, DEFAULT_INTEREST_TAGS as Kt, officialFileSchemas as L, effectiveKnowledge as Lt, blockSchema as M, officialRuntimeRecordSchema as Mt, collectionsSchema as N, openmaicQuestionSchema as Nt, archiveEvidencePath as O, officialQuestionSchema as Ot, dailyPlanSchema as P, openmaicResponseSourceSchema as Pt, sameSavedAnswer as Q, knowledgeExtensionSchema as Qt, questionSchema as R, knowledgeSources as Rt, evidenceOf as S, lessonSchema as St, matchOpenmaicResponse as T, feedbackBindingSchema as Tt, worksheetSchema as U, figureSchema as Ut, responseSourceSchema as V, commandSchema as Vt, DAY as W, stateSchema as Wt, matchChoice as X, capabilityGoalSchema as Xt, formatDuration as Y, capabilityBindingSchema as Yt, requireValue as Z, capabilityScopeSchema as Zt, attachEvidence as _, OPENMAIC_COOKIE_PATH as _t, describeKnowledgeMigration as a, taughtUnit as at, evidenceAtCutoff as b, interactiveLessonsView as bt, migrationOutputPaths as c, builtinObjectiveAnywhere as ct, sourceSha256 as d, builtinObjectivesIn as dt, questionFamilySchema as en, schoolGate as et, validateStudyFiles as f, curriculumFor as ft, scheduleMistakes as g, readLessonFile as gt, replayMistake as h, subjectIdeas as ht, describeArchive as i, studyDay as it, assistanceSchema as j, officialRuntimePayloadSchema as jt, archiveEvidenceReferenceSchema as k, officialResultSchema as kt, readBackups as l, builtinObjectiveIn as lt, dayStart as m, subjectExercises as mt, backupSchema as n, showValue as nt, describeMigration as o, todaySpent as ot, migrateStudyFile as p, exercisesForObjective as pt, choiceMismatch as q, interestFocus as qt, backupVersions as r, spent as rt, describeRestore as s, builtinObjective as st, readWorkspace as t, StudyReadCache as tn, scopeSelects as tt, retainObservedBackups as u, builtinObjectives as ut, demonstrablyAfter as v, OPENMAIC_LESSONS_PATH as vt, effectiveOpenmaicAssessment as w, readInteractiveLessons as wt, evidenceDay as x, lessonFileSchema as xt, deriveEvidence as y, effectiveOpenmaicBase as yt, questionSourceSchema as z, resolveLegacyReference as zt };
+export { requireValue as $, capabilityScopeSchema as $t, archiveEvidencePath as A, officialQuestionSchema as At, questionSchema as B, knowledgeSources as Bt, evidenceDay as C, lessonFileSchema as Ct, matchOpenmaicResponse as D, feedbackBindingSchema as Dt, effectiveOpenmaicAssessment as E, readInteractiveLessons as Et, collectionsSchema as F, openmaicQuestionSchema as Ft, worksheetSchema as G, figureSchema as Gt, responseSchema as H, scopeSupports as Ht, dailyPlanSchema as I, openmaicResponseSourceSchema as It, canonical as J, DEFAULT_INTEREST_TAGS as Jt, DAY as K, stateSchema as Kt, dailyTaskSchema as L, pendingOpenmaicSchema as Lt, assessmentSchema as M, officialReviewSchema as Mt, assistanceSchema as N, officialRuntimePayloadSchema as Nt, openmaicAcademicQuestion as O, feedbackCheckpointSchema as Ot, blockSchema as P, officialRuntimeRecordSchema as Pt, matchChoice as Q, capabilityGoalSchema as Qt, learningRoundSchema as R, snapshotRevisionSchema as Rt, evidenceAtCutoff as S, interactiveLessonsView as St, consumeOpenmaicFeedback as T, normalizeOpenmaicBase as Tt, responseSourceSchema as U, commandSchema as Ut, questionSourceSchema as V, resolveLegacyReference as Vt, termSettingsSchema as W, customObjectiveMethods as Wt, foldText as X, interestTagsOf as Xt, choiceMismatch as Y, interestFocus as Yt, formatDuration as Z, capabilityBindingSchema as Zt, replayMistake as _, subjectIdeas as _t, describeKnowledgeMigration as a, spent as at, demonstrablyAfter as b, OPENMAIC_LESSONS_PATH as bt, migrationOutputPaths as c, todaySpent as ct, sourceSha256 as d, builtinObjectiveIn as dt, knowledgeExtensionSchema as en, sameSavedAnswer as et, validateStudyFiles as f, builtinObjectives as ft, dayStart as g, subjectExercises as gt, migrateStudyFile as h, exercisesForObjective as ht, describeArchive as i, showValue as it, archiveEvidenceReferenceSchema as j, officialResultSchema as jt, answerDateSchema as k, officialAnswerSchema as kt, readBackups as l, builtinObjective as lt, effectiveLearningScopes as m, curriculumFor as mt, backupSchema as n, questionFamilySchema as nn, schoolGate as nt, describeMigration as o, studyDay as ot, automaticLearningScopes as p, builtinObjectivesIn as pt, activeSession as q, errorTypesBySubject as qt, backupVersions as r, StudyReadCache as rn, scopeSelects as rt, describeRestore as s, taughtUnit as st, readWorkspace as t, knowledgeIdSchema as tn, sameScope as tt, retainObservedBackups as u, builtinObjectiveAnywhere as ut, scheduleMistakes as v, readLessonFile as vt, evidenceOf as w, lessonSchema as wt, deriveEvidence as x, effectiveOpenmaicBase as xt, attachEvidence as y, OPENMAIC_COOKIE_PATH as yt, officialFileSchemas as z, effectiveKnowledge as zt };

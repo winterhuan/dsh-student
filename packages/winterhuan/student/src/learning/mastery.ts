@@ -1,3 +1,4 @@
+import { effectiveLearningScopes } from './scopes.ts'
 import type { ErrorType, StudyState } from '../schema.ts'
 import { builtinObjectives, builtinObjectivesIn, curriculumFor, type CurriculumMethod, type CurriculumScope, type CurriculumSubject } from '../curriculum.ts'
 import { evidenceOf, evidenceDay, evidenceAtCutoff, demonstrablyAfter } from './evidence.ts'
@@ -56,7 +57,8 @@ export function learningContinuation(workspace: ValidatedWorkspace, state: Study
   const ordered = workspace.blocks.slice().sort((a, b) => b.startedAt - a.startedAt || a.id.localeCompare(b.id))
   const subjectBlocks = ordered.filter(block => !subject || block.subject === subject)
   const questionBindings = ordered.flatMap(block => block.questions.flatMap(question => question.capability ? [{ block, binding: question.capability }] : []))
-  const scopeFor = (goalId: string) => current?.capability?.goalId === goalId ? current.capability.scope : workspace.settings.learningScopes?.find(item => item.subject === knowledge.goals.find(goal => goal.id === goalId)?.subject && (!item.goalIds || item.goalIds.includes(goalId)))?.scope ?? questionBindings.find(item => item.binding.goalId === goalId)?.binding.scope ?? workspace.archivedEvidence?.flatMap(archive => archive.references).find(reference => reference.goalId === goalId)?.scope
+  const learningScopes = effectiveLearningScopes(workspace)
+  const scopeFor = (goalId: string) => current?.capability?.goalId === goalId ? current.capability.scope : learningScopes.find(item => item.subject === knowledge.goals.find(goal => goal.id === goalId)?.subject && (!item.goalIds || item.goalIds.includes(goalId)))?.scope ?? questionBindings.find(item => item.binding.goalId === goalId)?.binding.scope ?? workspace.archivedEvidence?.flatMap(archive => archive.references).find(reference => reference.goalId === goalId)?.scope
   const canonicalFamily = (id: string) => knowledge.familyAliases[id] ?? id
   const accepted = (entry: EffectiveEvidence) => entry.sourceStatus === 'known' && entry.result === 'correct'
   const independent = (entry: EffectiveEvidence) => accepted(entry) && entry.assistance === 'independent' && evidenceDay(entry) !== undefined
@@ -181,18 +183,17 @@ export function learningContinuation(workspace: ValidatedWorkspace, state: Study
     return finish({ ...action, review: { mistakeIds: [], familyIds: [action.familyId!], remaining: reviewRound.remaining } })
   }
   const selectedSubject = active?.subject ?? subject
-  const confirmations = (workspace.settings.learningScopes ?? []).filter(item => !selectedSubject || item.subject === selectedSubject)
+  const confirmations = learningScopes.filter(item => !selectedSubject || item.subject === selectedSubject)
   const enteredGoals = new Set(rounds.flatMap(round => round.members.filter(member => round.enteredFamilyIds.includes(member.familyId)).map(member => member.goalId)))
   for (const confirmation of confirmations) {
-    const course = workspace.settings.courses.find(course => course.subject === confirmation.subject)
     const gate = schoolGate(state, confirmation.subject)
-    if (course && (!gate || gate.pace === 'review')) continue
+    if (gate?.pace === 'review') continue
     const candidates = knowledge.goals.filter(goal => {
       const item = progress.find(item => item.id === goal.id)!
       if (goal.subject !== confirmation.subject || enteredGoals.has(goal.id) && item.level !== 'weak' || item.level === 'mastered' || item.level === 'due' || item.level === 'practising' && !item.missingCriteria.length) return false
       if (confirmation.goalIds && !confirmation.goalIds.includes(goal.id)) return false
       const associations = builtinObjectives(state.profile).filter(old => old.subject === goal.subject).filter(old => goal.curriculumAssociationIds.includes(old.id))
-      if (course ? !associations.some(old => gate!.posture === 'catch-up' ? gate!.taught.has(old.unit) : old.unit === gate!.current) : !confirmation.goalIds && !associations.length) return false
+      if (gate ? !associations.some(old => gate.posture === 'catch-up' ? gate.taught.has(old.unit) : old.unit === gate.current) : !confirmation.goalIds && !associations.length) return false
       const modality = confirmation.scope.modality
       const oral = goal.id.startsWith('e.speak') || ['c.read-aloud', 'c.recite', 'c.retell', 'c.describe', 'c.interact'].includes(goal.id)
       const listening = goal.id.startsWith('e.listen') || goal.id === 'c.listen'
@@ -205,19 +206,20 @@ export function learningContinuation(workspace: ValidatedWorkspace, state: Study
       return finish(actionFor(candidate.id, item.level === 'weak' ? 'teach' : item.level === 'practising' ? 'supplement' : 'learn', item.level === 'weak' ? 'current-gap' : item.level === 'practising' ? 'missing-evidence' : 'new-goal', confirmation.scope))
     }
   }
-  return finish({ kind: 'hold', reason: confirmations.length ? 'no-learnable-goal' : 'confirmed-scope-required', subject: selectedSubject ?? 'math', title: confirmations.length ? 'No new goal is available in the confirmed range. Rest or explicitly request more review.' : 'Confirm the next learning range or choose another allowed activity.' })
+  return finish({ kind: 'hold', reason: confirmations.length ? 'no-learnable-goal' : 'confirmed-scope-required', subject: selectedSubject ?? 'math', title: confirmations.length ? 'No new goal is available in this range. Rest or explicitly request more review.' : 'Adjust the profile or learning range to find suitable content.' })
 }
 
 /** One capability/range projection for recommendations, maps and parent summaries. */
 export function capabilityProgress(workspace: ValidatedWorkspace, state: StudyState, now: number): CapabilityProgress[] {
   const knowledge = effectiveKnowledge(workspace.collections?.knowledge)
+  const learningScopes = effectiveLearningScopes(workspace)
   const index = evidenceOf(state)
   const questionBindings = workspace.blocks.slice().sort((a, b) => b.startedAt - a.startedAt || a.id.localeCompare(b.id)).flatMap(block => block.questions.flatMap(question => question.capability ? [{ block, binding: question.capability }] : []))
   const canonicalFamily = (id: string) => knowledge.familyAliases[id] ?? id
   const accepted = (entry: EffectiveEvidence) => entry.sourceStatus === 'known' && entry.result === 'correct'
   const independent = (entry: EffectiveEvidence) => accepted(entry) && entry.assistance === 'independent' && evidenceDay(entry) !== undefined
   const progress: CapabilityProgress[] = knowledge.goals.flatMap(goal => {
-    const ranges = [...questionBindings.filter(item => item.binding.goalId === goal.id).map(item => item.binding.scope), ...(workspace.settings.learningScopes ?? []).filter(item => item.subject === goal.subject && (!item.goalIds || item.goalIds.includes(goal.id))).map(item => item.scope), ...(workspace.archivedEvidence ?? []).flatMap(archive => archive.references.filter(reference => reference.goalId === goal.id).map(reference => reference.scope))]
+    const ranges = [...questionBindings.filter(item => item.binding.goalId === goal.id).map(item => item.binding.scope), ...learningScopes.filter(item => item.subject === goal.subject && (!item.goalIds || item.goalIds.includes(goal.id))).map(item => item.scope), ...(workspace.archivedEvidence ?? []).flatMap(archive => archive.references.filter(reference => reference.goalId === goal.id).map(reference => reference.scope))]
     const scopes = ranges.filter((scope, i) => ranges.findIndex(other => scopeSupports(scope, other) && scopeSupports(other, scope)) === i)
     return (scopes.length ? scopes : [null]).map(scope => {
     const relevant = scope ? index.entries.filter(entry => entry.capability?.goalId === goal.id && scopeSupports(entry.capability.scope, scope) && (!entry.referenceScopes || entry.referenceScopes.some(reference => scopeSupports(reference, scope))) && (entry.answerDate.kind === 'unknown' || (entry.answerDate.kind === 'instant' ? entry.answerDate.at <= now : entry.answerDate.day <= studyDay(now)))) : []

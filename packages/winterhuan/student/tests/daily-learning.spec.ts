@@ -28,13 +28,29 @@ async function fixture() {
   return { cwd, settings, block, save, fs, read, daily, answer }
 }
 
-it('previews only confirmed subjects, leaves files untouched and uses a short diagnostic without claiming weakness', async () => {
+it('uses the existing profile for unconfigured subjects without writing confirmations or claiming weakness', async () => {
   const f = await fixture()
   const before = await f.read(), first = await f.daily(), second = await f.daily()
   expect(first.preview).toMatchObject({ id: 'day-2026-11-25', subjects: ['math'], tasks: [{ purpose: 'diagnostic', goalId: 'm.count', state: 'ready' }] })
-  expect(first.missingSubjects).toEqual(['chinese', 'english'])
+  expect(first.missingSubjects).toEqual([])
+  expect(first.suggestions.map(item => item.task.subject)).toEqual(expect.arrayContaining(['chinese', 'math', 'english']))
   expect(second.preview?.tasks.map(task => task.id)).toEqual(first.preview?.tasks.map(task => task.id))
   expect((await f.read()).files.map(file => file.version)).toEqual(before.files.map(file => file.version))
+})
+
+it('starts a grade-based plan without requiring new learning-scope confirmations', async () => {
+  const f = await fixture()
+  delete f.settings.learningScopes
+  await f.save('.study/settings.json', f.settings)
+  const before = (await f.read()).files.map(file => file.version)
+  const daily = await f.daily()
+  expect(daily.missingSubjects).toEqual([])
+  expect(daily.recommended[0]?.task.purpose).toBe('diagnostic')
+  expect((await f.read()).files.map(file => file.version)).toEqual(before)
+  const plan = dailyPlanSchema.parse(daily.preview)
+  await f.save(`.study/plans/${plan.day}.json`, plan)
+  expect((await f.read()).issues).toEqual([])
+  expect((await f.read()).workspace?.settings.learningScopes).toBeUndefined()
 })
 
 it('retains the explicit start time when preparing the plan takes longer than the click', async () => {
@@ -214,4 +230,31 @@ it('retains original blocks when plan count or total metadata exceeds its limit'
   expect(read.issues).toContainEqual(expect.objectContaining({ rule: 'collection-limit' }))
   expect(read.issues).toContainEqual(expect.objectContaining({ rule: 'workspace-size', path: '.study/plans' }))
   expect(read.workspace?.blocks[0]?.responses[0]?.rawResponse).toBe('3')
+})
+
+it('reuses confirmed books and school progress without per-subject unlocking', async () => {
+  const f = await fixture()
+  const subjects = ['chinese', 'math', 'english'] as const
+  const units = { chinese: 'c2a-u4', math: 'm2a-u-shop', english: 'e2a-u4' }
+  const materials = subjects.map(subject => ({ id: `book-${subject}`, subject, scope: { region: setup.profile.region, grade: setup.profile.grade, term: setup.profile.term, schoolYear: setup.profile.schoolYear, schoolSystem: setup.profile.schoolSystem }, title: 'Existing book', publisher: 'Publisher', edition: 'Confirmed edition', editionStatus: 'identified', kind: 'official-textbook', locator: 'Current page', evidence: 'Parent checked this book' }))
+  const courses = subjects.map(subject => ({ subject, materialId: `book-${subject}`, unit: units[subject], parentConfirmation: 'Already confirmed school unit', progress: { unitId: units[subject], confirmedAt: NOW - DAY, posture: 'keep-up', preview: false, pace: 'teaching' } }))
+  await f.save('.study/settings.json', { ...f.settings, learningScopes: undefined, materials, courses })
+  const before = await f.read(), daily = await f.daily()
+  expect(daily.missingSubjects).toEqual([])
+  expect(daily.suggestions.map(item => [item.task.subject, item.task.goalId])).toEqual([['chinese', 'c.character'], ['math', 'm.money'], ['english', 'e.word-form']])
+  expect(daily.scopeSuggestions.find(item => item.subject === 'math')?.scope.id).toContain('m2a-o-shop')
+  await f.save(`.study/plans/${daily.preview!.day}.json`, daily.preview)
+  const after = await f.read()
+  expect(after.issues).toEqual([])
+  expect(after.workspace!.settings).toEqual(before.workspace!.settings)
+})
+
+it('continues evidence in its original range when no extra family range was configured', async () => {
+  const f = await fixture()
+  delete f.settings.learningScopes
+  await f.save('.study/settings.json', f.settings)
+  f.answer('incorrect'); f.block.endedAt = NOW
+  await f.save('.study/blocks/counting.json', f.block)
+  const daily = await f.daily()
+  expect(daily.recommended[0]).toMatchObject({ task: { purpose: 'teaching', goalId: 'm.count', scope }, nextAction: { reason: 'current-gap' } })
 })

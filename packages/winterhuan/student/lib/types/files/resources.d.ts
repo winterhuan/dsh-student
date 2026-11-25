@@ -529,8 +529,8 @@ declare const schemas: {
                 }>;
                 preview: z.ZodBoolean;
                 pace: z.ZodEnum<{
-                    teaching: "teaching";
                     review: "review";
+                    teaching: "teaching";
                 }>;
             }, z.core.$strict>>;
             parentConfirmation: z.ZodString;
@@ -615,10 +615,10 @@ declare const schemas: {
         }>;
         mode: z.ZodEnum<{
             review: "review";
+            diagnose: "diagnose";
             foundation: "foundation";
             school: "school";
             explore: "explore";
-            diagnose: "diagnose";
         }>;
         intensity: z.ZodOptional<z.ZodEnum<{
             light: "light";
@@ -1124,8 +1124,8 @@ declare const schemas: {
         rounds: z.ZodOptional<z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             kind: z.ZodEnum<{
-                check: "check";
                 review: "review";
+                check: "check";
             }>;
             startedAt: z.ZodNumber;
             members: z.ZodArray<z.ZodObject<{
@@ -1210,13 +1210,13 @@ declare const schemas: {
             }, z.core.$strict>>;
             userConfirmation: z.ZodOptional<z.ZodString>;
             errorType: z.ZodOptional<z.ZodEnum<{
-                pattern: "pattern";
-                "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
+                "place-value": "place-value";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
+                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -1348,8 +1348,8 @@ declare const schemas: {
         }>;
         worksheetKind: z.ZodOptional<z.ZodEnum<{
             review: "review";
-            daily: "daily";
             practice: "practice";
+            daily: "daily";
         }>>;
         origin: z.ZodEnum<{
             prepared: "prepared";
@@ -1856,13 +1856,13 @@ declare const schemas: {
             }, z.core.$strict>>;
             userConfirmation: z.ZodOptional<z.ZodString>;
             errorType: z.ZodOptional<z.ZodEnum<{
-                pattern: "pattern";
-                "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
+                "place-value": "place-value";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
+                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -2019,8 +2019,8 @@ declare const schemas: {
         }, z.core.$strict>>>;
         legacyReferences: z.ZodOptional<z.ZodArray<z.ZodObject<{
             kind: z.ZodEnum<{
-                exercise: "exercise";
                 objective: "objective";
+                exercise: "exercise";
             }>;
             oldId: z.ZodString;
             status: z.ZodEnum<{
@@ -2053,13 +2053,13 @@ declare const schemas: {
             imagePath: z.ZodOptional<z.ZodString>;
             uncertainties: z.ZodString;
             errorType: z.ZodOptional<z.ZodEnum<{
-                pattern: "pattern";
-                "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
+                "place-value": "place-value";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
+                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -2403,13 +2403,13 @@ declare const schemas: {
             explanation: z.ZodString;
             answerEvidence: z.ZodString;
             errorType: z.ZodOptional<z.ZodEnum<{
-                pattern: "pattern";
-                "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
+                "place-value": "place-value";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
+                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -2469,13 +2469,13 @@ declare const schemas: {
                 speak: "speak";
             }>;
             errorTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
-                pattern: "pattern";
-                "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
+                "place-value": "place-value";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
+                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -2564,8 +2564,8 @@ declare const schemas: {
             english: "english";
         }>>;
         state: z.ZodEnum<{
-            stopped: "stopped";
             ready: "ready";
+            stopped: "stopped";
             active: "active";
             paused: "paused";
             completed: "completed";
@@ -2579,8 +2579,8 @@ declare const schemas: {
                 english: "english";
             }>;
             purpose: z.ZodEnum<{
-                teaching: "teaching";
                 review: "review";
+                teaching: "teaching";
                 resume: "resume";
                 diagnostic: "diagnostic";
                 learning: "learning";

@@ -84,8 +84,8 @@ export function nativeIntentPrompt(intent, request) {
 }
 /** Daily choices are persisted by the native executor after checking observed versions. */
 export const dailyPlanPrompt = '请加载 study，读取 references/daily-planning.md、references/continuation.md 和 study_status kind=daily-plan。执行本次 dailyAction：先核对意图携带的正式文件版本、计划 revision 和任务身份；变化时保留用户选择，重新核对，不能覆盖别的会话的新记录。首次开始复用 day-YYYY-MM-DD 和稳定任务身份，先保存计划，再准备当前任务，独立读取确认两者关联。继续原题和草稿；暂停与结束不能制造学习完成或掌握。只有明确继续才调整未开始内容；只有 extra 才添加可选活动。计划结束后不自动生成新题。';
-/** Explain a concrete parent scope without requiring internal catalog identifiers. */
+/** Adjust an optional family preference while retaining existing profile and school progress. */
 export function scopeConfirmationPrompt(subject, suggestion) {
-    return `请加载 study，读取 references/daily-planning.md。家长正在确认 ${subject} 学习范围。保留已有档案，先读取设置与能力目录，展示已有确认、建议包含的内容、不包含的内容和可用方式。建议：${JSON.stringify(suggestion ?? null)}。学校进度不明时不要猜单元，可明确选择基础学习。请家长确认具体摘要后才保存 learningScopes；只补此学科，其他已确认学科仍可学习。保存后只读校验并独立读取，再回到今日推荐。`;
+    return `请加载 study，读取 references/daily-planning.md。家长想调整 ${subject} 的学习内容。先读取已有档案、教材、学校进度、有效作答和当前建议：${JSON.stringify(suggestion ?? null)}。说明当前依据，询问希望改变的内容；默认沿用已有资料，不要求逐科解锁。只有家长明确提出额外限制时才保存此学科的 learningScopes 与原话，不替其他学科补写确认。缺少学校进度时使用年级范围做简短摸底，不猜正在教的单元。保存后只读校验并独立读取，再回到今日推荐。`;
 }
 //# sourceMappingURL=prompts.js.map

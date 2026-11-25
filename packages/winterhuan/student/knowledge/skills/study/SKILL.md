@@ -19,7 +19,7 @@ description: 通过当前 DSH 原生对话管理学生档案、教材进度、�
 
 教材与学校当前单元共同保存在同一份学期设置中，校验整个结果后才报告校内设置完成。用户资料优先；二年级上册语文和数学可读取 [默认教材](references/default-textbooks.md)，英语和其他册次没有默认课页。封面、版权页和当前单元的核对见 [教材与来源](references/materials.md)。默认课页不自动证明学校正在使用这本书。基本档案有效时可先做 `foundation`，明确说明基础练习，稍后再完成校内关联。
 
-学校范围由家长确认；照片只能提出进度建议。家长明确选定的科目、目标、单元或跨年级范围优先，保存到学习段 `context.scope`。浏览其他科目或册次保留当前学习段与题目。建议不替换选中的目标。继续、暂停、换目标与补检按共享 `learning-context.nextAction`、`round` 和 `legalActions`，操作前读取 [继续与轮次](references/continuation.md)。浏览不授予执行权限；家长一次确认具体数域、词表和形式后，在范围内无需逐课确认。
+学校范围由家长确认；照片只能提出进度建议。家长明确选定的科目、目标、单元或跨年级范围优先，保存到学习段 `context.scope`。浏览其他科目或册次保留当前学习段与题目。建议不替换选中的目标。继续、暂停、换目标与补检按共享 `learning-context.nextAction`、`round` 和 `legalActions`，操作前读取 [继续与轮次](references/continuation.md)。浏览不启动学习；已有档案、学校进度和历史范围直接沿用，缺少 learningScopes 不要求逐科解锁。只有家长额外限制内容时才记录该字段；无学校进度时可按年级做简短摸底。
 
 家长可确认 3 到 8 个兴趣标签。出题和 OpenMAIC 用 [兴趣情境](references/interest-hooks.md) 换生活场景，知识事实仍来自地图。
 

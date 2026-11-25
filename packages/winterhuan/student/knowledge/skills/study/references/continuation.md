@@ -4,9 +4,9 @@
 
 ## 身份与范围
 
-继续的 blockId、questionId、responseId 仅取 nextAction。新目标或尚未建立的新复习没有旧 blockId；`previousActivity` 只用于保留旧题、原回答和迟到评价。回答、提示、不会和停止仍属于原题。执行已确认范围内的新学习时保存新学习段身份；课堂及独立组件都使用 nextAction.requirement。
+继续的 blockId、questionId、responseId 仅取 nextAction。新目标或尚未建立的新复习没有旧 blockId；`previousActivity` 只用于保留旧题、原回答和迟到评价。回答、提示、不会和停止仍属于原题。执行当前可学范围内的新学习时保存新学习段身份；课堂及独立组件都使用 nextAction.requirement。
 
-家长一次确认具体表现形式和数域或词表后，保存 `settings.learningScopes` 的 subject、scope、parentConfirmation；goalIds 可选，省略时采用已确认的课程关联。没有学校教材也可明确选定基础目标。校内学习还须符合已确认学校进度：紧跟当前单元、追赶已教内容、复习周不增加新目标。能力目录的宽范围不代表家长已确认。
+已有档案、学校进度和历史学习范围直接参与下一步选择；缺少 settings.learningScopes 不阻止学习。缺进度时按年级目录短摸底，不猜学校单元。learningScopes 是可选的家长额外限制，保留实际 parentConfirmation，不为默认建议补写确认。校内建议遵守现有学校进度：紧跟当前单元、追赶已教内容、复习周不增加新目标；已有回答优先恢复。
 
 ## 保存原轮次
 

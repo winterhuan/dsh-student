@@ -20,7 +20,6 @@ export declare const zh: {
     startToday: string;
     noDailySuggestion: string;
     scopeConfirmationHelp: string;
-    confirmSubjectScope: string;
     dailyCompleted: string;
     dailyStopped: string;
     dailyCompletionHelp: string;

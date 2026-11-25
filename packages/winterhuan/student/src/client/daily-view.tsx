@@ -5,7 +5,7 @@ import { continuationReasons } from './today-view.tsx'
 import css from './desk.module.css'
 
 /** Home is the only learner surface for browsing subjects or choosing new content. */
-export function DailyHome({ daily, subject, disabled, extra, onStart, onResume, onSummary, onScope, t }: { daily: DailyLearning; subject: Subject | 'all'; disabled: boolean; extra: boolean; onStart: (suggestion?: DailySuggestion) => void; onResume: () => void; onSummary: () => void; onScope: (subject: Subject) => void; t: Translate }) {
+export function DailyHome({ daily, subject, disabled, extra, onStart, onResume, onSummary, t }: { daily: DailyLearning; subject: Subject | 'all'; disabled: boolean; extra: boolean; onStart: (suggestion?: DailySuggestion) => void; onResume: () => void; onSummary: () => void; t: Translate }) {
   const unfinished = daily.tasks.find(item => ['active', 'paused', 'ready'].includes(item.task.state))
   const resumedBlock = unfinished?.task.activity?.blockId ?? (daily.phase === 'learning' ? daily.nextAction?.blockId : undefined)
   const suggestions = (subject === 'all' ? daily.recommended : daily.suggestions.filter(item => item.task.subject === subject)).filter(item => !resumedBlock || item.task.activity?.blockId !== resumedBlock)
@@ -23,9 +23,6 @@ export function DailyHome({ daily, subject, disabled, extra, onStart, onResume, 
       <p className="student-muted">{t(item.task.ending === 'review-attempts' ? 'reviewEnding' : 'learningEnding')}</p>
       <button type="button" className={index === 0 && !unfinished && daily.phase !== 'learning' ? 'student-primary' : undefined} disabled={disabled} onClick={() => onStart(subject === 'all' && index === 0 && !extra ? undefined : item)}>{t(extra ? 'learnThis' : item.task.purpose === 'resume' ? 'resumeLearning' : 'startToday')}</button>
     </article>)}</section> : !unfinished && daily.phase !== 'learning' && <section><p>{t('noDailySuggestion')}</p></section>}
-    {daily.missingSubjects.filter(item => subject === 'all' || subject === item).length > 0 && <details className="student-fold" open={suggestions.length === 0}><summary>{t('confirmLearningScope')}</summary><p>{t('scopeConfirmationHelp')}</p>
-      {daily.missingSubjects.filter(item => subject === 'all' || subject === item).map(item => <button key={item} type="button" disabled={disabled} onClick={() => onScope(item)}>{t('confirmSubjectScope').replace('{subject}', t(item))}</button>)}
-    </details>}
   </>
 }
 

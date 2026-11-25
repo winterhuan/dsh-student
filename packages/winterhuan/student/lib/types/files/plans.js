@@ -1,9 +1,11 @@
+import { effectiveLearningScopes } from "../learning/scopes.js";
 import { effectiveKnowledge, scopeSupports } from "../capabilities.js";
 import { canonical, studyDay } from "../learning/shared.js";
 /** Check arrangement ownership and original references without creating learning evidence. */
 export function validateDailyPlans(workspace, prior, fail) {
     const { settings, blocks, plans = [] } = workspace;
     const knowledge = effectiveKnowledge(workspace.collections?.knowledge);
+    const scopes = effectiveLearningScopes(workspace);
     const owners = new Map();
     const pending = (task) => ['ready', 'active', 'paused'].includes(task.state);
     for (const plan of plans) {
@@ -28,16 +30,16 @@ export function validateDailyPlans(workspace, prior, fail) {
             if (!plan.subjects.includes(task.subject) || task.goalId && (!goal || goal.subject !== task.subject) || task.familyIds.some(id => !knowledge.families.some(family => family.id === (knowledge.familyAliases[id] ?? id) && family.goalIds.includes(task.goalId ?? ''))))
                 issue(field, 'plan-goal', 'Use compatible goals and families of a participating subject.');
             if (task.purpose !== 'resume' && (!task.goalId || !task.scope))
-                issue(field, 'plan-scope', 'Save a concrete capability and confirmed range for a new activity.');
+                issue(field, 'plan-scope', 'Save a concrete capability and learning range for a new activity.');
             // Changed settings may invalidate an unstarted task; the query offers an explicit amendment.
-            if (['ready', 'active'].includes(task.state) && plan.createdAt >= settings.updatedAt && task.scope && !settings.learningScopes?.some(scope => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(task.goalId)) && scopeSupports(scope.scope, task.scope)))
-                issue(field, 'plan-scope', 'Defer this unstarted task or confirm its learning scope before starting it.');
+            if (['ready', 'active'].includes(task.state) && plan.createdAt >= settings.updatedAt && task.scope && !scopes.some(scope => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(task.goalId)) && scopeSupports(scope.scope, task.scope)))
+                issue(field, 'plan-scope', 'Defer this unstarted task or adjust its learning scope before starting it.');
             const block = task.activity ? blocks.find(block => block.id === task.activity.blockId) : undefined;
             if (task.activity && (!block || block.subject !== task.subject || task.activity.questionId && !block.questions.some(question => question.id === task.activity.questionId) || task.activity.responseId && !block.responses.some(response => response.id === task.activity.responseId && (!task.activity.questionId || response.questionId === task.activity.questionId)) || task.activity.roundId && !block.rounds?.some(round => round.id === task.activity.roundId)))
                 issue(field, 'plan-activity', 'Restore the original activity, question, response and round before continuing; do not recreate them.');
             const previousBlocks = prior.flatMap(entry => entry.file.kind === 'block' && entry.file.id === block?.id ? [entry.file] : []);
-            if (block && task.scope && plan.createdAt < settings.updatedAt && previousBlocks.length && block.questions.some(question => !previousBlocks.some(old => old.questions.some(saved => saved.id === question.id)) && question.capability && !settings.learningScopes?.some(scope => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(question.capability.goalId)) && scopeSupports(scope.scope, question.capability.scope))))
-                issue(field, 'plan-scope', 'Preserve the original questions and confirm the changed learning range before adding new questions.');
+            if (block && task.scope && plan.createdAt < settings.updatedAt && previousBlocks.length && block.questions.some(question => !previousBlocks.some(old => old.questions.some(saved => saved.id === question.id)) && question.capability && !scopes.some(scope => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(question.capability.goalId)) && scopeSupports(scope.scope, question.capability.scope))))
+                issue(field, 'plan-scope', 'Preserve the original questions and check the changed learning range before adding new questions.');
             if (block && task.goalId && task.scope && block.questions.length && !block.questions.some(question => question.capability?.goalId === task.goalId && scopeSupports(task.scope, question.capability.scope)))
                 issue(field, 'plan-activity', 'Bind a task only to its original capability and learning range.');
             for (const reference of [...task.basis, ...task.outcomes]) {

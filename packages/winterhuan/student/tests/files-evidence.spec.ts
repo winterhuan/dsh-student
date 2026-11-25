@@ -50,7 +50,7 @@ it('groups reviewed legacy mistakes without rewriting frozen questions or granti
   expect(read.workspace!.worksheets.map(sheet => sheet.items[0]!.objectiveId)).toEqual([{ kind: 'pending', reason: 'Original worksheet target unresolved' }, { kind: 'pending', reason: 'Original worksheet target unresolved' }])
   expect(deriveEvidence(read.workspace!).entries).toHaveLength(3)
   expect(queryWorkspace(read, { kind: 'mistakes' }, NOW)).toMatchObject({ data: { items: [expect.objectContaining({ id: 'm1', capability, stage: 0, independentDays: [] })], total: 1 } })
-  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { reviewRound: { backlog: 1 }, goalProgress: [] } })
+  expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { reviewRound: { backlog: 1 }, goalProgress: expect.arrayContaining([expect.objectContaining({ independentDays: [], feedback: [] })]) } })
   await f.save('.study/blocks/block-1.json', { ...f.block, endedAt: NOW })
   expect(queryWorkspace(await readWorkspace(f.files, new AbortController().signal), { kind: 'learning-context' }, NOW)).toMatchObject({ data: { nextAction: { kind: 'review', goalId: capability.goalId, familyId: capability.familyId, scope: capability.scope, review: { mistakeIds: ['m1'], familyIds: [capability.familyId], remaining: 2 } } } })
   mistakes[1]!.capability = { ...capability, scope: { ...capability.scope, numberMax: 1000 } }
@@ -228,7 +228,7 @@ it('keeps the selected goal and current response while distinguishing pending an
   expect(pending).toMatchObject({ data: { savedResponse: { id: 'r1', rawResponse: '15' }, pendingAssessment: true, target: { id: 'm2a-o-sub', method: 'verify' }, legalActions: ['request-assessment', 'end-block', 'switch-block'] } })
   block.assessments = [{ id: 'a1', responseId: 'r1', result: 'correct', assistance: 'unknown', feedback: 'Correct', answerEvidence: '8 + 7 = 15', assessedAt: NOW }]
   await save('.study/blocks/block-1.json', block)
-  expect(queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'learning-context' }, NOW)).toMatchObject({ data: { pendingAssessment: false, nextAction: { kind: 'hold', reason: 'confirmed-scope-required' }, legalActions: ['switch-block', 'rest', 'more-review'] } })
+  expect(queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'learning-context' }, NOW)).toMatchObject({ data: { pendingAssessment: false, nextAction: { kind: 'learn', reason: 'new-goal' }, legalActions: ['start-block', 'rest', 'more-review'] } })
 })
 
 it('retains an explicitly selected original response outside the recent response window', async () => {

@@ -56,7 +56,7 @@ it('browses subjects only at Home and returns to the original English question a
     expect(screen.queryByText('Confirm the next learning range or choose another allowed activity.')).toBeNull()
     expect(screen.queryByText('play ____')).toBeNull()
     expect(screen.queryByLabelText(en.reflection)).toBeNull()
-    expect(queryWorkspace(read, { kind: 'learning-context', subject }, NOW)).toMatchObject({ data: { nextAction: { subject, reason: subject === 'math' ? 'new-goal' : 'confirmed-scope-required' }, round: null } })
+    expect(queryWorkspace(read, { kind: 'learning-context', subject }, NOW)).toMatchObject({ data: { nextAction: { subject, reason: 'new-goal' }, round: null } })
   }
   fireEvent.click(screen.getByRole('button', { name: en.english }))
   fireEvent.click(screen.getAllByRole('button', { name: en.resumeLearning })[0]!)

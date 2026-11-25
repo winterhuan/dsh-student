@@ -362,7 +362,7 @@ it('starts fresh confirmed foundation or school learning without pre-creating qu
   await rm(join(f.cwd, '.study/blocks/current.json'))
   const learningScopes = [{ subject: 'math', goalIds: ['m.sub'], scope, parentConfirmation: 'Confirm subtraction within twenty.' }]
   await f.save('.study/settings.json', { ...f.settings, learningScopes })
-  const consume = async () => queryWorkspace(await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal), { kind: 'learning-context' }, NOW)
+  const consume = async () => queryWorkspace(await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal), { kind: 'learning-context', subject: 'math' }, NOW)
   expect(await consume()).toMatchObject({ data: { activeQuestions: [], nextAction: { kind: 'learn', goalId: 'm.sub', scope } } })
   const material = { id: 'book', subject: 'math', scope: { region: '上海市', grade: 2, term: 'first', schoolYear: '2026–2027', schoolSystem: 'five-four' }, title: 'Parent book', publisher: 'Publisher', edition: 'Confirmed edition', editionStatus: 'identified', kind: 'official-textbook', locator: 'Current page', evidence: 'Parent checked current book' }
   const course = { subject: 'math', materialId: 'book', unit: 'Current unit', parentConfirmation: 'Confirmed course', progress: { unitId: 'm2a-u-shop', confirmedAt: NOW, posture: 'keep-up', preview: false, pace: 'teaching' } }
@@ -376,7 +376,7 @@ it('starts fresh confirmed foundation or school learning without pre-creating qu
   await save({ ...course.progress, pace: 'review' })
   expect(await consume()).toMatchObject({ data: { nextAction: { kind: 'hold', reason: 'no-learnable-goal' } } })
   await save(undefined)
-  expect(await consume()).toMatchObject({ data: { nextAction: { kind: 'hold' } } })
+  expect(await consume()).toMatchObject({ data: { nextAction: { kind: 'learn', goalId: 'm.sub' } } })
 })
 
 it('requires explicit more-review intent and retains selected members when the browsing subject changes', async () => {
@@ -428,6 +428,6 @@ it.each(['chinese', 'english'] as const)('keeps Math ownership and round limits 
   read.sourceVerification = { native: [], openmaic: [{ lessonId: 'math-classroom', learnerId: 'child-1', termId: 'new-term', blockId: f.block.id, status: 'available', consumption: 'pending', omitted: 0 }] }
   const versions = read.files.map(file => file.version)
   expect(queryWorkspace(read, { kind: 'learning-context' }, NOW + 2)).toMatchObject({ data: { nextAction: { subject: 'math', reason: 'source-pending', blockId: f.block.id }, round: { id: round.id, status: 'paused', remaining: 2 } } })
-  expect(queryWorkspace(read, { kind: 'learning-context', subject }, NOW + 2)).toMatchObject({ data: { nextAction: { subject, reason: 'confirmed-scope-required' }, round: null, reviewRound: { remaining: 2, usedFamilyIds: [] } } })
+  expect(queryWorkspace(read, { kind: 'learning-context', subject }, NOW + 2)).toMatchObject({ data: { nextAction: { subject, reason: 'new-goal' }, round: null, reviewRound: { remaining: 2, usedFamilyIds: [] } } })
   expect(read.files.map(file => file.version)).toEqual(versions)
 })

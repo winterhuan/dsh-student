@@ -1,4 +1,4 @@
-import { Bt as scopeSupports, G as activeSession, Jt as interestTagsOf, K as canonical, Lt as effectiveKnowledge, Rt as knowledgeSources, S as evidenceOf, W as DAY, Wt as stateSchema, Y as formatDuration, _ as attachEvidence, _t as OPENMAIC_COOKIE_PATH, at as taughtUnit, b as evidenceAtCutoff, bt as interactiveLessonsView, ct as builtinObjectiveAnywhere, dt as builtinObjectivesIn, et as schoolGate, ft as curriculumFor, g as scheduleMistakes, h as replayMistake, ht as subjectIdeas, it as studyDay, m as dayStart, mt as subjectExercises, ot as todaySpent, p as migrateStudyFile, pt as exercisesForObjective, qt as interestFocus, st as builtinObjective, tn as StudyReadCache, tt as scopeSelects, ut as builtinObjectives, v as demonstrablyAfter, vt as OPENMAIC_LESSONS_PATH, x as evidenceDay, y as deriveEvidence, yt as effectiveOpenmaicBase } from "./read-CIG-O3uQ.js";
+import { Bt as knowledgeSources, C as evidenceDay, Ht as scopeSupports, J as canonical, K as DAY, Kt as stateSchema, S as evidenceAtCutoff, St as interactiveLessonsView, Xt as interestTagsOf, Yt as interestFocus, Z as formatDuration, _ as replayMistake, _t as subjectIdeas, b as demonstrablyAfter, bt as OPENMAIC_LESSONS_PATH, ct as todaySpent, ft as builtinObjectives, g as dayStart, gt as subjectExercises, h as migrateStudyFile, ht as exercisesForObjective, lt as builtinObjective, m as effectiveLearningScopes, mt as curriculumFor, nt as schoolGate, ot as studyDay, p as automaticLearningScopes, pt as builtinObjectivesIn, q as activeSession, rn as StudyReadCache, rt as scopeSelects, st as taughtUnit, ut as builtinObjectiveAnywhere, v as scheduleMistakes, w as evidenceOf, x as deriveEvidence, xt as effectiveOpenmaicBase, y as attachEvidence, yt as OPENMAIC_COOKIE_PATH, zt as effectiveKnowledge } from "./read-WhSEc1TX.js";
 import { z } from "zod";
 import { createHash } from "node:crypto";
 //#region lib/types/learning/mastery.js
@@ -30,7 +30,8 @@ function learningContinuation(workspace, state, now, subject, sourceVerification
 		block,
 		binding: question.capability
 	}] : []));
-	const scopeFor = (goalId) => current?.capability?.goalId === goalId ? current.capability.scope : workspace.settings.learningScopes?.find((item) => item.subject === knowledge.goals.find((goal) => goal.id === goalId)?.subject && (!item.goalIds || item.goalIds.includes(goalId)))?.scope ?? questionBindings.find((item) => item.binding.goalId === goalId)?.binding.scope ?? workspace.archivedEvidence?.flatMap((archive) => archive.references).find((reference) => reference.goalId === goalId)?.scope;
+	const learningScopes = effectiveLearningScopes(workspace);
+	const scopeFor = (goalId) => current?.capability?.goalId === goalId ? current.capability.scope : learningScopes.find((item) => item.subject === knowledge.goals.find((goal) => goal.id === goalId)?.subject && (!item.goalIds || item.goalIds.includes(goalId)))?.scope ?? questionBindings.find((item) => item.binding.goalId === goalId)?.binding.scope ?? workspace.archivedEvidence?.flatMap((archive) => archive.references).find((reference) => reference.goalId === goalId)?.scope;
 	const canonicalFamily = (id) => knowledge.familyAliases[id] ?? id;
 	const accepted = (entry) => entry.sourceStatus === "known" && entry.result === "correct";
 	const independent = (entry) => accepted(entry) && entry.assistance === "independent" && evidenceDay(entry) !== void 0;
@@ -363,18 +364,17 @@ function learningContinuation(workspace, state, now, subject, sourceVerification
 		});
 	}
 	const selectedSubject = active?.subject ?? subject;
-	const confirmations = (workspace.settings.learningScopes ?? []).filter((item) => !selectedSubject || item.subject === selectedSubject);
+	const confirmations = learningScopes.filter((item) => !selectedSubject || item.subject === selectedSubject);
 	const enteredGoals = new Set(rounds.flatMap((round) => round.members.filter((member) => round.enteredFamilyIds.includes(member.familyId)).map((member) => member.goalId)));
 	for (const confirmation of confirmations) {
-		const course = workspace.settings.courses.find((course) => course.subject === confirmation.subject);
 		const gate = schoolGate(state, confirmation.subject);
-		if (course && (!gate || gate.pace === "review")) continue;
+		if (gate?.pace === "review") continue;
 		const candidates = knowledge.goals.filter((goal) => {
 			const item = progress.find((item) => item.id === goal.id);
 			if (goal.subject !== confirmation.subject || enteredGoals.has(goal.id) && item.level !== "weak" || item.level === "mastered" || item.level === "due" || item.level === "practising" && !item.missingCriteria.length) return false;
 			if (confirmation.goalIds && !confirmation.goalIds.includes(goal.id)) return false;
 			const associations = builtinObjectives(state.profile).filter((old) => old.subject === goal.subject).filter((old) => goal.curriculumAssociationIds.includes(old.id));
-			if (course ? !associations.some((old) => gate.posture === "catch-up" ? gate.taught.has(old.unit) : old.unit === gate.current) : !confirmation.goalIds && !associations.length) return false;
+			if (gate ? !associations.some((old) => gate.posture === "catch-up" ? gate.taught.has(old.unit) : old.unit === gate.current) : !confirmation.goalIds && !associations.length) return false;
 			const modality = confirmation.scope.modality;
 			const oral = goal.id.startsWith("e.speak") || [
 				"c.read-aloud",
@@ -400,12 +400,13 @@ function learningContinuation(workspace, state, now, subject, sourceVerification
 		kind: "hold",
 		reason: confirmations.length ? "no-learnable-goal" : "confirmed-scope-required",
 		subject: selectedSubject ?? "math",
-		title: confirmations.length ? "No new goal is available in the confirmed range. Rest or explicitly request more review." : "Confirm the next learning range or choose another allowed activity."
+		title: confirmations.length ? "No new goal is available in this range. Rest or explicitly request more review." : "Adjust the profile or learning range to find suitable content."
 	});
 }
 /** One capability/range projection for recommendations, maps and parent summaries. */
 function capabilityProgress(workspace, state, now) {
 	const knowledge = effectiveKnowledge(workspace.collections?.knowledge);
+	const learningScopes = effectiveLearningScopes(workspace);
 	const index = evidenceOf(state);
 	const questionBindings = workspace.blocks.slice().sort((a, b) => b.startedAt - a.startedAt || a.id.localeCompare(b.id)).flatMap((block) => block.questions.flatMap((question) => question.capability ? [{
 		block,
@@ -417,7 +418,7 @@ function capabilityProgress(workspace, state, now) {
 	return knowledge.goals.flatMap((goal) => {
 		const ranges = [
 			...questionBindings.filter((item) => item.binding.goalId === goal.id).map((item) => item.binding.scope),
-			...(workspace.settings.learningScopes ?? []).filter((item) => item.subject === goal.subject && (!item.goalIds || item.goalIds.includes(goal.id))).map((item) => item.scope),
+			...learningScopes.filter((item) => item.subject === goal.subject && (!item.goalIds || item.goalIds.includes(goal.id))).map((item) => item.scope),
 			...(workspace.archivedEvidence ?? []).flatMap((archive) => archive.references.filter((reference) => reference.goalId === goal.id).map((reference) => reference.scope))
 		];
 		const scopes = ranges.filter((scope, i) => ranges.findIndex((other) => scopeSupports(scope, other) && scopeSupports(other, scope)) === i);
@@ -2022,7 +2023,8 @@ function dailyLearning(read, state, now, selectedSubject, requestedDay) {
 	const day = requestedDay ?? studyDay(now);
 	const knowledge = effectiveKnowledge(workspace.collections?.knowledge);
 	const entries = evidenceOf(state).entries;
-	const confirmed = SUBJECT_ORDER.filter((subject) => settings.learningScopes?.some((scope) => scope.subject === subject));
+	const scopes = effectiveLearningScopes(workspace);
+	const available = SUBJECT_ORDER.filter((subject) => scopes.some((scope) => scope.subject === subject));
 	const continuation = (subject, main = false) => learningContinuation(workspace, state, now, subject, read.sourceVerification, main ? "main" : void 0);
 	const all = continuation();
 	const active = blocks.find((block) => block.endedAt === void 0);
@@ -2042,7 +2044,7 @@ function dailyLearning(read, state, now, selectedSubject, requestedDay) {
 		return day ? [day] : [];
 	}))].filter((date) => date <= day).sort().reverse().slice(0, 3);
 	const lastMain = (subject) => actualDays.find((date) => entries.some((entry) => entry.subject === subject && evidenceDay(entry) === date && entry.sourceStatus === "known" && entry.result !== "unassessed" && plans.some((plan) => plan.tasks.some((task) => task.subject === subject && task.purpose !== "review" && task.activity?.blockId === entry.ownerId)))) ?? "";
-	const subjectOrder = [...confirmed].sort((a, b) => lastMain(a).localeCompare(lastMain(b)) || (settings.learningScopes?.findIndex((scope) => scope.subject === a) ?? 0) - (settings.learningScopes?.findIndex((scope) => scope.subject === b) ?? 0));
+	const subjectOrder = [...available].sort((a, b) => lastMain(a).localeCompare(lastMain(b)) || scopes.findIndex((scope) => scope.subject === a) - scopes.findIndex((scope) => scope.subject === b));
 	const suggestion = (next) => {
 		const binding = blocks.find((block) => block.id === next.blockId)?.questions.find((question) => question.id === next.questionId)?.capability;
 		const goalId = next.goalId ?? binding?.goalId;
@@ -2170,7 +2172,7 @@ function dailyLearning(read, state, now, selectedSubject, requestedDay) {
 		task,
 		title: knowledge.goals.find((goal) => goal.id === task.goalId)?.title ?? blocks.find((block) => block.id === task.activity?.blockId)?.questions.find((question) => question.id === task.activity?.questionId)?.topic ?? task.reason,
 		...outcomes(entries.filter((entry) => entry.termId === settings.termId && entry.ownerKind === "block" && entry.ownerId === task.activity?.blockId)),
-		invalidScope: !!task.scope && !settings.learningScopes?.some((scope) => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(task.goalId)) && scopeSupports(scope.scope, task.scope)),
+		invalidScope: !!task.scope && !scopes.some((scope) => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(task.goalId)) && scopeSupports(scope.scope, task.scope)),
 		preparationIncomplete: ["active", "ready"].includes(task.state) && !task.activity
 	}));
 	const summary = SUBJECT_ORDER.map((subject) => ({
@@ -2184,27 +2186,14 @@ function dailyLearning(read, state, now, selectedSubject, requestedDay) {
 		"stopped",
 		"paused"
 	].includes(saved.state) && !optionalActive ? "summary" : active || saved?.state === "active" || optionalActive ? "learning" : "home";
+	const defaults = automaticLearningScopes(workspace);
 	const scopeSuggestions = SUBJECT_ORDER.flatMap((subject) => {
-		const candidates = knowledge.goals.filter((goal) => goal.subject === subject && !goal.id.startsWith("e.listen") && !goal.id.startsWith("e.speak") && ![
-			"e.sound",
-			"e.view-listen",
-			"c.read-aloud",
-			"c.recite",
-			"c.retell",
-			"c.describe",
-			"c.interact",
-			"c.listen"
-		].includes(goal.id)).slice(0, 3);
-		return candidates.length ? [{
+		const selection = settings.learningScopes?.find((scope) => scope.subject === subject) ?? defaults.find((scope) => scope.subject === subject);
+		return selection ? [{
 			subject,
-			goalIds: candidates.map((goal) => goal.id),
-			scope: {
-				id: `${subject}-foundations`,
-				description: subject === "math" ? "20 以内按物点数、理解零与数的分合" : subject === "chinese" ? "书面辨认拼音、声调与拼读音节" : "借助图片认读常见英语词语、短句与短故事",
-				modality: "written",
-				...subject === "math" ? { numberMax: 20 } : {}
-			},
-			titles: candidates.map((goal) => goal.title)
+			goalIds: selection.goalIds ?? [],
+			scope: selection.scope,
+			titles: knowledge.goals.filter((goal) => selection.goalIds?.includes(goal.id)).map((goal) => goal.title)
 		}] : [];
 	});
 	return {
@@ -2219,7 +2208,7 @@ function dailyLearning(read, state, now, selectedSubject, requestedDay) {
 		summary,
 		currentTaskId: current?.id ?? null,
 		confirmedScopes: settings.learningScopes ?? [],
-		missingSubjects: SUBJECT_ORDER.filter((subject) => !confirmed.includes(subject)),
+		missingSubjects: SUBJECT_ORDER.filter((subject) => !available.includes(subject)),
 		scopeSuggestions,
 		nextAction: currentAction
 	};

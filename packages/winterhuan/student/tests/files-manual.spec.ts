@@ -7,6 +7,7 @@ import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
 import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { it, expect, onTestFinished } from 'vitest'
 import { applicationStudyFiles } from '../src/files/application.ts'
 import { nodeStudyFiles } from '../src/files/node.ts'
@@ -306,7 +307,7 @@ it('keeps published unanswered worksheet content frozen after source deletion ac
   await retainObservedBackups(fs, published, NOW, signal)
   await writeFile(join(cwd, '.study/collections.json'), JSON.stringify({ ...collections, mistakes: [] }))
   const cli = new URL('../src/cli.ts', import.meta.url)
-  const run = () => promisify(execFile)(process.execPath, ['--import', 'tsx/esm', cli.pathname, 'validate', '--workspace', cwd], { timeout: 30_000 })
+  const run = () => promisify(execFile)(process.execPath, ['--import', 'tsx/esm', fileURLToPath(cli), 'validate', '--workspace', cwd], { timeout: 30_000 })
   expect(JSON.parse((await run()).stdout)).toMatchObject({ ok: true, status: 'valid' })
   const cold = await readWorkspace(nodeStudyFiles(cwd), new AbortController().signal)
   expect(cold).toMatchObject({ status: 'valid', workspace: { worksheets: [{ id: 'published', responses: [], items: [expect.objectContaining({ prompt: '28 - 7?', objectiveId: 'm2a-o-sub' })] }] } })

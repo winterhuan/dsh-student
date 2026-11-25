@@ -16024,7 +16024,7 @@ function isElement(node) {
 	return !node.nodeName.startsWith("#");
 }
 //#endregion
-//#region node_modules/.pnpm/@openmaic+dsh-openmaic@https+++codeload.github.com+THU-MAIC+dsh-openmaic+tar.gz+09c1693_e55244188a52a66a7ab63ee30ff9269f/node_modules/@openmaic/dsh-openmaic/lib/index.js
+//#region node_modules/.pnpm/@openmaic+dsh-openmaic@https+++codeload.github.com+THU-MAIC+dsh-openmaic+tar.gz+09c1693_377ed0eb898080e69ffd3002fbb1073d/node_modules/@openmaic/dsh-openmaic/lib/index.js
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 /** Pull the openmaic_access value out of a Set-Cookie header. */
 function extractAccessCookie(setCookie) {

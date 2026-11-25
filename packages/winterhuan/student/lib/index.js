@@ -12,7 +12,7 @@ import { Remote, RemoteError, TypertRemoteService } from "@deepseek-ai/dsh-typer
 import Include from "@deepseek-ai/cordis-plugin-include";
 import { setTimeout as setTimeout$1 } from "node:timers/promises";
 import { brandString } from "@deepseek-ai/dsh-brand";
-//#region ../../../node_modules/.pnpm/@deepseek-ai+dsh-util-values@0.2.2-rc.1_@deepseek-ai+cordis@4.1.0/node_modules/@deepseek-ai/dsh-util-values/lib/index.js
+//#region ../../../node_modules/.pnpm/@deepseek-ai+dsh-util-values@0.2.2-rc.5_@deepseek-ai+cordis@4.1.0/node_modules/@deepseek-ai/dsh-util-values/lib/index.js
 /**
 * Lazily scanned view of one JSON object's top-level fields, built from text
 * that may still be streaming or from an already parsed object. Nothing is
@@ -689,7 +689,7 @@ function deepFreeze(value) {
 	return value;
 }
 //#endregion
-//#region ../../../node_modules/.pnpm/@deepseek-ai+dsh-util-crypto@0.2.2-rc.1_@deepseek-ai+cordis@4.1.0/node_modules/@deepseek-ai/dsh-util-crypto/lib/index.js
+//#region ../../../node_modules/.pnpm/@deepseek-ai+dsh-util-crypto@0.2.2-rc.5_@deepseek-ai+cordis@4.1.0/node_modules/@deepseek-ai/dsh-util-crypto/lib/index.js
 /**
 * Random v4 UUID, minted from `crypto.getRandomValues`.
 * @returns the UUID string.
@@ -702,11 +702,33 @@ function randomUUID() {
 	return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 //#endregion
-//#region ../../../node_modules/.pnpm/@deepseek-ai+dsh-timeout@0.2.2-rc.1_@deepseek-ai+cordis@4.1.0/node_modules/@deepseek-ai/dsh-timeout/lib/index.js
+//#region ../../../node_modules/.pnpm/@deepseek-ai+dsh-timeout@0.2.2-rc.5_@deepseek-ai+cordis@4.1.0/node_modules/@deepseek-ai/dsh-timeout/lib/index.js
 /** Largest delay Node schedules without clamping it to one millisecond. */
 const MAX_TIMER_DELAY_MS = 2147483647;
 //#endregion
-//#region ../../../node_modules/.pnpm/@deepseek-ai+dsh-llm@0.2.2-rc.1_@deepseek-ai+cordis@4.1.0/node_modules/@deepseek-ai/dsh-llm/lib/index.js
+//#region ../../../node_modules/.pnpm/@deepseek-ai+dsh-error@0.2.2-rc.5_@deepseek-ai+cordis@4.1.0/node_modules/@deepseek-ai/dsh-error/lib/index.js
+/**
+* Harness error base with a stable machine-routable code and chained cause.
+* Package errors extend it so tool results and replay can retain failure class.
+* @module @deepseek-ai/dsh-error
+*/
+/**
+* Base class for all harness errors. Carries a `code` (stable, programmatic —
+* e.g. `NO_ADAPTER`, `INVALID_ARGS`) distinct from the
+* human-readable `message`, and supports `cause` chaining via the standard
+* `ErrorOptions`. `name` defaults to the subclass constructor name.
+*/
+var HarnessError = class extends Error {
+	/** Stable machine-routable failure class (e.g. `RATE_LIMIT`); route on this, never by parsing `message`. */
+	code;
+	constructor(message, code, options) {
+		super(message, options);
+		this.code = code;
+		this.name = new.target.name;
+	}
+};
+//#endregion
+//#region ../../../node_modules/.pnpm/@deepseek-ai+dsh-llm@0.2.2-rc.5_@deepseek-ai+cordis@4.1.0_@deepseek-ai+dsh-error@0.2.2-rc.5_@deepseek-ai+cordis@4.1.0_/node_modules/@deepseek-ai/dsh-llm/lib/index.js
 /**
 * Detach and deep-freeze a message whose identity already exists.
 * @param message - complete message, including its stable identity.
@@ -738,25 +760,73 @@ function createUserMessage(input) {
 	});
 }
 /**
-* Harness error base with a stable machine-routable code and chained cause.
-* Package errors extend it so tool results and replay can retain failure class.
+* LLM failure codes and helpers over the shared Harness error base. The base
+* class lives in `@deepseek-ai/dsh-error` and is re-exported here, so both
+* import paths name the same class.
 * @module @deepseek-ai/dsh-llm/error
 */
 /**
-* Base class for all harness errors. Carries a `code` (stable, programmatic —
-* e.g. `NO_ADAPTER`, `INVALID_ARGS`) distinct from the
-* human-readable `message`, and supports `cause` chaining via the standard
-* `ErrorOptions`. `name` defaults to the subclass constructor name.
+* Every failure code the built-in providers and the LLM runtime raise. An entry
+* marked `retryChoice` is offered as a choice for a provider retry policy's
+* `retryableCodes`; being a choice does not make a code retried by default.
 */
-var HarnessError = class extends Error {
-	/** Stable machine-routable failure class (e.g. `RATE_LIMIT`); route on this, never by parsing `message`. */
-	code;
-	constructor(message, code, options) {
-		super(message, options);
-		this.code = code;
-		this.name = new.target.name;
-	}
+const LLM_FAILURE_CODES = {
+	ABORTED: {},
+	ACCOUNT_QUOTA: {},
+	ACCOUNT_SIGN_IN_REQUIRED: {},
+	ACCOUNT_TOKEN_INVALID: {},
+	AUTH: {},
+	CLIENT_UPGRADE_REQUIRED: {},
+	CONTENT_REFUSED: {},
+	CONTEXT_WINDOW_EXCEEDED: {},
+	DISCOVERY_FAILED: {},
+	DISCOVERY_UNSUPPORTED: {},
+	DUPLICATE_ADAPTER: {},
+	DUPLICATE_DIRECTORY: {},
+	DUPLICATE_DISCOVERY: {},
+	EMPTY_RESPONSE: { retryChoice: true },
+	FILES_API: {},
+	IMAGE_OFFLOAD_REQUIRED: {},
+	INVALID_ADAPTER: {},
+	INVALID_CATALOG: {},
+	INVALID_CONFIG: {},
+	INVALID_CREDENTIAL: {},
+	INVALID_DIRECTORY: {},
+	INVALID_DISCOVERY: {},
+	INVALID_MODEL_CONTEXT: {},
+	INVALID_MODEL_INFO: {},
+	INVALID_MODEL_MAX_TOKENS: {},
+	INVALID_MODEL_REASONING: {},
+	INVALID_PREPARED_CALL: {},
+	INVALID_REPLAY_STATE: {},
+	INVALID_REQUEST: {},
+	INVALID_RESPONSE: {},
+	MALFORMED_RESPONSE: { retryChoice: true },
+	MISSING_CREDENTIAL: {},
+	MODEL_SWITCH_COMPACTION_FAILED: {},
+	MODEL_UNSUPPORTED: {},
+	NO_ADAPTER: {},
+	NO_CREDENTIAL_STORE: {},
+	NO_DISCOVERY: {},
+	PI_AI_ERROR: {},
+	QUOTA: { retryChoice: true },
+	RATE_LIMIT: { retryChoice: true },
+	REGISTRATION_DISPOSED: {},
+	REQUEST_EXTENSION: {},
+	REQUEST_HEADERS: {},
+	SERVER: { retryChoice: true },
+	STREAM_CLOSED: { retryChoice: true },
+	TIMEOUT: { retryChoice: true },
+	TRANSPORT: { retryChoice: true },
+	UNKNOWN: {},
+	UNKNOWN_MODEL: {},
+	UNSTORABLE_PROVIDER_ID: {},
+	UNSUPPORTED_CONTENT: {},
+	UNSUPPORTED_OPTION: {},
+	UNSUPPORTED_REASONING_EFFORT: {}
 };
+/** The {@link LLM_FAILURE_CODES} entries marked as retry-policy choices, in definition order. */
+const RETRY_CODE_CHOICES = Object.freeze(Object.keys(LLM_FAILURE_CODES).filter((code) => "retryChoice" in LLM_FAILURE_CODES[code]));
 /**
 * Canonical provider-neutral code for a response that completed normally but
 * carried no content blocks at all. Providers occasionally emit a degenerate
@@ -790,14 +860,14 @@ const DEFAULT_RETRYABLE_CODES = Object.freeze([
 	"TRANSPORT"
 ]);
 const backoffSchema = z$1.object({
-	initialDelayMs: z$1.number().max(MAX_TIMER_DELAY_MS).default(DEFAULT_INITIAL_DELAY_MS),
-	maxDelayMs: z$1.number().max(MAX_TIMER_DELAY_MS).default(DEFAULT_MAX_DELAY_MS),
+	initialDelayMs: z$1.number().min(Number.MIN_VALUE).max(MAX_TIMER_DELAY_MS).default(DEFAULT_INITIAL_DELAY_MS),
+	maxDelayMs: z$1.number().min(Number.MIN_VALUE).max(MAX_TIMER_DELAY_MS).default(DEFAULT_MAX_DELAY_MS),
 	jitterRatio: z$1.number().min(0).max(1).default(DEFAULT_JITTER_RATIO)
 });
 const normalPolicySchema = z$1.object({
 	mode: z$1.const("normal").required(),
 	maxRetries: z$1.number().step(1).min(0).max(Number.MAX_SAFE_INTEGER).default(DEFAULT_MAX_RETRIES),
-	retryableCodes: z$1.array(z$1.string()).default([...DEFAULT_RETRYABLE_CODES]),
+	retryableCodes: z$1.array(z$1.union([...RETRY_CODE_CHOICES.map((code) => z$1.const(code)), z$1.string().min(1)])).min(1).default([...DEFAULT_RETRYABLE_CODES]),
 	backoff: backoffSchema
 });
 const alwaysPolicySchema = z$1.object({
@@ -1075,27 +1145,47 @@ function withoutDeveloperMessages(messages) {
 	const retained = messages.filter((message) => message.role !== "developer");
 	return retained.length === messages.length ? messages : retained;
 }
-function toolDeclarations(tools, mode, history) {
+function toolDeclarations(history) {
 	const declarations = new Map(history.tools.map((tool) => [tool.name, tool]));
 	for (const update of history.updates) for (const tool of update.additions) if (!declarations.has(tool.name)) declarations.set(tool.name, {
 		...tool,
 		deferLoading: true
 	});
-	switch (mode) {
-		case "in-history": return declarations;
-		case "addition-only": {
-			const activeNames = new Set(tools?.map((tool) => tool.name));
-			for (const name of declarations.keys()) if (!activeNames.has(name)) declarations.delete(name);
-			return declarations;
+	return declarations;
+}
+/** Rebuild declarations on removals or additions to an empty set, where the request prefix changes. */
+function rebaseAdditionOnlyHistory(history, messages) {
+	const available = new Map(history.tools.map((tool) => [tool.name, tool]));
+	let baseline = history.tools;
+	let retainedFrom = 0;
+	for (const [index, update] of history.updates.entries()) {
+		const additions = new Map(update.additions.map((tool) => [tool.name, tool]));
+		let reset = available.size === 0 && additions.size > 0;
+		for (const block of messages.get(update.messageId)) if (block.type === "tool-addition") {
+			const { deferLoading: _loading, ...tool } = additions.get(block.toolName);
+			available.set(tool.name, tool);
+		} else if (block.type === "tool-removal") {
+			reset = true;
+			available.delete(block.toolName);
 		}
-		/* v8 ignore next 2 -- closed-union exhaustiveness guard */
-		default: return assertNever(mode);
+		if (reset) {
+			baseline = [...available.values()];
+			retainedFrom = index + 1;
+		}
 	}
+	return retainedFrom === 0 ? history : {
+		tools: baseline,
+		updates: history.updates.slice(retainedFrom)
+	};
 }
 /**
 * Construct provider declarations from session-folded history without changing logged active tools.
 * Unsupported routes and incomplete history use current declarations without developer updates.
-* Explicitly deferred baseline tools become available only after their first retained addition.
+* Explicitly deferred declarations require an addition to activate them.
+* A rebuild makes previously activated declarations immediate; unactivated declarations stay deferred.
+* Addition-only routes rebuild when a tool is removed or tools are added to an empty set;
+* deferred declarations count as existing tools.
+* Later additions remain deferred and superseded tool blocks are omitted without dropping other content.
 * @param messages - complete request inputs, or the prefix selected for an auxiliary call.
 * @param tools - currently active tool schemas.
 * @param toolUpdate - the resolved route's update mode.
@@ -1115,14 +1205,16 @@ function projectToolUpdates(messages, tools, toolUpdate, history) {
 		messages: withoutDeveloperMessages(messages),
 		tools
 	};
-	const messageIds = new Set(messages.flatMap((message) => message.role === "developer" ? [message.id] : []));
-	if (history.updates.some((update) => !messageIds.has(update.messageId))) return {
+	const updates = new Map(messages.flatMap((message) => message.role === "developer" ? [[message.id, message.content]] : []));
+	if (history.updates.some((update) => !updates.has(update.messageId))) return {
 		messages: withoutDeveloperMessages(messages),
 		tools
 	};
-	const declarations = toolDeclarations(tools, toolUpdate, history);
+	const projectedHistory = toolUpdate === "addition-only" ? rebaseAdditionOnlyHistory(history, updates) : history;
+	const declarations = toolDeclarations(projectedHistory);
 	const updateIds = new Set(history.updates.map((update) => update.messageId));
-	const offered = new Set(history.tools.filter((tool) => !tool.deferLoading).map((tool) => tool.name));
+	const retainedUpdateIds = new Set(projectedHistory.updates.map((update) => update.messageId));
+	const offered = new Set(projectedHistory.tools.filter((tool) => !tool.deferLoading).map((tool) => tool.name));
 	const projectedMessages = [];
 	for (const message of messages) {
 		if (message.role !== "developer") {
@@ -1133,6 +1225,7 @@ function projectToolUpdates(messages, tools, toolUpdate, history) {
 		const content = message.content.filter((block) => {
 			switch (block.type) {
 				case "tool-addition":
+					if (!retainedUpdateIds.has(message.id)) return false;
 					if (!declarations.has(block.toolName) || offered.has(block.toolName)) return false;
 					offered.add(block.toolName);
 					return true;
@@ -1211,13 +1304,16 @@ var __esDecorate$1 = function(ctor, descriptorIn, decorators, contextIn, initial
 /**
 * Typed error for LLM-related failures. Extends {@link HarnessError}, so the
 * `code` string (e.g. `AUTH`, `RATE_LIMIT`, `NO_ADAPTER`) is shared taxonomy.
+* The constructor takes only a {@link BuiltinLlmFailureCode}; a failure from
+* another provider, whose code may be any string, is re-raised through
+* {@link LlmError.fromFailure}.
 */
-var LlmError = class extends HarnessError {
+var LlmError = class LlmError extends HarnessError {
 	/** Serializable facts retained beside this live Error. */
 	failure;
 	/**
 	* @param message - non-empty human-readable failure summary.
-	* @param code - non-empty stable provider-neutral machine code.
+	* @param code - built-in stable provider-neutral machine code.
 	* @param options - optional cause and validated serializable provider facts.
 	*/
 	constructor(message, code, options) {
@@ -1235,6 +1331,18 @@ var LlmError = class extends HarnessError {
 			...options?.providerRetryAfterMs === void 0 ? {} : { providerRetryAfterMs: options.providerRetryAfterMs },
 			...options?.requestId === void 0 ? {} : { requestId: options.requestId },
 			...options?.offloadImages === void 0 ? {} : { offloadImages: options.offloadImages }
+		});
+	}
+	/**
+	* Raise an observed failure again with its own code, which any provider may have chosen.
+	* @param failure - the serializable failure, typically from a stream's terminal chunk.
+	* @param options - optional cause.
+	* @returns an error carrying the failure's message, code, and provider facts.
+	*/
+	static fromFailure(failure, options) {
+		return new LlmError(failure.message, failure.code, {
+			...failure,
+			...options
 		});
 	}
 };

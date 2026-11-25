@@ -1,13 +1,14 @@
 import { z } from 'zod';
 /** Model-suggested cause of one mistake; the parent can review and change it in the panel. */
 export declare const errorTypeSchema: z.ZodEnum<{
-    "carry-borrow": "carry-borrow";
+    pattern: "pattern";
+    listening: "listening";
     "place-value": "place-value";
+    "carry-borrow": "carry-borrow";
     "operation-choice": "operation-choice";
     calculation: "calculation";
     "unit-quantity": "unit-quantity";
     "reading-task": "reading-task";
-    pattern: "pattern";
     "geometry-feature": "geometry-feature";
     "money-measure": "money-measure";
     "reasoning-incomplete": "reasoning-incomplete";
@@ -19,7 +20,6 @@ export declare const errorTypeSchema: z.ZodEnum<{
     order: "order";
     "expression-incomplete": "expression-incomplete";
     punctuation: "punctuation";
-    listening: "listening";
     spelling: "spelling";
     "word-form": "word-form";
     "sentence-pattern": "sentence-pattern";
@@ -39,19 +39,19 @@ export declare const variantSchema: z.ZodEnum<{
 export type Variant = z.infer<typeof variantSchema>;
 /** How a unit is practised daily, per subject; drives the subject-routine view. */
 export declare const unitFocusSchema: z.ZodEnum<{
+    review: "review";
+    writing: "writing";
     calculation: "calculation";
+    concepts: "concepts";
+    listen: "listen";
     literacy: "literacy";
     pinyin: "pinyin";
     reading: "reading";
-    writing: "writing";
-    review: "review";
-    concepts: "concepts";
     geometry: "geometry";
     measurement: "measurement";
     words: "words";
     sentences: "sentences";
     story: "story";
-    listen: "listen";
     project: "project";
 }>;
 /** One unit's daily-practice focus. */
@@ -74,11 +74,11 @@ export declare const sheetKindSchema: z.ZodEnum<{
 }>;
 /** One exercise item's pedagogical role in diagnosis, Simon four-step teaching, or daily routines. */
 export declare const exerciseRoleSchema: z.ZodEnum<{
-    daily: "daily";
     diagnose: "diagnose";
     demo: "demo";
     try: "try";
     vary: "vary";
+    daily: "daily";
 }>;
 /** Pedagogical role of a structured exercise item. */
 export type ExerciseRole = z.infer<typeof exerciseRoleSchema>;
@@ -649,11 +649,11 @@ export declare const exerciseItemSchema: z.ZodObject<{
     }>;
     objectiveId: z.ZodString;
     role: z.ZodEnum<{
-        daily: "daily";
         diagnose: "diagnose";
         demo: "demo";
         try: "try";
         vary: "vary";
+        daily: "daily";
     }>;
     variant: z.ZodEnum<{
         numeric: "numeric";
@@ -941,13 +941,14 @@ export declare const exerciseItemSchema: z.ZodObject<{
     explanation: z.ZodString;
     answerEvidence: z.ZodString;
     errorType: z.ZodOptional<z.ZodEnum<{
-        "carry-borrow": "carry-borrow";
+        pattern: "pattern";
+        listening: "listening";
         "place-value": "place-value";
+        "carry-borrow": "carry-borrow";
         "operation-choice": "operation-choice";
         calculation: "calculation";
         "unit-quantity": "unit-quantity";
         "reading-task": "reading-task";
-        pattern: "pattern";
         "geometry-feature": "geometry-feature";
         "money-measure": "money-measure";
         "reasoning-incomplete": "reasoning-incomplete";
@@ -959,7 +960,6 @@ export declare const exerciseItemSchema: z.ZodObject<{
         order: "order";
         "expression-incomplete": "expression-incomplete";
         punctuation: "punctuation";
-        listening: "listening";
         spelling: "spelling";
         "word-form": "word-form";
         "sentence-pattern": "sentence-pattern";
@@ -1058,10 +1058,10 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
     }>;
     mode: z.ZodEnum<{
         review: "review";
-        diagnose: "diagnose";
         foundation: "foundation";
         school: "school";
         explore: "explore";
+        diagnose: "diagnose";
     }>;
     intensity: z.ZodOptional<z.ZodEnum<{
         light: "light";
@@ -1445,8 +1445,8 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
             off: "off";
         }>;
         pace: z.ZodEnum<{
-            review: "review";
             teaching: "teaching";
+            review: "review";
         }>;
         parentConfirmation: z.ZodDefault<z.ZodString>;
     }, z.core.$strict>>;
@@ -1461,8 +1461,8 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
         off: "off";
     }>;
     pace: z.ZodEnum<{
-        review: "review";
         teaching: "teaching";
+        review: "review";
     }>;
     parentConfirmation: z.ZodDefault<z.ZodString>;
     action: z.ZodLiteral<"school-progress">;
@@ -1476,15 +1476,15 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
     attempt: z.ZodObject<{
         result: z.ZodEnum<{
             correct: "correct";
-            partial: "partial";
             incorrect: "incorrect";
+            partial: "partial";
             unassessed: "unassessed";
             stuck: "stuck";
         }>;
         assistance: z.ZodOptional<z.ZodEnum<{
             unknown: "unknown";
-            hint: "hint";
             independent: "independent";
+            hint: "hint";
             "worked-example": "worked-example";
         }>>;
         id: z.ZodString;
@@ -1808,13 +1808,14 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
         materialId: z.ZodOptional<z.ZodString>;
         objectiveId: z.ZodOptional<z.ZodString>;
         errorType: z.ZodOptional<z.ZodEnum<{
-            "carry-borrow": "carry-borrow";
+            pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
+            "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
             calculation: "calculation";
             "unit-quantity": "unit-quantity";
             "reading-task": "reading-task";
-            pattern: "pattern";
             "geometry-feature": "geometry-feature";
             "money-measure": "money-measure";
             "reasoning-incomplete": "reasoning-incomplete";
@@ -1826,7 +1827,6 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -1851,13 +1851,14 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
     explanation: z.ZodString;
     answerEvidence: z.ZodString;
     errorType: z.ZodOptional<z.ZodEnum<{
-        "carry-borrow": "carry-borrow";
+        pattern: "pattern";
+        listening: "listening";
         "place-value": "place-value";
+        "carry-borrow": "carry-borrow";
         "operation-choice": "operation-choice";
         calculation: "calculation";
         "unit-quantity": "unit-quantity";
         "reading-task": "reading-task";
-        pattern: "pattern";
         "geometry-feature": "geometry-feature";
         "money-measure": "money-measure";
         "reasoning-incomplete": "reasoning-incomplete";
@@ -1869,7 +1870,6 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
         order: "order";
         "expression-incomplete": "expression-incomplete";
         punctuation: "punctuation";
-        listening: "listening";
         spelling: "spelling";
         "word-form": "word-form";
         "sentence-pattern": "sentence-pattern";
@@ -1892,11 +1892,11 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
         }>;
         objectiveId: z.ZodString;
         role: z.ZodDefault<z.ZodEnum<{
-            daily: "daily";
             diagnose: "diagnose";
             demo: "demo";
             try: "try";
             vary: "vary";
+            daily: "daily";
         }>>;
         variant: z.ZodDefault<z.ZodEnum<{
             numeric: "numeric";
@@ -2184,13 +2184,14 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
         explanation: z.ZodString;
         answerEvidence: z.ZodString;
         errorType: z.ZodOptional<z.ZodEnum<{
-            "carry-borrow": "carry-borrow";
+            pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
+            "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
             calculation: "calculation";
             "unit-quantity": "unit-quantity";
             "reading-task": "reading-task";
-            pattern: "pattern";
             "geometry-feature": "geometry-feature";
             "money-measure": "money-measure";
             "reasoning-incomplete": "reasoning-incomplete";
@@ -2202,7 +2203,6 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -2250,24 +2250,25 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
         goal: z.ZodString;
         conceptIds: z.ZodArray<z.ZodString>;
         method: z.ZodEnum<{
+            reason: "reason";
             context: "context";
-            listen: "listen";
             recognize: "recognize";
             "read-evidence": "read-evidence";
             express: "express";
             represent: "represent";
-            reason: "reason";
             verify: "verify";
+            listen: "listen";
             speak: "speak";
         }>;
         errorTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
-            "carry-borrow": "carry-borrow";
+            pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
+            "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
             calculation: "calculation";
             "unit-quantity": "unit-quantity";
             "reading-task": "reading-task";
-            pattern: "pattern";
             "geometry-feature": "geometry-feature";
             "money-measure": "money-measure";
             "reasoning-incomplete": "reasoning-incomplete";
@@ -2279,7 +2280,6 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -2320,13 +2320,14 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
     action: z.ZodLiteral<"classify-mistake">;
     mistakeId: z.ZodString;
     errorType: z.ZodOptional<z.ZodUnion<readonly [z.ZodEnum<{
-        "carry-borrow": "carry-borrow";
+        pattern: "pattern";
+        listening: "listening";
         "place-value": "place-value";
+        "carry-borrow": "carry-borrow";
         "operation-choice": "operation-choice";
         calculation: "calculation";
         "unit-quantity": "unit-quantity";
         "reading-task": "reading-task";
-        pattern: "pattern";
         "geometry-feature": "geometry-feature";
         "money-measure": "money-measure";
         "reasoning-incomplete": "reasoning-incomplete";
@@ -2338,7 +2339,6 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
         order: "order";
         "expression-incomplete": "expression-incomplete";
         punctuation: "punctuation";
-        listening: "listening";
         spelling: "spelling";
         "word-form": "word-form";
         "sentence-pattern": "sentence-pattern";
@@ -2664,25 +2664,26 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
         response: z.ZodString;
         result: z.ZodEnum<{
             correct: "correct";
-            partial: "partial";
             incorrect: "incorrect";
+            partial: "partial";
             unassessed: "unassessed";
         }>;
         assistance: z.ZodEnum<{
             unknown: "unknown";
-            hint: "hint";
             independent: "independent";
+            hint: "hint";
             "worked-example": "worked-example";
         }>;
         uncertainties: z.ZodString;
         errorType: z.ZodOptional<z.ZodEnum<{
-            "carry-borrow": "carry-borrow";
+            pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
+            "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
             calculation: "calculation";
             "unit-quantity": "unit-quantity";
             "reading-task": "reading-task";
-            pattern: "pattern";
             "geometry-feature": "geometry-feature";
             "money-measure": "money-measure";
             "reasoning-incomplete": "reasoning-incomplete";
@@ -2694,7 +2695,6 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -2715,24 +2715,25 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
             itemId: z.ZodString;
             result: z.ZodEnum<{
                 correct: "correct";
-                partial: "partial";
                 incorrect: "incorrect";
+                partial: "partial";
             }>;
             response: z.ZodOptional<z.ZodString>;
             assistance: z.ZodOptional<z.ZodEnum<{
                 unknown: "unknown";
-                hint: "hint";
                 independent: "independent";
+                hint: "hint";
                 "worked-example": "worked-example";
             }>>;
             errorType: z.ZodOptional<z.ZodEnum<{
-                "carry-borrow": "carry-borrow";
+                pattern: "pattern";
+                listening: "listening";
                 "place-value": "place-value";
+                "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
                 calculation: "calculation";
                 "unit-quantity": "unit-quantity";
                 "reading-task": "reading-task";
-                pattern: "pattern";
                 "geometry-feature": "geometry-feature";
                 "money-measure": "money-measure";
                 "reasoning-incomplete": "reasoning-incomplete";
@@ -2744,7 +2745,6 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
-                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -2762,24 +2762,25 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
         itemId: z.ZodString;
         result: z.ZodEnum<{
             correct: "correct";
-            partial: "partial";
             incorrect: "incorrect";
+            partial: "partial";
         }>;
         response: z.ZodOptional<z.ZodString>;
         assistance: z.ZodOptional<z.ZodEnum<{
             unknown: "unknown";
-            hint: "hint";
             independent: "independent";
+            hint: "hint";
             "worked-example": "worked-example";
         }>>;
         errorType: z.ZodOptional<z.ZodEnum<{
-            "carry-borrow": "carry-borrow";
+            pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
+            "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
             calculation: "calculation";
             "unit-quantity": "unit-quantity";
             "reading-task": "reading-task";
-            pattern: "pattern";
             "geometry-feature": "geometry-feature";
             "money-measure": "money-measure";
             "reasoning-incomplete": "reasoning-incomplete";
@@ -2791,7 +2792,6 @@ export declare const commandSchema: z.ZodDiscriminatedUnion<[z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -2930,8 +2930,8 @@ export declare const stateSchema: z.ZodObject<{
             }>;
             preview: z.ZodBoolean;
             pace: z.ZodEnum<{
-                review: "review";
                 teaching: "teaching";
+                review: "review";
             }>;
         }, z.core.$strict>>;
     }, z.core.$strict>>;
@@ -2944,10 +2944,10 @@ export declare const stateSchema: z.ZodObject<{
         }>;
         mode: z.ZodEnum<{
             review: "review";
-            diagnose: "diagnose";
             foundation: "foundation";
             school: "school";
             explore: "explore";
+            diagnose: "diagnose";
         }>;
         intensity: z.ZodOptional<z.ZodEnum<{
             light: "light";
@@ -2973,15 +2973,15 @@ export declare const stateSchema: z.ZodObject<{
     attempts: z.ZodArray<z.ZodObject<{
         result: z.ZodEnum<{
             correct: "correct";
-            partial: "partial";
             incorrect: "incorrect";
+            partial: "partial";
             unassessed: "unassessed";
             stuck: "stuck";
         }>;
         assistance: z.ZodEnum<{
             unknown: "unknown";
-            hint: "hint";
             independent: "independent";
+            hint: "hint";
             "worked-example": "worked-example";
         }>;
         id: z.ZodString;
@@ -3301,13 +3301,14 @@ export declare const stateSchema: z.ZodObject<{
         materialId: z.ZodOptional<z.ZodString>;
         objectiveId: z.ZodOptional<z.ZodString>;
         errorType: z.ZodOptional<z.ZodEnum<{
-            "carry-borrow": "carry-borrow";
+            pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
+            "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
             calculation: "calculation";
             "unit-quantity": "unit-quantity";
             "reading-task": "reading-task";
-            pattern: "pattern";
             "geometry-feature": "geometry-feature";
             "money-measure": "money-measure";
             "reasoning-incomplete": "reasoning-incomplete";
@@ -3319,7 +3320,6 @@ export declare const stateSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -3336,9 +3336,9 @@ export declare const stateSchema: z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
-                    listening: "listening";
                     written: "written";
                     oral: "oral";
+                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -3363,11 +3363,11 @@ export declare const stateSchema: z.ZodObject<{
         }>;
         objectiveId: z.ZodString;
         role: z.ZodEnum<{
-            daily: "daily";
             diagnose: "diagnose";
             demo: "demo";
             try: "try";
             vary: "vary";
+            daily: "daily";
         }>;
         variant: z.ZodEnum<{
             numeric: "numeric";
@@ -3655,13 +3655,14 @@ export declare const stateSchema: z.ZodObject<{
         explanation: z.ZodString;
         answerEvidence: z.ZodString;
         errorType: z.ZodOptional<z.ZodEnum<{
-            "carry-borrow": "carry-borrow";
+            pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
+            "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
             calculation: "calculation";
             "unit-quantity": "unit-quantity";
             "reading-task": "reading-task";
-            pattern: "pattern";
             "geometry-feature": "geometry-feature";
             "money-measure": "money-measure";
             "reasoning-incomplete": "reasoning-incomplete";
@@ -3673,7 +3674,6 @@ export declare const stateSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -3710,24 +3710,25 @@ export declare const stateSchema: z.ZodObject<{
         goal: z.ZodString;
         conceptIds: z.ZodArray<z.ZodString>;
         method: z.ZodEnum<{
+            reason: "reason";
             context: "context";
-            listen: "listen";
             recognize: "recognize";
             "read-evidence": "read-evidence";
             express: "express";
             represent: "represent";
-            reason: "reason";
             verify: "verify";
+            listen: "listen";
             speak: "speak";
         }>;
         errorTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
-            "carry-borrow": "carry-borrow";
+            pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
+            "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
             calculation: "calculation";
             "unit-quantity": "unit-quantity";
             "reading-task": "reading-task";
-            pattern: "pattern";
             "geometry-feature": "geometry-feature";
             "money-measure": "money-measure";
             "reasoning-incomplete": "reasoning-incomplete";
@@ -3739,7 +3740,6 @@ export declare const stateSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -4087,14 +4087,14 @@ export declare const stateSchema: z.ZodObject<{
         response: z.ZodString;
         result: z.ZodEnum<{
             correct: "correct";
-            partial: "partial";
             incorrect: "incorrect";
+            partial: "partial";
             unassessed: "unassessed";
         }>;
         assistance: z.ZodEnum<{
             unknown: "unknown";
-            hint: "hint";
             independent: "independent";
+            hint: "hint";
             "worked-example": "worked-example";
         }>;
         feedback: z.ZodString;
@@ -4108,25 +4108,26 @@ export declare const stateSchema: z.ZodObject<{
         response: z.ZodString;
         result: z.ZodEnum<{
             correct: "correct";
-            partial: "partial";
             incorrect: "incorrect";
+            partial: "partial";
             unassessed: "unassessed";
         }>;
         assistance: z.ZodEnum<{
             unknown: "unknown";
-            hint: "hint";
             independent: "independent";
+            hint: "hint";
             "worked-example": "worked-example";
         }>;
         uncertainties: z.ZodString;
         errorType: z.ZodOptional<z.ZodEnum<{
-            "carry-borrow": "carry-borrow";
+            pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
+            "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
             calculation: "calculation";
             "unit-quantity": "unit-quantity";
             "reading-task": "reading-task";
-            pattern: "pattern";
             "geometry-feature": "geometry-feature";
             "money-measure": "money-measure";
             "reasoning-incomplete": "reasoning-incomplete";
@@ -4138,7 +4139,6 @@ export declare const stateSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";

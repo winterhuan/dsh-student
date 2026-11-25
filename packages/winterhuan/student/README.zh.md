@@ -25,10 +25,10 @@ kind: "package-bundle"
 <a id="use-this-package"></a>
 ## 使用此包
 
-通过[插件市场](https://winterhuan.github.io/dsh-creative/index.json)安装预构建版本，或在 DSH `0.2.2-rc.1` 中安装以下固定 Git 提交：
+通过[插件市场](https://winterhuan.github.io/dsh-creative/index.json)安装预构建版本，或在 DSH `0.2.2-rc.5` 中安装以下固定 Git 提交：
 
 ```sh
-dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.5&path:/packages/winterhuan/student'
+dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.6&path:/packages/winterhuan/student'
 ```
 
 将 `market` 替换为你已有的 DSH profile 名称。
@@ -37,7 +37,7 @@ dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.g
 
 也可在新建或空白原生会话中选择**智能学习**，从右侧栏打开学习面板。领域技能和工具仍仅在该模式中可用。已有会话保留原模式，会话状态和项目文件不迁移。
 
-将已构建的包安装到 DSH `0.2.2-rc.1` 配置，打开独立的学习工作区并调用 `/study`。
+将已构建的包安装到 DSH `0.2.2-rc.5` 配置，打开独立的学习工作区并调用 `/study`。
 
 ```sh
 dsh plugin --profile student add ./packages/winterhuan/student
@@ -45,7 +45,7 @@ dsh plugin --profile student add ./packages/winterhuan/student
 
 配置需要已提供技能、工具、会话文件系统和沙箱策略。web 配置还提供对话、图片附件和学习工作台侧栏。安装层添加 `student` Host 行和 `preset-student` 模式行，不安装任何创作包。安装或重新构建后重启配置。
 
-DSH `0.2.2-rc.1` Headless 不选择 Web 预设列表。非 Web 配置应禁用 `preset-student`，并在创建 Agent 前通过以下配置补丁加载已安装的 Student Agent 入口：
+DSH `0.2.2-rc.5` Headless 不选择 Web 预设列表。非 Web 配置应禁用 `preset-student`，并在创建 Agent 前通过以下配置补丁加载已安装的 Student Agent 入口：
 
 ```yaml
 - id: preset-student
@@ -148,7 +148,7 @@ Host 入口负责已验证工作区读取、类型化手动保存和配置。`./
 
 ### 演练恢复
 
-构建后，使用已安装的 DSH `0.2.2-rc.1` 可执行文件和仓库外证据目录运行真实原生工具恢复测试：
+构建后，使用已安装的 DSH `0.2.2-rc.5` 可执行文件和仓库外证据目录运行真实原生工具恢复测试：
 
 ```sh
 DSH_BIN=/absolute/path/to/dsh STUDENT_EVIDENCE_DIR=/path/to/evidence pnpm run test:recovery
@@ -215,7 +215,7 @@ Student 模式注册 `study_status`、`openmaic_feedback` 和四个官方 OpenMA
 
 #### Token 影响
 
-技能正文和参考按需加载，启用时提供两个只读 Student 工具定义；每次请求也包含原生工具的成本。集合查询每页返回 20 条及下一页偏移。不加载整本教材。两个隔离的 DSH 0.2.2-rc.1 首次请求使用同一空工作区、输入及类似 Web 的 preset 组合，固定密度估算测得基线包为 8,765 tokens，官方组合为 10,808，增加 2,043（23.3%），包含消息和工具定义。独立 Headless 入口的能力在 Agent 创建前组合，其实际调用路径由原生测试覆盖。24 份官方方法正文仍按需加载。请求未调用付费模型或写学习事实；该估算不衡量提供方计费、整课成本、教学质量或 KV Cache 性能。
+技能正文和参考按需加载，启用时提供两个只读 Student 工具定义；每次请求也包含原生工具的成本。集合查询每页返回 20 条及下一页偏移。不加载整本教材。两个隔离的 DSH 0.2.2-rc.5 首次请求使用同一空工作区、输入及类似 Web 的 preset 组合，固定密度估算测得基线包为 8,765 tokens，官方组合为 10,808，增加 2,043（23.3%），包含消息和工具定义。独立 Headless 入口的能力在 Agent 创建前组合，其实际调用路径由原生测试覆盖。24 份官方方法正文仍按需加载。请求未调用付费模型或写学习事实；该估算不衡量提供方计费、整课成本、教学质量或 KV Cache 性能。
 
 #### KV Cache 影响
 

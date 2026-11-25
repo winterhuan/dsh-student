@@ -41,7 +41,7 @@ let nativeSessionId
 const dsh = (...args) => execute(process.execPath, [dshBin, ...args], { cwd: project, env, timeout: 60000, maxBuffer: 16 * 1024 * 1024 })
 try {
   await mkdir(project)
-  assert.equal((await dsh('--version')).stdout.trim(), '0.2.2-rc.1')
+  assert.equal((await dsh('--version')).stdout.trim(), '0.2.2-rc.5')
   await dsh('--profile', 'native-cli', '--from-default-profile', 'headless', '--dump-config')
   await dsh('plugin', '--profile', 'native-cli', 'add', `link:${packageRoot}`)
   const wrapper = join(root, 'observe-cli.mjs')

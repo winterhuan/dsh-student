@@ -70,7 +70,7 @@ async function observe(label, expectedExit) {
 
 try {
   await mkdir(join(project, '.study'), { recursive: true })
-  assert.equal((await dsh('--version')).stdout.trim(), '0.2.2-rc.1')
+  assert.equal((await dsh('--version')).stdout.trim(), '0.2.2-rc.5')
   await dsh('--profile', 'recovery', '--from-default-profile', 'headless', '--dump-config')
   await dsh('plugin', '--profile', 'recovery', 'add', `link:${packageRoot}`)
   const model = join(root, 'model.mjs')

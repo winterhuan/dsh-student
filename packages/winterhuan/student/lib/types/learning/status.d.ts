@@ -24,7 +24,7 @@ export declare function studyStatus(state: StudyState, now: number): {
     active: {
         id: string;
         subject: "chinese" | "math" | "english";
-        mode: "review" | "diagnose" | "foundation" | "school" | "explore";
+        mode: "review" | "foundation" | "school" | "explore" | "diagnose";
         startedAt: number;
         intensity?: "light" | "standard" | "deep" | undefined;
         endedAt?: number | undefined;
@@ -55,7 +55,7 @@ export declare function studyStatus(state: StudyState, now: number): {
             confirmedAt: number;
             posture: "keep-up" | "catch-up";
             preview: boolean;
-            pace: "review" | "teaching";
+            pace: "teaching" | "review";
         } | undefined;
     }[];
     unconfirmedSubjects: string[];
@@ -295,8 +295,8 @@ export declare function studyStatus(state: StudyState, now: number): {
         stuck?: boolean | undefined;
     } | null;
     feedback: {
-        result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
-        assistance: "unknown" | "hint" | "independent" | "worked-example";
+        result: "correct" | "incorrect" | "partial" | "unassessed" | "stuck";
+        assistance: "unknown" | "independent" | "hint" | "worked-example";
         id: string;
         sessionId: string;
         subject: "chinese" | "math" | "english";

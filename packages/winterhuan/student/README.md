@@ -25,10 +25,10 @@ Guide a primary-school learner through Chinese, mathematics and English in the c
 <a id="use-this-package"></a>
 ## Use this package
 
-Install the prebuilt release through the [plugin market](https://winterhuan.github.io/dsh-creative/index.json), or use this pinned Git source with DSH `0.2.2-rc.1`:
+Install the prebuilt release through the [plugin market](https://winterhuan.github.io/dsh-creative/index.json), or use this pinned Git source with DSH `0.2.2-rc.5`:
 
 ```sh
-dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.5&path:/packages/winterhuan/student'
+dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.6&path:/packages/winterhuan/student'
 ```
 
 Replace `market` with the name of your existing DSH profile.
@@ -37,7 +37,7 @@ Open the learner's workspace in the left sidebar, select or create a conversatio
 
 You can also select **智能学习** (Smart learning) in a new or blank native conversation and open the learning desk in its right sidebar. Domain Skills/tools remain scoped to this mode. Existing conversations keep their mode; Session state and project files are not migrated.
 
-Install the built package into a DSH `0.2.2-rc.1` profile, open a dedicated learning workspace and invoke `/study`.
+Install the built package into a DSH `0.2.2-rc.5` profile, open a dedicated learning workspace and invoke `/study`.
 
 ```sh
 dsh plugin --profile student add ./packages/winterhuan/student
@@ -45,7 +45,7 @@ dsh plugin --profile student add ./packages/winterhuan/student
 
 The profile must already provide Skills, tools, a Session filesystem and sandbox policy. A web profile also supplies chat, image attachments and the Learning desk sidebar. The bundle adds the `student` Host row and the `preset-student` mode row and does not install any creative package. Restart the profile after installing or rebuilding.
 
-DSH `0.2.2-rc.1` Headless does not select the Web preset roster. For a non-Web profile, disable `preset-student` and load the installed Student Agent entry before creating an Agent, using this profile patch:
+DSH `0.2.2-rc.5` Headless does not select the Web preset roster. For a non-Web profile, disable `preset-student` and load the installed Student Agent entry before creating an Agent, using this profile patch:
 
 ```yaml
 - id: preset-student
@@ -148,7 +148,7 @@ The [official-file API](src/files/index.ts), exported as `./files`, shares stric
 
 ### Rehearse recovery
 
-After building, run the real native-tool recovery suite with an installed DSH `0.2.2-rc.1` executable and an evidence directory outside the repository:
+After building, run the real native-tool recovery suite with an installed DSH `0.2.2-rc.5` executable and an evidence directory outside the repository:
 
 ```sh
 DSH_BIN=/absolute/path/to/dsh STUDENT_EVIDENCE_DIR=/path/to/evidence pnpm run test:recovery
@@ -215,7 +215,7 @@ The Student preset adds `study_status`, `openmaic_feedback` and the four officia
 
 #### Token effect
 
-Skill bodies and references load on demand. Two read-only Student tool schemas are advertised when enabled; native tools also contribute to each request. Collection queries return 20 records with a next offset. Textbooks are not loaded as a whole. Two isolated DSH 0.2.2-rc.1 first requests with the same empty workspace, input and Web-like preset composition measured a fixed-density estimate of 8,765 tokens for the baseline package and 10,808 for the official composition: +2,043 (+23.3%), including messages and tool definitions. The separate Headless entry composes capabilities before Agent creation; native tests cover its actual invocation path. The 24 official method bodies remained deferred. These requests made no paid model calls or academic writes; the estimate does not measure provider billing, total lesson cost, teaching quality or KV Cache performance.
+Skill bodies and references load on demand. Two read-only Student tool schemas are advertised when enabled; native tools also contribute to each request. Collection queries return 20 records with a next offset. Textbooks are not loaded as a whole. Two isolated DSH 0.2.2-rc.5 first requests with the same empty workspace, input and Web-like preset composition measured a fixed-density estimate of 8,765 tokens for the baseline package and 10,808 for the official composition: +2,043 (+23.3%), including messages and tool definitions. The separate Headless entry composes capabilities before Agent creation; native tests cover its actual invocation path. The 24 official method bodies remained deferred. These requests made no paid model calls or academic writes; the estimate does not measure provider billing, total lesson cost, teaching quality or KV Cache performance.
 
 #### KV Cache effect
 

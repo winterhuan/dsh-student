@@ -31,7 +31,7 @@ function observationPolicy(rows) {
 
 try {
   await mkdir(project)
-  assert.equal((await dsh('--version')).stdout.trim(), '0.2.2-rc.1')
+  assert.equal((await dsh('--version')).stdout.trim(), '0.2.2-rc.5')
   await dsh('--profile', 'openmaic', '--from-default-profile', 'headless', '--dump-config')
   let installSource = process.env.STUDENT_PACKAGE_SOURCE
   if (!installSource) {

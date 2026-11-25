@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { promisify } from 'node:util'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { zstdDecompressSync } from 'node:zlib'
+import { readSessionLog } from './fixtures/session-log.mjs'
 
 const execute = promisify(execFile)
 const packageRoot = fileURLToPath(new URL('..', import.meta.url))
@@ -196,7 +196,7 @@ ctx.effect(()=>ctx.llm.registerAdapter(['student-cli-fixture'],new Fixture()));
   }
   let persistedCalls = 0, retries = 0, usageSamples = 0
   for (const [group, { name }] of generations) {
-    const text = zstdDecompressSync(await readFile(join(sessionRoot, name))).toString()
+    const text = await readSessionLog(join(sessionRoot, name))
     const events = text.trim().split('\n').map(line => JSON.parse(line))
     persistedCalls += events.filter(event => event.type === 'tool/call').length
     retries += events.filter(event => event.type === 'llm/retry' || event.type === 'llm/retry-started').length

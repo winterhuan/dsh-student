@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { promisify } from 'node:util'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { zstdDecompressSync } from 'node:zlib'
+import { readSessionLog } from './fixtures/session-log.mjs'
 
 const execute = promisify(execFile)
 const packageRoot = fileURLToPath(new URL('..', import.meta.url))
@@ -241,7 +241,7 @@ const text='Recovery fixture completed with independently queried Student facts.
   }
   let persistedCalls = 0
   for (const [key, { name }] of generations) {
-    const text = zstdDecompressSync(await readFile(join(sessionRoot, name))).toString()
+    const text = await readSessionLog(join(sessionRoot, name))
     const events = text.trim().split('\n').map(line => JSON.parse(line))
     assert.deepEqual(events.filter(event => event.type === 'turn/end').map(event => event.data.reason), [{ kind: 'completed' }])
     persistedCalls += events.filter(event => event.type === 'tool/call').length

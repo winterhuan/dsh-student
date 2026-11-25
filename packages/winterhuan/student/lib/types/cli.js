@@ -9,7 +9,7 @@ import { authoringKind, authoringSchema, authoringExample } from "./files/resour
 try {
     const { values, positionals } = parseArgs({ allowPositionals: true, options: { workspace: { type: 'string' }, help: { type: 'boolean' } } });
     if (values.help) {
-        console.log('node <installed-package>/lib/cli.js validate [--workspace <root>]\nnode <installed-package>/lib/cli.js schema|example <term-settings|block|worksheet|collections|openmaic-lessons|capability-goal|question-family|knowledge-extension|figure>\nRead-only validation and on-demand source-derived resources. No writes, revisions, backups or repairs.');
+        console.log('node <installed-package>/lib/cli.js validate [--workspace <root>]\nnode <installed-package>/lib/cli.js schema|example <term-settings|block|worksheet|collections|daily-plan|openmaic-lessons|capability-goal|question-family|knowledge-extension|figure>\nRead-only validation and on-demand source-derived resources. No writes, revisions, backups or repairs.');
     }
     else if (positionals.length === 2 && (positionals[0] === 'schema' || positionals[0] === 'example')) {
         const kind = authoringKind(positionals[1]);

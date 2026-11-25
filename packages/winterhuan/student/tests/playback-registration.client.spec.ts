@@ -35,12 +35,13 @@ it('keeps playback in the current Session sidebar without a global workbench ent
   ctx.provide('sessions', { list: createSnapshotStore({ byId: {} }) })
   ctx.provide('uiSession', { adapter: { current: createSnapshotStore({ key: undefined }) } })
   ctx.provide('sidebarRightTabs', { register: () => () => {} })
+  ctx.provide('sidebarRight', { mounted: createSnapshotStore(undefined), openTab: vi.fn() })
   ctx.provide('conversation', {})
   await ctx.plugin({ inject, apply })
 
   expect(ctx.slots.entries('main').some(entry => entry.options.key === 'student')).toBe(false)
   expect(ctx.slots.entries('sidebar.panellist').some(entry => entry.options.id === 'student')).toBe(false)
-  const entry = ctx.slots.entries('sidebar.right.pane.tab').find(entry => entry.options.key === '@winterhuan/dsh-student')
+  const entry = ctx.slots.entries('student.desk')[0]
   expect(entry?.inject).toBeTypeOf('function')
   const factory = entry!.inject as () => { openLesson: (sessionId: StudentSessionId, lessonId: string) => Promise<OpenmaicPlaybackResult> }
   const sessionId = 'playback-session' as StudentSessionId

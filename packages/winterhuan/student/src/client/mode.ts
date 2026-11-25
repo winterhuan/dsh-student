@@ -24,17 +24,30 @@ export function isModeSession(context: Context, sessionId: SessionId | undefined
  */
 export function registerModeTab(context: Context, definition: SidebarRightTabDefinition): () => void {
   const current = context.uiSession.adapter.current
+  const opened = new Set<SessionId>()
+  let openTimer: ReturnType<typeof setTimeout> | undefined
   let visible: boolean | undefined
   let release: (() => void) | undefined
   const sync = () => {
     const next = isModeSession(context, current.getSnapshot().key as SessionId | undefined)
-    if (next === visible) return
-    visible = next
-    release?.()
-    release = context.sidebarRightTabs.register({ ...definition, guide: next ? definition.guide ?? [] : [] })
+    if (next !== visible) {
+      visible = next
+      release?.()
+      release = context.sidebarRightTabs.register({ ...definition, guide: next ? definition.guide ?? [] : [] })
+    }
+    const mounted = context.sidebarRight.mounted.getSnapshot()
+    if (next && mounted && mounted === current.getSnapshot().key && !opened.has(mounted)) {
+      clearTimeout(openTimer)
+      openTimer = setTimeout(() => {
+        if (context.sidebarRight.mounted.getSnapshot() !== mounted || !isModeSession(context, mounted)) return
+        opened.add(mounted)
+        context.sidebarRight.openTab('student')
+      }, 0)
+    }
   }
   const stopCurrent = current.subscribe(sync)
   const stopSessions = context.sessions.list.subscribe(sync)
+  const stopMounted = context.sidebarRight.mounted.subscribe(sync)
   sync()
-  return () => { stopCurrent(); stopSessions(); release?.() }
+  return () => { clearTimeout(openTimer); stopCurrent(); stopSessions(); stopMounted(); release?.() }
 }

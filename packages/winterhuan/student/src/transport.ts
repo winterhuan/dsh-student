@@ -29,7 +29,7 @@ const signature = (read: WorkspaceRead) => JSON.stringify([[...read.files, ...re
  * @param lessonId - Explicit classroom selection takes priority within the eight-source read budget.
  * @returns Validated facts and explicit per-source availability; releases every Session lease and never writes academic records.
  */
-export async function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | 'signal'>, invocation?: Context, lessonId?: string): Promise<StudentWorkspaceRead> {
+export async function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | 'signal'>, invocation?: Context, lessonId?: string, planDay?: string): Promise<StudentWorkspaceRead> {
   exec.signal.throwIfAborted()
   if (!exec.agent) throw new Error('Student reads require a registered Agent.')
   const agent = exec.agent
@@ -41,7 +41,7 @@ export async function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | '
   const backupIssues = backups.issues.slice()
   let unstableSources: StudentOfficialFeedback[] = []
   for (let attempt = 0; attempt < 3; attempt++) {
-    const initial = await readWorkspace(files, exec.signal, backupVersions(backups.backups), native.observations)
+    const initial = await readWorkspace(files, exec.signal, backupVersions(backups.backups), native.observations, [], planDay ? { planDay } : {})
     const historical = await readNativeHistory(agent, initial, exec.signal, invocation)
     const openmaic: StudentOfficialFeedback[] = [], observations: OpenmaicInputObservation[] = []
     const service = agent.ctx.get('studentOpenmaic')
@@ -77,7 +77,7 @@ export async function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | '
         fact.status = 'available'; observations.push(...fact.source.observations)
       } catch (error) { if (exec.signal.aborted) throw error; fact.status = 'unavailable'; fact.failure = error instanceof OpenmaicError ? error.code : 'invalid-response'; fact.reason = error instanceof OpenmaicError ? error.message : 'Original official source could not be read completely. Retry the same classroom.' }
     }
-    let read = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations)
+    let read = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations, planDay ? { planDay } : {})
     const finalLessons = await readLessonFile(files, exec.signal)
     if (signature(initial) !== signature(read) || lessons.observation?.version !== finalLessons.observation?.version || lessons.observation?.targetKey !== finalLessons.observation?.targetKey) continue
     if (read.status === 'valid') { const retained = await retainObservedBackups(files, read, Date.now(), exec.signal); backupIssues.push(...retained.issues) }
@@ -94,7 +94,7 @@ export async function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | '
     }
     if (sourceChanged) { unstableSources = openmaic.map(({ source: _source, consumption: _consumption, ...fact }) => ({ ...fact, status: 'unavailable', failure: 'incomplete-read', reason: 'Original official source changed during verification. Retry the same classroom.' })); continue }
     await historical.recheck()
-    const publication = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations)
+    const publication = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations, planDay ? { planDay } : {})
     const publicationLessons = await readLessonFile(files, exec.signal)
     if (signature(read) !== signature(publication) || finalLessons.observation?.version !== publicationLessons.observation?.version || finalLessons.observation?.targetKey !== publicationLessons.observation?.targetKey) continue
     read = publication

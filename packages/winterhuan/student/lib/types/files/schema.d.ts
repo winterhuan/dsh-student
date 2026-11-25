@@ -106,9 +106,9 @@ export declare const learningRoundSchema: z.ZodObject<{
             id: z.ZodString;
             description: z.ZodString;
             modality: z.ZodEnum<{
+                listening: "listening";
                 written: "written";
                 oral: "oral";
-                listening: "listening";
                 audiovisual: "audiovisual";
                 performed: "performed";
             }>;
@@ -118,6 +118,10 @@ export declare const learningRoundSchema: z.ZodObject<{
         mistakeId: z.ZodOptional<z.ZodString>;
     }, z.core.$strict>>;
     enteredFamilyIds: z.ZodArray<z.ZodString>;
+    familyEntries: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        familyId: z.ZodString;
+        at: z.ZodNumber;
+    }, z.core.$strict>>>;
     presentedQuestionIds: z.ZodArray<z.ZodString>;
     endedAt: z.ZodOptional<z.ZodNumber>;
     endReason: z.ZodOptional<z.ZodEnum<{
@@ -147,9 +151,9 @@ export declare const archiveEvidenceReferenceSchema: z.ZodObject<{
         id: z.ZodString;
         description: z.ZodString;
         modality: z.ZodEnum<{
+            listening: "listening";
             written: "written";
             oral: "oral";
-            listening: "listening";
             audiovisual: "audiovisual";
             performed: "performed";
         }>;
@@ -179,9 +183,9 @@ export declare const questionSchema: z.ZodObject<{
             id: z.ZodString;
             description: z.ZodString;
             modality: z.ZodEnum<{
+                listening: "listening";
                 written: "written";
                 oral: "oral";
-                listening: "listening";
                 audiovisual: "audiovisual";
                 performed: "performed";
             }>;
@@ -595,8 +599,8 @@ export declare const assessmentSchema: z.ZodObject<{
     responseId: z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>;
     result: z.ZodEnum<{
         correct: "correct";
-        incorrect: "incorrect";
         partial: "partial";
+        incorrect: "incorrect";
         unassessed: "unassessed";
         stuck: "stuck";
     }>;
@@ -624,7 +628,6 @@ export declare const assessmentSchema: z.ZodObject<{
     userConfirmation: z.ZodOptional<z.ZodString>;
     errorType: z.ZodOptional<z.ZodEnum<{
         pattern: "pattern";
-        listening: "listening";
         "place-value": "place-value";
         "carry-borrow": "carry-borrow";
         "operation-choice": "operation-choice";
@@ -642,6 +645,7 @@ export declare const assessmentSchema: z.ZodObject<{
         order: "order";
         "expression-incomplete": "expression-incomplete";
         punctuation: "punctuation";
+        listening: "listening";
         spelling: "spelling";
         "word-form": "word-form";
         "sentence-pattern": "sentence-pattern";
@@ -777,9 +781,9 @@ export declare const termSettingsSchema: z.ZodObject<{
             id: z.ZodString;
             description: z.ZodString;
             modality: z.ZodEnum<{
+                listening: "listening";
                 written: "written";
                 oral: "oral";
-                listening: "listening";
                 audiovisual: "audiovisual";
                 performed: "performed";
             }>;
@@ -811,9 +815,9 @@ export declare const termSettingsSchema: z.ZodObject<{
             id: z.ZodString;
             description: z.ZodString;
             modality: z.ZodEnum<{
+                listening: "listening";
                 written: "written";
                 oral: "oral";
-                listening: "listening";
                 audiovisual: "audiovisual";
                 performed: "performed";
             }>;
@@ -925,6 +929,10 @@ export declare const blockSchema: z.ZodObject<{
             evidence: z.ZodString;
         }, z.core.$strict>>;
     }, z.core.$strict>;
+    plan: z.ZodOptional<z.ZodObject<{
+        day: z.ZodString;
+        taskId: z.ZodString;
+    }, z.core.$strict>>;
     currentQuestionId: z.ZodOptional<z.ZodString>;
     questions: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
@@ -939,9 +947,9 @@ export declare const blockSchema: z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
+                    listening: "listening";
                     written: "written";
                     oral: "oral";
-                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -1363,9 +1371,9 @@ export declare const blockSchema: z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
+                    listening: "listening";
                     written: "written";
                     oral: "oral";
-                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -1375,6 +1383,10 @@ export declare const blockSchema: z.ZodObject<{
             mistakeId: z.ZodOptional<z.ZodString>;
         }, z.core.$strict>>;
         enteredFamilyIds: z.ZodArray<z.ZodString>;
+        familyEntries: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            familyId: z.ZodString;
+            at: z.ZodNumber;
+        }, z.core.$strict>>>;
         presentedQuestionIds: z.ZodArray<z.ZodString>;
         endedAt: z.ZodOptional<z.ZodNumber>;
         endReason: z.ZodOptional<z.ZodEnum<{
@@ -1406,8 +1418,8 @@ export declare const blockSchema: z.ZodObject<{
         responseId: z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>;
         result: z.ZodEnum<{
             correct: "correct";
-            incorrect: "incorrect";
             partial: "partial";
+            incorrect: "incorrect";
             unassessed: "unassessed";
             stuck: "stuck";
         }>;
@@ -1435,7 +1447,6 @@ export declare const blockSchema: z.ZodObject<{
         userConfirmation: z.ZodOptional<z.ZodString>;
         errorType: z.ZodOptional<z.ZodEnum<{
             pattern: "pattern";
-            listening: "listening";
             "place-value": "place-value";
             "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
@@ -1453,6 +1464,7 @@ export declare const blockSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
+            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -1515,9 +1527,9 @@ export declare const blockSchema: z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
+                    listening: "listening";
                     written: "written";
                     oral: "oral";
-                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -1639,9 +1651,9 @@ export declare const worksheetSchema: z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
+                    listening: "listening";
                     written: "written";
                     oral: "oral";
-                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -2053,8 +2065,8 @@ export declare const worksheetSchema: z.ZodObject<{
         responseId: z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>;
         result: z.ZodEnum<{
             correct: "correct";
-            incorrect: "incorrect";
             partial: "partial";
+            incorrect: "incorrect";
             unassessed: "unassessed";
             stuck: "stuck";
         }>;
@@ -2082,7 +2094,6 @@ export declare const worksheetSchema: z.ZodObject<{
         userConfirmation: z.ZodOptional<z.ZodString>;
         errorType: z.ZodOptional<z.ZodEnum<{
             pattern: "pattern";
-            listening: "listening";
             "place-value": "place-value";
             "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
@@ -2100,6 +2111,7 @@ export declare const worksheetSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
+            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -2150,8 +2162,8 @@ export declare const worksheetSchema: z.ZodObject<{
         response: z.ZodString;
         result: z.ZodEnum<{
             correct: "correct";
-            incorrect: "incorrect";
             partial: "partial";
+            incorrect: "incorrect";
             unassessed: "unassessed";
             stuck: "stuck";
         }>;
@@ -2267,12 +2279,12 @@ export declare const collectionsSchema: z.ZodObject<{
             math: "math";
             english: "english";
         }>;
-        objectiveId: z.ZodOptional<z.ZodString>;
         materialId: z.ZodOptional<z.ZodString>;
         confirmedAt: z.ZodOptional<z.ZodNumber>;
         topic: z.ZodString;
         prompt: z.ZodString;
         answerEvidence: z.ZodString;
+        objectiveId: z.ZodOptional<z.ZodString>;
         learnerAnswer: z.ZodString;
         correction: z.ZodString;
         explanation: z.ZodString;
@@ -2280,7 +2292,6 @@ export declare const collectionsSchema: z.ZodObject<{
         uncertainties: z.ZodString;
         errorType: z.ZodOptional<z.ZodEnum<{
             pattern: "pattern";
-            listening: "listening";
             "place-value": "place-value";
             "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
@@ -2298,6 +2309,7 @@ export declare const collectionsSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
+            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -2313,9 +2325,9 @@ export declare const collectionsSchema: z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
+                    listening: "listening";
                     written: "written";
                     oral: "oral";
-                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -2630,7 +2642,6 @@ export declare const collectionsSchema: z.ZodObject<{
         answerEvidence: z.ZodString;
         errorType: z.ZodOptional<z.ZodEnum<{
             pattern: "pattern";
-            listening: "listening";
             "place-value": "place-value";
             "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
@@ -2648,6 +2659,7 @@ export declare const collectionsSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
+            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -2684,19 +2696,18 @@ export declare const collectionsSchema: z.ZodObject<{
         goal: z.ZodString;
         conceptIds: z.ZodArray<z.ZodString>;
         method: z.ZodEnum<{
-            reason: "reason";
             context: "context";
             recognize: "recognize";
             "read-evidence": "read-evidence";
             express: "express";
             represent: "represent";
+            reason: "reason";
             verify: "verify";
             listen: "listen";
             speak: "speak";
         }>;
         errorTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
             pattern: "pattern";
-            listening: "listening";
             "place-value": "place-value";
             "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
@@ -2714,6 +2725,7 @@ export declare const collectionsSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
+            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -2773,6 +2785,212 @@ export declare const collectionsSchema: z.ZodObject<{
     termId: z.ZodPipe<z.ZodString, z.ZodTransform<TermId, string>>;
     learnerId: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<LearnerId, string>>>;
 }, z.core.$strict>;
+export declare const dailyTaskSchema: z.ZodObject<{
+    id: z.ZodString;
+    subject: z.ZodEnum<{
+        chinese: "chinese";
+        math: "math";
+        english: "english";
+    }>;
+    purpose: z.ZodEnum<{
+        teaching: "teaching";
+        review: "review";
+        resume: "resume";
+        diagnostic: "diagnostic";
+        learning: "learning";
+    }>;
+    goalId: z.ZodOptional<z.ZodString>;
+    scope: z.ZodOptional<z.ZodObject<{
+        id: z.ZodString;
+        description: z.ZodString;
+        modality: z.ZodEnum<{
+            listening: "listening";
+            written: "written";
+            oral: "oral";
+            audiovisual: "audiovisual";
+            performed: "performed";
+        }>;
+        numberMax: z.ZodOptional<z.ZodNumber>;
+        vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+    }, z.core.$strict>>;
+    familyIds: z.ZodArray<z.ZodString>;
+    reason: z.ZodString;
+    basis: z.ZodArray<z.ZodObject<{
+        termId: z.ZodPipe<z.ZodString, z.ZodTransform<TermId, string>>;
+        ownerKind: z.ZodEnum<{
+            block: "block";
+            worksheet: "worksheet";
+        }>;
+        ownerId: z.ZodString;
+        responseId: z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>;
+    }, z.core.$strict>>;
+    ending: z.ZodEnum<{
+        "short-check": "short-check";
+        "review-attempts": "review-attempts";
+        "original-activity": "original-activity";
+    }>;
+    state: z.ZodEnum<{
+        ready: "ready";
+        active: "active";
+        paused: "paused";
+        completed: "completed";
+        deferred: "deferred";
+        skipped: "skipped";
+        "carried-forward": "carried-forward";
+    }>;
+    activity: z.ZodOptional<z.ZodObject<{
+        blockId: z.ZodPipe<z.ZodString, z.ZodTransform<BlockId, string>>;
+        roundId: z.ZodOptional<z.ZodString>;
+        questionId: z.ZodOptional<z.ZodString>;
+        responseId: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>>;
+    }, z.core.$strict>>;
+    original: z.ZodOptional<z.ZodObject<{
+        day: z.ZodString;
+        taskId: z.ZodString;
+    }, z.core.$strict>>;
+    carriedTo: z.ZodOptional<z.ZodObject<{
+        day: z.ZodString;
+        taskId: z.ZodString;
+    }, z.core.$strict>>;
+    optional: z.ZodOptional<z.ZodBoolean>;
+    outcomes: z.ZodArray<z.ZodObject<{
+        termId: z.ZodPipe<z.ZodString, z.ZodTransform<TermId, string>>;
+        ownerKind: z.ZodEnum<{
+            block: "block";
+            worksheet: "worksheet";
+        }>;
+        ownerId: z.ZodString;
+        responseId: z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>;
+    }, z.core.$strict>>;
+}, z.core.$strict>;
+/** One learner's explicit choices for one Shanghai calendar day. */
+export declare const dailyPlanSchema: z.ZodObject<{
+    kind: z.ZodLiteral<"daily-plan">;
+    learnerId: z.ZodPipe<z.ZodString, z.ZodTransform<LearnerId, string>>;
+    id: z.ZodString;
+    day: z.ZodString;
+    timezone: z.ZodLiteral<"Asia/Shanghai">;
+    revision: z.ZodNumber;
+    createdAt: z.ZodNumber;
+    updatedAt: z.ZodNumber;
+    policyVersion: z.ZodLiteral<1>;
+    settingsVersion: z.ZodString;
+    subjects: z.ZodArray<z.ZodEnum<{
+        chinese: "chinese";
+        math: "math";
+        english: "english";
+    }>>;
+    state: z.ZodEnum<{
+        stopped: "stopped";
+        ready: "ready";
+        active: "active";
+        paused: "paused";
+        completed: "completed";
+    }>;
+    completedAt: z.ZodOptional<z.ZodNumber>;
+    tasks: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        subject: z.ZodEnum<{
+            chinese: "chinese";
+            math: "math";
+            english: "english";
+        }>;
+        purpose: z.ZodEnum<{
+            teaching: "teaching";
+            review: "review";
+            resume: "resume";
+            diagnostic: "diagnostic";
+            learning: "learning";
+        }>;
+        goalId: z.ZodOptional<z.ZodString>;
+        scope: z.ZodOptional<z.ZodObject<{
+            id: z.ZodString;
+            description: z.ZodString;
+            modality: z.ZodEnum<{
+                listening: "listening";
+                written: "written";
+                oral: "oral";
+                audiovisual: "audiovisual";
+                performed: "performed";
+            }>;
+            numberMax: z.ZodOptional<z.ZodNumber>;
+            vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+        }, z.core.$strict>>;
+        familyIds: z.ZodArray<z.ZodString>;
+        reason: z.ZodString;
+        basis: z.ZodArray<z.ZodObject<{
+            termId: z.ZodPipe<z.ZodString, z.ZodTransform<TermId, string>>;
+            ownerKind: z.ZodEnum<{
+                block: "block";
+                worksheet: "worksheet";
+            }>;
+            ownerId: z.ZodString;
+            responseId: z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>;
+        }, z.core.$strict>>;
+        ending: z.ZodEnum<{
+            "short-check": "short-check";
+            "review-attempts": "review-attempts";
+            "original-activity": "original-activity";
+        }>;
+        state: z.ZodEnum<{
+            ready: "ready";
+            active: "active";
+            paused: "paused";
+            completed: "completed";
+            deferred: "deferred";
+            skipped: "skipped";
+            "carried-forward": "carried-forward";
+        }>;
+        activity: z.ZodOptional<z.ZodObject<{
+            blockId: z.ZodPipe<z.ZodString, z.ZodTransform<BlockId, string>>;
+            roundId: z.ZodOptional<z.ZodString>;
+            questionId: z.ZodOptional<z.ZodString>;
+            responseId: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>>;
+        }, z.core.$strict>>;
+        original: z.ZodOptional<z.ZodObject<{
+            day: z.ZodString;
+            taskId: z.ZodString;
+        }, z.core.$strict>>;
+        carriedTo: z.ZodOptional<z.ZodObject<{
+            day: z.ZodString;
+            taskId: z.ZodString;
+        }, z.core.$strict>>;
+        optional: z.ZodOptional<z.ZodBoolean>;
+        outcomes: z.ZodArray<z.ZodObject<{
+            termId: z.ZodPipe<z.ZodString, z.ZodTransform<TermId, string>>;
+            ownerKind: z.ZodEnum<{
+                block: "block";
+                worksheet: "worksheet";
+            }>;
+            ownerId: z.ZodString;
+            responseId: z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>;
+        }, z.core.$strict>>;
+    }, z.core.$strict>>;
+    choices: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        at: z.ZodNumber;
+        revision: z.ZodNumber;
+        action: z.ZodEnum<{
+            start: "start";
+            continue: "continue";
+            pause: "pause";
+            stop: "stop";
+            defer: "defer";
+            skip: "skip";
+            adjust: "adjust";
+            carry: "carry";
+            extra: "extra";
+        }>;
+        reason: z.ZodString;
+        taskIds: z.ZodArray<z.ZodString>;
+        replacedTaskIds: z.ZodArray<z.ZodString>;
+    }, z.core.$strict>>;
+    format: z.ZodLiteral<2>;
+    termId: z.ZodPipe<z.ZodString, z.ZodTransform<TermId, string>>;
+}, z.core.$strict>;
+/** Validated plan and task arrangements, separate from capability evidence. */
+export type DailyPlan = z.infer<typeof dailyPlanSchema>;
+export type DailyTask = z.infer<typeof dailyTaskSchema>;
 /** Machine-readable file definitions shared by CLI, application reads and manual saves. */
 export declare const officialFileSchemas: {
     readonly 'term-settings': z.ZodObject<{
@@ -2865,9 +3083,9 @@ export declare const officialFileSchemas: {
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
+                    listening: "listening";
                     written: "written";
                     oral: "oral";
-                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -2899,9 +3117,9 @@ export declare const officialFileSchemas: {
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
+                    listening: "listening";
                     written: "written";
                     oral: "oral";
-                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -3012,6 +3230,10 @@ export declare const officialFileSchemas: {
                 evidence: z.ZodString;
             }, z.core.$strict>>;
         }, z.core.$strict>;
+        plan: z.ZodOptional<z.ZodObject<{
+            day: z.ZodString;
+            taskId: z.ZodString;
+        }, z.core.$strict>>;
         currentQuestionId: z.ZodOptional<z.ZodString>;
         questions: z.ZodArray<z.ZodObject<{
             id: z.ZodString;
@@ -3026,9 +3248,9 @@ export declare const officialFileSchemas: {
                     id: z.ZodString;
                     description: z.ZodString;
                     modality: z.ZodEnum<{
+                        listening: "listening";
                         written: "written";
                         oral: "oral";
-                        listening: "listening";
                         audiovisual: "audiovisual";
                         performed: "performed";
                     }>;
@@ -3450,9 +3672,9 @@ export declare const officialFileSchemas: {
                     id: z.ZodString;
                     description: z.ZodString;
                     modality: z.ZodEnum<{
+                        listening: "listening";
                         written: "written";
                         oral: "oral";
-                        listening: "listening";
                         audiovisual: "audiovisual";
                         performed: "performed";
                     }>;
@@ -3462,6 +3684,10 @@ export declare const officialFileSchemas: {
                 mistakeId: z.ZodOptional<z.ZodString>;
             }, z.core.$strict>>;
             enteredFamilyIds: z.ZodArray<z.ZodString>;
+            familyEntries: z.ZodOptional<z.ZodArray<z.ZodObject<{
+                familyId: z.ZodString;
+                at: z.ZodNumber;
+            }, z.core.$strict>>>;
             presentedQuestionIds: z.ZodArray<z.ZodString>;
             endedAt: z.ZodOptional<z.ZodNumber>;
             endReason: z.ZodOptional<z.ZodEnum<{
@@ -3493,8 +3719,8 @@ export declare const officialFileSchemas: {
             responseId: z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>;
             result: z.ZodEnum<{
                 correct: "correct";
-                incorrect: "incorrect";
                 partial: "partial";
+                incorrect: "incorrect";
                 unassessed: "unassessed";
                 stuck: "stuck";
             }>;
@@ -3522,7 +3748,6 @@ export declare const officialFileSchemas: {
             userConfirmation: z.ZodOptional<z.ZodString>;
             errorType: z.ZodOptional<z.ZodEnum<{
                 pattern: "pattern";
-                listening: "listening";
                 "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
@@ -3540,6 +3765,7 @@ export declare const officialFileSchemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
+                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -3602,9 +3828,9 @@ export declare const officialFileSchemas: {
                     id: z.ZodString;
                     description: z.ZodString;
                     modality: z.ZodEnum<{
+                        listening: "listening";
                         written: "written";
                         oral: "oral";
-                        listening: "listening";
                         audiovisual: "audiovisual";
                         performed: "performed";
                     }>;
@@ -3725,9 +3951,9 @@ export declare const officialFileSchemas: {
                     id: z.ZodString;
                     description: z.ZodString;
                     modality: z.ZodEnum<{
+                        listening: "listening";
                         written: "written";
                         oral: "oral";
-                        listening: "listening";
                         audiovisual: "audiovisual";
                         performed: "performed";
                     }>;
@@ -4139,8 +4365,8 @@ export declare const officialFileSchemas: {
             responseId: z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>;
             result: z.ZodEnum<{
                 correct: "correct";
-                incorrect: "incorrect";
                 partial: "partial";
+                incorrect: "incorrect";
                 unassessed: "unassessed";
                 stuck: "stuck";
             }>;
@@ -4168,7 +4394,6 @@ export declare const officialFileSchemas: {
             userConfirmation: z.ZodOptional<z.ZodString>;
             errorType: z.ZodOptional<z.ZodEnum<{
                 pattern: "pattern";
-                listening: "listening";
                 "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
@@ -4186,6 +4411,7 @@ export declare const officialFileSchemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
+                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -4236,8 +4462,8 @@ export declare const officialFileSchemas: {
             response: z.ZodString;
             result: z.ZodEnum<{
                 correct: "correct";
-                incorrect: "incorrect";
                 partial: "partial";
+                incorrect: "incorrect";
                 unassessed: "unassessed";
                 stuck: "stuck";
             }>;
@@ -4352,12 +4578,12 @@ export declare const officialFileSchemas: {
                 math: "math";
                 english: "english";
             }>;
-            objectiveId: z.ZodOptional<z.ZodString>;
             materialId: z.ZodOptional<z.ZodString>;
             confirmedAt: z.ZodOptional<z.ZodNumber>;
             topic: z.ZodString;
             prompt: z.ZodString;
             answerEvidence: z.ZodString;
+            objectiveId: z.ZodOptional<z.ZodString>;
             learnerAnswer: z.ZodString;
             correction: z.ZodString;
             explanation: z.ZodString;
@@ -4365,7 +4591,6 @@ export declare const officialFileSchemas: {
             uncertainties: z.ZodString;
             errorType: z.ZodOptional<z.ZodEnum<{
                 pattern: "pattern";
-                listening: "listening";
                 "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
@@ -4383,6 +4608,7 @@ export declare const officialFileSchemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
+                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -4398,9 +4624,9 @@ export declare const officialFileSchemas: {
                     id: z.ZodString;
                     description: z.ZodString;
                     modality: z.ZodEnum<{
+                        listening: "listening";
                         written: "written";
                         oral: "oral";
-                        listening: "listening";
                         audiovisual: "audiovisual";
                         performed: "performed";
                     }>;
@@ -4715,7 +4941,6 @@ export declare const officialFileSchemas: {
             answerEvidence: z.ZodString;
             errorType: z.ZodOptional<z.ZodEnum<{
                 pattern: "pattern";
-                listening: "listening";
                 "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
@@ -4733,6 +4958,7 @@ export declare const officialFileSchemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
+                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -4769,19 +4995,18 @@ export declare const officialFileSchemas: {
             goal: z.ZodString;
             conceptIds: z.ZodArray<z.ZodString>;
             method: z.ZodEnum<{
-                reason: "reason";
                 context: "context";
                 recognize: "recognize";
                 "read-evidence": "read-evidence";
                 express: "express";
                 represent: "represent";
+                reason: "reason";
                 verify: "verify";
                 listen: "listen";
                 speak: "speak";
             }>;
             errorTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
                 pattern: "pattern";
-                listening: "listening";
                 "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
@@ -4799,6 +5024,7 @@ export declare const officialFileSchemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
+                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -4858,6 +5084,130 @@ export declare const officialFileSchemas: {
         termId: z.ZodPipe<z.ZodString, z.ZodTransform<TermId, string>>;
         learnerId: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<LearnerId, string>>>;
     }, z.core.$strict>;
+    readonly 'daily-plan': z.ZodObject<{
+        kind: z.ZodLiteral<"daily-plan">;
+        learnerId: z.ZodPipe<z.ZodString, z.ZodTransform<LearnerId, string>>;
+        id: z.ZodString;
+        day: z.ZodString;
+        timezone: z.ZodLiteral<"Asia/Shanghai">;
+        revision: z.ZodNumber;
+        createdAt: z.ZodNumber;
+        updatedAt: z.ZodNumber;
+        policyVersion: z.ZodLiteral<1>;
+        settingsVersion: z.ZodString;
+        subjects: z.ZodArray<z.ZodEnum<{
+            chinese: "chinese";
+            math: "math";
+            english: "english";
+        }>>;
+        state: z.ZodEnum<{
+            stopped: "stopped";
+            ready: "ready";
+            active: "active";
+            paused: "paused";
+            completed: "completed";
+        }>;
+        completedAt: z.ZodOptional<z.ZodNumber>;
+        tasks: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            subject: z.ZodEnum<{
+                chinese: "chinese";
+                math: "math";
+                english: "english";
+            }>;
+            purpose: z.ZodEnum<{
+                teaching: "teaching";
+                review: "review";
+                resume: "resume";
+                diagnostic: "diagnostic";
+                learning: "learning";
+            }>;
+            goalId: z.ZodOptional<z.ZodString>;
+            scope: z.ZodOptional<z.ZodObject<{
+                id: z.ZodString;
+                description: z.ZodString;
+                modality: z.ZodEnum<{
+                    listening: "listening";
+                    written: "written";
+                    oral: "oral";
+                    audiovisual: "audiovisual";
+                    performed: "performed";
+                }>;
+                numberMax: z.ZodOptional<z.ZodNumber>;
+                vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+            }, z.core.$strict>>;
+            familyIds: z.ZodArray<z.ZodString>;
+            reason: z.ZodString;
+            basis: z.ZodArray<z.ZodObject<{
+                termId: z.ZodPipe<z.ZodString, z.ZodTransform<TermId, string>>;
+                ownerKind: z.ZodEnum<{
+                    block: "block";
+                    worksheet: "worksheet";
+                }>;
+                ownerId: z.ZodString;
+                responseId: z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>;
+            }, z.core.$strict>>;
+            ending: z.ZodEnum<{
+                "short-check": "short-check";
+                "review-attempts": "review-attempts";
+                "original-activity": "original-activity";
+            }>;
+            state: z.ZodEnum<{
+                ready: "ready";
+                active: "active";
+                paused: "paused";
+                completed: "completed";
+                deferred: "deferred";
+                skipped: "skipped";
+                "carried-forward": "carried-forward";
+            }>;
+            activity: z.ZodOptional<z.ZodObject<{
+                blockId: z.ZodPipe<z.ZodString, z.ZodTransform<BlockId, string>>;
+                roundId: z.ZodOptional<z.ZodString>;
+                questionId: z.ZodOptional<z.ZodString>;
+                responseId: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>>;
+            }, z.core.$strict>>;
+            original: z.ZodOptional<z.ZodObject<{
+                day: z.ZodString;
+                taskId: z.ZodString;
+            }, z.core.$strict>>;
+            carriedTo: z.ZodOptional<z.ZodObject<{
+                day: z.ZodString;
+                taskId: z.ZodString;
+            }, z.core.$strict>>;
+            optional: z.ZodOptional<z.ZodBoolean>;
+            outcomes: z.ZodArray<z.ZodObject<{
+                termId: z.ZodPipe<z.ZodString, z.ZodTransform<TermId, string>>;
+                ownerKind: z.ZodEnum<{
+                    block: "block";
+                    worksheet: "worksheet";
+                }>;
+                ownerId: z.ZodString;
+                responseId: z.ZodPipe<z.ZodString, z.ZodTransform<ResponseId, string>>;
+            }, z.core.$strict>>;
+        }, z.core.$strict>>;
+        choices: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            at: z.ZodNumber;
+            revision: z.ZodNumber;
+            action: z.ZodEnum<{
+                start: "start";
+                continue: "continue";
+                pause: "pause";
+                stop: "stop";
+                defer: "defer";
+                skip: "skip";
+                adjust: "adjust";
+                carry: "carry";
+                extra: "extra";
+            }>;
+            reason: z.ZodString;
+            taskIds: z.ZodArray<z.ZodString>;
+            replacedTaskIds: z.ZodArray<z.ZodString>;
+        }, z.core.$strict>>;
+        format: z.ZodLiteral<2>;
+        termId: z.ZodPipe<z.ZodString, z.ZodTransform<TermId, string>>;
+    }, z.core.$strict>;
 };
 /** Validated official term file. */
 export type TermSettings = z.infer<typeof termSettingsSchema>;
@@ -4868,7 +5218,7 @@ export type WorksheetFile = z.infer<typeof worksheetSchema>;
 /** Validated bounded collection file. */
 export type CollectionsFile = z.infer<typeof collectionsSchema>;
 /** One official entity file. */
-export type OfficialFile = TermSettings | LearningBlock | WorksheetFile | CollectionsFile;
+export type OfficialFile = TermSettings | LearningBlock | WorksheetFile | CollectionsFile | DailyPlan;
 /** Actual answer precision. */
 export type AnswerDate = z.infer<typeof answerDateSchema>;
 /** One saved original response. */

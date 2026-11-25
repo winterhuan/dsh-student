@@ -255,7 +255,7 @@ it('loads curriculum and seed questions through the built package export in plai
 
 const SUMMARY_NOW = Date.parse('2026-11-12T20:00:00+08:00')
 
-it('distinguishes first mastery from repeating a goal mastered before the Shanghai seven-day window', async () => {
+it('retains actual practice without granting capability mastery to unassociated legacy goals', async () => {
   const { files, block, save } = await workspace()
   block.responses = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-11-12'].map((day, index) => ({ id: `r${index}`, questionId: 'q1', rawResponse: '15', assistance: 'independent', source: { kind: 'manual', entry: 'historical', parentConfirmation: 'Actual answer date confirmed' }, answerDate: { kind: 'day', day, parentConfirmation: 'Actual date confirmed' } }))
   block.assessments = block.responses.map(response => ({ id: `a-${response.id}`, responseId: response.id, result: 'correct', assistance: 'independent', feedback: 'Correct', answerEvidence: 'Verified', assessedAt: NOW }))
@@ -266,7 +266,7 @@ it('distinguishes first mastery from repeating a goal mastered before the Shangh
   block.assessments = block.assessments.slice(1)
   const fresh = await workspace()
   await fresh.save('.study/blocks/block-1.json', block)
-  expect(queryWorkspace(await readWorkspace(fresh.files, new AbortController().signal), { kind: 'summary' }, SUMMARY_NOW)).toMatchObject({ data: { masteredGoals: 1 } })
+  expect(queryWorkspace(await readWorkspace(fresh.files, new AbortController().signal), { kind: 'summary' }, SUMMARY_NOW)).toMatchObject({ data: { masteredGoals: 0 } })
 })
 
 it('does not label a repeat as first mastery when old unordered difficulty aged out before the new answer', async () => {
@@ -448,14 +448,14 @@ it('counts review opportunities by mistake identity and retains completion after
   expect(queryWorkspace(read, { kind: 'mistakes' }, SUMMARY_NOW)).toMatchObject({ data: { items: [expect.objectContaining({ id: 'm1', stage: 2, independentDays: ['2026-11-06', '2026-11-10'], dueAt: Date.parse('2026-11-14T00:00:00+08:00') }), expect.objectContaining({ id: 'm2', stage: 0 })] } })
 })
 
-it('reports mastery recovered by a new due-review answer separately from first mastery', async () => {
+it('retains legacy due-review completion without claiming recovered capability mastery', async () => {
   const { files, block, save } = await workspace()
   await save('.study/collections.json', collectionsSchema.parse({ format: 2, kind: 'collections', termId: 'term-1', mistakes: [{ id: 'm1', subject: 'math', topic: 'Subtraction', prompt: '18 - 7?', learnerAnswer: '10', correction: '11', explanation: 'Subtract seven', answerEvidence: '11 + 7 = 18', uncertainties: '', objectiveId: 'm2a-o-sub', confirmedAt: Date.parse('2026-09-30T09:00:00+08:00'), userConfirmation: 'Parent confirmed' }], rewards: [], teachingQueue: [] }))
   block.questions[0]!.mistakeId = 'm1'
   block.responses = ['2026-10-01', '2026-10-02', '2026-10-03', '2026-10-08', '2026-11-12'].map((day, index) => ({ id: `r${index}`, questionId: 'q1', rawResponse: '11', assistance: 'independent', answerDate: { kind: 'day', day, parentConfirmation: 'Actual day confirmed' }, source: { kind: 'manual', entry: 'historical', parentConfirmation: 'Confirmed' } }))
   block.assessments = block.responses.map((response, index) => ({ id: `a${index}`, responseId: response.id, result: 'correct', assistance: 'independent', feedback: 'Checked', answerEvidence: 'Verified', assessedAt: SUMMARY_NOW }))
   await save('.study/blocks/block-1.json', block)
-  expect(queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'summary' }, SUMMARY_NOW)).toMatchObject({ data: { masteredGoals: 0, recoveredGoals: 1, dueCompletion: { done: 1, total: 1 } } })
+  expect(queryWorkspace(await readWorkspace(files, new AbortController().signal), { kind: 'summary' }, SUMMARY_NOW)).toMatchObject({ data: { masteredGoals: 0, recoveredGoals: 0, dueCompletion: { done: 1, total: 1 } } })
 })
 
 it('cancels a future review opportunity when independent practice advances it before it is due', async () => {

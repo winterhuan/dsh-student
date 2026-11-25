@@ -250,6 +250,7 @@ export function reviewPlan(state: StudyState, subject: CurriculumSubject, now: n
 
 /** One knowledge point with mastery rolled up from the objectives that teach it. */
 export interface ConceptView {
+  association?: 'missing' | 'partial' | 'complete'
   id: string
   name: string
   unit: string

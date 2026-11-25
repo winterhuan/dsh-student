@@ -67,7 +67,7 @@ const signature = (read) => JSON.stringify([[...read.files, ...read.archiveFiles
  * @param lessonId - Explicit classroom selection takes priority within the eight-source read budget.
  * @returns Validated facts and explicit per-source availability; releases every Session lease and never writes academic records.
  */
-export async function readStudentWorkspace(exec, invocation, lessonId) {
+export async function readStudentWorkspace(exec, invocation, lessonId, planDay) {
     exec.signal.throwIfAborted();
     if (!exec.agent)
         throw new Error('Student reads require a registered Agent.');
@@ -93,7 +93,7 @@ export async function readStudentWorkspace(exec, invocation, lessonId) {
     const backupIssues = backups.issues.slice();
     let unstableSources = [];
     for (let attempt = 0; attempt < 3; attempt++) {
-        const initial = await readWorkspace(files, exec.signal, backupVersions(backups.backups), native.observations);
+        const initial = await readWorkspace(files, exec.signal, backupVersions(backups.backups), native.observations, [], planDay ? { planDay } : {});
         const historical = await readNativeHistory(agent, initial, exec.signal, invocation);
         const openmaic = [], observations = [];
         const service = agent.ctx.get('studentOpenmaic');
@@ -156,7 +156,7 @@ export async function readStudentWorkspace(exec, invocation, lessonId) {
                     fact.reason = error instanceof OpenmaicError ? error.message : 'Original official source could not be read completely. Retry the same classroom.';
                 }
             }
-        let read = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations);
+        let read = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations, planDay ? { planDay } : {});
         const finalLessons = await readLessonFile(files, exec.signal);
         if (signature(initial) !== signature(read) || lessons.observation?.version !== finalLessons.observation?.version || lessons.observation?.targetKey !== finalLessons.observation?.targetKey)
             continue;
@@ -190,7 +190,7 @@ export async function readStudentWorkspace(exec, invocation, lessonId) {
             continue;
         }
         await historical.recheck();
-        const publication = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations);
+        const publication = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations, planDay ? { planDay } : {});
         const publicationLessons = await readLessonFile(files, exec.signal);
         if (signature(read) !== signature(publication) || finalLessons.observation?.version !== publicationLessons.observation?.version || finalLessons.observation?.targetKey !== publicationLessons.observation?.targetKey)
             continue;

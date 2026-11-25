@@ -14,9 +14,9 @@
 
 补检一轮最多三道首次呈现的新题实例。先把新题 ID 加入原 round.presentedQuestionIds，保存冻结题目并校验，再展示给孩子；不能等作答或评分才计数。示范、提示、不会、前置切换、官方判据已有或未知、来源失败都不减少已呈现计数，也不创建新轮领取额度。仅补投影指出的缺项；到限后请求讲解、换允许内容或休息。
 
-短复习 kind=review，一轮最多进入两类母题。保存原成员及每次首次进入的 familyId；同母题数字或情境变式不变成另一类。计数由已保存进入事实决定，不能只数答对题，也不能在暂停、失败、切块或跨天后复位。投影的 remaining 是唯一展示额度，不在界面重新算。
+短复习 kind=review，一轮最多进入两类母题。保存原成员及每次首次进入的 familyId 和 familyEntries 的真实 at；同母题数字或情境变式不变成另一类。计数由已保存进入事实决定，不能只数答对题，也不能在暂停、失败、切块或跨天后复位。投影的 remaining 是唯一展示额度，不在界面重新算。
 
-暂停只在原 block 保存 endedAt，保留未结束 round 的全部呈现与进入事实。`resume-round` 先结束其他活动段，再移除原 block 的暂停结束标记，沿同一个 round 和原额度继续；先处理来源 hold。确定结束轮次时保存 round.endedAt 与 endReason（complete、budget-exhausted 或 stopped），之后保留结束事实。另开复习须有上一轮结束后孩子明确的“再复习”请求，保存 moreReview.afterRoundId 与原 request；真实插入新目标学习也可按共享投影开启后续轮次。普通“继续”不等于追加复习。
+暂停只在原 block 保存 endedAt，保留未结束 round 的全部呈现与进入事实。`resume-round` 先结束其他活动段，再移除原 block 的暂停结束标记，沿同一个 round 和原额度继续；先处理来源 hold。确定结束轮次时保存 round.endedAt 与 endReason（complete、budget-exhausted 或 stopped），之后保留结束事实。上一复习轮次明确结束后，后续学习日可依真实到期事实开启一次有界复习，同日不能返还额度。当天另开额外复习须有上一轮结束后孩子明确的“再复习”请求，保存 moreReview.afterRoundId 与原 request；新目标学习也不能重置当天自动复习额度。每日安排及跨天所有权见 [每日安排](daily-planning.md)。普通“继续”不等于追加复习。
 
 ## 来源与等待
 

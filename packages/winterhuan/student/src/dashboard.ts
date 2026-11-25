@@ -1,3 +1,4 @@
+import type { CapabilityProgress } from './learning/mastery.ts'
 import type { StudyState } from './schema.ts'
 import { interactiveLessonsView, type InteractiveLessons } from './openmaic.ts'
 import type { CurriculumSubject } from './curriculum.ts'
@@ -39,7 +40,7 @@ export function dashboard(state: StudyState | undefined, now: number, options: {
   const due = status.dueMistakes.filter(item => item.subject === subject)
   const pending = state.mistakes.filter(item => item.subject === subject && item.confirmedAt === undefined)
   return { serverNow: now, revision: state.revision, study: {
-    ...status,
+    ...status, capabilityProgress: [] as CapabilityProgress[],
     progress: status.progress.filter(item => item.subject === subject).slice(-20),
     concepts: state.concepts.filter(item => item.subject === subject).slice(-20).reverse(),
     objectives: state.objectives.filter(item => item.subject === subject).slice(-20).reverse(),

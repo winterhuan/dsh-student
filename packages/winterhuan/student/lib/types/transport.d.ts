@@ -26,5 +26,5 @@ export interface StudentWorkspaceRead {
  * @param lessonId - Explicit classroom selection takes priority within the eight-source read budget.
  * @returns Validated facts and explicit per-source availability; releases every Session lease and never writes academic records.
  */
-export declare function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | 'signal'>, invocation?: Context, lessonId?: string): Promise<StudentWorkspaceRead>;
+export declare function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | 'signal'>, invocation?: Context, lessonId?: string, planDay?: string): Promise<StudentWorkspaceRead>;
 //# sourceMappingURL=transport.d.ts.map

@@ -58,6 +58,12 @@ export function authoringExample(kind) {
         });
     const value = z.record(z.string(), z.unknown()).parse(sample(authoringSchema(kind)));
     const profile = stateSchema.shape.profile.parse(sample(z.toJSONSchema(stateSchema.shape.profile, { io: 'input' })));
+    if (kind in officialFileSchemas)
+        value.learnerId = 'example';
+    if (kind === 'daily-plan') {
+        const at = Date.parse('2026-11-25T00:00:00+08:00');
+        Object.assign(value, { day: '2026-11-25', id: 'day-2026-11-25', createdAt: at, updatedAt: at, choices: [{ id: 'example', at, revision: 0, action: 'start', reason: 'Explicit example choice', taskIds: ['example'], replacedTaskIds: [] }] });
+    }
     if (kind === 'block' || kind === 'worksheet') {
         value.subject = 'math';
         value.context = { profile };

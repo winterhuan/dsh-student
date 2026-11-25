@@ -35,18 +35,6 @@ it('has only Learning and Parent main entries and preserves an answer draft thro
   expect(screen.queryByText(en.openmaicTitle)).toBeNull()
 })
 
-it('preserves reflection and exploration drafts through parent browsing', () => {
-  mount()
-  fireEvent.change(screen.getByLabelText(en.reflection), { target: { value: 'I made ten first' } })
-  fireEvent.change(screen.getByLabelText(en.mode), { target: { value: 'explore' } })
-  fireEvent.change(screen.getByLabelText(en.inquiryQuestion), { target: { value: 'Why does making ten help?' } })
-  const main = screen.getByRole('navigation', { name: en.title })
-  fireEvent.click(within(main).getByRole('button', { name: en.parentEntry }))
-  fireEvent.click(within(main).getByRole('button', { name: en.learningEntry }))
-  expect((screen.getByLabelText(en.reflection) as HTMLTextAreaElement).value).toBe('I made ten first')
-  expect((screen.getByLabelText(en.inquiryQuestion) as HTMLTextAreaElement).value).toBe('Why does making ten help?')
-})
-
 it('keeps the question draft visible and waits for matching dashboard and learning-context versions', () => {
   const state = updateStudy(updateStudy(updateStudy(undefined, setup, NOW), start, NOW), { action: 'task', task: { id: 'current-question', sessionId: start.id, subject: 'math', topic: 'Addition', prompt: '8 + 7?' } }, NOW)
   const fixture = studentClientFixture(state, undefined, { learnerId: 'learner-one', termId: 'term-one', nextAction: { kind: 'answer', reason: 'unfinished-question', subject: 'math', title: 'Addition', blockId: start.id, questionId: 'current-question' } })
@@ -60,24 +48,27 @@ it('keeps the question draft visible and waits for matching dashboard and learni
   fireEvent.change(screen.getByLabelText(en.answer), { target: { value: 'Keep this thought' } })
   contextVersion = 'v1'
   view.rerender(<Desk />)
-  expect((screen.getByRole('button', { name: en.continueLearning }) as HTMLButtonElement).disabled).toBe(true)
+  expect(screen.getByRole('button', { name: en.submit }).closest('fieldset')!.disabled).toBe(true)
   contextVersion = 'v2'
   view.rerender(<Desk />)
   expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('Keep this thought')
-  expect((screen.getByRole('button', { name: en.continueLearning }) as HTMLButtonElement).disabled).toBe(false)
+  expect(screen.getByRole('button', { name: en.submit }).closest('fieldset')!.disabled).toBe(false)
 })
 
 it('continues the original block after browsing another subject without starting a new block', async () => {
   const { ask } = mount()
+  fireEvent.click(screen.getByRole('button', { name: en.parentEntry }))
   fireEvent.click(screen.getByRole('button', { name: en.chinese }))
-  fireEvent.click(screen.getByRole('button', { name: 'Continue learning' }))
+  fireEvent.click(screen.getByRole('button', { name: en.learningEntry }))
+  fireEvent.change(screen.getByLabelText(en.answer), { target: { value: '15' } })
+  fireEvent.click(screen.getByRole('button', { name: en.submit }))
   await waitFor(() => expect(ask).toHaveBeenCalledOnce())
   const message = String(ask.mock.calls[0]![0])
   const intention = JSON.parse(message.split('Student intention:\n')[1]!.split('\n')[0]!)
   expect(intention.blockId).toBe(start.id)
   expect(intention.questionId).toBe('current-question')
   expect(intention.selection.subject).toBe('math')
-  expect(intention.operation).toBeUndefined()
+  expect(intention.operation).toMatchObject({ action: 'answer', response: '15' })
   expect(message).toContain('nextAction')
   expect(message).not.toContain('curl')
 })
@@ -123,7 +114,8 @@ it('keeps the current local question ahead of a ready classroom for the same goa
   const openLesson = vi.fn()
   const { ask } = mount({ termId: 'term-one', nextAction }, { lessons: lessonList({ ...classroom, blockId: start.id, objectiveId: 'm.add' } as typeof classroom), openLesson })
   expect(screen.queryByRole('button', { name: en.goToClass })).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: en.continueLearning }))
+  fireEvent.change(screen.getByLabelText(en.answer), { target: { value: '15' } })
+  fireEvent.click(screen.getByRole('button', { name: en.submit }))
   await waitFor(() => expect(ask).toHaveBeenCalledOnce())
   expect(openLesson).not.toHaveBeenCalled()
   expect(String(ask.mock.calls[0]![0])).toContain('current-question')
@@ -150,7 +142,7 @@ it.each([
 ])('keeps Continue on the current action when a ready classroom has an incompatible binding: %j', overrides => {
   mount(currentContext, { lessons: lessonList({ ...currentClassroom, ...overrides }) })
   expect(screen.queryByRole('button', { name: en.goToClass })).toBeNull()
-  expect(screen.getByRole('button', { name: en.continueLearning })).toBeTruthy()
+  expect(screen.getByRole('button', { name: en.submit })).toBeTruthy()
 })
 
 it('opens a newly ready classroom for the current canonical goal and scope before further questions', async () => {
@@ -247,23 +239,6 @@ it('shows only the saved scope and actual independent days in Parent goal progre
   expect(screen.queryByText(en.firstMasteredOn)).toBeNull()
 })
 
-it('preserves the old draft while Other ways explicitly starts the browsed subject', async () => {
-  const { ask } = mount()
-  fireEvent.change(screen.getByLabelText(en.answer), { target: { value: 'Saved before switching' } })
-  fireEvent.click(screen.getByRole('button', { name: en.chinese }))
-  expect(screen.queryByLabelText(en.answer)).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: en.math }))
-  expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('Saved before switching')
-  fireEvent.click(screen.getByRole('button', { name: en.chinese }))
-  fireEvent.click(screen.getByText(en.otherWays))
-  fireEvent.click(screen.getByRole('button', { name: en.switchLearning }))
-  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
-  const intention = JSON.parse(String(ask.mock.calls[0]![0]).split('Student intention:\n')[1]!.split('\n')[0]!)
-  expect(intention.operation).toMatchObject({ action: 'start', subject: 'chinese' })
-  expect(intention.blockId).toBe(start.id)
-  expect(intention.questionId).toBe('current-question')
-})
-
 it('offers Continue for an unregistered new Session and waits for an independent live read', async () => {
   const state = updateStudy(updateStudy(undefined, setup, NOW), start, NOW)
   const fixture = studentClientFixture(state)
@@ -294,10 +269,10 @@ it('offers Continue for an unregistered new Session and waits for an independent
 
 const pausedRound = { id: 'round-one', blockId: start.id, kind: 'check', status: 'paused', limit: 3, remaining: 1, startedAt: NOW, members: [{ goalId: 'm.add', familyId: 'math.add-column', scope: currentScope }], enteredFamilyIds: ['math.add-column'], presentedQuestionIds: ['earlier-one', 'current-question'] }
 
-it('resumes the original projected round and displays its remaining allowance without calculating it', async () => {
+it('resumes the original projected round without displaying internal allowances', async () => {
   const { ask, syncFeedback } = mount({ ...currentContext, round: pausedRound, legalActions: ['resume-round', 'switch-block', 'rest'], nextAction: { ...currentAction, kind: 'hold', reason: 'round-paused', roundId: pausedRound.id } }, { lessons: lessonList(currentClassroom) })
   expect(syncFeedback).not.toHaveBeenCalled()
-  expect(screen.getByText(en.roundCheckRemaining.replace('{count}', '1'))).toBeTruthy()
+  expect(screen.queryByText(en.roundCheckRemaining.replace('{count}', '1'))).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: en.resumeRound }))
   await waitFor(() => expect(ask).toHaveBeenCalledOnce())
   const intent = JSON.parse(String(ask.mock.calls[0]![0]).split('Student intention:\n')[1]!.split('\n')[0]!)
@@ -331,7 +306,7 @@ it('withdraws pending feedback before native cancellation and never restarts it 
   const options = { lessons: lessonList(currentClassroom), running: true, syncFeedback, cancel: vi.fn(async () => { order.push('cancel') }) }
   const { ask, rerender } = mount(currentContext, options)
   await waitFor(() => expect(syncFeedback).toHaveBeenCalledWith(classroom.id, 'resume'))
-  fireEvent.click(screen.getByRole('button', { name: en.stop }))
+  fireEvent.click(screen.getByRole('button', { name: en.finishToday }))
   await waitFor(() => expect(ask).toHaveBeenCalledOnce())
   expect(order).toEqual(['resume', 'pause', 'cancel'])
   options.running = false; rerender(); fireEvent.focus(window)
@@ -351,8 +326,8 @@ it('retries the same classroom on explicit returns without requiring a changed l
 
 it('keeps Continue disabled while the native session still has an accepted submission', () => {
   const { ask } = mount(currentContext, { pending: true })
-  const button = screen.getByRole('button', { name: en.continueLearning }) as HTMLButtonElement
-  expect(button.disabled).toBe(true)
+  const button = screen.getByRole('button', { name: en.submit }) as HTMLButtonElement
+  expect(button.matches(':disabled')).toBe(true)
   fireEvent.click(button)
   expect(ask).not.toHaveBeenCalled()
 })
@@ -361,7 +336,7 @@ it('keeps Continue disabled while the native session still has an accepted submi
 it('can pause while a user input is pending and leaves cancellation to the native session', async () => {
   const cancel = vi.fn().mockResolvedValue(undefined)
   const { ask, syncFeedback } = mount(currentContext, { lessons: lessonList(currentClassroom), pending: true, cancel })
-  fireEvent.click(screen.getByRole('button', { name: en.stop }))
+  fireEvent.click(screen.getByRole('button', { name: en.finishToday }))
   await waitFor(() => expect(cancel).toHaveBeenCalledOnce())
   expect(syncFeedback).toHaveBeenCalledWith(classroom.id, 'pause')
   await waitFor(() => expect(ask).toHaveBeenCalledOnce())
@@ -376,7 +351,7 @@ it.each([
   expect(screen.getByText(notice)).toBeTruthy()
   expect(screen.getByText('8 + 7?')).toBeTruthy()
   expect(screen.getByRole('button', { name: en.submit }).matches(':disabled')).toBe(true)
-  expect(screen.getByRole('button', { name: en.stop }).matches(':disabled')).toBe(false)
+  expect(screen.getByRole('button', { name: en.finishToday }).matches(':disabled')).toBe(false)
 })
 
 it.each(['learning-context', 'dashboard'])('blocks advancement for a partial %s while retaining the same draft and visible question', query => {
@@ -394,7 +369,7 @@ it.each(['learning-context', 'dashboard'])('blocks advancement for a partial %s 
   expect(screen.getByText(query === 'learning-context' ? en.partialLearningRecords : en.continueWaiting)).toBeTruthy()
   expect(screen.getByText('8 + 7?')).toBeTruthy()
   expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('Keep me through partial read')
-  expect(screen.getByRole('button', { name: en.continueLearning }).matches(':disabled')).toBe(true)
+  expect(screen.getByRole('button', { name: en.submit }).matches(':disabled')).toBe(true)
 })
 
 
@@ -417,5 +392,5 @@ it('keeps the last coherent question and draft while a newer dashboard arrives b
   expect(screen.getByText('8 + 7?')).toBeTruthy()
   expect(screen.queryByText('9 + 9?')).toBeNull()
   expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('My first thought')
-  expect(screen.getByRole('button', { name: en.continueLearning }).matches(':disabled')).toBe(true)
+  expect(screen.getByRole('button', { name: en.submit }).matches(':disabled')).toBe(true)
 })

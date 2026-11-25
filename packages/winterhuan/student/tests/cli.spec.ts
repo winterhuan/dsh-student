@@ -89,7 +89,7 @@ it.each(['2026-02-29', '2026-02-30', '2026-04-31', '2026-13-01'])('rejects the i
 })
 
 it('generates valid examples for every official file kind from the same strict definitions', () => {
-  const paths = { 'term-settings': '.study/settings.json', block: '.study/blocks/example.json', worksheet: '.study/worksheets/example.json', collections: '.study/collections.json' }
+  const paths = { 'term-settings': '.study/settings.json', block: '.study/blocks/example.json', worksheet: '.study/worksheets/example.json', collections: '.study/collections.json', 'daily-plan': '.study/plans/2026-11-25.json' }
   const input = Object.entries(officialFileSchemas).map(([kind, schema]) => {
     const name = kind as keyof typeof officialFileSchemas
     const value = authoringExample(name)

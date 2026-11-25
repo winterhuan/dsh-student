@@ -40,6 +40,7 @@ export interface WorkspaceRead {
     cache?: StudyReadCache;
     status: 'valid' | 'missing' | 'invalid' | 'future-format' | 'changing' | 'legacy' | 'archived';
     files: ObservedFile[];
+    totalBytes?: number;
     membership: {
         path: string;
         names: string[];
@@ -77,5 +78,8 @@ export interface WorkspaceRead {
 export declare function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?: readonly {
     path: string;
     file: OfficialFile;
-}[], nativeSources?: readonly NativeInputObservation[], openmaicSources?: readonly OpenmaicInputObservation[]): Promise<WorkspaceRead>;
+}[], nativeSources?: readonly NativeInputObservation[], openmaicSources?: readonly OpenmaicInputObservation[], options?: {
+    now?: number;
+    planDay?: string;
+}): Promise<WorkspaceRead>;
 //# sourceMappingURL=read.d.ts.map

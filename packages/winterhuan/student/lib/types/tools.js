@@ -12,7 +12,7 @@ export function registerStudyTools(context) {
         name: 'study_status',
         description: 'Read validated Student files, observed versions, pending work and learning context. Load the study skill to author official files and run the packaged read-only CLI.',
         parameters: {
-            kind: { type: 'string', enum: ['status', 'capabilities', 'families', 'knowledge-sources', 'legacy-references', 'learning-context', 'files', 'settings', 'summary', 'materials', 'mistakes', 'due', 'pending', 'attempts', 'sessions', 'progress', 'concepts', 'objectives', 'relations', 'worksheets', 'paper-results', 'curriculum', 'weak', 'elements', 'exercises', 'diagnose', 'review-sheet'], description: 'status (default) returns validated status and learning context; capabilities and families page source-backed goals and canonical mothers (optional subject/id); knowledge-sources returns official curriculum sources and coverage limits; legacy-references pages pending old-ID routes and never grants mastery; learning-context returns current block/question, saved responses, pending assessment, selected scope, target facts/method and at most three seeds; files pages official file identities and paths; settings returns term setup; summary returns seven Shanghai calendar days; collections page 20 records with offset. curriculum needs subject (grade and term browse another map); elements needs subject and returns question-writing elements, exercises and the hint ladder; exercises pages shipped and workspace exercises (optional subject, unit or id/objectiveId); diagnose returns check-in plans (grade, term or unit narrow the scope); review-sheet needs subject; weak lists weak points.' },
+            kind: { type: 'string', enum: ['status', 'daily-plan', 'capability-progress', 'capabilities', 'families', 'knowledge-sources', 'legacy-references', 'learning-context', 'files', 'settings', 'summary', 'materials', 'mistakes', 'due', 'pending', 'attempts', 'sessions', 'progress', 'concepts', 'objectives', 'relations', 'worksheets', 'paper-results', 'curriculum', 'weak', 'elements', 'exercises', 'diagnose', 'review-sheet'], description: 'daily-plan returns the deterministic preview, saved arrangement, legal continuation and actual summary; capability-progress returns the shared capability/range evidence projection. status (default) returns validated status and learning context; capabilities and families page source-backed goals and canonical mothers (optional subject/id); knowledge-sources returns official curriculum sources and coverage limits; legacy-references pages pending old-ID routes and never grants mastery; learning-context returns current block/question, saved responses, pending assessment, selected scope, target facts/method and at most three seeds; files pages official file identities and paths; settings returns term setup; summary returns seven Shanghai calendar days; collections page 20 records with offset. curriculum needs subject (grade and term browse another map); elements needs subject and returns question-writing elements, exercises and the hint ladder; exercises pages shipped and workspace exercises (optional subject, unit or id/objectiveId); diagnose returns check-in plans (grade, term or unit narrow the scope); review-sheet needs subject; weak lists weak points.' },
             offset: { type: 'integer', description: 'Zero-based collection offset; defaults to 0.' },
             id: { type: 'string', description: 'Optional exact record ID (or objectiveId for kind=exercises) for materials, mistakes, attempts, sessions, concepts, objectives, exercises or worksheets.' },
             subject: { type: 'string', enum: ['chinese', 'math', 'english'], description: 'Optional subject filter for subject-owned records; required for kind=curriculum and kind=elements.' },
@@ -26,14 +26,18 @@ export function registerStudyTools(context) {
             const offset = args.offset ?? 0;
             if (offset < 0)
                 throw new Error('offset 不能为负数。');
-            const { read, native: source, backupIssues } = await readStudentWorkspace(exec);
+            const { read, native: source, backupIssues } = await readStudentWorkspace(exec, undefined, undefined, args.kind === 'daily-plan' && args.id && /^\d{4}-\d{2}-\d{2}$/u.test(args.id) ? args.id : undefined);
             const now = Date.now();
             const active = read.workspace?.blocks.find(block => block.endedAt === undefined);
-            const paths = ['.study/settings.json', ...(active ? [`.study/blocks/${active.id}.json`] : []), ...read.files.filter(file => file.file && 'id' in file.file && file.file.id === args.id).map(file => file.path)];
+            const paths = ['.study/settings.json', ...read.files.filter(file => file.file?.kind === 'daily-plan').map(file => file.path), ...(active ? [`.study/blocks/${active.id}.json`] : []), ...read.files.filter(file => file.file && 'id' in file.file && file.file.id === args.id).map(file => file.path)];
             const result = boundedRead(queryWorkspace(read, { ...args, kind: args.kind ?? 'status', offset }, now), paths);
             if (args.kind === 'files') {
                 const matching = read.files.filter(file => args.id === undefined || (file.file && 'id' in file.file && file.file.id === args.id));
                 result.data = { total: matching.length, items: matching.slice(offset, offset + 20).map(file => ({ path: file.path, version: file.version, kind: file.file?.kind, termId: file.file?.termId, ...(file.file && 'id' in file.file ? { id: file.file.id } : {}) })), nextOffset: offset + 20 < matching.length ? offset + 20 : null };
+            }
+            if (args.kind === 'capability-progress' && Array.isArray(result.data)) {
+                const items = result.data;
+                result.data = { items: items.slice(offset, offset + 20), total: items.length, nextOffset: offset + 20 < items.length ? offset + 20 : null };
             }
             if (args.kind === 'curriculum' && result.data) {
                 const data = z.record(z.string(), z.unknown()).parse(result.data);
@@ -42,12 +46,18 @@ export function registerStudyTools(context) {
                     result.data = { curriculum: { ...Object.fromEntries(['id', 'subject', 'grade', 'term', 'title', 'scope', 'units'].filter(key => key in curriculum).map(key => [key, curriculum[key]])), more: 'Use elements with a subject and goal ID for facts/methods, or read the matching installed knowledge/curriculum JSON for the full map.' } };
                 }
             }
-            const context = boundedRead(queryWorkspace(read, { kind: 'learning-context' }, now), paths);
+            const context = boundedRead(queryWorkspace(read, { kind: 'learning-context', ...(args.subject ? { subject: args.subject } : {}) }, now), paths);
             if (context.data) {
                 const data = z.record(z.string(), z.unknown()).parse(context.data);
                 const responses = z.array(z.record(z.string(), z.unknown())).parse(data.responses);
                 const saved = z.record(z.string(), z.unknown()).nullable().parse(data.savedResponse);
                 const selected = responses.filter(response => response.id === saved?.id);
+                data.goalProgress = Array.isArray(data.goalProgress) ? data.goalProgress.filter(item => item && typeof item === 'object' && 'id' in item && item.id === data.nextAction?.goalId).slice(0, 3) : [];
+                data.activeQuestions = data.currentQuestion ? [data.currentQuestion] : [];
+                if (data.daily && typeof data.daily === 'object') {
+                    const daily = data.daily;
+                    data.daily = { day: daily.day, phase: daily.phase, currentTaskId: daily.currentTaskId, planId: daily.saved?.id ?? null, revision: daily.saved?.revision ?? null, nextAction: daily.nextAction, more: 'Read study_status kind=daily-plan for the arrangement and choices.' };
+                }
                 data.responses = selected;
                 data.omittedResponses = responses.length - selected.length;
                 data.assessments = data.savedAssessment ? [data.savedAssessment] : [];

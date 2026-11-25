@@ -60,7 +60,9 @@ export { capabilityBindingSchema }
 export const learningRoundSchema = z.object({
   id, kind: z.enum(['check', 'review']), startedAt: time,
   members: z.array(capabilityBindingSchema.extend({ mistakeId: id.optional() })).min(1).max(3),
-  enteredFamilyIds: z.array(knowledgeIdSchema).max(3), presentedQuestionIds: z.array(id).max(200),
+  enteredFamilyIds: z.array(knowledgeIdSchema).max(3),
+  familyEntries: z.array(z.object({ familyId: knowledgeIdSchema, at: time }).strict()).max(3).optional(),
+  presentedQuestionIds: z.array(id).max(200),
   endedAt: time.optional(), endReason: z.enum(['complete', 'budget-exhausted', 'stopped']).optional(),
   moreReview: z.object({ afterRoundId: id, request: text }).strict().optional(),
 }).strict()
@@ -105,6 +107,7 @@ export const blockSchema = z.object({ ...base, kind: z.literal('block'), id: blo
   mode: stateSchema.shape.sessions.element.shape.mode, intensity: stateSchema.shape.sessions.element.shape.intensity,
   startedAt: time, endedAt: time.optional(), spentMs: time.optional(), reflection: z.string().max(2000).optional(),
   context: z.object({ profile: stateSchema.shape.profile.optional(), pendingProfile: text.optional(), scope: scope.optional(), material: stateSchema.shape.materials.element.optional() }).strict(),
+  plan: z.object({ day, taskId: id }).strict().optional(),
   currentQuestionId: id.optional(), questions: z.array(questionSchema).max(200), responses: z.array(responseSchema).max(500),
   currentResponseId: responseId.optional(),
   rounds: z.array(learningRoundSchema).max(100).optional(),
@@ -133,8 +136,33 @@ export const collectionsSchema = z.object({ ...base, kind: z.literal('collection
   relations: stateSchema.shape.relations, teachingQueue: stateSchema.shape.teachingQueue, rewards: z.array(stateSchema.shape.rewards.element.extend({ day })).max(1000),
   pendingLegacy: z.array(pending).max(5000).optional(),
 }).strict()
+/** Arrangements reference original evidence; they never store answers or mastery. */
+const planTaskReference = z.object({ day, taskId: id }).strict()
+const planEvidenceReference = z.object({ termId, ownerKind: z.enum(['block', 'worksheet']), ownerId: id, responseId }).strict()
+export const dailyTaskSchema = z.object({
+  id, subject, purpose: z.enum(['resume', 'teaching', 'diagnostic', 'learning', 'review']),
+  goalId: knowledgeIdSchema.optional(), scope: capabilityScopeSchema.optional(), familyIds: z.array(knowledgeIdSchema).max(2),
+  reason: text, basis: z.array(planEvidenceReference).max(20),
+  ending: z.enum(['short-check', 'review-attempts', 'original-activity']),
+  state: z.enum(['ready', 'active', 'paused', 'completed', 'deferred', 'skipped', 'carried-forward']),
+  activity: z.object({ blockId, roundId: id.optional(), questionId: id.optional(), responseId: responseId.optional() }).strict().optional(),
+  original: planTaskReference.optional(), carriedTo: planTaskReference.optional(),
+  optional: z.boolean().optional(), outcomes: z.array(planEvidenceReference).max(200),
+}).strict()
+/** One learner's explicit choices for one Shanghai calendar day. */
+export const dailyPlanSchema = z.object({
+  ...base, kind: z.literal('daily-plan'), learnerId, id, day, timezone: z.literal('Asia/Shanghai'),
+  revision: time, createdAt: time, updatedAt: time, policyVersion: z.literal(1),
+  settingsVersion: text, subjects: z.array(subject).min(1).max(3),
+  state: z.enum(['ready', 'active', 'paused', 'completed', 'stopped']), completedAt: time.optional(),
+  tasks: z.array(dailyTaskSchema).min(1).max(100),
+  choices: z.array(z.object({ id, at: time, revision: time, action: z.enum(['start', 'continue', 'pause', 'stop', 'defer', 'skip', 'adjust', 'carry', 'extra']), reason: text, taskIds: z.array(id).max(100), replacedTaskIds: z.array(id).max(100) }).strict()).min(1).max(500),
+}).strict()
+/** Validated plan and task arrangements, separate from capability evidence. */
+export type DailyPlan = z.infer<typeof dailyPlanSchema>
+export type DailyTask = z.infer<typeof dailyTaskSchema>
 /** Machine-readable file definitions shared by CLI, application reads and manual saves. */
-export const officialFileSchemas = { 'term-settings': termSettingsSchema, block: blockSchema, worksheet: worksheetSchema, collections: collectionsSchema } as const
+export const officialFileSchemas = { 'term-settings': termSettingsSchema, block: blockSchema, worksheet: worksheetSchema, collections: collectionsSchema, 'daily-plan': dailyPlanSchema } as const
 /** Validated official term file. */
 export type TermSettings = z.infer<typeof termSettingsSchema>
 /** Validated official block file. */
@@ -144,7 +172,7 @@ export type WorksheetFile = z.infer<typeof worksheetSchema>
 /** Validated bounded collection file. */
 export type CollectionsFile = z.infer<typeof collectionsSchema>
 /** One official entity file. */
-export type OfficialFile = TermSettings | LearningBlock | WorksheetFile | CollectionsFile
+export type OfficialFile = TermSettings | LearningBlock | WorksheetFile | CollectionsFile | DailyPlan
 /** Actual answer precision. */
 export type AnswerDate = z.infer<typeof answerDateSchema>
 /** One saved original response. */

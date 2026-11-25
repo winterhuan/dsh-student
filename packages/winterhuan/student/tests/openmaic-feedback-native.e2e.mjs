@@ -157,11 +157,12 @@ this.index++;await appendFile(config.telemetry,JSON.stringify({index:this.index,
     assert.ok(requirement.feedback.some(item => item.result === 'correct' && item.assistance === 'unknown' && item.answerDate.kind === 'unknown'))
     assert.equal(read.workspace.blocks.find(item => item.id === 'fixture-followup').responses.length, 0)
     assert.notEqual(generationRequirements[0], generationRequirements[1])
-    const continuation = queryWorkspace(read, { kind: 'learning-context', subject: 'english' }, now + 86400000).data
+    const continuation = queryWorkspace(read, { kind: 'learning-context' }, now + 86400000).data
     assert.equal(continuation.round.id, 'native-check')
     assert.equal(continuation.round.remaining, 0)
     assert.equal(continuation.nextAction.reason, 'check-budget-exhausted')
     assert.deepEqual(continuation.legalActions, ['request-teaching', 'switch-block', 'rest'])
+    assert.equal(queryWorkspace(read, { kind: 'learning-context', subject: 'english' }, now + 86400000).data.round, null)
   }
   const summary = { runs, generations, sourceReads: online ? 'Authorized original transport rereads; private native receipts retained.' : sourceReads, cliInvocations: cli.length, nativeAuthoring: true, feedbackDrivenNextGeneration: !online, distinctQuestionSessionsStartingAtZero: !online, laterSessionImportedAfterCheckpoint: !online, restartIndependentRead: true, persistedNativeCheckAllowance: !online, checkpointAfterIndependentAcceptance: true, unknownDatesAndHelpPreserved: true, agentOnlyAcademicWrites: true, sourceWithoutAuthorizationExcluded: true, networkAndModel: online ? 'Actual authorized official records with a scripted native model. Protected original job/capture metadata is seeded; academic writes are exclusively native tools. Original classroom generation is validated separately.' : 'Synthetic HTTP source and scripted model; all native tools, protected transport, formal writer, built CLI and independent Student reader are real.', cleanup: 'Awaited subprocess and server closure before temporary directory removal.' }
   if (outputRoot) { await writeFile(join(outputRoot, 'summary.json'), JSON.stringify(summary, null, 2)); await writeFile(join(outputRoot, 'cli.jsonl'), await readFile(join(root, 'cli.jsonl'))); await writeFile(join(outputRoot, 'final-block.json'), JSON.stringify(saved)); await writeFile(join(outputRoot, 'final-lessons.json'), JSON.stringify(lessons)) }

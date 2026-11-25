@@ -3,6 +3,7 @@ import type { Command } from '../schema.ts'
 import type { Dashboard } from '../dashboard.ts'
 import type { CheckInIntensity, ObjectiveInsight } from '../learning/mastery.ts'
 import type { Translate } from './locales.ts'
+import { CapabilityProgressView } from './capability-progress.tsx'
 import { MasteryDots } from './mastery-dots.tsx'
 import { assistKeys, day, intensityHelpKeys, intensityKeys, levelKeys, reasonText, sampleKeys, type ScopeChoice, type Subject } from './display.ts'
 
@@ -62,6 +63,7 @@ export function MapView({ study, curriculum, subject, selectedConceptId, setSele
   const chosen = (target: Subject): CheckInIntensity => intensities[target] ?? study.diagnostics.find(plan => plan.subject === target)?.recommendedIntensity ?? 'standard'
   const summary = curriculum?.summary
   return <>
+    <CapabilityProgressView goals={study.capabilityProgress} subject={subject} t={t} />
     <section>
       <h3>{curriculum ? curriculum.title : t('map')}</h3>
       <div className="student-scope">
@@ -100,7 +102,7 @@ export function MapView({ study, curriculum, subject, selectedConceptId, setSele
           {shown.length === 0 ? <p className="student-muted">{t('mapFilterEmpty')}</p> : <ul className="student-mindmap-branch">
             {shown.map(item => <li key={item.id} className="student-mindmap-node">
               <button type="button" className={`student-mindmap-concept student-level-${item.level}`} aria-pressed={selectedConceptId === item.id} onClick={() => setSelectedConceptId(item.id)}>
-                <span className={`student-dot student-level-${item.level}`} />{item.name}
+                <span className={`student-dot student-level-${item.level}`} />{item.name}{item.association === 'missing' ? ` · ${t('needsAssociation')}` : item.association === 'partial' ? ` · ${t('partialKnowledge')}` : ''}
               </button>
               {selectedConceptId === item.id && <ConceptDetail curriculum={curriculum} concept={item} selectedObjectiveId={selectedObjectiveId} chooseGoal={chooseGoal} setSelectedConceptId={setSelectedConceptId} t={t} />}
             </li>)}
@@ -193,8 +195,9 @@ function ConceptDetail({ curriculum, concept, selectedObjectiveId, chooseGoal, s
     <p className="student-muted">{t('source')}: {concept.source}</p>
     {concept.lastAt !== undefined && <p className="student-muted">{t('lastPractised')}: {day(concept.lastAt)}{concept.activeMistakes > 0 ? ` · ${t('bookReviewing')} ${concept.activeMistakes}` : ''}</p>}
     {goals.map(item => <div key={item.id}>
-      <p>{t('learningGoal')} · {item.title} · {t(levelKeys[item.level])} · {t(item.method)}</p>
-      <MasteryDots days={curriculum.scope.current ? item.independentDays : undefined} t={t} />
+      <p>{t('learningGoal')} · {item.title} · {t(item.association === 'missing' ? 'needsAssociation' : item.association === 'partial' ? 'partialKnowledge' : levelKeys[item.level])} · {t(item.method)}</p>
+      {!item.association && <MasteryDots days={curriculum.scope.current ? item.independentDays : undefined} t={t} />}
+      {item.capabilityIds?.length ? <p className="student-muted">{t('capabilityProgressTitle')}: {item.capabilityTitles?.join(' · ')}</p> : null}
       <p className="student-muted">{item.goal}</p>
       {item.reasons.length > 0 && item.level !== 'untouched' && <p className="student-muted">{reasonText(item.reasons, t)}</p>}
       {curriculum.scope.current && <button type="button" aria-pressed={selectedObjectiveId === item.id} onClick={() => chooseGoal(item)}>{t('chooseGoal')} · {item.title}</button>}

@@ -4,7 +4,9 @@ import { createHash } from 'node:crypto'
 import { stateSchema } from '../schema.ts'
 import { readLessonFile, type LessonFileRead } from './lessons.ts'
 import { scopeSupports } from '../capabilities.ts'
-import { deriveEvidence } from '../learning/evidence.ts'
+import { studyDay } from '../learning/shared.ts'
+import { blockSchema, termSettingsSchema, dailyPlanSchema } from './schema.ts'
+import { deriveEvidence, evidenceDay } from '../learning/evidence.ts'
 import { replayMistake } from '../learning/schedule.ts'
 import { migrateStudyFile } from './legacy.ts'
 import { validateStudyFiles, type FileIssue, type ParsedFile, type ValidationResult, type ValidatedWorkspace, type NativeInputObservation } from './validation.ts'
@@ -37,6 +39,7 @@ export interface WorkspaceRead {
   cache?: StudyReadCache
   status: 'valid' | 'missing' | 'invalid' | 'future-format' | 'changing' | 'legacy' | 'archived'
   files: ObservedFile[]
+  totalBytes?: number
   membership: { path: string; names: string[] }[]
   issues: FileIssue[]
   /** Missing or incompatible explicit history is excluded without blocking current learning. */
@@ -64,18 +67,18 @@ const MAX_TOTAL_BYTES = 33_554_432
  * @param openmaicSources - independently authorized original official submissions and grading.
  * @returns validated facts or an explicit incomplete, invalid or changing result.
  */
-export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?: readonly { path: string; file: OfficialFile }[], nativeSources: readonly NativeInputObservation[] = [], openmaicSources: readonly OpenmaicInputObservation[] = []): Promise<WorkspaceRead> {
+export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?: readonly { path: string; file: OfficialFile }[], nativeSources: readonly NativeInputObservation[] = [], openmaicSources: readonly OpenmaicInputObservation[] = [], options: { now?: number; planDay?: string } = {}): Promise<WorkspaceRead> {
   const owner = fs.cache ??= new StudyReadCache()
   const backups = prior === undefined ? await readBackups(fs, signal) : undefined
   for (let attempt = 0; attempt < 3; attempt++) {
-    const read = await readWorkspaceFiles(fs, signal, prior ?? backupVersions(backups!.backups), nativeSources, openmaicSources, owner)
+    const read = await readWorkspaceFiles(fs, signal, prior ?? backupVersions(backups!.backups), nativeSources, openmaicSources, owner, MAX_TOTAL_BYTES, options)
     if (!read.workspace || read.status !== 'valid') return { ...read, cache: owner, ...(backups ? { backupIssues: backups.issues } : {}) }
     const archiveIssues: FileIssue[] = [], archiveFiles: ObservedFile[] = [], archiveSources: NonNullable<WorkspaceRead['archiveSources']> = []
     read.workspace.archivedEvidence = []
     const requestedTerms = [...new Set((read.workspace.settings.evidenceReferences ?? []).map(reference => reference.termId))]
     const terms = requestedTerms.slice(0, 128)
     if (requestedTerms.length > terms.length) archiveIssues.push({ path: '.study/archives', field: '', rule: 'archive-reference', correction: 'Reference at most 128 original terms in one current read.' })
-    let total = read.files.reduce((sum, file) => sum + file.bytes.byteLength, 0)
+    let total = read.totalBytes ?? read.files.reduce((sum, file) => sum + file.bytes.byteLength, 0)
     const archiveSettings: { path: string; observation: FileObservation | undefined }[] = []
     for (const term of terms) {
       const prefix = `.study/archives/${term}`
@@ -83,7 +86,7 @@ export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?:
       archiveSettings.push({ path: path('.study/settings.json'), observation: await fs.stat(path('.study/settings.json'), signal) })
       const archiveFs: StudyFiles = { cache: owner, stat: (relative, signal) => fs.stat(path(relative), signal), list: (relative, signal) => relative === '.study/archives' ? Promise.resolve([]) : fs.list(path(relative), signal), read: (relative, signal, limit) => fs.read(path(relative), signal, limit) }
       const archive = await readWorkspaceFiles(archiveFs, signal, [], nativeSources, openmaicSources, owner, Math.max(0, MAX_TOTAL_BYTES - total))
-      const archiveBytes = archive.files.reduce((sum, file) => sum + file.bytes.byteLength, 0)
+      const archiveBytes = archive.totalBytes ?? archive.files.reduce((sum, file) => sum + file.bytes.byteLength, 0)
       const lessons = await readLessonFile({ ...archiveFs, read: (path, signal, limit) => archiveFs.read(path, signal, Math.max(0, Math.min(limit, MAX_TOTAL_BYTES - total - archiveBytes))) }, signal)
       if (lessons.bytes && lessons.observation) {
         total += lessons.bytes.byteLength
@@ -137,7 +140,7 @@ export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?:
   return { status: 'changing', files: [], membership: [], issues: [{ path: '.study/archives', field: '', rule: 'changing-read', correction: 'Finish archive edits and read the original history again.' }], cache: owner }
 }
 
-async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: readonly { path: string; file: OfficialFile }[], nativeSources: readonly NativeInputObservation[], openmaicSources: readonly OpenmaicInputObservation[], owner: StudyReadCache, budget = MAX_TOTAL_BYTES): Promise<WorkspaceRead> {
+async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: readonly { path: string; file: OfficialFile }[], nativeSources: readonly NativeInputObservation[], openmaicSources: readonly OpenmaicInputObservation[], owner: StudyReadCache, budget = MAX_TOTAL_BYTES, options: { now?: number; planDay?: string } = {}): Promise<WorkspaceRead> {
   const cache = owner.files
   for (let attempt = 0; attempt < 3; attempt += 1) {
     signal.throwIfAborted()
@@ -158,6 +161,16 @@ async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: re
         else paths.push(`${path}/${entry.name}`)
       }
     }
+    const planEntries = await fs.list('.study/plans', signal)
+    membership.push({ path: '.study/plans', names: planEntries.map(entry => `${entry.type}:${entry.name}`).sort() })
+    if (planEntries.length > 1000) discoveryIssues.push({ path: '.study/plans', field: '', rule: 'collection-limit', correction: 'Keep at most 1,000 daily plans in this term; archive the term before adding more. No records were removed.' })
+    const planPaths = planEntries.slice(0, 1000).flatMap(entry => {
+      if (entry.type !== 'file' || !/^\d{4}-\d{2}-\d{2}\.json$/u.test(entry.name)) { discoveryIssues.push({ path: `.study/plans/${entry.name}`, field: '', rule: 'file-membership', correction: 'Use one regular YYYY-MM-DD.json file per learning day.' }); return [] }
+      return [`.study/plans/${entry.name}`]
+    })
+    const planBefore = await Promise.all(planPaths.map(path => fs.stat(path, signal)))
+    const planBytes = planBefore.reduce((sum, info) => sum + (info?.size ?? 0), 0)
+    for (const [i, info] of planBefore.entries()) if (!info || info.type !== 'file' || info.size === undefined || info.size > 1_048_576) discoveryIssues.push({ path: planPaths[i]!, field: '', rule: 'plan-size', correction: 'Keep each daily plan within 1 MiB; preserve original records and archive or simplify the arrangement explicitly.' })
     const before = await Promise.all(paths.map(path => fs.stat(path, signal)))
     if (!before[0]) {
       const legacy = await fs.stat('.study/state.json', signal)
@@ -180,7 +193,8 @@ async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: re
     const files: ObservedFile[] = []
     const input: ParsedFile[] = []
     const available = [...prior]
-    let total = 0
+    if (planBytes > budget) discoveryIssues.push({ path: '.study/plans', field: '', rule: 'workspace-size', correction: 'Daily plans exceed the 32 MiB term budget; preserve originals and archive the term before continuing.' })
+    let total = planBytes > budget ? 0 : planBytes
     for (const [index, path] of paths.entries()) {
       const observed = before[index]
       if (!observed) continue
@@ -198,6 +212,30 @@ async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: re
         input.push({ path, value })
       } catch (error) { discoveryIssues.push({ path, field: '', rule: 'json', correction: error instanceof Error ? error.message : 'Save valid UTF-8 JSON.' }) }
     }
+    const settingsValue = termSettingsSchema.safeParse(input.find(entry => entry.path === '.study/settings.json')?.value)
+    const parsedBlocks = input.flatMap(entry => { const parsed = blockSchema.safeParse(entry.value); return parsed.success ? [parsed.data] : [] })
+    const days = settingsValue.success ? deriveEvidence({ settings: settingsValue.data, blocks: parsedBlocks, worksheets: [], nativeSources, openmaicSources }).entries.filter(entry => entry.sourceStatus === 'known' && entry.result !== 'unassessed').flatMap(entry => { const day = evidenceDay(entry); return day ? [day] : [] }) : []
+    const selectedDays = new Set([studyDay(options.now ?? Date.now()), ...[...new Set(days)].sort().reverse().slice(0, 3), ...(options.planDay ? [options.planDay] : [])])
+    for (const block of parsedBlocks) if (block.plan && block.responses.some(response => { const date = response.answerDate; return date?.kind === 'instant' ? selectedDays.has(studyDay(date.at)) : date?.kind === 'day' && selectedDays.has(date.day) })) selectedDays.add(block.plan.day)
+    const resumed = parsedBlocks.filter(block => block.endedAt === undefined || block.rounds?.some(round => round.endedAt === undefined)).sort((a, b) => b.startedAt - a.startedAt)[0]
+    if (resumed?.plan) selectedDays.add(resumed.plan.day)
+    const finished = parsedBlocks.filter(block => block.plan && block.endedAt !== undefined && studyDay(block.endedAt) === studyDay(options.now ?? Date.now())).sort((a, b) => b.endedAt! - a.endedAt!)[0]
+    if (finished?.plan) selectedDays.add(finished.plan.day)
+    // Read direct origins once; a chain is invalid and never followed recursively.
+    const readPlan = async (path: string) => {
+      const index = planPaths.indexOf(path), observed = planBefore[index]
+      if (!observed || observed.type !== 'file' || (observed.size ?? 0) > 1_048_576 || files.some(file => file.path === path)) return
+      const cached = cache.get(observed.targetKey)
+      if (cached?.file) available.push({ path, file: cached.file })
+      try {
+        const bytes = cached?.version === observed.version ? cached.bytes : await fs.read(path, signal, 1_048_576)
+        const value: unknown = cached?.version === observed.version ? cached.value : JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes))
+        files.push({ path, ...observed, bytes }); input.push({ path, value })
+      } catch (error) { if (signal.aborted) throw error; discoveryIssues.push({ path, field: '', rule: 'plan-read', correction: error instanceof Error ? error.message : 'Restore the original daily plan; saved activity and answers are retained.' }) }
+    }
+    for (const day of selectedDays) await readPlan(`.study/plans/${day}.json`)
+    const origins = input.flatMap(entry => { const parsed = dailyPlanSchema.safeParse(entry.value); return parsed.success ? parsed.data.tasks.flatMap(task => task.original ? [task.original.day] : []) : [] })
+    for (const day of new Set(origins)) await readPlan(`.study/plans/${day}.json`)
     const validation: ValidationResult = validateStudyFiles(input, available, nativeSources, openmaicSources)
     const migration = validation.workspace?.settings.migration
     if (migration) {
@@ -222,6 +260,8 @@ async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: re
     // Source verification also awaits filesystem reads; the official cut must cover those awaits.
     const after = await Promise.all(paths.map(path => fs.stat(path, signal)))
     if (before.some((entry, index) => entry?.version !== after[index]?.version || entry?.targetKey !== after[index]?.targetKey)) continue
+    const planAfter = await Promise.all(planPaths.map(path => fs.stat(path, signal)))
+    if (planBefore.some((entry, index) => entry?.version !== planAfter[index]?.version || entry?.targetKey !== planAfter[index]?.targetKey)) continue
     let changed = false
     for (const directory of membership) {
       const entries = await fs.list(directory.path, signal)
@@ -243,7 +283,7 @@ async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: re
       while ([...cache.values()].reduce((sum, entry) => sum + entry.bytes.byteLength, observed.bytes.byteLength) > MAX_TOTAL_BYTES && cache.size > 0) cache.delete(cache.keys().next().value ?? '')
       cache.set(observed.targetKey, { version: observed.version, bytes: observed.bytes, value, ...(observed.file ? { file: observed.file } : {}) })
     }
-    return { status: validation.workspace?.settings.archivedAt !== undefined ? 'archived' : 'valid', files, membership, issues, ...(validation.workspace ? { workspace: validation.workspace } : {}) }
+    return { status: validation.workspace?.settings.archivedAt !== undefined ? 'archived' : 'valid', totalBytes: total, files, membership, issues, ...(validation.workspace ? { workspace: validation.workspace } : {}) }
   }
   return { status: 'changing', files: [], membership: [], issues: [{ path: '.study', field: '', rule: 'changing-read', correction: 'Files changed during three reads. Finish the related edits and query again.' }] }
 }

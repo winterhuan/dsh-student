@@ -126,9 +126,9 @@ export declare const feedbackBindingSchema: z.ZodObject<{
         id: z.ZodString;
         description: z.ZodString;
         modality: z.ZodEnum<{
+            listening: "listening";
             written: "written";
             oral: "oral";
-            listening: "listening";
             audiovisual: "audiovisual";
             performed: "performed";
         }>;
@@ -149,9 +149,9 @@ export declare const pendingOpenmaicSchema: z.ZodObject<{
             id: z.ZodString;
             description: z.ZodString;
             modality: z.ZodEnum<{
+                listening: "listening";
                 written: "written";
                 oral: "oral";
-                listening: "listening";
                 audiovisual: "audiovisual";
                 performed: "performed";
             }>;

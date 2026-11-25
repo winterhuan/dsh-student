@@ -1,5 +1,5 @@
-import { t as applicationStudyFiles } from "./application-BNH-KAtu.js";
-import { At as officialRuntimeRecordSchema, C as consumeOpenmaicFeedback, Ct as feedbackBindingSchema, Et as officialQuestionSchema, W as canonical, jt as openmaicQuestionSchema, kt as officialRuntimePayloadSchema, l as readBackups, mt as readLessonFile, r as backupVersions, t as readWorkspace, u as retainObservedBackups, wt as feedbackCheckpointSchema, xt as normalizeOpenmaicBase } from "./read-BbJWwvjD.js";
+import { t as applicationStudyFiles } from "./application-BMj1jlwn.js";
+import { C as consumeOpenmaicFeedback, Ct as normalizeOpenmaicBase, Et as feedbackCheckpointSchema, K as canonical, Mt as officialRuntimeRecordSchema, Nt as openmaicQuestionSchema, Ot as officialQuestionSchema, Tt as feedbackBindingSchema, gt as readLessonFile, jt as officialRuntimePayloadSchema, l as readBackups, r as backupVersions, t as readWorkspace, u as retainObservedBackups } from "./read-CIG-O3uQ.js";
 import { z } from "zod";
 import { constants, createHash, publicEncrypt } from "node:crypto";
 import { KNOWN_SESSION_EVENT_TYPES, SessionId, pluginRecordOf } from "@deepseek-ai/dsh-session";
@@ -920,7 +920,7 @@ const signature = (read) => JSON.stringify([[...read.files, ...read.archiveFiles
 * @param lessonId - Explicit classroom selection takes priority within the eight-source read budget.
 * @returns Validated facts and explicit per-source availability; releases every Session lease and never writes academic records.
 */
-async function readStudentWorkspace(exec, invocation, lessonId) {
+async function readStudentWorkspace(exec, invocation, lessonId, planDay) {
 	exec.signal.throwIfAborted();
 	if (!exec.agent) throw new Error("Student reads require a registered Agent.");
 	const agent = exec.agent;
@@ -957,7 +957,7 @@ async function readStudentWorkspace(exec, invocation, lessonId) {
 	const backupIssues = backups.issues.slice();
 	let unstableSources = [];
 	for (let attempt = 0; attempt < 3; attempt++) {
-		const initial = await readWorkspace(files, exec.signal, backupVersions(backups.backups), native.observations);
+		const initial = await readWorkspace(files, exec.signal, backupVersions(backups.backups), native.observations, [], planDay ? { planDay } : {});
 		const historical = await readNativeHistory(agent, initial, exec.signal, invocation);
 		const openmaic = [], observations = [];
 		const service = agent.ctx.get("studentOpenmaic");
@@ -1038,7 +1038,7 @@ async function readStudentWorkspace(exec, invocation, lessonId) {
 				fact.reason = error instanceof OpenmaicError ? error.message : "Original official source could not be read completely. Retry the same classroom.";
 			}
 		}
-		let read = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations);
+		let read = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations, planDay ? { planDay } : {});
 		const finalLessons = await readLessonFile(files, exec.signal);
 		if (signature(initial) !== signature(read) || lessons.observation?.version !== finalLessons.observation?.version || lessons.observation?.targetKey !== finalLessons.observation?.targetKey) continue;
 		if (read.status === "valid") {
@@ -1077,7 +1077,7 @@ async function readStudentWorkspace(exec, invocation, lessonId) {
 			continue;
 		}
 		await historical.recheck();
-		const publication = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations);
+		const publication = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations, planDay ? { planDay } : {});
 		const publicationLessons = await readLessonFile(files, exec.signal);
 		if (signature(read) !== signature(publication) || finalLessons.observation?.version !== publicationLessons.observation?.version || finalLessons.observation?.targetKey !== publicationLessons.observation?.targetKey) continue;
 		read = publication;

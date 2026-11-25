@@ -8,6 +8,19 @@ export function createStudentDraftStore() {
         init: () => {
             const drafts = {};
             try {
+                // One-time migration from the former per-Session store; keep the original keys and bytes.
+                for (let index = 0; index < window.localStorage.length; index++) {
+                    const storageKey = window.localStorage.key(index);
+                    if (!storageKey?.startsWith('student:drafts.'))
+                        continue;
+                    try {
+                        const previous = JSON.parse(window.localStorage.getItem(storageKey) ?? '{}');
+                        for (const [key, value] of Object.entries(previous.drafts ?? {}))
+                            if (key.startsWith('student:draft:') && typeof value === 'string')
+                                drafts[key] = value;
+                    }
+                    catch { /* A corrupt old Session cannot hide other drafts. */ }
+                }
                 for (let index = 0; index < window.sessionStorage.length; index++) {
                     const key = window.sessionStorage.key(index);
                     if (key?.startsWith('student:draft:'))

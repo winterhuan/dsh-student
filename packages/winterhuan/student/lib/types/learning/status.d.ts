@@ -295,7 +295,7 @@ export declare function studyStatus(state: StudyState, now: number): {
         stuck?: boolean | undefined;
     } | null;
     feedback: {
-        result: "correct" | "incorrect" | "partial" | "unassessed" | "stuck";
+        result: "correct" | "partial" | "incorrect" | "unassessed" | "stuck";
         assistance: "unknown" | "independent" | "hint" | "worked-example";
         id: string;
         sessionId: string;

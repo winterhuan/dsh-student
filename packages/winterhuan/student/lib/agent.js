@@ -1,7 +1,7 @@
-import { t as applicationStudyFiles } from "./application-BNH-KAtu.js";
-import { E as openmaicAcademicQuestion, W as canonical, mt as readLessonFile, t as readWorkspace } from "./read-BbJWwvjD.js";
-import { a as openmaicEntityId, n as generationRequestSchema, o as readStudentWorkspace, u as nativeMessageHash } from "./generation-_SHC7Am8.js";
-import { a as queryWorkspace } from "./queries-Da9yyi2n.js";
+import { t as applicationStudyFiles } from "./application-BMj1jlwn.js";
+import { E as openmaicAcademicQuestion, K as canonical, gt as readLessonFile, t as readWorkspace } from "./read-CIG-O3uQ.js";
+import { a as openmaicEntityId, n as generationRequestSchema, o as readStudentWorkspace, u as nativeMessageHash } from "./generation-BN___dn-.js";
+import { a as queryWorkspace } from "./queries--sYk894N.js";
 import "node:module";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -97,6 +97,8 @@ function registerStudyTools(context) {
 				type: "string",
 				enum: [
 					"status",
+					"daily-plan",
+					"capability-progress",
 					"capabilities",
 					"families",
 					"knowledge-sources",
@@ -124,7 +126,7 @@ function registerStudyTools(context) {
 					"diagnose",
 					"review-sheet"
 				],
-				description: "status (default) returns validated status and learning context; capabilities and families page source-backed goals and canonical mothers (optional subject/id); knowledge-sources returns official curriculum sources and coverage limits; legacy-references pages pending old-ID routes and never grants mastery; learning-context returns current block/question, saved responses, pending assessment, selected scope, target facts/method and at most three seeds; files pages official file identities and paths; settings returns term setup; summary returns seven Shanghai calendar days; collections page 20 records with offset. curriculum needs subject (grade and term browse another map); elements needs subject and returns question-writing elements, exercises and the hint ladder; exercises pages shipped and workspace exercises (optional subject, unit or id/objectiveId); diagnose returns check-in plans (grade, term or unit narrow the scope); review-sheet needs subject; weak lists weak points."
+				description: "daily-plan returns the deterministic preview, saved arrangement, legal continuation and actual summary; capability-progress returns the shared capability/range evidence projection. status (default) returns validated status and learning context; capabilities and families page source-backed goals and canonical mothers (optional subject/id); knowledge-sources returns official curriculum sources and coverage limits; legacy-references pages pending old-ID routes and never grants mastery; learning-context returns current block/question, saved responses, pending assessment, selected scope, target facts/method and at most three seeds; files pages official file identities and paths; settings returns term setup; summary returns seven Shanghai calendar days; collections page 20 records with offset. curriculum needs subject (grade and term browse another map); elements needs subject and returns question-writing elements, exercises and the hint ladder; exercises pages shipped and workspace exercises (optional subject, unit or id/objectiveId); diagnose returns check-in plans (grade, term or unit narrow the scope); review-sheet needs subject; weak lists weak points."
 			},
 			offset: {
 				type: "integer",
@@ -168,11 +170,12 @@ function registerStudyTools(context) {
 		async execute(args, exec) {
 			const offset = args.offset ?? 0;
 			if (offset < 0) throw new Error("offset 不能为负数。");
-			const { read, native: source, backupIssues } = await readStudentWorkspace(exec);
+			const { read, native: source, backupIssues } = await readStudentWorkspace(exec, void 0, void 0, args.kind === "daily-plan" && args.id && /^\d{4}-\d{2}-\d{2}$/u.test(args.id) ? args.id : void 0);
 			const now = Date.now();
 			const active = read.workspace?.blocks.find((block) => block.endedAt === void 0);
 			const paths = [
 				".study/settings.json",
+				...read.files.filter((file) => file.file?.kind === "daily-plan").map((file) => file.path),
 				...active ? [`.study/blocks/${active.id}.json`] : [],
 				...read.files.filter((file) => file.file && "id" in file.file && file.file.id === args.id).map((file) => file.path)
 			];
@@ -195,6 +198,14 @@ function registerStudyTools(context) {
 					nextOffset: offset + 20 < matching.length ? offset + 20 : null
 				};
 			}
+			if (args.kind === "capability-progress" && Array.isArray(result.data)) {
+				const items = result.data;
+				result.data = {
+					items: items.slice(offset, offset + 20),
+					total: items.length,
+					nextOffset: offset + 20 < items.length ? offset + 20 : null
+				};
+			}
 			if (args.kind === "curriculum" && result.data) {
 				const data = z.record(z.string(), z.unknown()).parse(result.data);
 				if (data.curriculum !== null) {
@@ -213,12 +224,29 @@ function registerStudyTools(context) {
 					} };
 				}
 			}
-			const context = boundedRead(queryWorkspace(read, { kind: "learning-context" }, now), paths);
+			const context = boundedRead(queryWorkspace(read, {
+				kind: "learning-context",
+				...args.subject ? { subject: args.subject } : {}
+			}, now), paths);
 			if (context.data) {
 				const data = z.record(z.string(), z.unknown()).parse(context.data);
 				const responses = z.array(z.record(z.string(), z.unknown())).parse(data.responses);
 				const saved = z.record(z.string(), z.unknown()).nullable().parse(data.savedResponse);
 				const selected = responses.filter((response) => response.id === saved?.id);
+				data.goalProgress = Array.isArray(data.goalProgress) ? data.goalProgress.filter((item) => item && typeof item === "object" && "id" in item && item.id === data.nextAction?.goalId).slice(0, 3) : [];
+				data.activeQuestions = data.currentQuestion ? [data.currentQuestion] : [];
+				if (data.daily && typeof data.daily === "object") {
+					const daily = data.daily;
+					data.daily = {
+						day: daily.day,
+						phase: daily.phase,
+						currentTaskId: daily.currentTaskId,
+						planId: daily.saved?.id ?? null,
+						revision: daily.saved?.revision ?? null,
+						nextAction: daily.nextAction,
+						more: "Read study_status kind=daily-plan for the arrangement and choices."
+					};
+				}
 				data.responses = selected;
 				data.omittedResponses = responses.length - selected.length;
 				data.assessments = data.savedAssessment ? [data.savedAssessment] : [];

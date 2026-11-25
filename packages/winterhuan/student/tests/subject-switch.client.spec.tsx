@@ -16,7 +16,7 @@ import { setup, NOW } from './fixtures.ts'
 
 afterEach(() => { cleanup(); window.localStorage.clear(); window.sessionStorage.clear() })
 
-it('switches an unfinished English question to the selected subject and restores its original draft', async () => {
+it('browses subjects only at Home and returns to the original English question and draft', async () => {
   const cwd = await mkdtemp(join(tmpdir(), 'student-subject-switch-'))
   onTestFinished(() => rm(cwd, { recursive: true, force: true }))
   await mkdir(join(cwd, '.study/blocks'), { recursive: true })
@@ -36,12 +36,14 @@ it('switches an unfinished English question to the selected subject and restores
     const request: StudentQueryRequest = JSON.parse(new URL(address).searchParams.get('query')!)
     const result = request.kind === 'dashboard' ? queryWorkspaceDashboard(read, NOW, request.options) : queryWorkspace(read, request, NOW)
     const value: StudentQueryResult = { ...result, data: JSON.parse(JSON.stringify(result.data)), token: address, readAt: NOW, refreshAfter: NOW + 3000, native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [] }
-    return request.kind === 'learning-context' && request.subject === pendingSubject ? { status: 'loading' as const, value: undefined, failure: undefined } : { status: 'live' as const, value, failure: undefined }
+    return pendingSubject !== undefined && request.kind === 'learning-context' && request.subject === pendingSubject ? { status: 'loading' as const, value: undefined, failure: undefined } : { status: 'live' as const, value, failure: undefined }
   }
   function Desk() { return <StudyDesk {...useDraftFixture()} {...createStudentManualActions(remote)} useResource={useResource} sessionId="subject-switch" visible running={false} ask={ask} t={key => en[key]} /> }
   const view = render(<Desk />)
   await screen.findByText('play ____')
   fireEvent.change(screen.getByLabelText(en.answer), { target: { value: 'Original English draft' } })
+  expect(screen.queryByRole('navigation', { name: en.subject })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: en.backHome }))
   for (const subject of ['chinese', 'math'] as const) {
     pendingSubject = subject
     fireEvent.click(screen.getByRole('button', { name: en[subject] }))
@@ -57,17 +59,18 @@ it('switches an unfinished English question to the selected subject and restores
     expect(queryWorkspace(read, { kind: 'learning-context', subject }, NOW)).toMatchObject({ data: { nextAction: { subject, reason: subject === 'math' ? 'new-goal' : 'confirmed-scope-required' }, round: null } })
   }
   fireEvent.click(screen.getByRole('button', { name: en.english }))
+  fireEvent.click(screen.getAllByRole('button', { name: en.resumeLearning })[0]!)
   await screen.findByText('play ____')
   expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('Original English draft')
   expect(queryWorkspace(read, { kind: 'learning-context' }, NOW)).toMatchObject({ data: { nextAction: { kind: 'answer', subject: 'english', blockId: block.id, questionId: block.currentQuestionId } } })
   expect(await readFile(blockPath)).toEqual(originalBytes)
   expect(ask).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: en.backHome }))
   fireEvent.click(screen.getByRole('button', { name: en.math }))
-  fireEvent.click(screen.getByRole('button', { name: en.continueLearning }))
+  fireEvent.click(screen.getByRole('button', { name: en.startToday }))
   await waitFor(() => expect(ask).toHaveBeenCalledOnce())
   const intent = JSON.parse(String(ask.mock.calls[0]![0]).split('Student intention:\n')[1]!.split('\n')[0]!)
-  expect(intent).toMatchObject({ selection: { subject: 'math', goalId: 'm.count' }, nextAction: { subject: 'math', reason: 'new-goal' }, previousActivity: { blockId: block.id, questionId: block.currentQuestionId } })
-  expect(intent.blockId).toBeUndefined()
+  expect(intent).toMatchObject({ dailyAction: { action: 'start', suggestion: { task: { subject: 'math', goalId: 'm.count' } } }, blockId: block.id, questionId: block.currentQuestionId })
   expect(intent.operation).toBeUndefined()
   expect(await readFile(blockPath)).toEqual(originalBytes)
 })

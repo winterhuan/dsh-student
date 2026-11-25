@@ -104,3 +104,11 @@ export const workbookPhotoPrompt = '请加载 study 技能。这是练习册照�
 export function nativeIntentPrompt(intent: object, request: string): string {
   return `请加载 study 技能。在当前原生会话处理下面的意图，先核对 learnerId、termId、blockId、questionId 和 nextAction。通过原生文件工具读写正式业务文件，再运行安装包中的只读校验 CLI，随后独立 study_status 读取确认实际保存结果；保留学生原话、回答身份和附件关联。未完成的回答先保存再评估；结束或切换时保留待评估回答，迟到的反馈仍属于原题。不要自动换题或重发不确定的回答。\nStudent intention:\n${JSON.stringify(intent)}\n${request}`
 }
+
+/** Daily choices are persisted by the native executor after checking observed versions. */
+export const dailyPlanPrompt = '请加载 study，读取 references/daily-planning.md、references/continuation.md 和 study_status kind=daily-plan。执行本次 dailyAction：先核对意图携带的正式文件版本、计划 revision 和任务身份；变化时保留用户选择，重新核对，不能覆盖别的会话的新记录。首次开始复用 day-YYYY-MM-DD 和稳定任务身份，先保存计划，再准备当前任务，独立读取确认两者关联。继续原题和草稿；暂停与结束不能制造学习完成或掌握。只有明确继续才调整未开始内容；只有 extra 才添加可选活动。计划结束后不自动生成新题。'
+
+/** Explain a concrete parent scope without requiring internal catalog identifiers. */
+export function scopeConfirmationPrompt(subject: string, suggestion: object | undefined): string {
+  return `请加载 study，读取 references/daily-planning.md。家长正在确认 ${subject} 学习范围。保留已有档案，先读取设置与能力目录，展示已有确认、建议包含的内容、不包含的内容和可用方式。建议：${JSON.stringify(suggestion ?? null)}。学校进度不明时不要猜单元，可明确选择基础学习。请家长确认具体摘要后才保存 learningScopes；只补此学科，其他已确认学科仍可学习。保存后只读校验并独立读取，再回到今日推荐。`
+}

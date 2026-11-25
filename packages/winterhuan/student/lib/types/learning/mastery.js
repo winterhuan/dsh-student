@@ -16,7 +16,7 @@ const RECHECK_AFTER = 35 * DAY;
  * @param sourceVerification - independently read source availability and consumption for the current owner.
  * @returns one permitted action, scoped progress and the current two-mother review allowance.
  */
-export function learningContinuation(workspace, state, now, subject, sourceVerification) {
+export function learningContinuation(workspace, state, now, subject, sourceVerification, selection) {
     const knowledge = effectiveKnowledge(workspace.collections?.knowledge);
     const index = evidenceOf(state);
     const active = workspace.blocks.find(block => block.endedAt === undefined && (!subject || block.subject === subject));
@@ -24,45 +24,12 @@ export function learningContinuation(workspace, state, now, subject, sourceVerif
     const ordered = workspace.blocks.slice().sort((a, b) => b.startedAt - a.startedAt || a.id.localeCompare(b.id));
     const subjectBlocks = ordered.filter(block => !subject || block.subject === subject);
     const questionBindings = ordered.flatMap(block => block.questions.flatMap(question => question.capability ? [{ block, binding: question.capability }] : []));
-    const scopeFor = (goalId) => current?.capability?.goalId === goalId ? current.capability.scope : questionBindings.find(item => item.binding.goalId === goalId)?.binding.scope ?? workspace.archivedEvidence?.flatMap(archive => archive.references).find(reference => reference.goalId === goalId)?.scope;
+    const scopeFor = (goalId) => current?.capability?.goalId === goalId ? current.capability.scope : workspace.settings.learningScopes?.find(item => item.subject === knowledge.goals.find(goal => goal.id === goalId)?.subject && (!item.goalIds || item.goalIds.includes(goalId)))?.scope ?? questionBindings.find(item => item.binding.goalId === goalId)?.binding.scope ?? workspace.archivedEvidence?.flatMap(archive => archive.references).find(reference => reference.goalId === goalId)?.scope;
     const canonicalFamily = (id) => knowledge.familyAliases[id] ?? id;
     const accepted = (entry) => entry.sourceStatus === 'known' && entry.result === 'correct';
     const independent = (entry) => accepted(entry) && entry.assistance === 'independent' && evidenceDay(entry) !== undefined;
-    const progress = knowledge.goals.map(goal => {
-        const scope = scopeFor(goal.id) ?? null;
-        const relevant = scope ? index.entries.filter(entry => entry.capability?.goalId === goal.id && scopeSupports(entry.capability.scope, scope) && (!entry.referenceScopes || entry.referenceScopes.some(reference => scopeSupports(reference, scope))) && (entry.answerDate.kind === 'unknown' || (entry.answerDate.kind === 'instant' ? entry.answerDate.at <= now : entry.answerDate.day <= studyDay(now)))) : [];
-        const dated = evidenceAtCutoff({ entries: relevant, stuckSignals: [] }, now);
-        const familyIds = [...new Set(questionBindings.filter(item => item.binding.goalId === goal.id && scope && scopeSupports(item.binding.scope, scope)).map(item => canonicalFamily(item.binding.familyId)))];
-        const required = familyIds.length ? familyIds : [goal.familyIds[0]];
-        const missingAt = (entries) => required.map(familyId => ({ familyId, criteria: ['basic', 'method', 'variation'].filter(criterion => !entries.some(entry => accepted(entry) && canonicalFamily(entry.capability.familyId) === familyId && entry.criteria?.includes(criterion))) })).filter(item => item.criteria.length);
-        const missingCriteria = missingAt(relevant);
-        const days = [...new Set(dated.filter(independent).map(entry => evidenceDay(entry)))].sort();
-        const mistakes = state.mistakes.filter(mistake => mistake.subject === goal.subject && mistake.objectiveId === goal.id && mistake.confirmedAt !== undefined && mistake.confirmedAt <= now && (!scope || !index.entries.some(entry => entry.mistakeId === mistake.id && entry.capability) || index.entries.some(entry => entry.mistakeId === mistake.id && entry.capability && scopeSupports(entry.capability.scope, scope))));
-        const difficultiesAt = (entries, at) => entries.some(entry => {
-            const day = evidenceDay(entry);
-            const instant = entry.answerDate.kind === 'instant' ? entry.answerDate.at : day ? dayStart(day) + DAY - 1 : undefined;
-            return entry.sourceStatus === 'known' && instant !== undefined && instant >= at - 14 * DAY && (['incorrect', 'partial', 'stuck'].includes(entry.result) || entry.result === 'correct' && ['hint', 'worked-example'].includes(entry.assistance));
-        });
-        let firstMasteredDay;
-        for (const day of days) {
-            const cut = dated.filter(entry => evidenceDay(entry) <= day);
-            const at = dayStart(day) + DAY - 1;
-            const open = mistakes.some(mistake => mistake.confirmedAt <= at && (replayMistake(mistake, index, at).stage < 4 || (replayMistake(mistake, index, at).dueAt ?? Infinity) <= at));
-            if (new Set(cut.filter(independent).map(evidenceDay)).size >= 3 && !missingAt(cut).length && !difficultiesAt(cut, at) && !open) {
-                firstMasteredDay = day;
-                break;
-            }
-        }
-        const weak = difficultiesAt(dated, now) || relevant.some(entry => entry.sourceStatus === 'known' && entry.answerDate.kind === 'unknown' && ['incorrect', 'partial', 'stuck'].includes(entry.result)) || mistakes.some(mistake => mistake.stage < 4);
-        const due = mistakes.some(mistake => mistake.dueAt !== undefined && mistake.dueAt <= now) || !weak && days.length > 0 && days.length < 3 && days.at(-1) < studyDay(now);
-        const level = due ? 'due' : weak ? 'weak' : days.length >= 3 && !missingCriteria.length ? 'mastered' : relevant.length ? 'practising' : 'untouched';
-        const baseline = firstMasteredDay !== undefined && dated.filter(entry => evidenceDay(entry) <= firstMasteredDay).every(entry => entry.termId !== workspace.settings.termId);
-        const troubleDays = dated.filter(entry => firstMasteredDay && evidenceDay(entry) > firstMasteredDay && ['incorrect', 'partial', 'stuck'].includes(entry.result)).map(entry => evidenceDay(entry)).sort();
-        const recovered = level === 'mastered' && troubleDays.length > 0 && days.at(-1) > troubleDays.at(-1);
-        return { id: goal.id, subject: goal.subject, title: goal.title, scope, level, independentDays: days, baseline,
-            ...(firstMasteredDay ? { firstMasteredDay } : {}), ...(recovered ? { recoveredDay: days.at(-1) } : {}), missingFamilyIds: missingCriteria.map(item => item.familyId), missingCriteria,
-            feedback: relevant.slice(-20).map(entry => ({ termId: entry.termId, ownerId: entry.ownerId, responseId: entry.responseId, familyId: canonicalFamily(entry.capability.familyId), result: entry.result, feedback: entry.feedback ?? '', ...(entry.errorType ? { errorType: entry.errorType } : {}), sourceStatus: entry.sourceStatus, assistance: entry.assistance, answerDate: entry.answerDate })) };
-    });
+    const allProgress = capabilityProgress(workspace, state, now);
+    const progress = knowledge.goals.map(goal => allProgress.find(item => item.id === goal.id && (!scopeFor(goal.id) || item.scope && scopeSupports(item.scope, scopeFor(goal.id)) && scopeSupports(scopeFor(goal.id), item.scope))) ?? allProgress.find(item => item.id === goal.id));
     const familyForMistake = (id) => {
         const entry = index.entries.find(entry => entry.mistakeId === id && entry.capability);
         const binding = state.mistakes.find(mistake => mistake.id === id)?.capability ?? entry?.capability;
@@ -76,14 +43,17 @@ export function learningContinuation(workspace, state, now, subject, sourceVerif
     const rounds = subjectBlocks.flatMap(block => (block.rounds ?? []).map(round => ({ ...round, blockId: block.id,
         status: round.endedAt !== undefined ? 'ended' : block.endedAt !== undefined ? 'paused' : 'active',
         limit: round.kind === 'check' ? 3 : 2,
-        remaining: Math.max(0, (round.kind === 'check' ? 3 - round.presentedQuestionIds.length : 2 - round.enteredFamilyIds.length)), }))).sort((a, b) => b.startedAt - a.startedAt || a.id.localeCompare(b.id));
+        remaining: round.endedAt !== undefined ? 0 : Math.max(0, (round.kind === 'check' ? 3 - round.presentedQuestionIds.length : 2 - round.enteredFamilyIds.length)), }))).sort((a, b) => b.startedAt - a.startedAt || a.id.localeCompare(b.id));
     const latestReview = rounds.find(round => round.kind === 'review');
     const lastLearning = subjectBlocks.find(block => block.mode !== 'review' && block.responses.some(response => response.source.kind === 'manual' && response.source.entry === 'current' || response.source.kind === 'native'));
     const legacyReview = subjectBlocks.filter(block => !block.rounds?.length && block.mode === 'review' && (!lastLearning || block.startedAt > lastLearning.startedAt));
-    const used = latestReview?.enteredFamilyIds ?? [...new Set(legacyReview.flatMap(block => block.questions.filter(question => question.id === block.currentQuestionId || block.responses.some(response => response.questionId === question.id)).map(question => question.capability ? canonicalFamily(question.capability.familyId) : familyForMistake(question.mistakeId ?? question.id))))];
+    const todayReviews = ordered.flatMap(block => block.rounds ?? []).filter(round => round.kind === 'review' && !round.moreReview);
+    const dailyUsed = [...new Set(todayReviews.flatMap(round => round.enteredFamilyIds.filter(id => studyDay(round.familyEntries?.find(entry => entry.familyId === id)?.at ?? round.startedAt) === studyDay(now)).map(canonicalFamily)))];
+    const endedToday = latestReview?.endedAt !== undefined && studyDay(latestReview.endedAt) === studyDay(now);
+    const used = latestReview && (latestReview.endedAt === undefined || endedToday) ? latestReview.enteredFamilyIds : [...new Set(legacyReview.filter(block => studyDay(block.startedAt) === studyDay(now)).flatMap(block => block.questions.filter(question => question.id === block.currentQuestionId || block.responses.some(response => response.questionId === question.id)).map(question => question.capability ? canonicalFamily(question.capability.familyId) : familyForMistake(question.mistakeId ?? question.id))))];
     const goalReviews = progress.filter(item => item.level === 'due' && item.scope && (!subject || item.subject === subject) && !due.some(mistake => mistake.objectiveId === item.id));
     const dueFamilies = [...new Set([...due.map(mistake => familyForMistake(mistake.id)), ...goalReviews.map(item => questionBindings.find(binding => binding.binding.goalId === item.id)?.binding.familyId ?? knowledge.goals.find(goal => goal.id === item.id).familyIds[0])])];
-    const reviewRound = { limit: 2, usedFamilyIds: used, remaining: latestReview?.endedAt !== undefined ? 0 : Math.max(0, 2 - used.length), backlog: dueFamilies.length };
+    const reviewRound = { limit: 2, usedFamilyIds: used, remaining: endedToday ? 0 : Math.max(0, Math.min(2 - used.length, latestReview?.moreReview && latestReview.endedAt === undefined ? 2 : 2 - dailyUsed.length)), backlog: dueFamilies.length };
     const finish = (nextAction) => {
         const round = rounds.find(round => nextAction?.roundId === round.id) ?? rounds[0] ?? null;
         const legalActions = nextAction?.reason === 'source-unavailable' || nextAction?.reason === 'source-pending' ? [nextAction.source?.kind === 'native' ? 'verify-source' : 'sync-feedback', 'switch-block', 'rest']
@@ -95,7 +65,7 @@ export function learningContinuation(workspace, state, now, subject, sourceVerif
                                 : nextAction?.kind === 'hold' ? ['switch-block', 'rest', 'more-review']
                                     : nextAction?.kind === 'learn' ? ['start-block', 'rest', 'more-review']
                                         : ['next-question', 'end-block', 'switch-block'];
-        return { nextAction, goalProgress: progress.filter(item => item.scope !== null || item.feedback.length > 0), round, legalActions, reviewRound };
+        return { nextAction, goalProgress: allProgress.filter(item => item.scope !== null || item.feedback.length > 0), round, legalActions, reviewRound };
     };
     const actionFor = (goalId, kind, reason, scope, selectedFamilyId) => {
         const goal = knowledge.goals.find(goal => goal.id === goalId);
@@ -167,7 +137,7 @@ export function learningContinuation(workspace, state, now, subject, sourceVerif
     const latestRound = rounds[0];
     if (latestRound?.kind === 'check' && (latestRound.remaining === 0 || latestRound.endedAt !== undefined) && (latestRound.endReason !== 'complete' || latestRound.members.some(member => progress.find(item => item.id === member.goalId)?.missingCriteria.length))) {
         const member = latestRound.members[0];
-        return finish({ ...actionFor(member.goalId, 'hold', 'check-budget-exhausted', member.scope), roundId: latestRound.id, blockId: latestRound.blockId });
+        return finish({ ...actionFor(member.goalId, progress.find(item => item.id === member.goalId)?.level === 'weak' ? 'teach' : 'hold', 'check-budget-exhausted', member.scope), roundId: latestRound.id, blockId: latestRound.blockId });
     }
     if (latestRound?.status === 'paused')
         return finish({ kind: 'hold', reason: 'round-paused', subject: workspace.blocks.find(block => block.id === latestRound.blockId).subject, title: 'Resume the saved round or rest.', roundId: latestRound.id, blockId: latestRound.blockId });
@@ -177,7 +147,7 @@ export function learningContinuation(workspace, state, now, subject, sourceVerif
             return finish({ ...actionFor(member.goalId, 'review', 'due-review', member.scope, member.familyId), blockId: latestReview.blockId, roundId: latestReview.id, review: { mistakeIds: member.mistakeId ? [member.mistakeId] : [], familyIds: [member.familyId], remaining: latestReview.remaining } });
     }
     const remainingDue = due.filter(mistake => !used.includes(familyForMistake(mistake.id)));
-    if (reviewRound.remaining && remainingDue.length) {
+    if (selection !== 'main' && reviewRound.remaining && remainingDue.length) {
         const selectedFamilies = [...new Set(remainingDue.map(mistake => familyForMistake(mistake.id)))].slice(0, reviewRound.remaining);
         const selected = remainingDue.filter(mistake => selectedFamilies.includes(familyForMistake(mistake.id)));
         const first = selected[0];
@@ -186,7 +156,7 @@ export function learningContinuation(workspace, state, now, subject, sourceVerif
         return finish({ ...base, review: { mistakeIds: selected.map(mistake => mistake.id), familyIds: selectedFamilies, remaining: reviewRound.remaining } });
     }
     const goalReview = goalReviews.find(item => !used.includes(questionBindings.find(binding => binding.binding.goalId === item.id)?.binding.familyId ?? knowledge.goals.find(goal => goal.id === item.id).familyIds[0]));
-    if (reviewRound.remaining && goalReview) {
+    if (selection !== 'main' && reviewRound.remaining && goalReview) {
         const action = actionFor(goalReview.id, 'review', 'due-review');
         return finish({ ...action, review: { mistakeIds: [], familyIds: [action.familyId], remaining: reviewRound.remaining } });
     }
@@ -198,8 +168,9 @@ export function learningContinuation(workspace, state, now, subject, sourceVerif
         const gate = schoolGate(state, confirmation.subject);
         if (course && (!gate || gate.pace === 'review'))
             continue;
-        const candidate = knowledge.goals.find(goal => {
-            if (goal.subject !== confirmation.subject || enteredGoals.has(goal.id) || progress.find(item => item.id === goal.id)?.level !== 'untouched')
+        const candidates = knowledge.goals.filter(goal => {
+            const item = progress.find(item => item.id === goal.id);
+            if (goal.subject !== confirmation.subject || enteredGoals.has(goal.id) && item.level !== 'weak' || item.level === 'mastered' || item.level === 'due' || item.level === 'practising' && !item.missingCriteria.length)
                 return false;
             if (confirmation.goalIds && !confirmation.goalIds.includes(goal.id))
                 return false;
@@ -211,10 +182,62 @@ export function learningContinuation(workspace, state, now, subject, sourceVerif
             const listening = goal.id.startsWith('e.listen') || goal.id === 'c.listen';
             return oral ? modality === 'oral' : listening ? modality === 'listening' : goal.id === 'e.sound' ? ['oral', 'listening'].includes(modality) : goal.id === 'e.view-listen' ? modality === 'audiovisual' : modality === 'written' || modality === 'performed';
         });
-        if (candidate)
-            return finish(actionFor(candidate.id, 'learn', 'new-goal', confirmation.scope));
+        const rank = (id) => { const item = progress.find(item => item.id === id); return item.level === 'weak' ? 0 : item.level === 'practising' ? 1 : 2; };
+        const candidate = candidates.sort((a, b) => rank(a.id) - rank(b.id))[0];
+        if (candidate) {
+            const item = progress.find(item => item.id === candidate.id);
+            return finish(actionFor(candidate.id, item.level === 'weak' ? 'teach' : item.level === 'practising' ? 'supplement' : 'learn', item.level === 'weak' ? 'current-gap' : item.level === 'practising' ? 'missing-evidence' : 'new-goal', confirmation.scope));
+        }
     }
     return finish({ kind: 'hold', reason: confirmations.length ? 'no-learnable-goal' : 'confirmed-scope-required', subject: selectedSubject ?? 'math', title: confirmations.length ? 'No new goal is available in the confirmed range. Rest or explicitly request more review.' : 'Confirm the next learning range or choose another allowed activity.' });
+}
+/** One capability/range projection for recommendations, maps and parent summaries. */
+export function capabilityProgress(workspace, state, now) {
+    const knowledge = effectiveKnowledge(workspace.collections?.knowledge);
+    const index = evidenceOf(state);
+    const questionBindings = workspace.blocks.slice().sort((a, b) => b.startedAt - a.startedAt || a.id.localeCompare(b.id)).flatMap(block => block.questions.flatMap(question => question.capability ? [{ block, binding: question.capability }] : []));
+    const canonicalFamily = (id) => knowledge.familyAliases[id] ?? id;
+    const accepted = (entry) => entry.sourceStatus === 'known' && entry.result === 'correct';
+    const independent = (entry) => accepted(entry) && entry.assistance === 'independent' && evidenceDay(entry) !== undefined;
+    const progress = knowledge.goals.flatMap(goal => {
+        const ranges = [...questionBindings.filter(item => item.binding.goalId === goal.id).map(item => item.binding.scope), ...(workspace.settings.learningScopes ?? []).filter(item => item.subject === goal.subject && (!item.goalIds || item.goalIds.includes(goal.id))).map(item => item.scope), ...(workspace.archivedEvidence ?? []).flatMap(archive => archive.references.filter(reference => reference.goalId === goal.id).map(reference => reference.scope))];
+        const scopes = ranges.filter((scope, i) => ranges.findIndex(other => scopeSupports(scope, other) && scopeSupports(other, scope)) === i);
+        return (scopes.length ? scopes : [null]).map(scope => {
+            const relevant = scope ? index.entries.filter(entry => entry.capability?.goalId === goal.id && scopeSupports(entry.capability.scope, scope) && (!entry.referenceScopes || entry.referenceScopes.some(reference => scopeSupports(reference, scope))) && (entry.answerDate.kind === 'unknown' || (entry.answerDate.kind === 'instant' ? entry.answerDate.at <= now : entry.answerDate.day <= studyDay(now)))) : [];
+            const dated = evidenceAtCutoff({ entries: relevant, stuckSignals: [] }, now);
+            const familyIds = [...new Set(questionBindings.filter(item => item.binding.goalId === goal.id && scope && scopeSupports(item.binding.scope, scope)).map(item => canonicalFamily(item.binding.familyId)))];
+            const required = familyIds.length ? familyIds : [goal.familyIds[0]];
+            const missingAt = (entries) => required.map(familyId => ({ familyId, criteria: ['basic', 'method', 'variation'].filter(criterion => !entries.some(entry => accepted(entry) && canonicalFamily(entry.capability.familyId) === familyId && entry.criteria?.includes(criterion))) })).filter(item => item.criteria.length);
+            const missingCriteria = missingAt(relevant);
+            const days = [...new Set(dated.filter(independent).map(entry => evidenceDay(entry)))].sort();
+            const mistakes = state.mistakes.filter(mistake => mistake.subject === goal.subject && mistake.objectiveId === goal.id && mistake.confirmedAt !== undefined && mistake.confirmedAt <= now && (!scope || !index.entries.some(entry => entry.mistakeId === mistake.id && entry.capability) || index.entries.some(entry => entry.mistakeId === mistake.id && entry.capability && scopeSupports(entry.capability.scope, scope))));
+            const difficultiesAt = (entries, at) => entries.some(entry => {
+                const day = evidenceDay(entry);
+                const instant = entry.answerDate.kind === 'instant' ? entry.answerDate.at : day ? dayStart(day) + DAY - 1 : undefined;
+                return entry.sourceStatus === 'known' && instant !== undefined && instant >= at - 14 * DAY && (['incorrect', 'partial', 'stuck'].includes(entry.result) || entry.result === 'correct' && ['hint', 'worked-example'].includes(entry.assistance));
+            });
+            let firstMasteredDay;
+            for (const day of days) {
+                const cut = dated.filter(entry => evidenceDay(entry) <= day);
+                const at = dayStart(day) + DAY - 1;
+                const open = mistakes.some(mistake => mistake.confirmedAt <= at && (replayMistake(mistake, index, at).stage < 4 || (replayMistake(mistake, index, at).dueAt ?? Infinity) <= at));
+                if (new Set(cut.filter(independent).map(evidenceDay)).size >= 3 && !missingAt(cut).length && !difficultiesAt(cut, at) && !open) {
+                    firstMasteredDay = day;
+                    break;
+                }
+            }
+            const weak = difficultiesAt(dated, now) || relevant.some(entry => entry.sourceStatus === 'known' && entry.answerDate.kind === 'unknown' && ['incorrect', 'partial', 'stuck'].includes(entry.result)) || mistakes.some(mistake => mistake.stage < 4);
+            const due = mistakes.some(mistake => mistake.dueAt !== undefined && mistake.dueAt <= now) || !weak && days.length > 0 && days.length < 3 && days.at(-1) < studyDay(now);
+            const level = due ? 'due' : weak ? 'weak' : days.length >= 3 && !missingCriteria.length ? 'mastered' : relevant.length ? 'practising' : 'untouched';
+            const baseline = firstMasteredDay !== undefined && dated.filter(entry => evidenceDay(entry) <= firstMasteredDay).every(entry => entry.termId !== workspace.settings.termId);
+            const troubleDays = dated.filter(entry => firstMasteredDay && evidenceDay(entry) > firstMasteredDay && ['incorrect', 'partial', 'stuck'].includes(entry.result)).map(entry => evidenceDay(entry)).sort();
+            const recovered = level === 'mastered' && troubleDays.length > 0 && days.at(-1) > troubleDays.at(-1);
+            return { id: goal.id, subject: goal.subject, title: goal.title, scope, level, independentDays: days, baseline,
+                ...(firstMasteredDay ? { firstMasteredDay } : {}), ...(recovered ? { recoveredDay: days.at(-1) } : {}), missingFamilyIds: missingCriteria.map(item => item.familyId), missingCriteria,
+                feedback: relevant.slice(-20).map(entry => ({ termId: entry.termId, ownerId: entry.ownerId, responseId: entry.responseId, familyId: canonicalFamily(entry.capability.familyId), result: entry.result, feedback: entry.feedback ?? '', ...(entry.errorType ? { errorType: entry.errorType } : {}), sourceStatus: entry.sourceStatus, assistance: entry.assistance, answerDate: entry.answerDate })) };
+        });
+    });
+    return progress;
 }
 /** Objectives probed per intensity. */
 export const checkInSizes = { light: 3, standard: 6, deep: 12 };

@@ -10,17 +10,19 @@ import { checkInHistory, curriculumView, exercisesFor, objectiveElements, review
 import { evidenceOf } from './evidence.ts'
 import { studyDay, taughtUnit, canonical } from './shared.ts'
 import { projectWorkspace } from '../files/projection.ts'
-import { diagnosticFor, insightSummary, studyInsight, learningContinuation } from './mastery.ts'
+import { diagnosticFor, insightSummary, studyInsight, learningContinuation, capabilityProgress } from './mastery.ts'
 import { studyStatus, weeklySummary, timeStatus, summaryMinutes } from './status.ts'
 import { effectiveKnowledge, knowledgeSources } from '../capabilities.ts'
 import { builtinObjectiveAnywhere, curriculumFor, subjectExercises, subjectIdeas } from '../curriculum.ts'
 import { z } from 'zod'
 import type { StudentJsonValue } from '../types.ts'
+import { applyCapabilityView } from './capability-view.ts'
+import { dailyLearning } from './daily.ts'
 import { StudyReadCache } from '../files/cache.ts'
 
 /** Bounded read query; an explicit clock belongs to the caller. */
 export interface WorkspaceQuery {
-  kind: 'capabilities' | 'families' | 'knowledge-sources' | 'legacy-references' | 'learning-context' | 'summary' | 'files' | 'settings' | 'status' | 'curriculum' | 'elements' | 'exercises' | 'review-sheet' | 'diagnose' | 'weak' | 'due' | 'pending' | 'progress' | 'concepts' | 'objectives' | 'relations' | 'worksheets' | 'paper-results' | 'materials' | 'mistakes' | 'sessions' | 'attempts'
+  kind: 'daily-plan' | 'capability-progress' | 'capabilities' | 'families' | 'knowledge-sources' | 'legacy-references' | 'learning-context' | 'summary' | 'files' | 'settings' | 'status' | 'curriculum' | 'elements' | 'exercises' | 'review-sheet' | 'diagnose' | 'weak' | 'due' | 'pending' | 'progress' | 'concepts' | 'objectives' | 'relations' | 'worksheets' | 'paper-results' | 'materials' | 'mistakes' | 'sessions' | 'attempts'
   subject?: 'math' | 'chinese' | 'english'; id?: string; unit?: string; grade?: number; term?: 'first' | 'second'; offset?: number
 }
 /** Dynamic CLI projection; typed page consumers use queryDashboard and the validated file DTOs. */
@@ -51,7 +53,7 @@ function workspaceProjection(read: WorkspaceRead, now: number) {
 export function queryWorkspaceDashboard(read: WorkspaceRead, now: number, options: Parameters<typeof dashboard>[2] = {}, lessons?: InteractiveLessons): WorkspaceQueryResult<ReturnType<typeof queryDashboard>> {
   const facts = { status: read.status, versions: read.files.map(({ path, targetKey, version }) => ({ path, targetKey, version })), issues: read.issues }
   if (read.status === 'legacy') return { ...facts, data: queryDashboard(stateSchema.parse(migrateStudyFile(structuredClone(read.legacy))), now, options, lessons) }
-  return read.status === 'valid' && read.workspace ? { ...facts, data: queryDashboard(workspaceProjection(read, now).state, now, options, lessons) } : facts
+  return (read.status === 'valid' || read.status === 'invalid' && read.issues.every(issue => issue.path.startsWith('.study/plans'))) && read.workspace ? { ...facts, data: applyCapabilityView(queryDashboard(workspaceProjection(read, now).state, now, options, lessons), read.workspace, workspaceProjection(read, now).state, now) } : facts
 }
 /**
  * Query current validated facts. Settings and materials remain explicitly partial when unrelated entities fail.
@@ -87,6 +89,8 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
   const cached = workspaceProjection(read, now)
   const { state, refreshAfter } = cached
   const index = evidenceOf(state)
+  if (request.kind === 'daily-plan') return { status: read.status, issues: read.issues, versions, refreshAfter, data: dailyLearning(read, state, now, request.subject, request.id) }
+  if (request.kind === 'capability-progress') return { status: read.status, versions, refreshAfter, data: capabilityProgress(workspace, state, now).filter(item => (!request.subject || item.subject === request.subject) && (!request.id || item.id === request.id)) }
   if (request.kind === 'learning-context') {
     const active = workspace.blocks.find(block => block.endedAt === undefined)
     const currentQuestion = active?.questions.find(question => question.id === active.currentQuestionId)
@@ -105,11 +109,14 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
     const declaredAssessment = savedResponse ? active?.assessments.find(assessment => assessment.responseId === savedResponse.id) ?? null : null
     const effectiveAssessment = savedResponse ? index.entries.find(item => item.ownerId === active?.id && item.responseId === savedResponse.id) : undefined
     const savedAssessment = declaredAssessment && savedResponse?.source.kind === 'openmaic' ? { ...declaredAssessment, declaredResult: declaredAssessment.result, result: effectiveAssessment?.result ?? 'unassessed', assistance: effectiveAssessment?.assistance ?? 'unknown' } : declaredAssessment
+    const daily = dailyLearning(read, state, now)
+    const continuation = learningContinuation(workspace, state, now, request.subject, read.sourceVerification)
+    const closed = daily.saved?.state === 'completed' && daily.phase !== 'learning'
     const discardedSheets = new Set<string>(workspace.worksheets.filter(sheet => sheet.discardedAt !== undefined).map(sheet => sheet.id))
     const pendingFacts = index.entries.filter(item => (item.ownerKind !== 'worksheet' || !discardedSheets.has(item.ownerId)) && (item.answerDate.kind === 'unknown' || item.assistance === 'unknown' || item.sourceStatus === 'unknown' || !item.objectiveId))
     return { status: read.status === 'valid' ? 'valid' : 'partial', issues: read.issues, versions, refreshAfter, data: { termId: workspace.settings.termId, learnerId: workspace.settings.learnerId ?? null,
-      activeBlock: active ? { id: active.id, subject: active.subject, mode: active.mode, context: active.context, currentQuestionId: active.currentQuestionId } : null, currentQuestion: currentQuestion ?? null, activeQuestions: active?.questions ?? [], responses,
-      ...learningContinuation(workspace, state, now, request.subject, read.sourceVerification), ...(read.status !== 'valid' ? { nextAction: null, legalActions: [] } : {}), archiveIssues: read.archiveIssues ?? [],
+      activeBlock: active ? { id: active.id, subject: active.subject, mode: active.mode, context: active.context, currentQuestionId: active.currentQuestionId } : null, currentQuestion: currentQuestion ?? null, activeQuestions: active?.questions ?? [], responses, daily,
+      ...continuation, ...(!request.subject && daily.saved ? { nextAction: daily.nextAction, ...(closed ? { legalActions: ['extra', 'view-summary'] } : {}) } : {}), ...(read.status !== 'valid' ? { nextAction: null, legalActions: [] } : {}), archiveIssues: read.archiveIssues ?? [],
       assessments: active?.assessments.filter(assessment => responses.some(response => response.id === assessment.responseId)) ?? [], savedResponse, savedAssessment, pendingAssessment: savedResponse !== null && savedAssessment === null,
       target: target ? { id: target.id, title: target.title, goal: target.goal, method: target.method, source: currentQuestion?.source, facts: elements?.facts ?? [] } : null,
       pendingFactCount: pendingFacts.length,
@@ -125,13 +132,16 @@ export function queryWorkspace(read: WorkspaceRead, request: WorkspaceQuery, now
       elements: elements ? { ...elements, exercises: elements.exercises.slice(0, 3) } : null,
     } }
   }
+  if (request.kind === 'curriculum' && !request.subject) throw new Error('知识地图查询需要指定科目（subject）。')
+  if (request.kind === 'curriculum') return { status: read.status, versions, refreshAfter, data: { revision: state.revision, curriculum: applyCapabilityView(queryDashboard(state, now, { ...(request.subject ? { subject: request.subject } : {}), tab: 'map', ...(request.grade !== undefined ? { mapGrade: request.grade } : {}), ...(request.term ? { mapTerm: request.term } : {}) }), workspace, state, now).study?.curriculum ?? null } }
+  if (request.kind === 'weak') return { status: read.status, versions, refreshAfter, data: { items: capabilityProgress(workspace, state, now).filter(item => (!request.subject || item.subject === request.subject) && ['weak', 'due'].includes(item.level)).slice(request.offset ?? 0, (request.offset ?? 0) + 20) } }
   if (request.kind === 'summary') {
     const summary = cached.summary ??= (() => {
       const legacy = weeklySummary(state, now, studyInsight(state, now))
       const progress = learningContinuation(workspace, state, now).goalProgress
       const firstDay = studyDay(now - 6 * 86_400_000)
-      return { ...legacy, masteredGoals: legacy.masteredGoals + progress.filter(item => item.level === 'mastered' && !item.baseline && item.firstMasteredDay && item.firstMasteredDay >= firstDay).length,
-        recoveredGoals: legacy.recoveredGoals + progress.filter(item => item.level === 'mastered' && item.recoveredDay && item.recoveredDay >= firstDay).length }
+      return { ...legacy, masteredGoals: progress.filter(item => item.level === 'mastered' && !item.baseline && item.firstMasteredDay && item.firstMasteredDay >= firstDay).length,
+        recoveredGoals: progress.filter(item => item.level === 'mastered' && item.recoveredDay && item.recoveredDay >= firstDay).length }
     })()
     const minutesByDay = summaryMinutes(state, now)
     return { status: 'valid', versions, refreshAfter, data: { ...summary, minutesByDay, activeDays: minutesByDay.filter(item => item.minutes > 0).length } }

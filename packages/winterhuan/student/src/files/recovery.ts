@@ -308,7 +308,7 @@ export function backupVersions(backups: readonly { path: string; backup: Observe
       const bytes = Buffer.from(backup.bytesBase64, 'base64')
       if (sourceSha256(bytes) !== backup.sha256) return []
       const raw: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes))
-      const kind = z.object({ kind: z.enum(['term-settings', 'block', 'worksheet', 'collections']) }).passthrough().parse(raw).kind
+      const kind = z.object({ kind: z.enum(['term-settings', 'block', 'worksheet', 'collections', 'daily-plan']) }).passthrough().parse(raw).kind
       return [{ path: backup.sourcePath, file: officialFileSchemas[kind].parse(raw) }]
     } catch (_error) { return [] }
   })

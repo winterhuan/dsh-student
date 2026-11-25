@@ -7,6 +7,7 @@ import { officialFileSchemas } from "./schema.js";
 import { customObjectiveMethods } from "../schema.js";
 import { effectiveKnowledge, resolveLegacyReference, scopeSupports } from "../capabilities.js";
 import { answerWasExposed } from "./answer-exposure.js";
+import { validateDailyPlans } from "./plans.js";
 import { errorTypesBySubject } from "../vocabulary.js";
 /**
  * Validate parsed official files and available previously validated versions.
@@ -35,7 +36,7 @@ export function validateStudyFiles(input, prior = [], nativeSources = [], openma
         }
         const schema = Object.hasOwn(officialFileSchemas, raw.data.kind) ? officialFileSchemas[raw.data.kind] : undefined;
         if (!schema) {
-            fail(entry.path, 'kind', 'file-kind', 'Use term-settings, block, worksheet or collections.');
+            fail(entry.path, 'kind', 'file-kind', 'Use term-settings, block, worksheet, collections or daily-plan.');
             continue;
         }
         const parsed = schema.safeParse(entry.value);
@@ -45,7 +46,7 @@ export function validateStudyFiles(input, prior = [], nativeSources = [], openma
             continue;
         }
         const file = parsed.data;
-        const expected = file.kind === 'term-settings' ? '.study/settings.json' : file.kind === 'collections' ? '.study/collections.json' : `.study/${file.kind === 'block' ? 'blocks' : 'worksheets'}/${file.id}.json`;
+        const expected = file.kind === 'term-settings' ? '.study/settings.json' : file.kind === 'collections' ? '.study/collections.json' : file.kind === 'daily-plan' ? `.study/plans/${file.day}.json` : `.study/${file.kind === 'block' ? 'blocks' : 'worksheets'}/${file.id}.json`;
         if (entry.path !== expected)
             fail(entry.path, 'id', 'file-membership', `Place this ${file.kind} at ${expected}.`);
         files.push({ path: entry.path, file });
@@ -62,7 +63,7 @@ export function validateStudyFiles(input, prior = [], nativeSources = [], openma
     if (worksheets.length > 500)
         fail('.study/worksheets', '', 'collection-limit', 'Keep at most 500 worksheet files in this term.');
     const collections = files.find(entry => entry.file.kind === 'collections')?.file;
-    const workspace = { settings, blocks, worksheets, nativeSources, openmaicSources, ...(collections?.kind === 'collections' ? { collections } : {}) };
+    const workspace = { settings, plans: files.flatMap(entry => entry.file.kind === 'daily-plan' ? [entry.file] : []), blocks, worksheets, nativeSources, openmaicSources, ...(collections?.kind === 'collections' ? { collections } : {}) };
     const unique = (path, field, rows) => {
         const seen = new Set();
         rows.forEach((row, index) => { if (seen.has(row.id))
@@ -92,6 +93,8 @@ export function validateStudyFiles(input, prior = [], nativeSources = [], openma
             fail(path, field, 'round-limit', 'A check permits three new instances; a short review permits two entered mothers. Errors, skips and help retain their entries.');
         if ((round.endedAt === undefined) !== (round.endReason === undefined) || round.startedAt < block.startedAt || round.endedAt !== undefined && round.endedAt < round.startedAt)
             fail(path, field, 'round-time', 'Keep the round inside its owning activity and save an end time and reason together.');
+        if (round.familyEntries && (new Set(round.familyEntries.map(entry => familyId(entry.familyId))).size !== round.familyEntries.length || round.enteredFamilyIds.some(id => !round.familyEntries.some(entry => familyId(entry.familyId) === familyId(id))) || round.familyEntries.some(entry => !round.enteredFamilyIds.map(familyId).includes(familyId(entry.familyId)) || entry.at < round.startedAt || round.endedAt !== undefined && entry.at > round.endedAt)))
+            fail(path, field, 'round-entry-time', 'Retain one actual entry time per entered family, within the original round.');
         if (round.enteredFamilyIds.some(id => !memberIds.includes(familyId(id))))
             fail(path, field, 'round-member', 'Enter only a saved member of this round.');
         for (const member of round.members) {
@@ -117,11 +120,23 @@ export function validateStudyFiles(input, prior = [], nativeSources = [], openma
                 const date = response.answerDate;
                 return question?.capability && !old.members.some(member => member.goalId === question.capability.goalId) && !owner.rounds?.some(item => item.presentedQuestionIds.includes(question.id)) && date && (date.kind === 'instant' ? date.at >= old.endedAt && date.at <= round.startedAt : date.kind === 'day' && date.day > studyDay(old.endedAt) && date.day <= studyDay(round.startedAt));
             }));
-            if (!explicitMore && !newLearning)
-                fail(path, field, 'round-restart', 'Retain the prior allowance across activities and days. Start another round only after actual new-goal learning, or an explicit request for more review after the prior review ends.');
+            const nextDayReview = round.kind === 'review' && old.endedAt !== undefined && studyDay(round.startedAt) > studyDay(old.endedAt);
+            if (!explicitMore && !nextDayReview && !(round.kind === 'check' && newLearning))
+                fail(path, field, 'round-restart', 'Retain the prior allowance across activities and days. Start another check only after actual new-goal learning; an ended review may restart on a later learning day or after an explicit request for more review.');
         }
         else if (round.moreReview)
             fail(path, field, 'round-restart', 'An explicit more-review request references an earlier ended review round.');
+    }
+    const reviewDays = new Map();
+    for (const { block, round } of rounds.filter(item => item.round.kind === 'review' && !item.round.moreReview)) {
+        for (const id of round.enteredFamilyIds) {
+            const day = studyDay(round.familyEntries?.find(entry => entry.familyId === id)?.at ?? round.startedAt);
+            const used = reviewDays.get(day) ?? new Set();
+            used.add(knowledge.familyAliases[id] ?? id);
+            reviewDays.set(day, used);
+            if (used.size > 2)
+                fail(`.study/blocks/${block.id}.json`, 'rounds', 'daily-review-limit', 'Keep automatic review to two entered families across subjects on this Shanghai date; preserve unfinished-round consumption.');
+        }
     }
     for (const block of blocks.filter(block => block.endedAt === undefined)) {
         const current = block.questions.find(question => question.id === block.currentQuestionId);
@@ -134,6 +149,7 @@ export function validateStudyFiles(input, prior = [], nativeSources = [], openma
     for (const old of prior)
         if (old.file.kind === 'block' && old.file.termId === settings.termId && old.file.rounds?.length && !files.some(entry => entry.path === old.path && entry.file.kind === 'block'))
             fail(old.path, 'rounds', 'round-history', 'Restore the original activity containing the saved round; removing its file cannot release an allowance.');
+    validateDailyPlans(workspace, prior, fail);
     const officialSources = new Set();
     const evidenceIds = new Set();
     for (const [i, reference] of (settings.evidenceReferences ?? []).entries()) {
@@ -407,8 +423,10 @@ export function validateStudyFiles(input, prior = [], nativeSources = [], openma
             if (old.file.kind === 'block' && file.kind === 'block')
                 for (const priorRound of old.file.rounds ?? []) {
                     const currentRound = file.rounds?.find(round => round.id === priorRound.id);
-                    const { enteredFamilyIds, presentedQuestionIds, endedAt, endReason, ...identity } = priorRound;
-                    const { enteredFamilyIds: entered, presentedQuestionIds: presented, endedAt: end, endReason: reason, ...currentIdentity } = currentRound ?? priorRound;
+                    const { enteredFamilyIds, familyEntries, presentedQuestionIds, endedAt, endReason, ...identity } = priorRound;
+                    const { enteredFamilyIds: entered, familyEntries: entries, presentedQuestionIds: presented, endedAt: end, endReason: reason, ...currentIdentity } = currentRound ?? priorRound;
+                    if (familyEntries?.some(entry => !entries?.some(current => canonical(entry) === canonical(current))))
+                        fail(path, 'rounds', 'round-history', 'Retain original family entry times; a new day cannot release a saved allowance.');
                     if (!currentRound || canonical(identity) !== canonical(currentIdentity) || enteredFamilyIds.some(id => !entered.includes(id)) || presentedQuestionIds.some(id => !presented.includes(id)) || endedAt !== undefined && (endedAt !== end || endReason !== reason || canonical(enteredFamilyIds) !== canonical(entered) || canonical(presentedQuestionIds) !== canonical(presented)))
                         fail(path, 'rounds', 'round-history', 'Preserve round membership, entry, presentation and ending facts; corrections to answers never release an allowance.');
                 }
@@ -445,7 +463,7 @@ export function validateStudyFiles(input, prior = [], nativeSources = [], openma
                 fail(`.study/${file.kind === 'block' ? 'blocks' : 'worksheets'}/${file.id}.json`, 'objectiveId', 'invalid-target-source', 'Repair the referenced custom-goal collection before using this entity.');
         }
     const partial = affected('.study/settings.json') ? undefined : {
-        settings, nativeSources, openmaicSources, blocks: blocks.filter(block => !affected(`.study/blocks/${block.id}.json`)),
+        settings, plans: (workspace.plans ?? []).filter(plan => !affected(`.study/plans/${plan.day}.json`)), nativeSources, openmaicSources, blocks: blocks.filter(block => !affected(`.study/blocks/${block.id}.json`)),
         worksheets: worksheets.filter(sheet => !affected(`.study/worksheets/${sheet.id}.json`)),
         ...(workspace.collections && !affected('.study/collections.json') ? { collections: workspace.collections } : {}),
     };

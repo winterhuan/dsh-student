@@ -14,7 +14,7 @@ node "$STUDY_CLI" example term-settings
 node "$STUDY_CLI" validate --workspace '<当前工作区绝对路径>'
 ```
 
-开发者在插件仓库构建后使用 `node packages/winterhuan/student/lib/cli.js`。`study-validate` bin 指向同一文件，但 DSH Git 安装不承诺将它加进 shell PATH。schema/example 输出按需生成，不常驻在工具参数中。kind 可用 term-settings、block、worksheet、collections、openmaic-lessons、capability-goal、question-family、knowledge-extension、figure；figure 的 example 输出全部 23 种。示例是结构起点，不能当学生已学内容或用户确认。
+开发者在插件仓库构建后使用 `node packages/winterhuan/student/lib/cli.js`。`study-validate` bin 指向同一文件，但 DSH Git 安装不承诺将它加进 shell PATH。schema/example 输出按需生成，不常驻在工具参数中。kind 可用 term-settings、block、worksheet、daily-plan、collections、openmaic-lessons、capability-goal、question-family、knowledge-extension、figure；figure 的 example 输出全部 23 种。示例是结构起点，不能当学生已学内容或用户确认。
 
 结构 schema 来自共享 Zod 输入定义；CLI 再核对身份、关联、范围、帮助与已观察使用内容。日期合法性和其他跨字段规则以 CLI 为准，不以 JSON schema 独立判定业务完成。
 
@@ -27,10 +27,13 @@ node "$STUDY_CLI" validate --workspace '<当前工作区绝对路径>'
 | `.study/settings.json` | format 2，kind term-settings；稳定 termId、revision、updatedAt、档案、教材、课程及学校进度、兴趣和 OpenMAIC 地址 |
 | `.study/blocks/<id>.json` | format 2，kind block；一个学习段的历史 context、范围、题目、原回答、提示、卡住与评价 |
 | `.study/worksheets/<id>.json` | format 2，kind worksheet；冻结题目/目标、全卷日期、转录草稿、所有确认原回答与评价 |
+| `.study/plans/YYYY-MM-DD.json` | format 2，kind daily-plan；当日任务、选择理由、结束条件、明确调整与原活动引用，不复制回答或掌握 |
 | `.study/collections.json` | format 2，kind collections；错题、题库、确认概念/目标/关系、教学队列和奖励 |
 | `.study/openmaic-lessons.json` | format 1；独立课程生命周期，不存学生作答或 cookie |
 
 每次新增身份都使用新的稳定 ID，文件名与所属身份一致。设置保留当前 termId 和稳定 learnerId；新学期创建新 termId 并保留同一孩子的 learnerId。缺少 learnerId 的旧格式2档案先核对身份，不能用家长账号、MAIC 账号或 DSH Session 代替。当前题只存在于所属学习段/卷中；评价引用 responseId，不能用局部题号跨段查找。原回答和已使用题目内容冻结；替换内容使用新题 ID，评价更正沿用回答 ID。每题都保存 objectiveId、来源、答案和可复查依据。
+
+每日安排的预览、开始、暂停、跨日承接和完成后加学遵循[每日安排](daily-planning.md)。计划最多 1,000 份，每份 1 MiB，计入活动学期 32 MiB 总量；超限保留原文件并说明恢复动作，不自动删除。默认只加载今日、近期实际学习日、续学归属及直接原始引用，查询历史计划时传入日期。
 
 ## 能力、母题与历史引用
 

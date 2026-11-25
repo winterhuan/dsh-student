@@ -13,8 +13,8 @@ export declare function objectiveOf(state: StudyState, objectiveId: string): {
     title: string;
     goal: string;
     conceptIds: string[];
-    method: "reason" | "context" | "recognize" | "read-evidence" | "express" | "represent" | "verify" | "listen" | "speak";
-    errorTypes?: ("pattern" | "listening" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
+    method: "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "listen" | "speak";
+    errorTypes?: ("pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
     questionPoints?: string[] | undefined;
     variationAxes?: ("context" | "numbers" | "representation" | "reverse" | "explain")[] | undefined;
 } | undefined;
@@ -106,7 +106,7 @@ export declare function reviewPlan(state: StudyState, subject: CurriculumSubject
     picks: ReviewPick[];
     objectiveFills: ObjectiveFill[];
     errorCoverage: {
-        type: "pattern" | "listening" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
+        type: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
         count: number;
     }[];
     remaining: number;
@@ -120,6 +120,7 @@ export declare function reviewPlan(state: StudyState, subject: CurriculumSubject
 };
 /** One knowledge point with mastery rolled up from the objectives that teach it. */
 export interface ConceptView {
+    association?: 'missing' | 'partial' | 'complete';
     id: string;
     name: string;
     unit: string;

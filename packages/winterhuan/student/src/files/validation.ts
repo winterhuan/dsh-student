@@ -4,10 +4,11 @@ import { createHash } from 'node:crypto'
 import type { OpenmaicInputObservation } from '../openmaic/feedback-schema.ts'
 import { canonical, sameScope, scopeSelects, studyDay } from '../learning/shared.ts'
 import { builtinObjectiveAnywhere, builtinObjectiveIn, curriculumFor, subjectExercises } from '../curriculum.ts'
-import { officialFileSchemas, type OfficialFile, type TermSettings, type LearningBlock, type WorksheetFile, type CollectionsFile } from './schema.ts'
+import { officialFileSchemas, type OfficialFile, type TermSettings, type LearningBlock, type WorksheetFile, type CollectionsFile, type DailyPlan } from './schema.ts'
 import { customObjectiveMethods } from '../schema.ts'
 import { effectiveKnowledge, resolveLegacyReference, scopeSupports } from '../capabilities.ts'
 import { answerWasExposed } from './answer-exposure.ts'
+import { validateDailyPlans } from './plans.ts'
 import { errorTypesBySubject } from '../vocabulary.ts'
 
 /** Bounded, actionable durable-file failure. */
@@ -15,7 +16,7 @@ export interface FileIssue { path: string; field: string; rule: string; correcti
 /** Parsed bytes supplied by a filesystem reader or a proposed manual edit. */
 export interface ParsedFile { path: string; value: unknown }
 /** The relevant valid business entities; no second persisted evidence authority. */
-export interface ValidatedWorkspace { settings: TermSettings; blocks: LearningBlock[]; worksheets: WorksheetFile[]; collections?: CollectionsFile; nativeSources?: readonly NativeInputObservation[]; openmaicSources?: readonly OpenmaicInputObservation[]; archivedEvidence?: { workspace: ValidatedWorkspace; references: NonNullable<TermSettings['evidenceReferences']> }[] }
+export interface ValidatedWorkspace { settings: TermSettings; plans?: DailyPlan[]; blocks: LearningBlock[]; worksheets: WorksheetFile[]; collections?: CollectionsFile; nativeSources?: readonly NativeInputObservation[]; openmaicSources?: readonly OpenmaicInputObservation[]; archivedEvidence?: { workspace: ValidatedWorkspace; references: NonNullable<TermSettings['evidenceReferences']> }[] }
 /** Host-resolved consumed input version; official-file declarations alone cannot supply this observation. */
 export interface NativeInputObservation { sessionId: string; messageId: string; inputVersion: string; rawResponse: string; receiptAt: number; learningScope?: { learnerId: string; termId: string; blockId: string; questionId: string; responseId?: string }; questionSnapshot?: string }
 /** Validation outcome retains independently valid parsed files when related data fails. */
@@ -42,14 +43,14 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
     const raw = z.object({ kind: z.string(), format: z.number() }).passthrough().safeParse(entry.value)
     if (!raw.success) { fail(entry.path, '', 'schema', 'Save an official JSON object with format and kind.'); continue }
     const schema = Object.hasOwn(officialFileSchemas, raw.data.kind) ? officialFileSchemas[raw.data.kind as keyof typeof officialFileSchemas] : undefined
-    if (!schema) { fail(entry.path, 'kind', 'file-kind', 'Use term-settings, block, worksheet or collections.'); continue }
+    if (!schema) { fail(entry.path, 'kind', 'file-kind', 'Use term-settings, block, worksheet, collections or daily-plan.'); continue }
     const parsed = schema.safeParse(entry.value)
     if (!parsed.success) {
       for (const issue of parsed.error.issues) fail(entry.path, issue.path.join('.'), raw.data.format > 2 ? 'future-format' : 'schema', issue.message)
       continue
     }
     const file = parsed.data
-    const expected = file.kind === 'term-settings' ? '.study/settings.json' : file.kind === 'collections' ? '.study/collections.json' : `.study/${file.kind === 'block' ? 'blocks' : 'worksheets'}/${file.id}.json`
+    const expected = file.kind === 'term-settings' ? '.study/settings.json' : file.kind === 'collections' ? '.study/collections.json' : file.kind === 'daily-plan' ? `.study/plans/${file.day}.json` : `.study/${file.kind === 'block' ? 'blocks' : 'worksheets'}/${file.id}.json`
     if (entry.path !== expected) fail(entry.path, 'id', 'file-membership', `Place this ${file.kind} at ${expected}.`)
     files.push({ path: entry.path, file })
   }
@@ -63,7 +64,7 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
   if (blocks.length > 5000) fail('.study/blocks', '', 'collection-limit', 'Keep at most 5,000 block files in this term.')
   if (worksheets.length > 500) fail('.study/worksheets', '', 'collection-limit', 'Keep at most 500 worksheet files in this term.')
   const collections = files.find(entry => entry.file.kind === 'collections')?.file
-  const workspace: ValidatedWorkspace = { settings, blocks, worksheets, nativeSources, openmaicSources, ...(collections?.kind === 'collections' ? { collections } : {}) }
+  const workspace: ValidatedWorkspace = { settings, plans: files.flatMap(entry => entry.file.kind === 'daily-plan' ? [entry.file] : []), blocks, worksheets, nativeSources, openmaicSources, ...(collections?.kind === 'collections' ? { collections } : {}) }
   const unique = (path: string, field: string, rows: readonly { id: string }[]) => {
     const seen = new Set<string>()
     rows.forEach((row, index) => { if (seen.has(row.id)) fail(path, `${field}.${index}.id`, 'duplicate-identity', 'Keep one entry per stable identity; use a new identity for a new attempt.'); seen.add(row.id) })
@@ -84,6 +85,7 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
     if (new Set(memberIds).size !== memberIds.length || new Set(round.enteredFamilyIds.map(familyId)).size !== round.enteredFamilyIds.length || new Set(round.presentedQuestionIds).size !== round.presentedQuestionIds.length) fail(path, field, 'round-identity', 'Keep one membership, entry and presentation per stable identity.')
     if (round.kind === 'check' && round.presentedQuestionIds.length > 3 || round.kind === 'review' && (round.members.length > 2 || round.enteredFamilyIds.length > 2)) fail(path, field, 'round-limit', 'A check permits three new instances; a short review permits two entered mothers. Errors, skips and help retain their entries.')
     if ((round.endedAt === undefined) !== (round.endReason === undefined) || round.startedAt < block.startedAt || round.endedAt !== undefined && round.endedAt < round.startedAt) fail(path, field, 'round-time', 'Keep the round inside its owning activity and save an end time and reason together.')
+    if (round.familyEntries && (new Set(round.familyEntries.map(entry => familyId(entry.familyId))).size !== round.familyEntries.length || round.enteredFamilyIds.some(id => !round.familyEntries!.some(entry => familyId(entry.familyId) === familyId(id))) || round.familyEntries.some(entry => !round.enteredFamilyIds.map(familyId).includes(familyId(entry.familyId)) || entry.at < round.startedAt || round.endedAt !== undefined && entry.at > round.endedAt))) fail(path, field, 'round-entry-time', 'Retain one actual entry time per entered family, within the original round.')
     if (round.enteredFamilyIds.some(id => !memberIds.includes(familyId(id)))) fail(path, field, 'round-member', 'Enter only a saved member of this round.')
     for (const member of round.members) {
       const goal = knowledge.goals.find(goal => goal.id === member.goalId)
@@ -105,8 +107,18 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
         const date = response.answerDate
         return question?.capability && !old.members.some(member => member.goalId === question.capability!.goalId) && !owner.rounds?.some(item => item.presentedQuestionIds.includes(question.id)) && date && (date.kind === 'instant' ? date.at >= old.endedAt! && date.at <= round.startedAt : date.kind === 'day' && date.day > studyDay(old.endedAt!) && date.day <= studyDay(round.startedAt))
       }))
-      if (!explicitMore && !newLearning) fail(path, field, 'round-restart', 'Retain the prior allowance across activities and days. Start another round only after actual new-goal learning, or an explicit request for more review after the prior review ends.')
+      const nextDayReview = round.kind === 'review' && old.endedAt !== undefined && studyDay(round.startedAt) > studyDay(old.endedAt)
+      if (!explicitMore && !nextDayReview && !(round.kind === 'check' && newLearning)) fail(path, field, 'round-restart', 'Retain the prior allowance across activities and days. Start another check only after actual new-goal learning; an ended review may restart on a later learning day or after an explicit request for more review.')
     } else if (round.moreReview) fail(path, field, 'round-restart', 'An explicit more-review request references an earlier ended review round.')
+  }
+  const reviewDays = new Map<string, Set<string>>()
+  for (const { block, round } of rounds.filter(item => item.round.kind === 'review' && !item.round.moreReview)) {
+    for (const id of round.enteredFamilyIds) {
+      const day = studyDay(round.familyEntries?.find(entry => entry.familyId === id)?.at ?? round.startedAt)
+      const used = reviewDays.get(day) ?? new Set<string>()
+      used.add(knowledge.familyAliases[id] ?? id); reviewDays.set(day, used)
+      if (used.size > 2) fail(`.study/blocks/${block.id}.json`, 'rounds', 'daily-review-limit', 'Keep automatic review to two entered families across subjects on this Shanghai date; preserve unfinished-round consumption.')
+    }
   }
   for (const block of blocks.filter(block => block.endedAt === undefined)) {
     const current = block.questions.find(question => question.id === block.currentQuestionId)
@@ -115,6 +127,7 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
     if (check && check.round.endedAt === undefined && check.round.presentedQuestionIds.length < 3 && !(check.block.id === block.id && check.round.presentedQuestionIds.includes(current.id))) fail(`.study/blocks/${block.id}.json`, 'currentQuestionId', 'round-presentation', 'Record this newly presented instance in its original check before answering; switching blocks retains that allowance.')
   }
   for (const old of prior) if (old.file.kind === 'block' && old.file.termId === settings.termId && old.file.rounds?.length && !files.some(entry => entry.path === old.path && entry.file.kind === 'block')) fail(old.path, 'rounds', 'round-history', 'Restore the original activity containing the saved round; removing its file cannot release an allowance.')
+  validateDailyPlans(workspace, prior, fail)
   const officialSources = new Set<string>()
   const evidenceIds = new Set<string>()
   for (const [i, reference] of (settings.evidenceReferences ?? []).entries()) {
@@ -307,8 +320,9 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
       if (old.file.kind === 'block' && file.kind === 'block' && old.file.answerReveals?.some(reveal => !file.answerReveals?.some(current => canonical(current) === canonical(reveal)))) fail(path, 'answerReveals', 'answer-reveal-history', 'Retain the original frozen-instance reveal facts.')
       if (old.file.kind === 'block' && file.kind === 'block') for (const priorRound of old.file.rounds ?? []) {
         const currentRound = file.rounds?.find(round => round.id === priorRound.id)
-        const { enteredFamilyIds, presentedQuestionIds, endedAt, endReason, ...identity } = priorRound
-        const { enteredFamilyIds: entered, presentedQuestionIds: presented, endedAt: end, endReason: reason, ...currentIdentity } = currentRound ?? priorRound
+        const { enteredFamilyIds, familyEntries, presentedQuestionIds, endedAt, endReason, ...identity } = priorRound
+        const { enteredFamilyIds: entered, familyEntries: entries, presentedQuestionIds: presented, endedAt: end, endReason: reason, ...currentIdentity } = currentRound ?? priorRound
+        if (familyEntries?.some(entry => !entries?.some(current => canonical(entry) === canonical(current)))) fail(path, 'rounds', 'round-history', 'Retain original family entry times; a new day cannot release a saved allowance.')
         if (!currentRound || canonical(identity) !== canonical(currentIdentity) || enteredFamilyIds.some(id => !entered.includes(id)) || presentedQuestionIds.some(id => !presented.includes(id)) || endedAt !== undefined && (endedAt !== end || endReason !== reason || canonical(enteredFamilyIds) !== canonical(entered) || canonical(presentedQuestionIds) !== canonical(presented))) fail(path, 'rounds', 'round-history', 'Preserve round membership, entry, presentation and ending facts; corrections to answers never release an allowance.')
       }
       const oldQuestions = old.file.kind === 'block' ? old.file.questions : old.file.items
@@ -337,7 +351,7 @@ export function validateStudyFiles(input: readonly ParsedFile[], prior: readonly
     if (questions.some(question => typeof question.objectiveId === 'string' && !builtinObjectiveAnywhere(question.objectiveId) && !knowledge.goals.some(goal => goal.id === question.objectiveId))) fail(`.study/${file.kind === 'block' ? 'blocks' : 'worksheets'}/${file.id}.json`, 'objectiveId', 'invalid-target-source', 'Repair the referenced custom-goal collection before using this entity.')
   }
   const partial = affected('.study/settings.json') ? undefined : {
-    settings, nativeSources, openmaicSources, blocks: blocks.filter(block => !affected(`.study/blocks/${block.id}.json`)),
+    settings, plans: (workspace.plans ?? []).filter(plan => !affected(`.study/plans/${plan.day}.json`)), nativeSources, openmaicSources, blocks: blocks.filter(block => !affected(`.study/blocks/${block.id}.json`)),
     worksheets: worksheets.filter(sheet => !affected(`.study/worksheets/${sheet.id}.json`)),
     ...(workspace.collections && !affected('.study/collections.json') ? { collections: workspace.collections } : {}),
   }

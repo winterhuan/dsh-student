@@ -2458,6 +2458,10 @@ const learningRoundSchema = z.object({
 	startedAt: time,
 	members: z.array(capabilityBindingSchema.extend({ mistakeId: id.optional() })).min(1).max(3),
 	enteredFamilyIds: z.array(knowledgeIdSchema).max(3),
+	familyEntries: z.array(z.object({
+		familyId: knowledgeIdSchema,
+		at: time
+	}).strict()).max(3).optional(),
 	presentedQuestionIds: z.array(id).max(200),
 	endedAt: time.optional(),
 	endReason: z.enum([
@@ -2613,6 +2617,10 @@ const blockSchema = z.object({
 		scope: scope.optional(),
 		material: stateSchema.shape.materials.element.optional()
 	}).strict(),
+	plan: z.object({
+		day,
+		taskId: id
+	}).strict().optional(),
 	currentQuestionId: id.optional(),
 	questions: z.array(questionSchema).max(200),
 	responses: z.array(responseSchema).max(500),
@@ -2703,12 +2711,107 @@ const collectionsSchema = z.object({
 	rewards: z.array(stateSchema.shape.rewards.element.extend({ day })).max(1e3),
 	pendingLegacy: z.array(pending).max(5e3).optional()
 }).strict();
+/** Arrangements reference original evidence; they never store answers or mastery. */
+const planTaskReference = z.object({
+	day,
+	taskId: id
+}).strict();
+const planEvidenceReference = z.object({
+	termId,
+	ownerKind: z.enum(["block", "worksheet"]),
+	ownerId: id,
+	responseId
+}).strict();
+const dailyTaskSchema = z.object({
+	id,
+	subject,
+	purpose: z.enum([
+		"resume",
+		"teaching",
+		"diagnostic",
+		"learning",
+		"review"
+	]),
+	goalId: knowledgeIdSchema.optional(),
+	scope: capabilityScopeSchema.optional(),
+	familyIds: z.array(knowledgeIdSchema).max(2),
+	reason: text,
+	basis: z.array(planEvidenceReference).max(20),
+	ending: z.enum([
+		"short-check",
+		"review-attempts",
+		"original-activity"
+	]),
+	state: z.enum([
+		"ready",
+		"active",
+		"paused",
+		"completed",
+		"deferred",
+		"skipped",
+		"carried-forward"
+	]),
+	activity: z.object({
+		blockId,
+		roundId: id.optional(),
+		questionId: id.optional(),
+		responseId: responseId.optional()
+	}).strict().optional(),
+	original: planTaskReference.optional(),
+	carriedTo: planTaskReference.optional(),
+	optional: z.boolean().optional(),
+	outcomes: z.array(planEvidenceReference).max(200)
+}).strict();
+/** One learner's explicit choices for one Shanghai calendar day. */
+const dailyPlanSchema = z.object({
+	...base,
+	kind: z.literal("daily-plan"),
+	learnerId,
+	id,
+	day,
+	timezone: z.literal("Asia/Shanghai"),
+	revision: time,
+	createdAt: time,
+	updatedAt: time,
+	policyVersion: z.literal(1),
+	settingsVersion: text,
+	subjects: z.array(subject).min(1).max(3),
+	state: z.enum([
+		"ready",
+		"active",
+		"paused",
+		"completed",
+		"stopped"
+	]),
+	completedAt: time.optional(),
+	tasks: z.array(dailyTaskSchema).min(1).max(100),
+	choices: z.array(z.object({
+		id,
+		at: time,
+		revision: time,
+		action: z.enum([
+			"start",
+			"continue",
+			"pause",
+			"stop",
+			"defer",
+			"skip",
+			"adjust",
+			"carry",
+			"extra"
+		]),
+		reason: text,
+		taskIds: z.array(id).max(100),
+		replacedTaskIds: z.array(id).max(100)
+	}).strict()).min(1).max(500)
+}).strict();
 /** Machine-readable file definitions shared by CLI, application reads and manual saves. */
 const officialFileSchemas = {
 	"term-settings": termSettingsSchema,
 	block: blockSchema,
 	worksheet: worksheetSchema,
-	collections: collectionsSchema
+	collections: collectionsSchema,
+	"daily-plan": dailyPlanSchema
 };
 /**
 * Locate an original archived entity using validated identities; response selection remains explicit.
@@ -3196,6 +3299,74 @@ function migrateStudyFile(parsed) {
 	return next;
 }
 //#endregion
+//#region lib/types/files/plans.js
+/** Check arrangement ownership and original references without creating learning evidence. */
+function validateDailyPlans(workspace, prior, fail) {
+	const { settings, blocks, plans = [] } = workspace;
+	const knowledge = effectiveKnowledge(workspace.collections?.knowledge);
+	const owners = /* @__PURE__ */ new Map();
+	const pending = (task) => [
+		"ready",
+		"active",
+		"paused"
+	].includes(task.state);
+	for (const plan of plans) {
+		const path = `.study/plans/${plan.day}.json`;
+		const issue = (field, rule, correction) => fail(path, field, rule, correction);
+		if (plan.id !== `day-${plan.day}` || plan.day !== studyDay(plan.createdAt) || plan.updatedAt < plan.createdAt || new Set(plan.subjects).size !== plan.subjects.length) issue("id", "plan-identity", "Use day-YYYY-MM-DD for this learner and term, with its original Shanghai creation day and distinct subjects.");
+		if (plan.tasks.length !== new Set(plan.tasks.map((task) => task.id)).size || plan.choices.length !== new Set(plan.choices.map((choice) => choice.id)).size) issue("tasks", "plan-identity", "Retain distinct task and choice identities.");
+		if (plan.tasks.filter((task) => task.state === "active").length > 1) issue("tasks", "plan-active", "Keep one active task; pause or defer the original before changing activities.");
+		if (plan.choices.some((choice) => choice.at > plan.updatedAt || choice.revision > plan.revision || [...choice.taskIds, ...choice.replacedTaskIds].some((id) => !plan.tasks.some((task) => task.id === id)))) issue("choices", "plan-choice", "Keep explicit choices no later than the saved update and reference retained tasks inside this revision.");
+		if (plan.state === "completed" && (!plan.completedAt || plan.tasks.some((task) => !task.optional && task.state !== "completed"))) issue("state", "plan-completion", "Complete only the original arrangement whose tasks reached their ending conditions; skipped and deferred work belongs to a stopped plan.");
+		if (plan.completedAt !== void 0 && (plan.completedAt < plan.createdAt || plan.completedAt > plan.updatedAt)) issue("completedAt", "plan-time", "Keep the original completion time inside the plan history.");
+		for (const [i, task] of plan.tasks.entries()) {
+			const field = `tasks.${i}`;
+			const goal = knowledge.goals.find((goal) => goal.id === task.goalId);
+			if (!plan.subjects.includes(task.subject) || task.goalId && (!goal || goal.subject !== task.subject) || task.familyIds.some((id) => !knowledge.families.some((family) => family.id === (knowledge.familyAliases[id] ?? id) && family.goalIds.includes(task.goalId ?? "")))) issue(field, "plan-goal", "Use compatible goals and families of a participating subject.");
+			if (task.purpose !== "resume" && (!task.goalId || !task.scope)) issue(field, "plan-scope", "Save a concrete capability and confirmed range for a new activity.");
+			if (["ready", "active"].includes(task.state) && plan.createdAt >= settings.updatedAt && task.scope && !settings.learningScopes?.some((scope) => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(task.goalId)) && scopeSupports(scope.scope, task.scope))) issue(field, "plan-scope", "Defer this unstarted task or confirm its learning scope before starting it.");
+			const block = task.activity ? blocks.find((block) => block.id === task.activity.blockId) : void 0;
+			if (task.activity && (!block || block.subject !== task.subject || task.activity.questionId && !block.questions.some((question) => question.id === task.activity.questionId) || task.activity.responseId && !block.responses.some((response) => response.id === task.activity.responseId && (!task.activity.questionId || response.questionId === task.activity.questionId)) || task.activity.roundId && !block.rounds?.some((round) => round.id === task.activity.roundId))) issue(field, "plan-activity", "Restore the original activity, question, response and round before continuing; do not recreate them.");
+			const previousBlocks = prior.flatMap((entry) => entry.file.kind === "block" && entry.file.id === block?.id ? [entry.file] : []);
+			if (block && task.scope && plan.createdAt < settings.updatedAt && previousBlocks.length && block.questions.some((question) => !previousBlocks.some((old) => old.questions.some((saved) => saved.id === question.id)) && question.capability && !settings.learningScopes?.some((scope) => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(question.capability.goalId)) && scopeSupports(scope.scope, question.capability.scope)))) issue(field, "plan-scope", "Preserve the original questions and confirm the changed learning range before adding new questions.");
+			if (block && task.goalId && task.scope && block.questions.length && !block.questions.some((question) => question.capability?.goalId === task.goalId && scopeSupports(task.scope, question.capability.scope))) issue(field, "plan-activity", "Bind a task only to its original capability and learning range.");
+			for (const reference of [...task.basis, ...task.outcomes]) {
+				const owner = reference.ownerKind === "block" ? workspace.blocks.find((block) => block.id === reference.ownerId) : workspace.worksheets.find((sheet) => sheet.id === reference.ownerId);
+				if (reference.termId !== settings.termId || !owner || owner.subject !== task.subject || !owner.responses.some((response) => response.id === reference.responseId)) issue(field, "plan-evidence", "Reference an existing original response of this learner, term and subject; do not copy answers into a plan.");
+			}
+			if (task.outcomes.some((reference) => reference.ownerKind !== "block" || reference.ownerId !== block?.id)) issue(field, "plan-evidence", "Outcomes belong to the task’s original activity.");
+			if (task.state === "completed") {
+				const round = block?.rounds?.find((round) => round.id === task.activity?.roundId);
+				const assessed = block?.responses.filter((response) => task.outcomes.some((reference) => reference.responseId === response.id) && block.assessments.some((assessment) => assessment.responseId === response.id && !["unassessed", "stuck"].includes(assessment.result))) ?? [];
+				const reviewAttempted = task.familyIds.every((id) => assessed.some((response) => block?.questions.find((question) => question.id === response.questionId)?.capability?.familyId === id));
+				if (!block || block.endedAt === void 0 && round?.endedAt === void 0 || task.ending === "review-attempts" && !reviewAttempted || task.ending === "short-check" && !assessed.length && round?.endReason !== "budget-exhausted") issue(field, "plan-completion", "Reach the saved ending condition using the original ended activity and assessed attempts; otherwise pause or stop with the unfinished work retained.");
+			}
+			if (task.original) {
+				const original = plans.find((plan) => plan.day === task.original.day)?.tasks.find((item) => item.id === task.original.taskId);
+				if (task.original.day >= plan.day || !original || original.original || !original.activity || original.activity.blockId !== task.activity?.blockId) issue(field, "plan-transfer", "Point directly to an earlier original task and its activity; transfer chains and cycles are invalid.");
+			}
+			if (task.state === "carried-forward" && !task.carriedTo || task.carriedTo && (task.state !== "carried-forward" || task.carriedTo.day <= plan.day)) issue(field, "plan-transfer", "Retain a forward transfer only on a carried task, pointing to the later owning plan.");
+			if (task.activity && pending(task)) {
+				const previous = owners.get(task.activity.blockId);
+				if (previous) issue(field, "plan-ownership", `The original activity is already owned by ${previous}; finish its transfer before continuing.`);
+				owners.set(task.activity.blockId, `${plan.day}/${task.id}`);
+			}
+		}
+		for (const old of prior.flatMap((entry) => entry.path === path && entry.file.kind === "daily-plan" ? [entry.file] : [])) {
+			if (old.learnerId !== plan.learnerId || old.termId !== plan.termId || old.id !== plan.id || old.createdAt !== plan.createdAt || old.completedAt !== void 0 && old.completedAt !== plan.completedAt || old.revision > plan.revision || old.revision === plan.revision && canonical(old) !== canonical(plan)) issue("", "plan-history", "Retain plan identity and completion, and increment revision for every explicit amendment.");
+			if (old.state === "completed" && plan.state !== "completed" || old.tasks.some((task) => task.state === "completed" && plan.tasks.find((next) => next.id === task.id)?.state !== "completed")) issue("state", "plan-history", "Keep completed arrangements and tasks closed; attach explicitly requested extra work separately.");
+			if (plan.tasks.some((task) => !old.tasks.some((previous) => previous.id === task.id) && !plan.choices.some((choice) => !old.choices.some((previous) => previous.id === choice.id) && [
+				"start",
+				"adjust",
+				"extra",
+				"carry"
+			].includes(choice.action) && choice.taskIds.includes(task.id)))) issue("choices", "plan-choice", "Record the explicit choice that added each new task.");
+			if (old.choices.some((choice) => !plan.choices.some((next) => canonical(next) === canonical(choice))) || old.tasks.some((task) => !plan.tasks.some((next) => next.id === task.id && next.subject === task.subject && next.goalId === task.goalId && next.purpose === task.purpose && next.ending === task.ending && next.optional === task.optional && canonical(next.familyIds) === canonical(task.familyIds) && canonical(next.scope) === canonical(task.scope) && (!task.activity || next.activity?.blockId === task.activity.blockId)))) issue("tasks", "plan-history", "Keep original choices, tasks and activity identities; defer replaced tasks instead of deleting them.");
+		}
+	}
+	for (const block of blocks) if (block.plan && (block.endedAt === void 0 || plans.some((plan) => plan.day === block.plan.day)) && !plans.some((plan) => plan.day === block.plan.day && plan.tasks.some((task) => task.id === block.plan.taskId && task.activity?.blockId === block.id))) fail(`.study/plans/${block.plan.day}.json`, "activity", "plan-binding", "Restore and verify the original plan reference; the saved activity and answers remain intact.");
+}
+//#endregion
 //#region lib/types/files/validation.js
 /** Pure parsed-file and cross-entity validation, shared by every Student consumer. */
 /**
@@ -3231,7 +3402,7 @@ function validateStudyFiles(input, prior = [], nativeSources = [], openmaicSourc
 		}
 		const schema = Object.hasOwn(officialFileSchemas, raw.data.kind) ? officialFileSchemas[raw.data.kind] : void 0;
 		if (!schema) {
-			fail(entry.path, "kind", "file-kind", "Use term-settings, block, worksheet or collections.");
+			fail(entry.path, "kind", "file-kind", "Use term-settings, block, worksheet, collections or daily-plan.");
 			continue;
 		}
 		const parsed = schema.safeParse(entry.value);
@@ -3240,7 +3411,7 @@ function validateStudyFiles(input, prior = [], nativeSources = [], openmaicSourc
 			continue;
 		}
 		const file = parsed.data;
-		const expected = file.kind === "term-settings" ? ".study/settings.json" : file.kind === "collections" ? ".study/collections.json" : `.study/${file.kind === "block" ? "blocks" : "worksheets"}/${file.id}.json`;
+		const expected = file.kind === "term-settings" ? ".study/settings.json" : file.kind === "collections" ? ".study/collections.json" : file.kind === "daily-plan" ? `.study/plans/${file.day}.json` : `.study/${file.kind === "block" ? "blocks" : "worksheets"}/${file.id}.json`;
 		if (entry.path !== expected) fail(entry.path, "id", "file-membership", `Place this ${file.kind} at ${expected}.`);
 		files.push({
 			path: entry.path,
@@ -3263,6 +3434,7 @@ function validateStudyFiles(input, prior = [], nativeSources = [], openmaicSourc
 	const collections = files.find((entry) => entry.file.kind === "collections")?.file;
 	const workspace = {
 		settings,
+		plans: files.flatMap((entry) => entry.file.kind === "daily-plan" ? [entry.file] : []),
 		blocks,
 		worksheets,
 		nativeSources,
@@ -3296,6 +3468,7 @@ function validateStudyFiles(input, prior = [], nativeSources = [], openmaicSourc
 		if (new Set(memberIds).size !== memberIds.length || new Set(round.enteredFamilyIds.map(familyId)).size !== round.enteredFamilyIds.length || new Set(round.presentedQuestionIds).size !== round.presentedQuestionIds.length) fail(path, field, "round-identity", "Keep one membership, entry and presentation per stable identity.");
 		if (round.kind === "check" && round.presentedQuestionIds.length > 3 || round.kind === "review" && (round.members.length > 2 || round.enteredFamilyIds.length > 2)) fail(path, field, "round-limit", "A check permits three new instances; a short review permits two entered mothers. Errors, skips and help retain their entries.");
 		if (round.endedAt === void 0 !== (round.endReason === void 0) || round.startedAt < block.startedAt || round.endedAt !== void 0 && round.endedAt < round.startedAt) fail(path, field, "round-time", "Keep the round inside its owning activity and save an end time and reason together.");
+		if (round.familyEntries && (new Set(round.familyEntries.map((entry) => familyId(entry.familyId))).size !== round.familyEntries.length || round.enteredFamilyIds.some((id) => !round.familyEntries.some((entry) => familyId(entry.familyId) === familyId(id))) || round.familyEntries.some((entry) => !round.enteredFamilyIds.map(familyId).includes(familyId(entry.familyId)) || entry.at < round.startedAt || round.endedAt !== void 0 && entry.at > round.endedAt))) fail(path, field, "round-entry-time", "Retain one actual entry time per entered family, within the original round.");
 		if (round.enteredFamilyIds.some((id) => !memberIds.includes(familyId(id)))) fail(path, field, "round-member", "Enter only a saved member of this round.");
 		for (const member of round.members) {
 			const goal = knowledge.goals.find((goal) => goal.id === member.goalId);
@@ -3317,8 +3490,17 @@ function validateStudyFiles(input, prior = [], nativeSources = [], openmaicSourc
 				const date = response.answerDate;
 				return question?.capability && !old.members.some((member) => member.goalId === question.capability.goalId) && !owner.rounds?.some((item) => item.presentedQuestionIds.includes(question.id)) && date && (date.kind === "instant" ? date.at >= old.endedAt && date.at <= round.startedAt : date.kind === "day" && date.day > studyDay(old.endedAt) && date.day <= studyDay(round.startedAt));
 			}));
-			if (!explicitMore && !newLearning) fail(path, field, "round-restart", "Retain the prior allowance across activities and days. Start another round only after actual new-goal learning, or an explicit request for more review after the prior review ends.");
+			const nextDayReview = round.kind === "review" && old.endedAt !== void 0 && studyDay(round.startedAt) > studyDay(old.endedAt);
+			if (!explicitMore && !nextDayReview && !(round.kind === "check" && newLearning)) fail(path, field, "round-restart", "Retain the prior allowance across activities and days. Start another check only after actual new-goal learning; an ended review may restart on a later learning day or after an explicit request for more review.");
 		} else if (round.moreReview) fail(path, field, "round-restart", "An explicit more-review request references an earlier ended review round.");
+	}
+	const reviewDays = /* @__PURE__ */ new Map();
+	for (const { block, round } of rounds.filter((item) => item.round.kind === "review" && !item.round.moreReview)) for (const id of round.enteredFamilyIds) {
+		const day = studyDay(round.familyEntries?.find((entry) => entry.familyId === id)?.at ?? round.startedAt);
+		const used = reviewDays.get(day) ?? /* @__PURE__ */ new Set();
+		used.add(knowledge.familyAliases[id] ?? id);
+		reviewDays.set(day, used);
+		if (used.size > 2) fail(`.study/blocks/${block.id}.json`, "rounds", "daily-review-limit", "Keep automatic review to two entered families across subjects on this Shanghai date; preserve unfinished-round consumption.");
 	}
 	for (const block of blocks.filter((block) => block.endedAt === void 0)) {
 		const current = block.questions.find((question) => question.id === block.currentQuestionId);
@@ -3327,6 +3509,7 @@ function validateStudyFiles(input, prior = [], nativeSources = [], openmaicSourc
 		if (check && check.round.endedAt === void 0 && check.round.presentedQuestionIds.length < 3 && !(check.block.id === block.id && check.round.presentedQuestionIds.includes(current.id))) fail(`.study/blocks/${block.id}.json`, "currentQuestionId", "round-presentation", "Record this newly presented instance in its original check before answering; switching blocks retains that allowance.");
 	}
 	for (const old of prior) if (old.file.kind === "block" && old.file.termId === settings.termId && old.file.rounds?.length && !files.some((entry) => entry.path === old.path && entry.file.kind === "block")) fail(old.path, "rounds", "round-history", "Restore the original activity containing the saved round; removing its file cannot release an allowance.");
+	validateDailyPlans(workspace, prior, fail);
 	const officialSources = /* @__PURE__ */ new Set();
 	const evidenceIds = /* @__PURE__ */ new Set();
 	for (const [i, reference] of (settings.evidenceReferences ?? []).entries()) {
@@ -3552,8 +3735,9 @@ function validateStudyFiles(input, prior = [], nativeSources = [], openmaicSourc
 			if (old.file.kind === "block" && file.kind === "block" && old.file.answerReveals?.some((reveal) => !file.answerReveals?.some((current) => canonical(current) === canonical(reveal)))) fail(path, "answerReveals", "answer-reveal-history", "Retain the original frozen-instance reveal facts.");
 			if (old.file.kind === "block" && file.kind === "block") for (const priorRound of old.file.rounds ?? []) {
 				const currentRound = file.rounds?.find((round) => round.id === priorRound.id);
-				const { enteredFamilyIds, presentedQuestionIds, endedAt, endReason, ...identity } = priorRound;
-				const { enteredFamilyIds: entered, presentedQuestionIds: presented, endedAt: end, endReason: reason, ...currentIdentity } = currentRound ?? priorRound;
+				const { enteredFamilyIds, familyEntries, presentedQuestionIds, endedAt, endReason, ...identity } = priorRound;
+				const { enteredFamilyIds: entered, familyEntries: entries, presentedQuestionIds: presented, endedAt: end, endReason: reason, ...currentIdentity } = currentRound ?? priorRound;
+				if (familyEntries?.some((entry) => !entries?.some((current) => canonical(entry) === canonical(current)))) fail(path, "rounds", "round-history", "Retain original family entry times; a new day cannot release a saved allowance.");
 				if (!currentRound || canonical(identity) !== canonical(currentIdentity) || enteredFamilyIds.some((id) => !entered.includes(id)) || presentedQuestionIds.some((id) => !presented.includes(id)) || endedAt !== void 0 && (endedAt !== end || endReason !== reason || canonical(enteredFamilyIds) !== canonical(entered) || canonical(presentedQuestionIds) !== canonical(presented))) fail(path, "rounds", "round-history", "Preserve round membership, entry, presentation and ending facts; corrections to answers never release an allowance.");
 			}
 			const oldQuestions = old.file.kind === "block" ? old.file.questions : old.file.items;
@@ -3579,6 +3763,7 @@ function validateStudyFiles(input, prior = [], nativeSources = [], openmaicSourc
 	}
 	const partial = affected(".study/settings.json") ? void 0 : {
 		settings,
+		plans: (workspace.plans ?? []).filter((plan) => !affected(`.study/plans/${plan.day}.json`)),
 		nativeSources,
 		openmaicSources,
 		blocks: blocks.filter((block) => !affected(`.study/blocks/${block.id}.json`)),
@@ -4275,7 +4460,8 @@ function backupVersions(backups) {
 				"term-settings",
 				"block",
 				"worksheet",
-				"collections"
+				"collections",
+				"daily-plan"
 			]) }).passthrough().parse(raw).kind;
 			return [{
 				path: backup.sourcePath,
@@ -4581,11 +4767,11 @@ const MAX_TOTAL_BYTES = 33554432;
 * @param openmaicSources - independently authorized original official submissions and grading.
 * @returns validated facts or an explicit incomplete, invalid or changing result.
 */
-async function readWorkspace(fs, signal, prior, nativeSources = [], openmaicSources = []) {
+async function readWorkspace(fs, signal, prior, nativeSources = [], openmaicSources = [], options = {}) {
 	const owner = fs.cache ??= new StudyReadCache();
 	const backups = prior === void 0 ? await readBackups(fs, signal) : void 0;
 	for (let attempt = 0; attempt < 3; attempt++) {
-		const read = await readWorkspaceFiles(fs, signal, prior ?? backupVersions(backups.backups), nativeSources, openmaicSources, owner);
+		const read = await readWorkspaceFiles(fs, signal, prior ?? backupVersions(backups.backups), nativeSources, openmaicSources, owner, MAX_TOTAL_BYTES, options);
 		if (!read.workspace || read.status !== "valid") return {
 			...read,
 			cache: owner,
@@ -4601,7 +4787,7 @@ async function readWorkspace(fs, signal, prior, nativeSources = [], openmaicSour
 			rule: "archive-reference",
 			correction: "Reference at most 128 original terms in one current read."
 		});
-		let total = read.files.reduce((sum, file) => sum + file.bytes.byteLength, 0);
+		let total = read.totalBytes ?? read.files.reduce((sum, file) => sum + file.bytes.byteLength, 0);
 		const archiveSettings = [];
 		for (const term of terms) {
 			const prefix = `.study/archives/${term}`;
@@ -4617,7 +4803,7 @@ async function readWorkspace(fs, signal, prior, nativeSources = [], openmaicSour
 				read: (relative, signal, limit) => fs.read(path(relative), signal, limit)
 			};
 			const archive = await readWorkspaceFiles(archiveFs, signal, [], nativeSources, openmaicSources, owner, Math.max(0, MAX_TOTAL_BYTES - total));
-			const archiveBytes = archive.files.reduce((sum, file) => sum + file.bytes.byteLength, 0);
+			const archiveBytes = archive.totalBytes ?? archive.files.reduce((sum, file) => sum + file.bytes.byteLength, 0);
 			const lessons = await readLessonFile({
 				...archiveFs,
 				read: (path, signal, limit) => archiveFs.read(path, signal, Math.max(0, Math.min(limit, MAX_TOTAL_BYTES - total - archiveBytes)))
@@ -4734,7 +4920,7 @@ async function readWorkspace(fs, signal, prior, nativeSources = [], openmaicSour
 		cache: owner
 	};
 }
-async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSources, owner, budget = MAX_TOTAL_BYTES) {
+async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSources, owner, budget = MAX_TOTAL_BYTES, options = {}) {
 	const cache = owner.files;
 	for (let attempt = 0; attempt < 3; attempt += 1) {
 		signal.throwIfAborted();
@@ -4782,6 +4968,37 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
 				else paths.push(`${path}/${entry.name}`);
 			}
 		}
+		const planEntries = await fs.list(".study/plans", signal);
+		membership.push({
+			path: ".study/plans",
+			names: planEntries.map((entry) => `${entry.type}:${entry.name}`).sort()
+		});
+		if (planEntries.length > 1e3) discoveryIssues.push({
+			path: ".study/plans",
+			field: "",
+			rule: "collection-limit",
+			correction: "Keep at most 1,000 daily plans in this term; archive the term before adding more. No records were removed."
+		});
+		const planPaths = planEntries.slice(0, 1e3).flatMap((entry) => {
+			if (entry.type !== "file" || !/^\d{4}-\d{2}-\d{2}\.json$/u.test(entry.name)) {
+				discoveryIssues.push({
+					path: `.study/plans/${entry.name}`,
+					field: "",
+					rule: "file-membership",
+					correction: "Use one regular YYYY-MM-DD.json file per learning day."
+				});
+				return [];
+			}
+			return [`.study/plans/${entry.name}`];
+		});
+		const planBefore = await Promise.all(planPaths.map((path) => fs.stat(path, signal)));
+		const planBytes = planBefore.reduce((sum, info) => sum + (info?.size ?? 0), 0);
+		for (const [i, info] of planBefore.entries()) if (!info || info.type !== "file" || info.size === void 0 || info.size > 1048576) discoveryIssues.push({
+			path: planPaths[i],
+			field: "",
+			rule: "plan-size",
+			correction: "Keep each daily plan within 1 MiB; preserve original records and archive or simplify the arrangement explicitly."
+		});
 		const before = await Promise.all(paths.map((path) => fs.stat(path, signal)));
 		if (!before[0]) {
 			const legacy = await fs.stat(".study/state.json", signal);
@@ -4853,7 +5070,13 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
 		const files = [];
 		const input = [];
 		const available = [...prior];
-		let total = 0;
+		if (planBytes > budget) discoveryIssues.push({
+			path: ".study/plans",
+			field: "",
+			rule: "workspace-size",
+			correction: "Daily plans exceed the 32 MiB term budget; preserve originals and archive the term before continuing."
+		});
+		let total = planBytes > budget ? 0 : planBytes;
 		for (const [index, path] of paths.entries()) {
 			const observed = before[index];
 			if (!observed) continue;
@@ -4916,6 +5139,70 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
 				});
 			}
 		}
+		const settingsValue = termSettingsSchema.safeParse(input.find((entry) => entry.path === ".study/settings.json")?.value);
+		const parsedBlocks = input.flatMap((entry) => {
+			const parsed = blockSchema.safeParse(entry.value);
+			return parsed.success ? [parsed.data] : [];
+		});
+		const days = settingsValue.success ? deriveEvidence({
+			settings: settingsValue.data,
+			blocks: parsedBlocks,
+			worksheets: [],
+			nativeSources,
+			openmaicSources
+		}).entries.filter((entry) => entry.sourceStatus === "known" && entry.result !== "unassessed").flatMap((entry) => {
+			const day = evidenceDay(entry);
+			return day ? [day] : [];
+		}) : [];
+		const selectedDays = /* @__PURE__ */ new Set([
+			studyDay(options.now ?? Date.now()),
+			...[...new Set(days)].sort().reverse().slice(0, 3),
+			...options.planDay ? [options.planDay] : []
+		]);
+		for (const block of parsedBlocks) if (block.plan && block.responses.some((response) => {
+			const date = response.answerDate;
+			return date?.kind === "instant" ? selectedDays.has(studyDay(date.at)) : date?.kind === "day" && selectedDays.has(date.day);
+		})) selectedDays.add(block.plan.day);
+		const resumed = parsedBlocks.filter((block) => block.endedAt === void 0 || block.rounds?.some((round) => round.endedAt === void 0)).sort((a, b) => b.startedAt - a.startedAt)[0];
+		if (resumed?.plan) selectedDays.add(resumed.plan.day);
+		const finished = parsedBlocks.filter((block) => block.plan && block.endedAt !== void 0 && studyDay(block.endedAt) === studyDay(options.now ?? Date.now())).sort((a, b) => b.endedAt - a.endedAt)[0];
+		if (finished?.plan) selectedDays.add(finished.plan.day);
+		const readPlan = async (path) => {
+			const index = planPaths.indexOf(path), observed = planBefore[index];
+			if (!observed || observed.type !== "file" || (observed.size ?? 0) > 1048576 || files.some((file) => file.path === path)) return;
+			const cached = cache.get(observed.targetKey);
+			if (cached?.file) available.push({
+				path,
+				file: cached.file
+			});
+			try {
+				const bytes = cached?.version === observed.version ? cached.bytes : await fs.read(path, signal, 1048576);
+				const value = cached?.version === observed.version ? cached.value : JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+				files.push({
+					path,
+					...observed,
+					bytes
+				});
+				input.push({
+					path,
+					value
+				});
+			} catch (error) {
+				if (signal.aborted) throw error;
+				discoveryIssues.push({
+					path,
+					field: "",
+					rule: "plan-read",
+					correction: error instanceof Error ? error.message : "Restore the original daily plan; saved activity and answers are retained."
+				});
+			}
+		};
+		for (const day of selectedDays) await readPlan(`.study/plans/${day}.json`);
+		const origins = input.flatMap((entry) => {
+			const parsed = dailyPlanSchema.safeParse(entry.value);
+			return parsed.success ? parsed.data.tasks.flatMap((task) => task.original ? [task.original.day] : []) : [];
+		});
+		for (const day of new Set(origins)) await readPlan(`.study/plans/${day}.json`);
 		const validation = validateStudyFiles(input, available, nativeSources, openmaicSources);
 		const migration = validation.workspace?.settings.migration;
 		if (migration) {
@@ -4952,6 +5239,8 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
 		}
 		const after = await Promise.all(paths.map((path) => fs.stat(path, signal)));
 		if (before.some((entry, index) => entry?.version !== after[index]?.version || entry?.targetKey !== after[index]?.targetKey)) continue;
+		const planAfter = await Promise.all(planPaths.map((path) => fs.stat(path, signal)));
+		if (planBefore.some((entry, index) => entry?.version !== planAfter[index]?.version || entry?.targetKey !== planAfter[index]?.targetKey)) continue;
 		let changed = false;
 		for (const directory of membership) {
 			const entries = await fs.list(directory.path, signal);
@@ -4987,6 +5276,7 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
 		}
 		return {
 			status: validation.workspace?.settings.archivedAt !== void 0 ? "archived" : "valid",
+			totalBytes: total,
 			files,
 			membership,
 			issues,
@@ -5006,4 +5296,4 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
 	};
 }
 //#endregion
-export { scopeSelects as $, StudyReadCache as $t, assessmentSchema as A, officialRuntimeRecordSchema as At, termSettingsSchema as B, customObjectiveMethods as Bt, consumeOpenmaicFeedback as C, feedbackBindingSchema as Ct, answerDateSchema as D, officialResultSchema as Dt, openmaicAcademicQuestion as E, officialQuestionSchema as Et, officialFileSchemas as F, effectiveKnowledge as Ft, choiceMismatch as G, interestFocus as Gt, DAY as H, stateSchema as Ht, questionSchema as I, knowledgeSources as It, matchChoice as J, capabilityGoalSchema as Jt, foldText as K, interestTagsOf as Kt, questionSourceSchema as L, resolveLegacyReference as Lt, blockSchema as M, openmaicResponseSourceSchema as Mt, collectionsSchema as N, pendingOpenmaicSchema as Nt, archiveEvidencePath as O, officialReviewSchema as Ot, learningRoundSchema as P, snapshotRevisionSchema as Pt, schoolGate as Q, questionFamilySchema as Qt, responseSchema as R, scopeSupports as Rt, evidenceOf as S, readInteractiveLessons as St, matchOpenmaicResponse as T, officialAnswerSchema as Tt, activeSession as U, errorTypesBySubject as Ut, worksheetSchema as V, figureSchema as Vt, canonical as W, DEFAULT_INTEREST_TAGS as Wt, sameSavedAnswer as X, knowledgeExtensionSchema as Xt, requireValue as Y, capabilityScopeSchema as Yt, sameScope as Z, knowledgeIdSchema as Zt, attachEvidence as _, effectiveOpenmaicBase as _t, describeKnowledgeMigration as a, builtinObjective as at, evidenceAtCutoff as b, lessonSchema as bt, migrationOutputPaths as c, builtinObjectives as ct, sourceSha256 as d, exercisesForObjective as dt, showValue as et, validateStudyFiles as f, subjectExercises as ft, scheduleMistakes as g, OPENMAIC_LESSONS_PATH as gt, replayMistake as h, OPENMAIC_COOKIE_PATH as ht, describeArchive as i, todaySpent as it, assistanceSchema as j, openmaicQuestionSchema as jt, archiveEvidenceReferenceSchema as k, officialRuntimePayloadSchema as kt, readBackups as l, builtinObjectivesIn as lt, dayStart as m, readLessonFile as mt, backupSchema as n, studyDay as nt, describeMigration as o, builtinObjectiveAnywhere as ot, migrateStudyFile as p, subjectIdeas as pt, formatDuration as q, capabilityBindingSchema as qt, backupVersions as r, taughtUnit as rt, describeRestore as s, builtinObjectiveIn as st, readWorkspace as t, spent as tt, retainObservedBackups as u, curriculumFor as ut, demonstrablyAfter as v, interactiveLessonsView as vt, effectiveOpenmaicAssessment as w, feedbackCheckpointSchema as wt, evidenceDay as x, normalizeOpenmaicBase as xt, deriveEvidence as y, lessonFileSchema as yt, responseSourceSchema as z, commandSchema as zt };
+export { sameScope as $, knowledgeIdSchema as $t, assessmentSchema as A, officialReviewSchema as At, responseSchema as B, scopeSupports as Bt, consumeOpenmaicFeedback as C, normalizeOpenmaicBase as Ct, answerDateSchema as D, officialAnswerSchema as Dt, openmaicAcademicQuestion as E, feedbackCheckpointSchema as Et, dailyTaskSchema as F, pendingOpenmaicSchema as Ft, activeSession as G, errorTypesBySubject as Gt, termSettingsSchema as H, customObjectiveMethods as Ht, learningRoundSchema as I, snapshotRevisionSchema as It, foldText as J, interestTagsOf as Jt, canonical as K, DEFAULT_INTEREST_TAGS as Kt, officialFileSchemas as L, effectiveKnowledge as Lt, blockSchema as M, officialRuntimeRecordSchema as Mt, collectionsSchema as N, openmaicQuestionSchema as Nt, archiveEvidencePath as O, officialQuestionSchema as Ot, dailyPlanSchema as P, openmaicResponseSourceSchema as Pt, sameSavedAnswer as Q, knowledgeExtensionSchema as Qt, questionSchema as R, knowledgeSources as Rt, evidenceOf as S, lessonSchema as St, matchOpenmaicResponse as T, feedbackBindingSchema as Tt, worksheetSchema as U, figureSchema as Ut, responseSourceSchema as V, commandSchema as Vt, DAY as W, stateSchema as Wt, matchChoice as X, capabilityGoalSchema as Xt, formatDuration as Y, capabilityBindingSchema as Yt, requireValue as Z, capabilityScopeSchema as Zt, attachEvidence as _, OPENMAIC_COOKIE_PATH as _t, describeKnowledgeMigration as a, taughtUnit as at, evidenceAtCutoff as b, interactiveLessonsView as bt, migrationOutputPaths as c, builtinObjectiveAnywhere as ct, sourceSha256 as d, builtinObjectivesIn as dt, questionFamilySchema as en, schoolGate as et, validateStudyFiles as f, curriculumFor as ft, scheduleMistakes as g, readLessonFile as gt, replayMistake as h, subjectIdeas as ht, describeArchive as i, studyDay as it, assistanceSchema as j, officialRuntimePayloadSchema as jt, archiveEvidenceReferenceSchema as k, officialResultSchema as kt, readBackups as l, builtinObjectiveIn as lt, dayStart as m, subjectExercises as mt, backupSchema as n, showValue as nt, describeMigration as o, todaySpent as ot, migrateStudyFile as p, exercisesForObjective as pt, choiceMismatch as q, interestFocus as qt, backupVersions as r, spent as rt, describeRestore as s, builtinObjective as st, readWorkspace as t, StudyReadCache as tn, scopeSelects as tt, retainObservedBackups as u, builtinObjectives as ut, demonstrablyAfter as v, OPENMAIC_LESSONS_PATH as vt, effectiveOpenmaicAssessment as w, readInteractiveLessons as wt, evidenceDay as x, lessonFileSchema as xt, deriveEvidence as y, effectiveOpenmaicBase as yt, questionSourceSchema as z, resolveLegacyReference as zt };

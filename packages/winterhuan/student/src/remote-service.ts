@@ -61,7 +61,7 @@ export class StudentRemote extends TypertRemoteService {
   async query(sessionId: StudentSessionId, request: StudentQueryRequest, signal: AbortSignal): Promise<StudentQueryResult> {
     const agent = await this.mainAgent(sessionId, signal)
     this.wire(request)
-    const { read, native, backupIssues } = await readStudentWorkspace({ agent, signal }, this.ctx)
+    const { read, native, backupIssues } = await readStudentWorkspace({ agent, signal }, this.ctx, undefined, request.kind === 'daily-plan' && request.id && /^\d{4}-\d{2}-\d{2}$/u.test(request.id) ? request.id : undefined)
     const now = Date.now()
     let query: WorkspaceQueryResult
     if (request.kind === 'dashboard') {

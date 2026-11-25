@@ -21,3 +21,8 @@
 .empty { display: flex; flex: 1; flex-direction: column; justify-content: center; align-items: center; gap: 12px; padding: 24px; text-align: center; }
 .spinner { width: 24px; height: 24px; border: 2px solid var(--dsw-alias-border-l2); border-top-color: var(--dsw-alias-label-primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.dailyCards { display: grid; gap: 16px; }
+.dailyCard { display: grid; gap: 8px; padding: 16px; border: 1px solid var(--dsw-alias-border-l2); border-radius: var(--dsw-radius-lg); }
+.dailyCard h3, .dailyCard p { margin: 0; }
+.dailyCard button { justify-self: start; }

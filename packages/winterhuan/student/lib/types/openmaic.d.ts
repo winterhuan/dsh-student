@@ -30,8 +30,8 @@ export declare function lessonHttpUrl(value: string): string | undefined;
 export declare const lessonSchema: z.ZodObject<{
     id: z.ZodString;
     status: z.ZodEnum<{
-        generating: "generating";
         ready: "ready";
+        generating: "generating";
         failed: "failed";
     }>;
     createdAt: z.ZodString;
@@ -69,9 +69,9 @@ export declare const lessonSchema: z.ZodObject<{
             id: z.ZodString;
             description: z.ZodString;
             modality: z.ZodEnum<{
+                listening: "listening";
                 written: "written";
                 oral: "oral";
-                listening: "listening";
                 audiovisual: "audiovisual";
                 performed: "performed";
             }>;
@@ -101,8 +101,8 @@ export declare const lessonFileSchema: z.ZodObject<{
     lessons: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
         status: z.ZodEnum<{
-            generating: "generating";
             ready: "ready";
+            generating: "generating";
             failed: "failed";
         }>;
         createdAt: z.ZodString;
@@ -140,9 +140,9 @@ export declare const lessonFileSchema: z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
+                    listening: "listening";
                     written: "written";
                     oral: "oral";
-                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;

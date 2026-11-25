@@ -14,19 +14,32 @@ export function isModeSession(context, sessionId) {
  */
 export function registerModeTab(context, definition) {
     const current = context.uiSession.adapter.current;
+    const opened = new Set();
+    let openTimer;
     let visible;
     let release;
     const sync = () => {
         const next = isModeSession(context, current.getSnapshot().key);
-        if (next === visible)
-            return;
-        visible = next;
-        release?.();
-        release = context.sidebarRightTabs.register({ ...definition, guide: next ? definition.guide ?? [] : [] });
+        if (next !== visible) {
+            visible = next;
+            release?.();
+            release = context.sidebarRightTabs.register({ ...definition, guide: next ? definition.guide ?? [] : [] });
+        }
+        const mounted = context.sidebarRight.mounted.getSnapshot();
+        if (next && mounted && mounted === current.getSnapshot().key && !opened.has(mounted)) {
+            clearTimeout(openTimer);
+            openTimer = setTimeout(() => {
+                if (context.sidebarRight.mounted.getSnapshot() !== mounted || !isModeSession(context, mounted))
+                    return;
+                opened.add(mounted);
+                context.sidebarRight.openTab('student');
+            }, 0);
+        }
     };
     const stopCurrent = current.subscribe(sync);
     const stopSessions = context.sessions.list.subscribe(sync);
+    const stopMounted = context.sidebarRight.mounted.subscribe(sync);
     sync();
-    return () => { stopCurrent(); stopSessions(); release?.(); };
+    return () => { clearTimeout(openTimer); stopCurrent(); stopSessions(); stopMounted(); release?.(); };
 }
 //# sourceMappingURL=mode.js.map

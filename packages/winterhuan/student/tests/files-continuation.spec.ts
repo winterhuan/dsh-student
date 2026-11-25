@@ -280,7 +280,7 @@ it('ends a two-mother round on entry despite skipped and unknown answers, then l
   const consume = async (at: number) => queryWorkspace(await readWorkspace(nodeStudyFiles(f.cwd), new AbortController().signal), { kind: 'learning-context', subject: 'math' }, at)
   const expected = { data: { nextAction: { kind: 'learn', goalId: 'm.compose', scope }, round: { id: round.id, status: 'ended', remaining: 0 }, reviewRound: { remaining: 0, usedFamilyIds: ['math.count', 'math.zero'] } } }
   expect(await consume(NOW + 100)).toMatchObject(expected)
-  expect(await consume(NOW + 86400000)).toMatchObject(expected)
+  expect(await consume(NOW + 86400000)).toMatchObject({ data: { ...expected.data, reviewRound: { remaining: 2, usedFamilyIds: [] } } })
   expect((await consume(NOW + 86400000)).data).not.toMatchObject({ nextAction: { blockId: 'current' } })
   await f.save('.study/settings.json', { ...f.settings, learningScopes: [{ subject: 'math', goalIds: ['m.count', 'm.zero'], scope, parentConfirmation: 'Only these two goals.' }] })
   expect(await consume(NOW + 86400000)).toMatchObject({ data: { nextAction: { kind: 'hold', reason: 'no-learnable-goal' }, legalActions: ['switch-block', 'rest', 'more-review'] } })

@@ -1,5 +1,5 @@
 import type { OpenmaicInputObservation } from '../openmaic/feedback-schema.ts';
-import { type OfficialFile, type TermSettings, type LearningBlock, type WorksheetFile, type CollectionsFile } from './schema.ts';
+import { type OfficialFile, type TermSettings, type LearningBlock, type WorksheetFile, type CollectionsFile, type DailyPlan } from './schema.ts';
 /** Bounded, actionable durable-file failure. */
 export interface FileIssue {
     path: string;
@@ -15,6 +15,7 @@ export interface ParsedFile {
 /** The relevant valid business entities; no second persisted evidence authority. */
 export interface ValidatedWorkspace {
     settings: TermSettings;
+    plans?: DailyPlan[];
     blocks: LearningBlock[];
     worksheets: WorksheetFile[];
     collections?: CollectionsFile;

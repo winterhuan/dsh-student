@@ -1,3 +1,4 @@
+import type { DailyLearning } from '../learning/daily.ts'
 import { useRef } from 'react'
 import type { WorkspaceRead } from '../files/read.ts'
 import type { ResourceSnapshot } from '@deepseek-ai/dsh-client-resources/client'
@@ -14,8 +15,9 @@ export type UseStudentResource = (address: string) => ResourceSnapshot<StudentQu
 /** Read validated dashboard and stable learning identities through the shared resource lifetime. */
 export function useStudy(sessionId: StudentSessionId, visible: boolean, networkError: string, query: StudyQuery, useResource: UseStudentResource) {
   const { offset: mistakeOffset, status: mistakeStatus, ...options } = query
-  const resource = useResource(visible ? studentResourceAddress(sessionId, { kind: 'dashboard', options: { ...options, mistakeOffset, mistakeStatus } }) : '')
-  const context = useResource(visible ? studentResourceAddress(sessionId, { kind: 'learning-context', subject: query.subject }) : '')
+  const { subject: _subject, ...learningOptions } = options
+  const resource = useResource(visible ? studentResourceAddress(sessionId, { kind: 'dashboard', options: { ...(query.tab === 'today' ? learningOptions : options), mistakeOffset, mistakeStatus } }) : '')
+  const context = useResource(visible ? studentResourceAddress(sessionId, { kind: 'learning-context', ...(query.tab !== 'today' ? { subject: query.subject } : {}) }) : '')
   const currentData = resource.value && dashboardValue(resource.value.data) ? resource.value.data : undefined
   const currentFacts = context.value?.data
   // Independent streams must agree on the files before an action can combine their facts.
@@ -24,7 +26,7 @@ export function useStudy(sessionId: StudentSessionId, visible: boolean, networkE
   const lastView = useRef<{ sessionId: StudentSessionId; subject: StudyQuery['subject']; data: StudentJsonValue & Dashboard; facts: StudentJsonValue }>()
   if (contextReady) lastView.current = { sessionId, subject: query.subject, data: currentData, facts: currentFacts }
   // Preserve one coherent question and draft identity while current reads disable actions.
-  const retained = lastView.current?.sessionId === sessionId && lastView.current.subject === query.subject ? lastView.current : undefined
+  const retained = lastView.current?.sessionId === sessionId && (query.tab === 'today' || lastView.current.subject === query.subject) ? lastView.current : undefined
   const data = contextReady ? currentData : retained?.data ?? currentData
   const facts = contextReady ? currentFacts : retained?.facts ?? currentFacts
   const offset = useRef(0)
@@ -39,10 +41,11 @@ export function useStudy(sessionId: StudentSessionId, visible: boolean, networkE
   const legalActions = facts && typeof facts === 'object' && 'legalActions' in facts && Array.isArray(facts.legalActions) ? facts.legalActions.filter((value): value is string => typeof value === 'string') : []
   const sourceVerification = facts && typeof facts === 'object' && 'sourceVerification' in facts ? facts.sourceVerification as StudentJsonValue & NonNullable<WorkspaceRead['sourceVerification']> : null
   const goalProgress = facts && typeof facts === 'object' && 'goalProgress' in facts && Array.isArray(facts.goalProgress) ? facts.goalProgress as StudentJsonValue[] & CapabilityProgress[] : []
+  const daily = facts && typeof facts === 'object' && 'daily' in facts ? facts.daily as StudentJsonValue & DailyLearning : undefined
   const loadNeeded = !data && (resource.failure?.code === 'student/main-session-required' || context.failure?.code === 'student/main-session-required')
   const stale = resource.status === 'failed' || context.status === 'failed'
   const invalidRecords = resource.status === 'failed' && resource.failure?.code === 'student/invalid-records' || context.status === 'failed' && context.failure?.code === 'student/invalid-records'
-  return { data, context: facts, contextState: { status: context.status, readStatus: context.value?.status, versions: context.value?.versions ?? [], issues: context.value?.issues ?? [], failure: context.failure }, contextReady, termId, learnerId, classroomBindingId, nextAction, round, legalActions, sourceVerification, goalProgress, value: resource.value, loadNeeded, stale, invalidRecords, error: stale ? networkError : '', offset }
+  return { data, daily, context: facts, contextState: { status: context.status, readStatus: context.value?.status, versions: context.value?.versions ?? [], issues: context.value?.issues ?? [], failure: context.failure }, contextReady, termId, learnerId, classroomBindingId, nextAction, round, legalActions, sourceVerification, goalProgress, value: resource.value, loadNeeded, stale, invalidRecords, error: stale ? networkError : '', offset }
 }
 
 // The shared Host dashboard query validates all business content; this checks its wire discriminator.

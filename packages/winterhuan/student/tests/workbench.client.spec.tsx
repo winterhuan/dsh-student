@@ -53,27 +53,12 @@ describe('learning workbench', () => {
     const details = screen.getByText(en.taskDetails).closest('details')!
     expect(details.open).toBe(false)
     expect(answer.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(screen.getByText(en.studyDetails).closest('details')!.open).toBe(false)
+    expect(screen.queryByText(en.studyDetails)).toBeNull()
     expect(screen.getByRole('main').innerHTML).toMatchSnapshot()
     openParent()
     fireEvent.click(screen.getByRole('button', { name: en.parentPractice }))
     expect(await screen.findByRole('heading', { name: `${en.worksheets} · 1` })).toBeTruthy()
     expect(screen.getByText(en.uploadHomework).closest('details')!.open).toBe(false)
-  })
-
-  it('clears a selected unit when the learner returns to the whole book', async () => {
-    vi.spyOn(Date, 'now').mockReturnValue(NOW)
-    const backend = installResource(updateStudy(undefined, setup, NOW))
-    render(<StudyDesk sessionId="whole-book" visible running={false} ask={vi.fn().mockResolvedValue(undefined)} t={t} />)
-    fireEvent.click(await screen.findByText(en.otherWays))
-    fireEvent.change(screen.getByLabelText(en.scopeLabel), { target: { value: '1-first' } })
-    await screen.findByRole('option', { name: '10 以内的数' })
-    fireEvent.change(screen.getByLabelText(en.scopeUnit), { target: { value: 'm1a-u3' } })
-    fireEvent.change(screen.getByLabelText(en.scopeUnit), { target: { value: '' } })
-    expect((screen.getByLabelText(en.scopeUnit) as HTMLSelectElement).value).toBe('')
-    fireEvent.submit(screen.getByLabelText(en.scopeLabel).closest('form')!)
-    await waitFor(() => expect(backend.read().sessions).toHaveLength(1))
-    expect(backend.read().sessions[0]?.scope).toEqual({ grade: 1, term: 'first' })
   })
   it('resets microsteps when another block reuses the same question number', async () => {
     vi.spyOn(Date, 'now').mockReturnValue(NOW)
@@ -94,19 +79,17 @@ describe('learning workbench', () => {
   })
   it('refreshes displayed counts without a write and retains the current draft', async () => {
     const clock = vi.spyOn(Date, 'now').mockReturnValue(NOW)
-    const state = updateStudy(updateStudy(undefined, setup, NOW), start, NOW)
+    const state = updateStudy(updateStudy(updateStudy(undefined, setup, NOW), start, NOW), { action: 'task', task: answerTask }, NOW)
     state.mistakes.push({ ...mistake, uncertainties: '', confirmedAt: NOW, dueAt: NOW + MINUTE, stage: 0, independentDays: [] })
     const backend = installResource(state)
     const props = { sessionId: 'clock', running: false, ask: vi.fn(), t }
     const view = render(<StudyDesk {...props} visible />)
-    await screen.findByText(/Due for review: 0/)
-    fireEvent.click(screen.getByText(en.reflectionOptional))
-    fireEvent.change(screen.getByLabelText(en.reflection), { target: { value: '未保存反思' } })
+    fireEvent.change(screen.getByLabelText(en.answer), { target: { value: '未保存答案' } })
     clock.mockReturnValue(NOW + MINUTE)
     view.rerender(<StudyDesk {...props} visible={false} />)
     view.rerender(<StudyDesk {...props} visible />)
-    await screen.findByText(/Due for review: 1/)
-    expect((screen.getByLabelText(en.reflection) as HTMLTextAreaElement).value).toBe('未保存反思')
+    expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('未保存答案')
+    expect(dashboard(state, NOW + MINUTE).study?.dueToday).toHaveLength(1)
     expect(backend.requests).toEqual([])
   })
   it('retains the original answer draft when native admission fails without claiming a business save', async () => {
@@ -132,9 +115,8 @@ describe('learning workbench', () => {
     await waitFor(() => expect(backend.read().task?.hintLevel).toBe(2))
     expect(String(ask.mock.calls[1]?.[0])).toContain('不会做时先教')
     view.rerender(<StudyDesk sessionId="one" visible running ask={ask} t={t} />)
-    fireEvent.click(screen.getByRole('button', { name: 'End this block' }))
-    await screen.findByText(/Due for review:/)
-    expect(backend.read().sessions[0]?.endedAt).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: en.finishToday }))
+    await waitFor(() => expect(backend.read().sessions[0]?.endedAt).toBeDefined())
     expect(backend.read().rewards).toEqual([])
   })
 
@@ -161,23 +143,6 @@ describe('learning workbench', () => {
   await screen.findByText(en.intentAdmitted)
   expect(graded.read().paperResults[0]).toMatchObject({ itemId: 'a', result: 'correct', assistance: 'hint' })
 })
-
-it('keeps answers available throughout a block and can start again after stopping', async () => {
-    let state = updateStudy(updateStudy(updateStudy(undefined, setup, NOW), start, NOW), { action: 'task', task: answerTask }, NOW)
-    const backend = installResource(state)
-    const view = render(<StudyDesk sessionId="one" visible running={false} ask={vi.fn()} t={t} />)
-    const submit = await screen.findByRole('button', { name: 'Submit answer' })
-    expect(submit.closest('fieldset')?.disabled).toBe(false)
-    expect(await screen.findByText(/Math · /)).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Start learning' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Start now' })).toBeNull()
-    view.unmount()
-    state = updateStudy(backend.read(), { action: 'stop', sessionId: start.id, reflection: '' }, Date.now())
-    installResource(state)
-    render(<StudyDesk sessionId="two" visible running={false} ask={vi.fn()} t={t} />)
-    await screen.findByText(/Due for review:/)
-    expect((await screen.findByRole('button', { name: 'Start learning' }) as HTMLButtonElement).disabled).toBe(false)
-  })
 
   it('releases visible resource addresses when the tab is hidden', () => {
     installResource()
@@ -252,33 +217,6 @@ it('confirms a concept before showing it as a learning goal source', async () =>
   fireEvent.click(screen.getByRole('button', { name: 'Confirm concept' }))
   await waitFor(() => expect(backend.read().concepts[0]?.confirmedAt).toBeDefined())
   expect(backend.read().concepts[0]?.userConfirmation).toBe(en.confirmConcept)
-})
-
-it('shows a different learning method for each selected subject', async () => {
-  installResource(updateStudy(undefined, setup, NOW))
-  render(<StudyDesk sessionId="subjects" visible running={false} ask={vi.fn()} t={t} />)
-  await screen.findByText(en.mathMethod)
-  fireEvent.click(screen.getByRole('button', { name: 'Chinese' }))
-  await screen.findByText(en.chineseMethod)
-  fireEvent.click(screen.getByRole('button', { name: 'English' }))
-  await screen.findByText(en.englishMethod)
-})
-
-it('starts foundation practice with the learner-selected knowledge goal', async () => {
-  const backend = installResource(updateStudy(worksheetState(), { ...start, scope: { grade: 2, term: 'first', objectiveIds: ['m2a-o-sub'] } }, NOW))
-  const ask = vi.fn().mockResolvedValue(undefined)
-  render(<StudyDesk sessionId="goal" visible running={false} ask={ask} t={t} />)
-  await openDesk('Knowledge map')
-  fireEvent.click(await screen.findByRole('button', { name: 'Practise this goal · 凑十加法' }))
-  fireEvent.click(screen.getByRole('button', { name: en.learningEntry }))
-  await screen.findByLabelText(en.scopeLabel)
-  fireEvent.change(screen.getByLabelText(en.scopeLabel), { target: { value: '1-second' } })
-  fireEvent.click(screen.getByRole('button', { name: en.switchLearning }))
-  await waitFor(() => expect(ask).toHaveBeenCalledWith(expect.stringContaining('add'), undefined))
-  const intent = JSON.parse(String(ask.mock.calls[0]![0]).split('Student intention:\n')[1]!.split('\n')[0]!)
-  expect(intent).toMatchObject({ selection: { subject: 'math', goalId: 'add', scope: { grade: 1, term: 'second' } }, operation: { action: 'start', subject: 'math', scope: { grade: 1, term: 'second' } } })
-  await waitFor(() => expect(backend.read().sessions).toHaveLength(2))
-  expect(backend.read().sessions[1]).toMatchObject({ subject: 'math', mode: 'foundation', scope: { grade: 1, term: 'second' } })
 })
 
 it('previews the sheet as HTML and prints through the browser dialog', async () => {
@@ -452,40 +390,6 @@ it('offers the preceding school year before September without silently selecting
   expect([...year.options].map(option => option.value)).toEqual(['', '2026–2027', '2025–2026', '2024–2025', '2023–2024', '2022–2023', '2021–2022', '2020–2021'])
 })
 
-it('carries the due subject into review without starting until the learner chooses', async () => {
-  vi.spyOn(Date, 'now').mockReturnValue(NOW)
-  let state = updateStudy(undefined, setup, NOW - DAY)
-  state = updateStudy(state, { action: 'mistake', mistake: { ...mistake, subject: 'english' } }, NOW - DAY)
-  state = updateStudy(state, confirm, NOW - DAY)
-  const backend = installResource(state)
-  const ask = vi.fn().mockResolvedValue(undefined)
-  render(<StudyDesk sessionId="review" visible running={false} ask={ask} t={t} />)
-  await openDesk('Mistakes')
-  fireEvent.click(screen.getByRole('button', { name: 'English' }))
-  fireEvent.click(await screen.findByRole('button', { name: 'Due review · English' }))
-  expect(screen.getByRole('button', { name: 'English' }).getAttribute('aria-pressed')).toBe('true')
-  expect((screen.getByRole('combobox', { name: 'Learning mode' }) as HTMLSelectElement).value).toBe('review')
-  expect(backend.requests).toHaveLength(0)
-  fireEvent.click(screen.getByRole('button', { name: 'Start learning' }))
-  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
-  expect(backend.read().sessions[0]).toMatchObject({ subject: 'english', mode: 'review' })
-})
-
-it('keeps due review available after stopping a block', async () => {
-  vi.spyOn(Date, 'now').mockReturnValue(NOW)
-  let state = updateStudy(undefined, setup, NOW - DAY)
-  state = updateStudy(state, { action: 'mistake', mistake }, NOW - DAY)
-  state = updateStudy(state, confirm, NOW - DAY)
-  state = updateStudy(state, start, NOW)
-  state = updateStudy(state, { action: 'stop', sessionId: start.id, reflection: '' }, NOW)
-  const backend = installResource(state)
-  render(<StudyDesk sessionId="break" visible running={false} ask={vi.fn()} t={t} />)
-  await screen.findByText(/Due for review:/)
-  await openDesk('Mistakes')
-  expect((screen.getByRole('button', { name: 'Due review · Math' }) as HTMLButtonElement).disabled).toBe(false)
-  expect(backend.requests).toHaveLength(0)
-})
-
 it('shows the saved answer with feedback and offers the next question', async () => {
   vi.spyOn(Date, 'now').mockReturnValue(NOW)
   let state = initial()
@@ -496,7 +400,7 @@ it('shows the saved answer with feedback and offers the next question', async ()
   await screen.findByText(`My answer: ${attempt.response}`)
   expect(screen.getByText(attempt.feedback)).toBeTruthy()
   expect(screen.getByRole('button', { name: en.continueLearning })).toBeTruthy()
-  expect(screen.getByText(/Due for review: 0 · Weak points: 0/)).toBeTruthy()
+  expect(screen.queryByText(/Due for review: 0 · Weak points: 0/)).toBeNull()
 })
 
 it('shows the open block subject without elapsed time', async () => {
@@ -505,9 +409,9 @@ it('shows the open block subject without elapsed time', async () => {
   const state = updateStudy(updateStudy(undefined, setup, serverNow), start, serverNow)
   installResource(state)
   render(<StudyDesk sessionId="clock" visible running={false} ask={vi.fn()} t={t} />)
-  await screen.findByText(/Math · /)
+  await screen.findByText(new RegExp(`${en.learningNow} · Math`))
   expect(screen.queryByText(/This block:/)).toBeNull()
-  expect(screen.getByText(/Due for review: 0 · Weak points: 0/)).toBeTruthy()
+  expect(screen.queryByText(/Due for review: 0 · Weak points: 0/)).toBeNull()
 })
 
 it('keeps math goals and lessons off the Chinese today page', async () => {
@@ -538,7 +442,7 @@ it('keeps math goals and lessons off the Chinese today page', async () => {
   expect(ask).not.toHaveBeenCalled()
 })
 
-it('keeps the knowledge map and mistake book in Parent and starts the selected review', async () => {
+it('keeps the knowledge map and mistake book in the four Parent sections', async () => {
   vi.spyOn(Date, 'now').mockReturnValue(NOW)
   let state = updateStudy(undefined, setup, NOW - DAY)
   state = updateStudy(state, { action: 'mistake', mistake }, NOW - DAY)
@@ -559,32 +463,9 @@ it('keeps the knowledge map and mistake book in Parent and starts the selected r
   expect(screen.getAllByRole('button', { name: /Practise this goal/ }).length).toBeGreaterThan(0)
   fireEvent.click(screen.getByText('100 以内数的加减法（二） · Mastered 0/3'))
   expect(screen.getAllByRole('img', { name: 'Mastered 0 · Practising 0 · Not practised lately 0 · Needs work 0 · Review due 0 · Not started 3' }).length).toBeGreaterThan(0)
-  fireEvent.click(screen.getByRole('button', { name: en.learningEntry }))
-  fireEvent.click(screen.getByText(en.otherWays))
-  fireEvent.change(screen.getByLabelText(en.mode), { target: { value: 'review' } })
-  fireEvent.click(screen.getByRole('button', { name: en.start }))
-  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
-  expect(ask.mock.calls[0]?.[0]).toContain('到期错题')
-  expect(backend.read().sessions[0]).toMatchObject({ subject: 'math', mode: 'review' })
-})
-
-it('surfaces a weak knowledge point and starts practice around it', async () => {
-  vi.spyOn(Date, 'now').mockReturnValue(NOW)
-  let state = updateStudy(undefined, setup, NOW - 2 * DAY)
-  state = updateStudy(state, { action: 'mistake', mistake: { ...mistake, objectiveId: 'm2a-o-tables' } }, NOW - 2 * DAY)
-  state = updateStudy(state, confirm, NOW - 2 * DAY)
-  const backend = installResource(state)
-  const ask = vi.fn().mockResolvedValue(undefined)
-  render(<StudyDesk sessionId="weak" visible running={false} ask={ask} t={t} />)
-  await screen.findByText(/Due for review: 1 · Weak points: 1/)
-  await openDesk('Knowledge map')
-  fireEvent.click(screen.getByText(/表内乘法 · Mastered/))
-  fireEvent.click(screen.getAllByRole('button', { name: '2、4、8的乘法口诀' })[0]!)
-  fireEvent.click(screen.getByRole('button', { name: 'Practise this goal · 熟记并运用2～9的乘法口诀' }))
-  await screen.findByText('Learning goal: 熟记并运用2～9的乘法口诀')
-  fireEvent.click(screen.getByRole('button', { name: 'Start learning' }))
-  await waitFor(() => expect(ask).toHaveBeenCalledWith(expect.stringContaining('m2a-o-tables'), undefined))
-  expect(backend.read().sessions[0]).toMatchObject({ subject: 'math', mode: 'foundation' })
+  expect(screen.getByRole('button', { name: en.parentPractice })).toBeTruthy()
+  expect(screen.getByRole('button', { name: en.lessonHistory })).toBeTruthy()
+  expect(ask).not.toHaveBeenCalled()
 })
 
 it('filters the mistake book by review status', async () => {
@@ -725,38 +606,6 @@ it('lets the parent mark a printed sheet per question and discard it', async () 
   await waitFor(() => expect(screen.queryByText(/凑十加法 · 1 questions/)).toBeNull())
 })
 
-it('offers a recurring check-in and starts it as a diagnose block', async () => {
-  vi.spyOn(Date, 'now').mockReturnValue(NOW)
-  const backend = installResource(updateStudy(undefined, setup, NOW - DAY))
-  const ask = vi.fn().mockResolvedValue(undefined)
-  render(<StudyDesk sessionId="checkin" visible running={false} ask={ask} t={t} />)
-  await screen.findByRole('heading', { name: 'Learning check-in · Math' })
-  expect(screen.getByText(/No check-in yet · Coverage: 0 \/ 8/)).toBeTruthy()
-  expect(screen.getByText(/Check-in intensity: Standard · 6 questions, mostly choices/)).toBeTruthy()
-  expect(screen.getByText(/A check-in is suggested · This round probes: 计算100以内不退位和退位减法并用加法验算/)).toBeTruthy()
-  expect(screen.queryByRole('button', { name: en.startNow })).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: 'Start check-in' }))
-  await waitFor(() => expect(ask).toHaveBeenCalledWith(expect.stringContaining('kind=diagnose'), undefined))
-  expect(backend.read().sessions[0]).toMatchObject({ subject: 'math', mode: 'diagnose' })
-})
-
-it('shows the class frontier and saves a parent confirmation of the same unit', async () => {
-  vi.spyOn(Date, 'now').mockReturnValue(NOW)
-  let state = updateStudy(undefined, setup, NOW)
-  state = updateStudy(state, { action: 'material', material }, NOW)
-  state = updateStudy(state, { action: 'course', course }, NOW)
-  state = updateStudy(state, { action: 'school-progress', subject: 'math', unitId: 'm2a-u-mul', posture: 'keep-up', preview: 'off', pace: 'teaching', parentConfirmation: '家长确认学校数学教到表内乘法。' }, NOW)
-  const backend = installResource(state)
-  const ask = vi.fn().mockResolvedValue(undefined)
-  render(<StudyDesk sessionId="frontier" visible running={false} ask={ask} t={t} />)
-  expect(await screen.findByText('School progress: 表内乘法 · Keep up with school · Practised through: No practice in this book yet')).toBeTruthy()
-  expect(screen.queryByText('School is here')).toBeNull()
-  await openDesk('Parent setup')
-  expect(within(screen.getByRole('combobox', { name: 'Current school unit' })).getByRole('option', { name: '表内乘法' })).toBeTruthy()
-  fireEvent.click(screen.getByRole('button', { name: 'Still on this unit' }))
-  await waitFor(() => expect(backend.read().courses.find(item => item.subject === 'math')?.progress?.confirmedAt).toBe(NOW))
-})
-
 it('scopes check-ins to the selected subject and starts a light check-in', async () => {
   vi.spyOn(Date, 'now').mockReturnValue(NOW)
   const backend = installResource(updateStudy(undefined, setup, NOW - DAY))
@@ -798,7 +647,7 @@ it('confirms a transcribed draft in the panel and records the chosen error cause
   expect(backend.read().mistakes[0]).toMatchObject({ id: mistake.id, errorType: 'carry-borrow' })
 })
 
-it('classifies a mistake in the notebook and shows the routine card with its cause', async () => {
+it('classifies a mistake in the notebook without adding a competing learner routine card', async () => {
   vi.spyOn(Date, 'now').mockReturnValue(NOW)
   let state = updateStudy(undefined, setup, NOW)
   state = updateStudy(state, { action: 'mistake', mistake: { ...mistake, objectiveId: 'm2a-o-sub' } }, NOW)
@@ -813,11 +662,7 @@ it('classifies a mistake in the notebook and shows the routine card with its cau
   fireEvent.click(within(entry).getByRole('button', { name: en.saveErrorType }))
   await waitFor(() => expect(backend.read().mistakes[0]?.errorType).toBe('carry-borrow'))
   fireEvent.click(screen.getByRole('button', { name: en.learningEntry }))
-  await screen.findByRole('heading', { name: `${en.routineTitle} · Math` })
-  expect(screen.getByText(`${en.topCauses}：${en['carry-borrow']} ×1`)).toBeTruthy()
-  fireEvent.click(screen.getByRole('button', { name: en.printDailySheet }))
-  expect(String(ask.mock.calls.at(-1)?.[0])).toContain('kind=elements')
-  expect(String(ask.mock.calls.at(-1)?.[0])).toContain('daily-routine.md')
+  expect(screen.queryByRole('heading', { name: `${en.routineTitle} · Math` })).toBeNull()
 })
 
 it('draws a saved task figure beside the question', async () => {
@@ -852,21 +697,6 @@ it('marks unmarked questions right and keeps a question the parent already marke
     expect.objectContaining({ itemId: 'a', result: 'incorrect' }),
     expect.objectContaining({ itemId: 'b', result: 'correct' }),
   ]))
-})
-
-it('shows the explain-it-back reminder after a helped answer', async () => {
-  vi.spyOn(Date, 'now').mockReturnValue(NOW + 5 * MINUTE)
-  let state = updateStudy(updateStudy(undefined, setup, NOW), start, NOW)
-  const task = { id: attempt.id, sessionId: attempt.sessionId, subject: attempt.subject, topic: attempt.topic, prompt: attempt.prompt, objectiveId: 'm2a-o-meaning' }
-  state = updateStudy(state, { action: 'task', task }, NOW)
-  state = updateStudy(state, { action: 'hint', taskId: task.id }, NOW)
-  state = updateStudy(state, { action: 'answer', taskId: task.id, response: attempt.response }, NOW + MINUTE)
-  state = updateStudy(state, { action: 'record', attempt: { ...attempt, objectiveId: 'm2a-o-meaning', assistance: 'hint' } }, NOW + 2 * MINUTE)
-  state = updateStudy(state, { action: 'stop', sessionId: start.id, reflection: '' }, NOW + 3 * MINUTE)
-  installResource(state)
-  render(<StudyDesk sessionId="remind" visible running={false} ask={vi.fn()} t={t} />)
-  await screen.findByRole('heading', { name: en.remindersTitle })
-  expect(screen.getByText(`${en.remindFirst} · 把同数连加改写成乘法算式并说明意义`)).toBeTruthy()
 })
 
 function ParentSettings(props: Omit<import('react').ComponentProps<typeof RealParentSettings>, keyof import('../src/client/drafts.tsx').DraftProps>) { return <RealParentSettings {...props} {...useDraftFixture()} /> }

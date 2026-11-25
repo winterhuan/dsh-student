@@ -100,7 +100,9 @@ export interface LearningContinuation {
  * @param sourceVerification - independently read source availability and consumption for the current owner.
  * @returns one permitted action, scoped progress and the current two-mother review allowance.
  */
-export declare function learningContinuation(workspace: ValidatedWorkspace, state: StudyState, now: number, subject?: CurriculumSubject, sourceVerification?: WorkspaceRead['sourceVerification']): LearningContinuation;
+export declare function learningContinuation(workspace: ValidatedWorkspace, state: StudyState, now: number, subject?: CurriculumSubject, sourceVerification?: WorkspaceRead['sourceVerification'], selection?: 'main'): LearningContinuation;
+/** One capability/range projection for recommendations, maps and parent summaries. */
+export declare function capabilityProgress(workspace: ValidatedWorkspace, state: StudyState, now: number): CapabilityProgress[];
 /** Why an objective needs attention; codes are localized by the workbench and read by the model. */
 export interface InsightReason {
     code: 'due-mistakes' | 'open-mistakes' | 'recent-help-or-error' | 'recurring-error' | 'not-practised-recently' | 'not-started' | 'diagnosis-due' | 'preview' | 'school-pace' | 'needs-teaching' | 'prerequisite-gap';
@@ -108,6 +110,9 @@ export interface InsightReason {
 }
 /** One objective's mastery derived from saved attempts, paper results and linked mistakes. */
 export interface ObjectiveInsight {
+    capabilityIds?: string[];
+    capabilityTitles?: string[];
+    association?: 'missing' | 'partial' | 'complete';
     id: string;
     subject: CurriculumSubject;
     title: string;
@@ -283,7 +288,7 @@ export declare function insightSummary(insight: StudyInsight): {
         id: string;
         subject: "chinese" | "math" | "english";
         title: string;
-        level: "practising" | "due" | "weak" | "stalled" | "mastered" | "untouched";
+        level: "due" | "weak" | "practising" | "stalled" | "mastered" | "untouched";
         priority: number;
         reasons: InsightReason[];
     }[];

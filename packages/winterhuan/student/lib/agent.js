@@ -1,7 +1,7 @@
-import { t as applicationStudyFiles } from "./application-Dbnnwt11.js";
-import { J as canonical, O as openmaicAcademicQuestion, t as readWorkspace, vt as readLessonFile } from "./read-WhSEc1TX.js";
-import { a as openmaicEntityId, n as generationRequestSchema, o as readStudentWorkspace, u as nativeMessageHash } from "./generation-D9KxyQ4f.js";
-import { a as queryWorkspace } from "./queries-D4nkRIm0.js";
+import { t as applicationStudyFiles } from "./application-CKoISUro.js";
+import { J as canonical, O as openmaicAcademicQuestion, t as readWorkspace, vt as readLessonFile } from "./read-BKnscgN2.js";
+import { a as openmaicEntityId, n as generationRequestSchema, o as readStudentWorkspace, u as nativeMessageHash } from "./generation-BDnsXksP.js";
+import { a as queryWorkspace } from "./queries-DsW1Bcnu.js";
 import "node:module";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";

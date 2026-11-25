@@ -1,4 +1,4 @@
-import { Bt as knowledgeSources, C as evidenceDay, Ht as scopeSupports, J as canonical, K as DAY, Kt as stateSchema, S as evidenceAtCutoff, St as interactiveLessonsView, Xt as interestTagsOf, Yt as interestFocus, Z as formatDuration, _ as replayMistake, _t as subjectIdeas, b as demonstrablyAfter, bt as OPENMAIC_LESSONS_PATH, ct as todaySpent, ft as builtinObjectives, g as dayStart, gt as subjectExercises, h as migrateStudyFile, ht as exercisesForObjective, lt as builtinObjective, m as effectiveLearningScopes, mt as curriculumFor, nt as schoolGate, ot as studyDay, p as automaticLearningScopes, pt as builtinObjectivesIn, q as activeSession, rn as StudyReadCache, rt as scopeSelects, st as taughtUnit, ut as builtinObjectiveAnywhere, v as scheduleMistakes, w as evidenceOf, x as deriveEvidence, xt as effectiveOpenmaicBase, y as attachEvidence, yt as OPENMAIC_COOKIE_PATH, zt as effectiveKnowledge } from "./read-WhSEc1TX.js";
+import { Bt as knowledgeSources, C as evidenceDay, Ht as scopeSupports, J as canonical, K as DAY, Kt as stateSchema, S as evidenceAtCutoff, St as interactiveLessonsView, Xt as interestTagsOf, Yt as interestFocus, Z as formatDuration, _ as replayMistake, _t as subjectIdeas, b as demonstrablyAfter, bt as OPENMAIC_LESSONS_PATH, ct as todaySpent, ft as builtinObjectives, g as dayStart, gt as subjectExercises, h as migrateStudyFile, ht as exercisesForObjective, lt as builtinObjective, m as effectiveLearningScopes, mt as curriculumFor, nt as schoolGate, ot as studyDay, p as automaticLearningScopes, pt as builtinObjectivesIn, q as activeSession, rn as StudyReadCache, rt as scopeSelects, st as taughtUnit, ut as builtinObjectiveAnywhere, v as scheduleMistakes, w as evidenceOf, x as deriveEvidence, xt as effectiveOpenmaicBase, y as attachEvidence, yt as OPENMAIC_COOKIE_PATH, zt as effectiveKnowledge } from "./read-BKnscgN2.js";
 import { z } from "zod";
 import { createHash } from "node:crypto";
 //#region lib/types/learning/mastery.js
@@ -2031,7 +2031,7 @@ function dailyLearning(read, state, now, selectedSubject, requestedDay) {
 	const originalDay = active?.plan?.day;
 	const today = plans.find((plan) => plan.day === day);
 	const original = plans.find((plan) => plan.day === originalDay);
-	const finished = blocks.filter((block) => block.plan && block.endedAt !== void 0 && studyDay(block.endedAt) === day).sort((a, b) => b.endedAt - a.endedAt)[0];
+	const finished = blocks.filter((block) => block.endedAt !== void 0 && studyDay(block.endedAt) === day).sort((a, b) => b.endedAt - a.endedAt)[0];
 	const closed = plans.find((plan) => plan.day === finished?.plan?.day && [
 		"completed",
 		"stopped",
@@ -2097,6 +2097,34 @@ function dailyLearning(read, state, now, selectedSubject, requestedDay) {
 		};
 	};
 	const executable = (action) => !!action && (action.kind !== "hold" || !!action.blockId);
+	const question = active?.questions.find((question) => question.id === active.currentQuestionId);
+	const round = active?.rounds?.find((round) => round.endedAt === void 0);
+	const unplanned = !requestedDay && active && !active.plan && !plans.some((plan) => plan.tasks.some((task) => task.activity?.blockId === active.id)) ? {
+		...all.nextAction?.blockId === active.id ? suggestion(all.nextAction).task : {
+			id: `task-${createHash("sha256").update(canonical([
+				day,
+				"resume",
+				active.id
+			])).digest("hex").slice(0, 20)}`,
+			subject: active.subject,
+			purpose: "resume",
+			...question?.capability ? {
+				goalId: question.capability.goalId,
+				scope: question.capability.scope
+			} : {},
+			familyIds: [],
+			reason: question?.topic ?? active.subject,
+			basis: [],
+			ending: "original-activity",
+			outcomes: [],
+			activity: {
+				blockId: active.id,
+				...question ? { questionId: question.id } : {},
+				...round ? { roundId: round.id } : {}
+			}
+		},
+		state: "active"
+	} : null;
 	const mains = subjectOrder.flatMap((subject) => {
 		const next = continuation(subject, true).nextAction;
 		return executable(next) ? [suggestion(next)] : [];
@@ -2168,24 +2196,31 @@ function dailyLearning(read, state, now, selectedSubject, requestedDay) {
 			"stuck"
 		].includes(entry.result) || ["hint", "worked-example"].includes(entry.assistance))).length
 	});
-	const tasks = (saved?.tasks ?? []).map((task) => ({
+	const tasks = [...saved?.tasks ?? [], ...unplanned ? [unplanned] : []].map((task) => ({
 		task,
 		title: knowledge.goals.find((goal) => goal.id === task.goalId)?.title ?? blocks.find((block) => block.id === task.activity?.blockId)?.questions.find((question) => question.id === task.activity?.questionId)?.topic ?? task.reason,
 		...outcomes(entries.filter((entry) => entry.termId === settings.termId && entry.ownerKind === "block" && entry.ownerId === task.activity?.blockId)),
 		invalidScope: !!task.scope && !scopes.some((scope) => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(task.goalId)) && scopeSupports(scope.scope, task.scope)),
 		preparationIncomplete: ["active", "ready"].includes(task.state) && !task.activity
 	}));
-	const summary = SUBJECT_ORDER.map((subject) => ({
-		subject,
-		...outcomes(entries.filter((entry) => entry.subject === subject && evidenceDay(entry) === day))
-	})).filter((item) => item.attempted > 0);
-	const currentAction = saved?.state === "completed" && !current?.optional ? null : current?.activity ? continuation(current.subject).nextAction : current ? suggestions.find((item) => item.task.subject === current.subject && item.task.goalId === current.goalId)?.nextAction ?? null : all.nextAction;
+	const summary = SUBJECT_ORDER.map((subject) => {
+		const rows = entries.filter((entry) => entry.subject === subject && evidenceDay(entry) === day);
+		return {
+			subject,
+			...outcomes(rows),
+			topics: [...new Set(rows.map((entry) => entry.topic))].map((title) => ({
+				title,
+				...outcomes(rows.filter((entry) => entry.topic === title))
+			}))
+		};
+	}).filter((item) => item.attempted > 0);
+	const currentAction = unplanned ? all.nextAction : saved?.state === "completed" && !current?.optional ? null : current?.activity ? continuation(current.subject).nextAction : current ? suggestions.find((item) => item.task.subject === current.subject && item.task.goalId === current.goalId)?.nextAction ?? null : all.nextAction;
 	const optionalActive = saved?.tasks.some((task) => task.optional && task.state === "active");
-	const phase = saved && [
+	const phase = unplanned ? "learning" : saved && [
 		"completed",
 		"stopped",
 		"paused"
-	].includes(saved.state) && !optionalActive ? "summary" : active || saved?.state === "active" || optionalActive ? "learning" : "home";
+	].includes(saved.state) && !optionalActive ? "summary" : active || saved?.state === "active" || optionalActive ? "learning" : !saved && finished ? "summary" : "home";
 	const defaults = automaticLearningScopes(workspace);
 	const scopeSuggestions = SUBJECT_ORDER.flatMap((subject) => {
 		const selection = settings.learningScopes?.find((scope) => scope.subject === subject) ?? defaults.find((scope) => scope.subject === subject);
@@ -2206,7 +2241,7 @@ function dailyLearning(read, state, now, selectedSubject, requestedDay) {
 		recommended,
 		tasks,
 		summary,
-		currentTaskId: current?.id ?? null,
+		currentTaskId: unplanned?.id ?? current?.id ?? null,
 		confirmedScopes: settings.learningScopes ?? [],
 		missingSubjects: SUBJECT_ORDER.filter((subject) => !available.includes(subject)),
 		scopeSuggestions,

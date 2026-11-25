@@ -14,7 +14,7 @@ export function DailyHome({ daily, subject, disabled, extra, onStart, onResume, 
       {!unfinished && daily.phase === 'learning' && <button type="button" className="student-primary" disabled={disabled} onClick={onResume}>{t('resumeLearning')}</button>}
       {daily.tasks.some(item => item.preparationIncomplete) && <p role="status">{t('dailyPreparationIncomplete')}</p>}
       {unfinished && <div><p>{t('unfinishedLearning')} · {t(unfinished.task.subject)} · {unfinished.title}</p><button type="button" className="student-primary" disabled={disabled} onClick={onResume}>{t('resumeLearning')}</button></div>}
-      {daily.saved && ['completed', 'stopped', 'paused'].includes(daily.saved.state) && <button type="button" onClick={onSummary}>{t('todayGains')}</button>}
+      {(daily.saved || daily.tasks.length > 0 || daily.summary.length > 0 || daily.phase === 'summary') && <button type="button" onClick={onSummary}>{t('todayGains')}</button>}
     </section>
     {suggestions.length > 0 ? <section className={css.dailyCards}>{suggestions.map((item, index) => <article key={item.task.id} className={css.dailyCard}>
       <p className="student-muted">{t(item.task.subject)} · {t(item.task.purpose === 'review' ? 'review' : item.task.purpose === 'teaching' ? 'requestTeaching' : item.task.purpose === 'diagnostic' ? 'exploreKnowledge' : 'learningGoal')}</p>
@@ -30,10 +30,13 @@ export function DailyHome({ daily, subject, disabled, extra, onStart, onResume, 
 export function DailySummary({ daily, disabled, onContinue, onExtra, onHome, t }: { daily: DailyLearning; disabled: boolean; onContinue: () => void; onExtra: () => void; onHome: () => void; t: Translate }) {
   const unfinished = daily.tasks.filter(item => ['active', 'paused', 'ready', 'deferred'].includes(item.task.state))
   return <>
-    <section><h3>{t('todayGains')}</h3><p>{daily.day} · {t(daily.completionPending ? 'dailyCompletionPending' : daily.saved?.state === 'completed' ? 'dailyCompleted' : 'dailyStopped')}</p><p className="student-muted">{t('dailyCompletionHelp')}</p></section>
+    <section><h3>{t('todayGains')}</h3><p>{daily.day} · {t(daily.completionPending ? 'dailyCompletionPending' : daily.phase === 'learning' ? 'learningNow' : daily.saved?.state === 'completed' ? 'dailyCompleted' : 'dailyStopped')}</p><p className="student-muted">{t('dailyCompletionHelp')}</p></section>
     {daily.summary.length ? daily.summary.map(item => <section key={item.subject}><h3>{t(item.subject)}</h3><p>{t('actualAttempts').replace('{count}', String(item.attempted))}</p>
       <p>{t('assistIndependent')} {item.independent} · {t('assistHint')} {item.helped}</p>
-      {item.consolidate > 0 && <p>{t('needsConsolidation').replace('{count}', String(item.consolidate))}</p>}
+      {item.topics.map(topic => <div key={topic.title}><h4>{topic.title}</h4><p className="student-muted">{t('assistIndependent')} {topic.independent} · {t('assistHint')} {topic.helped}</p>
+        {topic.consolidate > 0 && <p>{t('needsConsolidation').replace('{count}', String(topic.consolidate))}</p>}
+        {topic.pending > 0 && <p>{t('pendingLearningResults').replace('{count}', String(topic.pending))}</p>}
+      </div>)}
     </section>) : <section><p>{t('noActualLearning')}</p></section>}
     {daily.tasks.some(item => item.pending > 0) && <section><h3>{t('dailyCompletionPending')}</h3>{daily.tasks.filter(item => item.pending > 0).map(item => <p key={item.task.id}>{t(item.task.subject)} · {item.title} · {t('pendingLearningResults').replace('{count}', String(item.pending))}</p>)}</section>}
     {unfinished.length > 0 && <section><h3>{t('unfinishedLearning')}</h3>{unfinished.map(item => <p key={item.task.id}>{t(item.task.subject)} · {item.title}</p>)}<button type="button" className="student-primary" disabled={disabled} onClick={onContinue}>{t('resumeLearning')}</button></section>}

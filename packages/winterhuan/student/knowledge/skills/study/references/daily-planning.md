@@ -18,6 +18,14 @@
 4. 保存计划 ready 和用户 start choice，随后绑定当前任务的同一 block，并把 `block.plan={day,taskId}` 写回该原活动。将任务与计划设为 active，增加 revision/updatedAt。计划、活动非原子写入：中断后恢复原身份，不新建替代。
 5. 运行只读 CLI，再独立 study_status 读取两个文件实际版本。只有来源接受且绑定一致才开始呈现；保存计划但尚无 activity 时说明准备未完成，继续原安排。
 
+## 接续已有活动
+
+升级前的 active block 可能没有 `block.plan`。查询会在 `tasks` 和 `currentTaskId` 中只读投影该原活动，`saved` 仍表示真实保存的计划；打开、查看今日收获和返回首页都不写文件。
+
+孩子首次明确继续、暂停或结束时，使用该投影任务登记原活动。当日无计划时，沿用 `preview` 的计划元数据，但 `tasks` 只保留当前原活动，`subjects` 只含其学科，`choices` 只记录本次真实动作、operationId 和时间，不补造 start、历史日期或完成。无 preview 时从随包 schema 创建当天元数据。已有当日计划则保留它，追加该任务和本次选择；计划已完成时该原有活动作为 optional 接续，不改原完成事实。为原 block 添加对应 `plan`，不替换题目、作答、评价、轮次或时间。运行 CLI 并独立复读关联后，再按 continue/pause/stop 设置任务和计划状态。
+
+暂停或结束只保存接续点，不出新题、不把其他建议加入安排。今天已经结束但未关联计划的旧活动也可直接查看今日收获；没有当天实际作答就如实显示为空，不把历史回答计入今天。
+
 任务的 `basis`、`outcomes` 只保存原 term/ownerKind/ownerId/responseId 引用。题目、答案、评分、掌握状态不能复制到计划。`reason` 解释真实选择依据；没历史就探索已会什么，不能称薄弱。`ending` 是 short-check、review-attempts 或 original-activity。任务顺序就是 tasks 数组顺序。
 
 ## 回答与推进

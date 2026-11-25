@@ -8,6 +8,13 @@ export interface DailySuggestion {
     task: DailyTask;
     nextAction: LearningNextAction;
 }
+interface DailyOutcomes {
+    attempted: number;
+    independent: number;
+    helped: number;
+    pending: number;
+    consolidate: number;
+}
 /** Read-only daily flow, shared by the native tutor and learner page. */
 export interface DailyLearning {
     day: string;
@@ -28,14 +35,12 @@ export interface DailyLearning {
         invalidScope: boolean;
         preparationIncomplete: boolean;
     }[];
-    summary: {
+    summary: (DailyOutcomes & {
         subject: CurriculumSubject;
-        attempted: number;
-        independent: number;
-        helped: number;
-        pending: number;
-        consolidate: number;
-    }[];
+        topics: (DailyOutcomes & {
+            title: string;
+        })[];
+    })[];
     completionPending: boolean;
     missingSubjects: CurriculumSubject[];
     nextAction: LearningNextAction | null;
@@ -49,4 +54,5 @@ export interface DailyLearning {
 }
 /** Recommend from actual answers; opening this projection never writes or starts teaching. */
 export declare function dailyLearning(read: WorkspaceRead, state: StudyState, now: number, selectedSubject?: CurriculumSubject, requestedDay?: string): DailyLearning;
+export {};
 //# sourceMappingURL=daily.d.ts.map

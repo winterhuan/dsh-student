@@ -108,3 +108,55 @@ it('starts only on explicit choice, shows a factual paused summary and restores 
   await waitFor(() => expect(ask).toHaveBeenCalledTimes(4))
   expect(String(ask.mock.calls[3]![0])).toContain('"action":"extra"')
 })
+
+it('opens gains from an unplanned activity and binds pause to that original activity without fabricating a start', async () => {
+  const now = Date.parse('2026-11-26T12:00:00+08:00')
+  const cwd = await mkdtemp(join(tmpdir(), 'student-existing-flow-'))
+  onTestFinished(() => rm(cwd, { recursive: true, force: true }))
+  const save = async (path: string, value: unknown) => { await mkdir(join(cwd, path, '..'), { recursive: true }); await writeFile(join(cwd, path), JSON.stringify(value)) }
+  const settings = termSettingsSchema.parse({ format: 2, kind: 'term-settings', learnerId: 'child', termId: 'term', revision: 1, updatedAt: now - 1, profile: setup.profile, materials: [], courses: [] })
+  const block = blockSchema.parse({ format: 2, kind: 'block', learnerId: 'child', termId: 'term', id: 'old', subject: 'math', mode: 'foundation', startedAt: now - 86400000, context: { profile: setup.profile }, currentQuestionId: 'old-question', questions: [{ id: 'old-question', objectiveId: 'm.count', capability: { goalId: 'm.count', familyId: 'math.count', scope: { id: 'counting', description: 'Within twenty', modality: 'written', numberMax: 20 } }, source: { kind: 'authored', description: 'Original' }, topic: 'Counting', prompt: 'How many: ● ● ●?', answer: '3', explanation: 'Count once', answerEvidence: 'Three objects' }], responses: [], assessments: [], hints: [] })
+  await save('.study/settings.json', settings); await save('.study/blocks/old.json', block)
+  const fs = nodeStudyFiles(cwd)
+  let read = await readWorkspace(fs, new AbortController().signal, undefined, [], [], { now })
+  const useResource = (address: string) => {
+    const request: StudentQueryRequest = JSON.parse(new URL(address).searchParams.get('query')!)
+    const result = request.kind === 'dashboard' ? queryWorkspaceDashboard(read, now, request.options) : queryWorkspace(read, request, now)
+    return { status: 'live' as const, failure: undefined, value: { ...result, data: JSON.parse(JSON.stringify(result.data)), token: address, readAt: now, refreshAfter: now + 1000, native: { status: 'available', inputs: [], admissions: [], omitted: 0, omittedAdmissions: 0 }, backupIssues: [] } as StudentQueryResult }
+  }
+  const ask = vi.fn().mockResolvedValue(undefined)
+  const remote = createStudentManualActions({ inspectSubmission: vi.fn(), manualContext: vi.fn(), saveManual: vi.fn() })
+  function Desk({ id }: { id: string }) { return <StudyDesk key={id} {...useDraftFixture()} {...remote} {...{ useResource, ask }} sessionId={id} visible running={false} t={key => en[key]} /> }
+  const view = render(<Desk id="original" />)
+  fireEvent.change(screen.getByLabelText(en.answer), { target: { value: 'Retained old draft' } })
+  fireEvent.click(screen.getByRole('button', { name: en.backHome }))
+  fireEvent.click(screen.getByRole('button', { name: en.todayGains }))
+  expect(screen.getByRole('heading', { name: en.todayGains })).toBeTruthy()
+  expect(screen.getByText(en.noActualLearning)).toBeTruthy()
+  expect(screen.getByRole('button', { name: en.resumeLearning })).toBeTruthy()
+  expect(screen.queryByText(en.dailyRecommendations)).toBeNull()
+  expect(ask).not.toHaveBeenCalled()
+  // Reload still follows the unchanged active activity and preserves its draft.
+  view.rerender(<Desk id="reloaded" />)
+  expect((screen.getByLabelText(en.answer) as HTMLInputElement).value).toBe('Retained old draft')
+  fireEvent.click(screen.getByRole('button', { name: en.pauseLearning }))
+  await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+  expect(String(ask.mock.calls[0]![0])).toContain('"action":"pause"')
+  expect(String(ask.mock.calls[0]![0])).toContain('"blockId":"old"')
+  expect(screen.queryByRole('heading', { name: en.todayGains })).toBeNull()
+  expect(read.issues).toEqual([])
+  const daily = queryWorkspace(read, { kind: 'daily-plan' }, now).data as DailyLearning
+  const task = daily.tasks[0]!.task
+  const plan = dailyPlanSchema.parse({ ...daily.preview, state: 'paused', subjects: ['math'], tasks: [{ ...task, state: 'paused' }], choices: [{ id: 'pause', action: 'pause', at: now, revision: 1, reason: 'Child paused', taskIds: [task.id], replacedTaskIds: [] }] })
+  block.plan = { day: plan.day, taskId: task.id }
+  await save(`.study/plans/${plan.day}.json`, plan); await save('.study/blocks/old.json', block)
+  read = await readWorkspace(fs, new AbortController().signal, undefined, [], [], { now })
+  expect(read.status).toBe('valid')
+  view.rerender(<Desk id="paused-reloaded" />)
+  expect(screen.getByRole('heading', { name: en.todayGains })).toBeTruthy()
+  expect(screen.getByText(en.noActualLearning)).toBeTruthy()
+  expect(screen.queryByText(en.dailyRecommendations)).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: en.resumeLearning }))
+  await waitFor(() => expect(ask).toHaveBeenCalledTimes(2))
+  expect(String(ask.mock.calls[1]![0])).toContain('"action":"continue"')
+})

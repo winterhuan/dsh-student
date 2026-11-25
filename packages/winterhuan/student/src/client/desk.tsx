@@ -41,7 +41,7 @@ function storeSubject(value: Subject) {
 /** Workbench actions share the same persisted state as the native tutoring tools. */
 export function StudyDesk({ sessionId, visible, ask, running, pending = false, syncFeedback, cancel, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, openLesson, useStore, actions }: DraftProps & StudentManualActions & Partial<StudentSessionActions> & { sessionId: StudentSessionId; useResource: UseStudentResource; visible: boolean; ask: AskTutor; running: boolean; pending?: boolean; t: Translate; openLesson?: (lessonId: string) => Promise<import('../openmaic/playback.ts').OpenmaicPlaybackResult> }) {
   const [homeSubject, setHomeSubject] = useState<Subject | 'all'>('all')
-  const [homeAt, setHomeAt] = useState<string>()
+  const [viewAt, setViewAt] = useState<{ identity: string; scene: 'home' | 'summary' }>()
   const [extra, setExtra] = useState(false)
   const [scopeStep, setScopeStep] = useState<Subject>()
   const [subject, setSubject] = useState<Subject>(storedSubject)
@@ -204,16 +204,18 @@ export function StudyDesk({ sessionId, visible, ask, running, pending = false, s
   }
   const daily = workspace.daily
   const adding = extra || daily?.saved?.state === 'completed'
-  const flowIdentity = JSON.stringify([daily?.saved?.id, daily?.saved?.revision, active?.id])
-  const scene = homeAt === flowIdentity ? 'home' : daily?.phase ?? (active ? 'learning' : 'home')
-  function home(adding = false) { setHomeAt(flowIdentity); setExtra(adding); setTab('today') }
+  const flowIdentity = JSON.stringify([daily?.day, daily?.saved?.id, daily?.saved?.revision, active?.id])
+  const scene = viewAt?.identity === flowIdentity ? viewAt.scene : daily?.phase ?? (active ? 'learning' : 'home')
+  function home(adding = false) { setViewAt({ identity: flowIdentity, scene: 'home' }); setExtra(adding); setTab('today') }
   function scopeSetup(target: Subject) { setScopeStep(target); selectSubject(target); setTab('parent') }
   async function dailyChoice(action: string, suggestion?: DailySuggestion) {
     if (!workspace.contextReady || sending || nativePending && action !== 'pause' && action !== 'stop') return
     if (!daily && (action === 'pause' || action === 'stop')) { if (active) await act({ action: 'stop', sessionId: active.id, reflection: '' }); return }
     if (action === 'pause' || action === 'stop') { paused.current = true; if (currentLesson && syncFeedback) await requestSync(currentLesson.id, 'pause'); await cancel?.() }
+    else paused.current = false
+    suggestion ??= active && !daily?.saved?.tasks.some(task => task.activity?.blockId === active.id) ? daily?.suggestions.find(item => item.task.activity?.blockId === active.id) : undefined
     await tutor(dailyPlanPrompt, undefined, undefined, true, false, undefined, { action, ...(suggestion ? { suggestion } : {}) })
-    setHomeAt(undefined)
+    setViewAt(undefined)
   }
   const curriculum = study?.curriculum ?? null
   const scopeGrade = curriculum?.scope.grade ?? mapGrade ?? study?.profile.grade ?? 1
@@ -272,7 +274,7 @@ export function StudyDesk({ sessionId, visible, ask, running, pending = false, s
     {sendError && <p role="alert">{sendError}</p>}
     {syncStatus && <p role="status">{t(syncStatus === 'queued' ? 'feedbackSyncQueued' : syncStatus === 'coalesced' ? 'feedbackSyncCoalesced' : syncStatus === 'paused' ? 'feedbackSyncPaused' : 'feedbackSyncUnavailable')}</p>}
     {!data ? workspace.loadNeeded ? <section><p>{t('continueSavedLearning')}</p><button type="button" disabled={sending || running} onClick={() => { void tutor(loadLearningPrompt).catch(() => {}) }}>{t('continueLearning')}</button></section> : workspace.value?.status === 'missing' ? <section><p>{t('setupFirst')}</p><button disabled={sending} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('setupConversation')}</button></section> : workspace.value ? <section><p>{t(workspace.value.status === 'legacy' ? 'legacyFilesHelp' : 'unavailableFilesHelp')}</p></section> : !workspace.error && <div className={css.empty} aria-busy="true" aria-label={t('busy')}><span className={css.spinner} /></div> : !study && tab === 'today' ? <section><p>{t('setupFirst')}</p><button disabled={sending} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('setupConversation')}</button></section> : <>
-      {study && tab === 'today' && daily && scene === 'home' && <DailyHome daily={daily} subject={homeSubject} extra={adding} disabled={disabled || !workspace.contextReady || running || nativePending} t={t} onStart={suggestion => { const selected = suggestion ?? (homeSubject !== 'all' ? daily.suggestions.find(item => item.task.subject === homeSubject) : undefined); void dailyChoice(adding ? 'extra' : 'start', selected).catch(() => {}) }} onResume={() => { if (daily.phase !== 'learning' && daily.saved) void dailyChoice('continue').catch(() => {}); else setHomeAt(undefined) }} onSummary={() => setHomeAt(undefined)} />}
+      {study && tab === 'today' && daily && scene === 'home' && <DailyHome daily={daily} subject={homeSubject} extra={adding} disabled={disabled || !workspace.contextReady || running || nativePending} t={t} onStart={suggestion => { const selected = suggestion ?? (homeSubject !== 'all' ? daily.suggestions.find(item => item.task.subject === homeSubject) : undefined); void dailyChoice(adding ? 'extra' : 'start', selected).catch(() => {}) }} onResume={() => { if (daily.phase !== 'learning' && daily.saved) void dailyChoice('continue').catch(() => {}); else setViewAt(undefined) }} onSummary={() => setViewAt({ identity: flowIdentity, scene: 'summary' })} />}
       {study && tab === 'today' && daily && scene === 'summary' && <DailySummary daily={daily} disabled={disabled || !workspace.contextReady || running || nativePending} t={t} onContinue={() => { void dailyChoice('continue').catch(() => {}) }} onExtra={() => home(true)} onHome={() => home()} />}
       {study && tab === 'today' && (scene === 'learning' || !daily) && <>
         {daily?.tasks.find(item => item.task.id === daily.currentTaskId)?.invalidScope && <p role="status">{t('scopeChanged')}</p>}

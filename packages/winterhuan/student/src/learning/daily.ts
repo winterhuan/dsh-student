@@ -11,12 +11,13 @@ import { canonical, studyDay } from './shared.ts'
 
 /** An executable suggestion and the original evidence explaining it. */
 export interface DailySuggestion { task: DailyTask; nextAction: LearningNextAction }
+interface DailyOutcomes { attempted: number; independent: number; helped: number; pending: number; consolidate: number }
 /** Read-only daily flow, shared by the native tutor and learner page. */
 export interface DailyLearning {
   day: string; phase: 'home' | 'learning' | 'summary'; saved: DailyPlan | null; preview: DailyPlan | null
   suggestions: DailySuggestion[]; recommended: DailySuggestion[]; currentTaskId: string | null
   tasks: { task: DailyTask; title: string; attempted: number; independent: number; helped: number; pending: number; consolidate: number; invalidScope: boolean; preparationIncomplete: boolean }[]
-  summary: { subject: CurriculumSubject; attempted: number; independent: number; helped: number; pending: number; consolidate: number }[]
+  summary: (DailyOutcomes & { subject: CurriculumSubject; topics: (DailyOutcomes & { title: string })[] })[]
   completionPending: boolean
   missingSubjects: CurriculumSubject[]; nextAction: LearningNextAction | null
   confirmedScopes: NonNullable<import('../files/schema.ts').TermSettings['learningScopes']>
@@ -38,7 +39,7 @@ export function dailyLearning(read: WorkspaceRead, state: StudyState, now: numbe
   const originalDay = active?.plan?.day
   const today = plans.find(plan => plan.day === day)
   const original = plans.find(plan => plan.day === originalDay)
-  const finished = blocks.filter(block => block.plan && block.endedAt !== undefined && studyDay(block.endedAt) === day).sort((a, b) => b.endedAt! - a.endedAt!)[0]
+  const finished = blocks.filter(block => block.endedAt !== undefined && studyDay(block.endedAt) === day).sort((a, b) => b.endedAt! - a.endedAt!)[0]
   const closed = plans.find(plan => plan.day === finished?.plan?.day && ['completed', 'stopped', 'paused'].includes(plan.state))
   const saved = (!requestedDay && original && original.tasks.some(task => task.activity?.blockId === active?.id && task.state !== 'carried-forward') ? original : today ?? (!requestedDay ? closed : undefined)) ?? null
   const current = saved?.tasks.find(task => task.state === 'active') ?? saved?.tasks.find(task => task.state === 'paused') ?? saved?.tasks.find(task => task.state === 'ready' && (saved.state !== 'completed' || task.optional))
@@ -62,6 +63,11 @@ export function dailyLearning(read: WorkspaceRead, state: StudyState, now: numbe
     return { task, nextAction }
   }
   const executable = (action: LearningNextAction | null): action is LearningNextAction => !!action && (action.kind !== 'hold' || !!action.blockId)
+  const question = active?.questions.find(question => question.id === active.currentQuestionId)
+  const round = active?.rounds?.find(round => round.endedAt === undefined)
+  const unplanned: DailyTask | null = !requestedDay && active && !active.plan && !plans.some(plan => plan.tasks.some(task => task.activity?.blockId === active.id)) ? {
+    ...(all.nextAction?.blockId === active.id ? suggestion(all.nextAction).task : { id: `task-${createHash('sha256').update(canonical([day, 'resume', active.id])).digest('hex').slice(0, 20)}`, subject: active.subject, purpose: 'resume', ...(question?.capability ? { goalId: question.capability.goalId, scope: question.capability.scope } : {}), familyIds: [], reason: question?.topic ?? active.subject, basis: [], ending: 'original-activity', outcomes: [], activity: { blockId: active.id, ...(question ? { questionId: question.id } : {}), ...(round ? { roundId: round.id } : {}) } }), state: 'active',
+  } : null
   const mains = subjectOrder.flatMap(subject => { const next = continuation(subject, true).nextAction; return executable(next) ? [suggestion(next)] : [] })
   const priority = (item: DailySuggestion) => item.nextAction.blockId ? 0 : item.nextAction.kind === 'teach' ? 1 : 2
   mains.sort((a, b) => priority(a) - priority(b))
@@ -84,16 +90,20 @@ export function dailyLearning(read: WorkspaceRead, state: StudyState, now: numbe
   const settingsVersion = String(read.files.find(file => file.path === '.study/settings.json')?.version ?? settings.revision)
   const preview: DailyPlan | null = settings.learnerId && recommended.length && day === studyDay(now) ? { format: 2, kind: 'daily-plan', learnerId: settings.learnerId, termId: settings.termId, id: `day-${day}`, day, timezone: 'Asia/Shanghai', revision: 1, createdAt: now, updatedAt: now, policyVersion: 1, settingsVersion, subjects: [...new Set(recommended.map(item => item.task.subject))], state: 'ready', tasks: recommended.map(item => item.task), choices: [{ id: `start-${day}`, at: now, revision: 1, action: 'start', reason: 'Explicitly start the displayed recommendations.', taskIds: recommended.map(item => item.task.id), replacedTaskIds: [] }] } : null
   const outcomes = (rows: typeof entries) => ({ attempted: rows.length, independent: rows.filter(entry => entry.sourceStatus === 'known' && entry.result === 'correct' && entry.assistance === 'independent').length, helped: rows.filter(entry => entry.sourceStatus === 'known' && ['hint', 'worked-example'].includes(entry.assistance)).length, pending: rows.filter(entry => entry.sourceStatus !== 'known' || entry.result === 'unassessed' || entry.assistance === 'unknown' || entry.answerDate.kind === 'unknown').length, consolidate: rows.filter(entry => entry.sourceStatus === 'known' && (['incorrect', 'partial', 'stuck'].includes(entry.result) || ['hint', 'worked-example'].includes(entry.assistance))).length })
-  const tasks = (saved?.tasks ?? []).map(task => ({ task, title: knowledge.goals.find(goal => goal.id === task.goalId)?.title ?? blocks.find(block => block.id === task.activity?.blockId)?.questions.find(question => question.id === task.activity?.questionId)?.topic ?? task.reason, ...outcomes(entries.filter(entry => entry.termId === settings.termId && entry.ownerKind === 'block' && entry.ownerId === task.activity?.blockId)), invalidScope: !!task.scope && !scopes.some(scope => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(task.goalId!)) && scopeSupports(scope.scope, task.scope!)), preparationIncomplete: ['active', 'ready'].includes(task.state) && !task.activity }))
-  const summary = SUBJECT_ORDER.map(subject => ({ subject, ...outcomes(entries.filter(entry => entry.subject === subject && evidenceDay(entry) === day)) })).filter(item => item.attempted > 0)
-  const currentAction = saved?.state === 'completed' && !current?.optional ? null : current?.activity ? continuation(current.subject).nextAction : current ? suggestions.find(item => item.task.subject === current.subject && item.task.goalId === current.goalId)?.nextAction ?? null : all.nextAction
+  const projectedTasks = [...(saved?.tasks ?? []), ...(unplanned ? [unplanned] : [])]
+  const tasks = projectedTasks.map(task => ({ task, title: knowledge.goals.find(goal => goal.id === task.goalId)?.title ?? blocks.find(block => block.id === task.activity?.blockId)?.questions.find(question => question.id === task.activity?.questionId)?.topic ?? task.reason, ...outcomes(entries.filter(entry => entry.termId === settings.termId && entry.ownerKind === 'block' && entry.ownerId === task.activity?.blockId)), invalidScope: !!task.scope && !scopes.some(scope => scope.subject === task.subject && (!scope.goalIds || scope.goalIds.includes(task.goalId!)) && scopeSupports(scope.scope, task.scope!)), preparationIncomplete: ['active', 'ready'].includes(task.state) && !task.activity }))
+  const summary = SUBJECT_ORDER.map(subject => {
+    const rows = entries.filter(entry => entry.subject === subject && evidenceDay(entry) === day)
+    return { subject, ...outcomes(rows), topics: [...new Set(rows.map(entry => entry.topic))].map(title => ({ title, ...outcomes(rows.filter(entry => entry.topic === title)) })) }
+  }).filter(item => item.attempted > 0)
+  const currentAction = unplanned ? all.nextAction : saved?.state === 'completed' && !current?.optional ? null : current?.activity ? continuation(current.subject).nextAction : current ? suggestions.find(item => item.task.subject === current.subject && item.task.goalId === current.goalId)?.nextAction ?? null : all.nextAction
   const optionalActive = saved?.tasks.some(task => task.optional && task.state === 'active')
-  const phase = saved && ['completed', 'stopped', 'paused'].includes(saved.state) && !optionalActive ? 'summary' : active || saved?.state === 'active' || optionalActive ? 'learning' : 'home'
+  const phase = unplanned ? 'learning' : saved && ['completed', 'stopped', 'paused'].includes(saved.state) && !optionalActive ? 'summary' : active || saved?.state === 'active' || optionalActive ? 'learning' : !saved && finished ? 'summary' : 'home'
   const defaults = automaticLearningScopes(workspace)
   const scopeSuggestions = SUBJECT_ORDER.flatMap(subject => {
     const selection = settings.learningScopes?.find(scope => scope.subject === subject) ?? defaults.find(scope => scope.subject === subject)
     return selection ? [{ subject, goalIds: selection.goalIds ?? [], scope: selection.scope, titles: knowledge.goals.filter(goal => selection.goalIds?.includes(goal.id)).map(goal => goal.title) }] : []
   })
   const completionPending = !!saved?.tasks.some(task => task.state === 'completed' && task.outcomes.some(reference => !entries.some(entry => entry.termId === reference.termId && entry.ownerKind === reference.ownerKind && entry.ownerId === reference.ownerId && entry.responseId === reference.responseId && entry.sourceStatus === 'known' && entry.result !== 'unassessed')))
-  return { completionPending, day, phase, saved, preview, suggestions, recommended, tasks, summary, currentTaskId: current?.id ?? null, confirmedScopes: settings.learningScopes ?? [], missingSubjects: SUBJECT_ORDER.filter(subject => !available.includes(subject)), scopeSuggestions, nextAction: currentAction }
+  return { completionPending, day, phase, saved, preview, suggestions, recommended, tasks, summary, currentTaskId: unplanned?.id ?? current?.id ?? null, confirmedScopes: settings.learningScopes ?? [], missingSubjects: SUBJECT_ORDER.filter(subject => !available.includes(subject)), scopeSuggestions, nextAction: currentAction }
 }

@@ -106,7 +106,7 @@ export function nativeIntentPrompt(intent: object, request: string): string {
 }
 
 /** Daily choices are persisted by the native executor after checking observed versions. */
-export const dailyPlanPrompt = '请加载 study，读取 references/daily-planning.md、references/continuation.md 和 study_status kind=daily-plan。执行本次 dailyAction：先核对意图携带的正式文件版本、计划 revision 和任务身份；变化时保留用户选择，重新核对，不能覆盖别的会话的新记录。首次开始复用 day-YYYY-MM-DD 和稳定任务身份，先保存计划，再准备当前任务，独立读取确认两者关联。继续原题和草稿；暂停与结束不能制造学习完成或掌握。只有明确继续才调整未开始内容；只有 extra 才添加可选活动。计划结束后不自动生成新题。'
+export const dailyPlanPrompt = '请加载 study，读取 references/daily-planning.md、references/continuation.md 和 study_status kind=daily-plan。执行本次 dailyAction：先核对意图携带的正式文件版本、计划 revision 和任务身份；变化时保留用户选择，重新核对，不能覆盖别的会话的新记录。若当前原活动还未关联计划，按“接续已有活动”仅登记该原活动，记录本次真实 continue/pause/stop 选择，不把其他推荐一起加入，也不补造历史 start 或完成。首次开始复用 day-YYYY-MM-DD 和稳定任务身份，先保存计划，再准备当前任务，独立读取确认两者关联。继续原题和草稿；暂停与结束不能制造学习完成或掌握。只有明确继续才调整未开始内容；只有 extra 才添加可选活动。计划结束后不自动生成新题。'
 
 /** Adjust an optional family preference while retaining existing profile and school progress. */
 export function scopeConfirmationPrompt(subject: string, suggestion: object | undefined): string {

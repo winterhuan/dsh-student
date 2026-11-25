@@ -53,6 +53,55 @@ it('starts a grade-based plan without requiring new learning-scope confirmations
   expect((await f.read()).workspace?.settings.learningScopes).toBeUndefined()
 })
 
+it('projects an existing activity as unfinished without inventing a saved plan or moving historical answers to today', async () => {
+  const f = await fixture()
+  f.answer('correct', '2026-11-24')
+  await f.save('.study/blocks/counting.json', f.block)
+  const before = (await f.read()).files.map(file => file.version)
+  const daily = await f.daily()
+  expect(daily).toMatchObject({ phase: 'learning', saved: null, summary: [], tasks: [{ task: { purpose: 'resume', state: 'active', activity: { blockId: f.block.id, questionId: 'q' } } }] })
+  expect(daily.currentTaskId).toBe(daily.tasks[0]!.task.id)
+  expect((await f.read()).files.map(file => file.version)).toEqual(before)
+  const plan = dailyPlanSchema.parse({ ...daily.preview, tasks: [{ ...daily.tasks[0]!.task, state: 'paused' }], subjects: ['math'], state: 'paused', choices: [{ id: 'pause-existing', at: NOW, revision: 1, action: 'pause', reason: 'Child paused the original activity', taskIds: [daily.currentTaskId], replacedTaskIds: [] }] })
+  f.block.plan = { day: plan.day, taskId: daily.currentTaskId! }
+  await f.save(`.study/plans/${plan.day}.json`, plan); await f.save('.study/blocks/counting.json', f.block)
+  expect(await f.daily()).toMatchObject({ phase: 'summary', summary: [], saved: { state: 'paused', choices: [{ action: 'pause' }] } })
+  expect((await f.read()).workspace?.blocks[0]?.responses).toEqual(f.block.responses)
+})
+
+it('summarizes the actual topics and pending results of an unplanned activity that ends today', async () => {
+  const f = await fixture()
+  f.answer('incorrect'); f.block.endedAt = NOW
+  await f.save('.study/blocks/counting.json', f.block)
+  expect(await f.daily()).toMatchObject({ phase: 'summary', saved: null, summary: [{ subject: 'math', attempted: 1, consolidate: 1, topics: [{ title: 'Counting', attempted: 1, consolidate: 1 }] }] })
+  f.block.assessments = []
+  await f.save('.study/blocks/counting.json', f.block)
+  expect((await f.daily()).summary[0]).toMatchObject({ independent: 0, pending: 1, topics: [{ title: 'Counting', pending: 1 }] })
+  expect(await f.daily(NOW + DAY)).toMatchObject({ phase: 'home', summary: [] })
+})
+
+it('adopts an existing activity on pause while preserving a completed arrangement', async () => {
+  const f = await fixture(), plan = dailyPlanSchema.parse((await f.daily()).preview)
+  f.answer('correct'); f.block.endedAt = NOW
+  plan.state = 'completed'; plan.completedAt = NOW; plan.tasks[0]!.state = 'completed'
+  plan.tasks[0]!.activity = { blockId: f.block.id, questionId: 'q' }
+  plan.tasks[0]!.outcomes = [{ termId: f.settings.termId, ownerKind: 'block', ownerId: f.block.id, responseId: f.block.responses[0]!.id }]
+  await f.save('.study/blocks/counting.json', f.block); await f.save(`.study/plans/${plan.day}.json`, plan)
+  expect((await f.read()).status).toBe('valid')
+  const originalTask = structuredClone(plan.tasks[0])
+  const old = blockSchema.parse({ ...f.block, id: 'other-existing', endedAt: undefined, responses: [], assessments: [] })
+  await f.save('.study/blocks/other-existing.json', old)
+  const daily = await f.daily()
+  expect(daily.phase).toBe('learning')
+  const task = daily.tasks.find(item => item.task.activity?.blockId === old.id)!.task
+  plan.revision++; plan.tasks.push({ ...task, state: 'paused', optional: true })
+  plan.choices.push({ id: 'pause-existing', action: 'pause', at: NOW, revision: plan.revision, reason: 'Child paused the existing activity', taskIds: [task.id], replacedTaskIds: [] })
+  old.plan = { day: plan.day, taskId: task.id }
+  await f.save('.study/blocks/other-existing.json', old); await f.save(`.study/plans/${plan.day}.json`, plan)
+  expect((await f.read()).issues).toEqual([])
+  expect(await f.daily()).toMatchObject({ phase: 'summary', saved: { state: 'completed', completedAt: NOW, tasks: [originalTask, expect.objectContaining({ state: 'paused', optional: true })] } })
+})
+
 it('retains the explicit start time when preparing the plan takes longer than the click', async () => {
   const f = await fixture()
   const plan = dailyPlanSchema.parse((await f.daily()).preview)

@@ -1964,7 +1964,7 @@ const lessonSchema = z.object({
 	if (lesson.purpose === "foundation" && !lesson.foundationConfirmation) ctx.addIssue({
 		code: "custom",
 		path: ["foundationConfirmation"],
-		message: "Record the explicit choice of a foundational lesson with material limitations."
+		message: "Record the actual request to start this goal lesson; disclose source limitations in the teaching plan."
 	});
 	if ((lesson.purpose === "full" || lesson.purpose === "synthesis") && !lesson.course) ctx.addIssue({
 		code: "custom",

@@ -129,7 +129,7 @@ export const lessonSchema = z.object({
     if (lesson.purpose && (!lesson.teaching || !lesson.learnerId || !lesson.termId || !lesson.blockId))
         ctx.addIssue({ code: 'custom', path: ['teaching'], message: 'Full courses require a teaching plan and original ownership before submission.' });
     if (lesson.purpose === 'foundation' && !lesson.foundationConfirmation)
-        ctx.addIssue({ code: 'custom', path: ['foundationConfirmation'], message: 'Record the explicit choice of a foundational lesson with material limitations.' });
+        ctx.addIssue({ code: 'custom', path: ['foundationConfirmation'], message: 'Record the actual request to start this goal lesson; disclose source limitations in the teaching plan.' });
     if ((lesson.purpose === 'full' || lesson.purpose === 'synthesis') && !lesson.course)
         ctx.addIssue({ code: 'custom', path: ['course'], message: 'Link the original unit section and material revision.' });
     if (lesson.quality?.status === 'passed' && lesson.quality.questions.filter(question => question.purpose === 'assessment').length > (lesson.teaching?.maxAssessmentQuestions ?? 3))

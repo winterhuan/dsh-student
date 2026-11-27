@@ -285,7 +285,15 @@ export function queryStudy(state, kind, offset, options = {}, now = Date.now()) 
             return state.worksheets.some(sheet => sheet.id === item.worksheetId && sheet.subject === subject);
         return true;
     });
-    return { revision: state.revision, total: selected.length, items: selected.slice(offset, offset + 20), nextOffset: offset + 20 < selected.length ? offset + 20 : null };
+    const availableSources = kind === 'materials' ? (subject ? [subject] : ['chinese', 'math', 'english']).map(selectedSubject => {
+        const map = curriculumFor(state.profile, selectedSubject);
+        const defaultTextbook = state.profile.grade === 2 && state.profile.term === 'first' && selectedSubject !== 'english'
+            ? { title: selectedSubject === 'chinese' ? '人教版语文二年级上册' : '北师大版数学二年级上册', index: `textbooks/${selectedSubject}-grade2-first/index.md` }
+            : null;
+        return { subject: selectedSubject, knowledgeMap: map ? { id: map.id, query: { kind: 'curriculum', subject: selectedSubject } } : null, defaultTextbook };
+    }) : undefined;
+    return { revision: state.revision, total: selected.length, items: selected.slice(offset, offset + 20), nextOffset: offset + 20 < selected.length ? offset + 20 : null,
+        ...(availableSources ? { availableSources, sourceGuide: 'Study skill references/unit-courses.md selects sources. Textbook indexes are relative to the study skill directory; read the actual pages before using them. Availability does not confirm the school edition or progress. User-provided materials take priority.' } : {}) };
 }
 /**
  * Compute the next relevant evidence, diagnosis, due-date or Shanghai-day refresh.

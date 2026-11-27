@@ -23,7 +23,7 @@
 
 ## 建立资料记录
 
-工作台保存的教材记录标题是地图标题，出版社是「随包知识地图」，依据写明没有封面或版权页。那只表示家长选了地图单元。家长给出实物或官方资料时，settings.materials 的 title、publisher、edition 来自已经看到的内容。scope 保存 region、grade、term、schoolYear 和 schoolSystem（five-four 或 six-three）；年份未知就暂缓校内关联，不猜测。locator 写具体官方页面、教材页码或家长提供的工作区课页路径；evidence 描述核对过的封面、版权页、目录或相关内容。版本不明时 editionStatus 为 unconfirmed，如实写“待核实”；核对后用新的资料 ID 登记 identified 版本，再把确认的课程与当前学校单元共同保存到 settings.courses，校验后确认校内关联。
+工作台保存的教材记录标题是地图标题，出版社是「随包知识地图」，依据写明没有封面或版权页。那只表示家长选了地图单元，即使旧记录标记 official-textbook/identified，也不能据此认定已核对学校课本，或忽略随包默认课页。家长给出实物或官方资料时，settings.materials 的 title、publisher、edition 来自已经看到的内容。scope 保存 region、grade、term、schoolYear 和 schoolSystem（five-four 或 six-three）；年份未知就暂缓校内关联，不猜测。locator 写具体官方页面、教材页码或家长提供的工作区课页路径；evidence 描述核对过的封面、版权页、目录或相关内容。版本不明时 editionStatus 为 unconfirmed，如实写“待核实”；核对后用新的资料 ID 登记 identified 版本，再把确认的课程与当前学校单元共同保存到 settings.courses，校验后确认校内关联。
 
 kind 区分 official-textbook（出版社或官方平台教材）、school-material（学校发放资料）、reference（词典、科普等参考）和 generated（AI 自编练习）。分类仅说明提供者，不自动证明内容正确。仅在家长确认具体版本与当前单元后保存 settings.courses 并运行 CLI；记录实际确认语句，不以搜索摘要或其他地区书单代替。
 

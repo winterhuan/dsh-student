@@ -28,7 +28,7 @@ Guide a primary-school learner through Chinese, mathematics and English in the c
 Install the prebuilt release through the [plugin market](https://winterhuan.github.io/dsh-creative/index.json), or use this pinned Git source with DSH `0.2.2-rc.5`:
 
 ```sh
-dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.8&path:/packages/winterhuan/student'
+dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.9&path:/packages/winterhuan/student'
 ```
 
 Replace `market` with the name of your existing DSH profile.
@@ -114,6 +114,8 @@ Confirm each subject's book title, publisher, edition, cover/copyright evidence 
 ### Use default textbooks
 
 For grade two, first term, `/study` uses the bundled People's Education Press Chinese or Beijing Normal University Press mathematics textbook when the user supplies no textbook for that subject. User-provided books and pages take priority. You do not need to upload these two books again: complete the learner profile and choose Foundations, or ask in chat to learn multiplication with the default mathematics textbook. Without a selected topic, the tutor offers a short choice from the first unit. Defaults do not establish the school's edition or fill in school progress; English, other grades and other terms have no default textbook.
+
+Starting an interactive lesson reuses existing materials, bundled pages or verified knowledge-point facts. Goal lessons and default-textbook lessons include full explanation, demonstration and practice; an unconfirmed school edition does not require another upload or another foundation-mode choice. School alignment requires edition and progress confirmation; an unclear text or character range prompts only that missing question. Supply school pages as chat images or a readable PDF, adding the cover, copyright page or contents only when edition verification needs them.
 
 See [default textbooks](knowledge/skills/study/references/default-textbooks.md) for contents, edition evidence and reading rules. DSH's `read_image` reads selected pages and requires an image-capable model. Extracted text supports lookup only; it cannot directly establish pinyin, diagrams or column calculations for grading. Without image support, use user-provided or previously verified prompts, or clearly labelled generated foundation exercises.
 

@@ -1,7 +1,7 @@
-import { t as applicationStudyFiles } from "./application-BqngjvBs.js";
-import { J as canonical, O as openmaicAcademicQuestion, Ot as sectionReadiness, Vt as validateCourseWorkspace, t as readWorkspace, vt as readLessonFile } from "./read-BpRrocGx.js";
-import { a as courseReviewInput, d as readStudentWorkspace, h as nativeMessageHash, i as courseReviewModel, n as generationRequestSchema, o as reviewQuestionsCurrent, s as reviewedCourseRequirement, u as openmaicEntityId } from "./generation-7l-NkDsc.js";
-import { a as queryWorkspace } from "./queries-CiBrxUDd.js";
+import { t as applicationStudyFiles } from "./application-CtHMwUtl.js";
+import { J as canonical, O as openmaicAcademicQuestion, Ot as sectionReadiness, Vt as validateCourseWorkspace, t as readWorkspace, vt as readLessonFile } from "./read-uEqxBfJ6.js";
+import { a as courseReviewInput, d as readStudentWorkspace, h as nativeMessageHash, i as courseReviewModel, n as generationRequestSchema, o as reviewQuestionsCurrent, s as reviewedCourseRequirement, u as openmaicEntityId } from "./generation-BaMkyPON.js";
+import { a as queryWorkspace } from "./queries-CNIxA_eZ.js";
 import "node:module";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -126,7 +126,7 @@ function registerStudyTools(context) {
 					"diagnose",
 					"review-sheet"
 				],
-				description: "daily-plan returns the deterministic preview, saved arrangement, legal continuation and actual summary; capability-progress returns the shared capability/range evidence projection. status (default) returns validated status and learning context; capabilities and families page source-backed goals and canonical mothers (optional subject/id); knowledge-sources returns official curriculum sources and coverage limits; legacy-references pages pending old-ID routes and never grants mastery; learning-context returns current block/question, saved responses, pending assessment, selected scope, target facts/method and at most three seeds; files pages official file identities and paths; settings returns term setup; summary returns seven Shanghai calendar days; collections page 20 records with offset. curriculum needs subject (grade and term browse another map); elements needs subject and returns question-writing elements, exercises and the hint ladder; exercises pages shipped and workspace exercises (optional subject, unit or id/objectiveId); diagnose returns check-in plans (grade, term or unit narrow the scope); review-sheet needs subject; weak lists weak points."
+				description: "daily-plan returns the deterministic preview, saved arrangement, legal continuation and actual summary; capability-progress returns the shared capability/range evidence projection. status (default) returns validated status and learning context; capabilities and families page source-backed goals and canonical mothers (optional subject/id); knowledge-sources returns official curriculum sources and coverage limits; legacy-references pages pending old-ID routes and never grants mastery; learning-context returns current block/question, saved responses, pending assessment, selected scope, target facts/method and at most three seeds; files pages official file identities and paths; settings returns term setup; materials pages registered sources and lists available knowledge maps and default textbook indexes for the current profile; summary returns seven Shanghai calendar days; collections page 20 records with offset. curriculum needs subject (grade and term browse another map); elements needs subject and returns question-writing elements, exercises and the hint ladder; exercises pages shipped and workspace exercises (optional subject, unit or id/objectiveId); diagnose returns check-in plans (grade, term or unit narrow the scope); review-sheet needs subject; weak lists weak points."
 			},
 			offset: {
 				type: "integer",

@@ -1,4 +1,4 @@
-import { $t as interestTagsOf, C as evidenceDay, Gt as scopeSupports, Ht as effectiveKnowledge, J as canonical, K as DAY, Qt as interestFocus, S as evidenceAtCutoff, St as interactiveLessonsView, Ut as knowledgeSources, Yt as stateSchema, Z as formatDuration, _ as replayMistake, _t as subjectIdeas, b as demonstrablyAfter, bt as OPENMAIC_LESSONS_PATH, cn as StudyReadCache, ct as todaySpent, ft as builtinObjectives, g as dayStart, gt as subjectExercises, h as migrateStudyFile, ht as exercisesForObjective, lt as builtinObjective, m as effectiveLearningScopes, mt as curriculumFor, nt as schoolGate, ot as studyDay, p as automaticLearningScopes, pt as builtinObjectivesIn, q as activeSession, rt as scopeSelects, st as taughtUnit, ut as builtinObjectiveAnywhere, v as scheduleMistakes, w as evidenceOf, x as deriveEvidence, xt as effectiveOpenmaicBase, y as attachEvidence, yt as OPENMAIC_COOKIE_PATH } from "./read-BpRrocGx.js";
+import { $t as interestTagsOf, C as evidenceDay, Gt as scopeSupports, Ht as effectiveKnowledge, J as canonical, K as DAY, Qt as interestFocus, S as evidenceAtCutoff, St as interactiveLessonsView, Ut as knowledgeSources, Yt as stateSchema, Z as formatDuration, _ as replayMistake, _t as subjectIdeas, b as demonstrablyAfter, bt as OPENMAIC_LESSONS_PATH, cn as StudyReadCache, ct as todaySpent, ft as builtinObjectives, g as dayStart, gt as subjectExercises, h as migrateStudyFile, ht as exercisesForObjective, lt as builtinObjective, m as effectiveLearningScopes, mt as curriculumFor, nt as schoolGate, ot as studyDay, p as automaticLearningScopes, pt as builtinObjectivesIn, q as activeSession, rt as scopeSelects, st as taughtUnit, ut as builtinObjectiveAnywhere, v as scheduleMistakes, w as evidenceOf, x as deriveEvidence, xt as effectiveOpenmaicBase, y as attachEvidence, yt as OPENMAIC_COOKIE_PATH } from "./read-uEqxBfJ6.js";
 import { z } from "zod";
 import { createHash } from "node:crypto";
 //#region lib/types/learning/mastery.js
@@ -2789,11 +2789,37 @@ function queryStudy(state, kind, offset, options = {}, now = Date.now()) {
 		if ("worksheetId" in item) return state.worksheets.some((sheet) => sheet.id === item.worksheetId && sheet.subject === subject);
 		return true;
 	});
+	const availableSources = kind === "materials" ? (subject ? [subject] : [
+		"chinese",
+		"math",
+		"english"
+	]).map((selectedSubject) => {
+		const map = curriculumFor(state.profile, selectedSubject);
+		const defaultTextbook = state.profile.grade === 2 && state.profile.term === "first" && selectedSubject !== "english" ? {
+			title: selectedSubject === "chinese" ? "人教版语文二年级上册" : "北师大版数学二年级上册",
+			index: `textbooks/${selectedSubject}-grade2-first/index.md`
+		} : null;
+		return {
+			subject: selectedSubject,
+			knowledgeMap: map ? {
+				id: map.id,
+				query: {
+					kind: "curriculum",
+					subject: selectedSubject
+				}
+			} : null,
+			defaultTextbook
+		};
+	}) : void 0;
 	return {
 		revision: state.revision,
 		total: selected.length,
 		items: selected.slice(offset, offset + 20),
-		nextOffset: offset + 20 < selected.length ? offset + 20 : null
+		nextOffset: offset + 20 < selected.length ? offset + 20 : null,
+		...availableSources ? {
+			availableSources,
+			sourceGuide: "Study skill references/unit-courses.md selects sources. Textbook indexes are relative to the study skill directory; read the actual pages before using them. Availability does not confirm the school edition or progress. User-provided materials take priority."
+		} : {}
 	};
 }
 /**

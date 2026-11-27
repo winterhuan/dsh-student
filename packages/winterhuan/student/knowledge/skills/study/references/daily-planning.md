@@ -8,7 +8,7 @@
 
 ## 沿用已有资料
 
-已有档案直接沿用教材、已确认学校进度和历史学习范围，不因缺少 learningScopes 要求逐科解锁。查询根据这些资料生成 scopeSuggestions；无进度时说明缺少学校位置，新学先按 unit-courses.md 补齐资料；用户明确选择基础目标课才使用年级目录，不猜学校正在教的单元，也不把没有证据称为薄弱。默认使用书面活动，不能据此评定听说能力。learningScopes 仅保存家长额外指定的内容限制，优先于同科默认建议；不为迁移或自动建议伪造 parentConfirmation。家长主动调整时，保存实际意图和修改后的 settings revision/updatedAt，运行只读 CLI 并独立读取。
+已有档案直接沿用教材、已确认学校进度和历史学习范围，不因缺少 learningScopes 要求逐科解锁。查询根据这些资料生成 scopeSuggestions；新学按 unit-courses.md 先复用可用材料；知识点完整课可使用已核实 facts 或默认教材，不要求再次选择基础课。校内同步缺少位置时只补问当前课文，不猜学校正在教的单元，也不把没有证据称为薄弱。默认使用书面活动，不能据此评定听说能力。learningScopes 仅保存家长额外指定的内容限制，优先于同科默认建议；不为迁移或自动建议伪造 parentConfirmation。家长主动调整时，保存实际意图和修改后的 settings revision/updatedAt，运行只读 CLI 并独立读取。
 
 ## 首次开始
 

@@ -28,7 +28,7 @@ kind: "package-bundle"
 通过[插件市场](https://winterhuan.github.io/dsh-creative/index.json)安装预构建版本，或在 DSH `0.2.2-rc.5` 中安装以下固定 Git 提交：
 
 ```sh
-dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.8&path:/packages/winterhuan/student'
+dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.9&path:/packages/winterhuan/student'
 ```
 
 将 `market` 替换为你已有的 DSH profile 名称。
@@ -114,6 +114,8 @@ DSH 从启动命令所在目录读取项目 `.env`，同时支持 `$DSH_HOME/.en
 ### 使用默认教材
 
 二年级上册未提供某科教材时，`/study` 使用随包提供的人教社语文或北师大版数学，用户提供的教材和课页优先。无需再次上传这两本书；完成档案设置后选择“通用基础”，或在对话中说“用默认数学教材学习乘法”。尚未指定学习主题时从第一单元提供短小选择。默认教材不代表学校采用版本，也不自动填写校内进度；英语和其他年级、学期没有默认教材。
+
+开始互动课会先复用已有教材、随包课页或已核实的知识点事实。知识点课和默认教材课同样生成含讲解、示范、练习的完整互动课；缺少学校版本确认不要求重复上传，也不要求再次选择基础模式。只有校内同步才补齐版本与进度；具体课文或字词范围不明时只问该缺项。学校教材可通过 DSH 对话提供当前课文照片或可读取的 PDF，版本需要核对时再补封面、版权页或目录。
 
 教材目录、版本依据和读取规则见[默认教材](knowledge/skills/study/references/default-textbooks.md)。课页通过 DSH 的 `read_image` 按需读取，需要支持图片的模型；文字层仅供检索定位，不能直接用于拼音、图形或竖式判分。缺少图片能力时使用用户提供或已核对的题干，或明确标注的自编基础练习。
 

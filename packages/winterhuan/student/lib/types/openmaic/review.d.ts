@@ -12,7 +12,7 @@ export interface CourseReviewInput {
         blockId: string;
         lessonId: string;
     };
-    provenance: Pick<InteractiveLesson, 'purpose' | 'course' | 'foundationConfirmation' | 'sourceLessonIds'>;
+    lessonContext: Pick<InteractiveLesson, 'purpose' | 'course' | 'foundationConfirmation' | 'sourceLessonIds'>;
     subject: string;
     requirement: string;
     teaching: NonNullable<InteractiveLesson['teaching']>;

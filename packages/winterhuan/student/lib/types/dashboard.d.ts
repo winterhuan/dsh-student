@@ -49,7 +49,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             publisher: string;
             edition: string;
             editionStatus: "unconfirmed" | "identified";
-            kind: "official-textbook" | "school-material" | "reference" | "generated";
+            kind: "generated" | "official-textbook" | "school-material" | "reference";
             locator: string;
             evidence: string;
         }[];
@@ -58,7 +58,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             subject: "chinese" | "math" | "english";
             objectiveId: string;
             role: "diagnose" | "demo" | "try" | "vary" | "daily";
-            variant: "numeric" | "context" | "reasoning";
+            variant: "reasoning" | "context" | "numeric";
             prompt: string;
             steps: string[];
             answer: string;
@@ -310,7 +310,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             at: number;
             mistakeId?: string | undefined;
             objectiveId?: string | undefined;
-            variant?: "numeric" | "context" | "reasoning" | undefined;
+            variant?: "reasoning" | "context" | "numeric" | undefined;
             figure?: {
                 kind: "bar-model";
                 bars: {
@@ -527,7 +527,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             id: string;
             subject: "chinese" | "math" | "english";
             title: string;
-            level: "practising" | "due" | "weak" | "stalled" | "mastered" | "untouched";
+            level: "untouched" | "practising" | "weak" | "due" | "mastered" | "stalled";
             priority: number;
             reasons: import("./learning/mastery.ts").InsightReason[];
         }[];
@@ -566,10 +566,10 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             title: string;
             goal: string;
             conceptIds: string[];
-            method: "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "listen" | "speak";
+            method: "reason" | "context" | "recognize" | "read-evidence" | "express" | "represent" | "verify" | "listen" | "speak";
             errorTypes?: ("pattern" | "listening" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
             questionPoints?: string[] | undefined;
-            variationAxes?: ("context" | "numbers" | "representation" | "reverse" | "explain")[] | undefined;
+            variationAxes?: ("reverse" | "context" | "numbers" | "representation" | "explain")[] | undefined;
         }[];
         relations: {
             id: string;
@@ -614,7 +614,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
                 answerEvidence: string;
                 objectiveId?: string | undefined;
                 mistakeId?: string | undefined;
-                variant?: "numeric" | "context" | "reasoning" | undefined;
+                variant?: "reasoning" | "context" | "numeric" | undefined;
                 figure?: {
                     kind: "bar-model";
                     bars: {
@@ -975,7 +975,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             choices?: string[] | undefined;
             steps?: string[] | undefined;
             phase?: "demo" | "try" | "vary" | "guide" | undefined;
-            variant?: "numeric" | "context" | "reasoning" | undefined;
+            variant?: "reasoning" | "context" | "numeric" | undefined;
             mistakeId?: string | undefined;
             objectiveId?: string | undefined;
             figure?: {
@@ -1191,7 +1191,7 @@ export declare function dashboard(state: StudyState | undefined, now: number, op
             at: number;
             mistakeId?: string | undefined;
             objectiveId?: string | undefined;
-            variant?: "numeric" | "context" | "reasoning" | undefined;
+            variant?: "reasoning" | "context" | "numeric" | undefined;
             figure?: {
                 kind: "bar-model";
                 bars: {

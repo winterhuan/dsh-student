@@ -92,7 +92,7 @@ export declare function studyStatus(state: StudyState, now: number): {
         choices?: string[] | undefined;
         steps?: string[] | undefined;
         phase?: "demo" | "try" | "vary" | "guide" | undefined;
-        variant?: "numeric" | "context" | "reasoning" | undefined;
+        variant?: "reasoning" | "context" | "numeric" | undefined;
         mistakeId?: string | undefined;
         objectiveId?: string | undefined;
         figure?: {
@@ -308,7 +308,7 @@ export declare function studyStatus(state: StudyState, now: number): {
         at: number;
         mistakeId?: string | undefined;
         objectiveId?: string | undefined;
-        variant?: "numeric" | "context" | "reasoning" | undefined;
+        variant?: "reasoning" | "context" | "numeric" | undefined;
         figure?: {
             kind: "bar-model";
             bars: {

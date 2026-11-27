@@ -2026,7 +2026,7 @@ export const TYPERT = {
           },
           {
             "name": "CourseReviewInput",
-            "declaration": "export interface CourseReviewInput {\n    owner: { workspace: string; learnerId: string; termId: string; blockId: string; lessonId: string; };\n    provenance: Pick<InteractiveLesson, 'purpose' | 'course' | 'foundationConfirmation' | 'sourceLessonIds'>;\n    subject: string;\n    requirement: string;\n    teaching: NonNullable<InteractiveLesson['teaching']>;\n    plan: NonNullable<InteractiveLesson['questionPlan']>;\n    source: string;\n    content?: Awaited<ReturnType<OpenmaicFeedback['content']>>;\n    questions?: OpenmaicPreparation['questions'];\n}"
+            "declaration": "export interface CourseReviewInput {\n    owner: { workspace: string; learnerId: string; termId: string; blockId: string; lessonId: string; };\n    lessonContext: Pick<InteractiveLesson, 'purpose' | 'course' | 'foundationConfirmation' | 'sourceLessonIds'>;\n    subject: string;\n    requirement: string;\n    teaching: NonNullable<InteractiveLesson['teaching']>;\n    plan: NonNullable<InteractiveLesson['questionPlan']>;\n    source: string;\n    content?: Awaited<ReturnType<OpenmaicFeedback['content']>>;\n    questions?: OpenmaicPreparation['questions'];\n}"
           },
           {
             "name": "CourseReviewResult",

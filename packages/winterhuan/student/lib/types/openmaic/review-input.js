@@ -28,7 +28,7 @@ export async function courseReviewInput(files, workspace, lesson, log, signal) {
     const source = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
     if (plan.questions.some(q => !source.includes(q.sourceQuote)))
         throw new Error('Every planned question needs an exact supporting quote from its original material.');
-    return { owner: { workspace, learnerId: lesson.learnerId, termId: lesson.termId, blockId: lesson.blockId, lessonId: lesson.id }, provenance: { purpose: lesson.purpose, course: lesson.course, foundationConfirmation: lesson.foundationConfirmation, sourceLessonIds: lesson.sourceLessonIds }, subject: lesson.subject, requirement: lesson.requirement, teaching: lesson.teaching, plan, source };
+    return { owner: { workspace, learnerId: lesson.learnerId, termId: lesson.termId, blockId: lesson.blockId, lessonId: lesson.id }, lessonContext: { purpose: lesson.purpose, course: lesson.course, foundationConfirmation: lesson.foundationConfirmation, sourceLessonIds: lesson.sourceLessonIds }, subject: lesson.subject, requirement: lesson.requirement, teaching: lesson.teaching, plan, source };
 }
 /** Compare frozen questions with the complete current classroom, rejecting edited or unbound quizzes.
  * @param input - Review input with independently fetched current scenes and original capture.

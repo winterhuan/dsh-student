@@ -288,7 +288,7 @@ export declare function insightSummary(insight: StudyInsight): {
         id: string;
         subject: "chinese" | "math" | "english";
         title: string;
-        level: "practising" | "due" | "weak" | "stalled" | "mastered" | "untouched";
+        level: "untouched" | "practising" | "weak" | "due" | "mastered" | "stalled";
         priority: number;
         reasons: InsightReason[];
     }[];

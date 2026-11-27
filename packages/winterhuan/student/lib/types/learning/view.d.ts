@@ -13,10 +13,10 @@ export declare function objectiveOf(state: StudyState, objectiveId: string): {
     title: string;
     goal: string;
     conceptIds: string[];
-    method: "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "listen" | "speak";
+    method: "reason" | "context" | "recognize" | "read-evidence" | "express" | "represent" | "verify" | "listen" | "speak";
     errorTypes?: ("pattern" | "listening" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
     questionPoints?: string[] | undefined;
-    variationAxes?: ("context" | "numbers" | "representation" | "reverse" | "explain")[] | undefined;
+    variationAxes?: ("reverse" | "context" | "numbers" | "representation" | "explain")[] | undefined;
 } | undefined;
 /**
  * Title and subject of a learning objective, custom or shipped, for projections.

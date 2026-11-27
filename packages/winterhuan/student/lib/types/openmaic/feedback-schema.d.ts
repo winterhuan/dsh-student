@@ -48,8 +48,8 @@ export declare const openmaicResponseSourceSchema: z.ZodObject<{
 export declare const officialRuntimePayloadSchema: z.ZodObject<{
     payloadVersion: z.ZodLiteral<1>;
     phase: z.ZodEnum<{
-        draft: "draft";
         submitted: "submitted";
+        draft: "draft";
         reviewed: "reviewed";
     }>;
     answers: z.ZodRecord<z.ZodString, z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>>;
@@ -74,8 +74,8 @@ export declare const officialRuntimeRecordSchema: z.ZodObject<{
     payload: z.ZodObject<{
         payloadVersion: z.ZodLiteral<1>;
         phase: z.ZodEnum<{
-            draft: "draft";
             submitted: "submitted";
+            draft: "draft";
             reviewed: "reviewed";
         }>;
         answers: z.ZodRecord<z.ZodString, z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>>;
@@ -168,8 +168,8 @@ export declare const pendingOpenmaicSchema: z.ZodObject<{
         payload: z.ZodObject<{
             payloadVersion: z.ZodLiteral<1>;
             phase: z.ZodEnum<{
-                draft: "draft";
                 submitted: "submitted";
+                draft: "draft";
                 reviewed: "reviewed";
             }>;
             answers: z.ZodRecord<z.ZodString, z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>>;

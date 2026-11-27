@@ -12,7 +12,7 @@ const source = '山指地面上高起的部分。游泳是在水中运动。河�
 const question = { id: 'q1', type: 'single' as const, question: '游泳是在什么地方运动？', options: [{ value: 'A', label: '水中' }, { value: 'B', label: '山上' }], answer: 'A', analysis: '游泳是在水中运动。', sourceQuote: '游泳是在水中运动。', completedAnswer: '游泳是在水中运动。' }
 const stageNames = ['introduction', 'explanation', 'demonstration', 'guidedPractice', 'independentPractice', 'summary']
 function input(): CourseReviewInput {
-  return { owner: { workspace: '/original', learnerId: 'child', termId: 'term', blockId: 'block', lessonId: 'lesson' }, provenance: { purpose: 'foundation' }, subject: 'chinese', requirement: '认识山和水', source,
+  return { owner: { workspace: '/original', learnerId: 'child', termId: 'term', blockId: 'block', lessonId: 'lesson' }, lessonContext: { purpose: 'foundation' }, subject: 'chinese', requirement: '认识山和水', source,
     teaching: { revision: 'v1', goal: '识字', scope: '山和水', materialLimitations: '自编基础材料，仅字形字义', introduction: '观察', explanation: '识字', demonstration: '示范', guidedPractice: '引导辨字', independentPractice: '独立识字', summary: '回顾', maxAssessmentQuestions: 3 },
     plan: courseQuestionPlanSchema.parse({ revision: 'v1', source: { path: 'materials/unit.md', sha256: createHash('sha256').update(source).digest('hex') }, target: { goalId: 'c.recognize', familyId: 'c.recognize-context', scope: { id: 'mountain-water', description: '山和水的字义', modality: 'written' } }, questions: [question] }),
   }

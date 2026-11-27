@@ -32,8 +32,8 @@ export declare function lessonHttpUrl(value: string): string | undefined;
 export declare const lessonSchema: z.ZodObject<{
     id: z.ZodString;
     status: z.ZodEnum<{
-        planned: "planned";
         unknown: "unknown";
+        planned: "planned";
         generating: "generating";
         ready: "ready";
         failed: "failed";
@@ -213,8 +213,8 @@ export declare const lessonFileSchema: z.ZodObject<{
     lessons: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
         status: z.ZodEnum<{
-            planned: "planned";
             unknown: "unknown";
+            planned: "planned";
             generating: "generating";
             ready: "ready";
             failed: "failed";

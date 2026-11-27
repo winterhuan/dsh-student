@@ -1707,7 +1707,7 @@ async function courseReviewInput(files, workspace, lesson, log, signal) {
 			blockId: lesson.blockId,
 			lessonId: lesson.id
 		},
-		provenance: {
+		lessonContext: {
 			purpose: lesson.purpose,
 			course: lesson.course,
 			foundationConfirmation: lesson.foundationConfirmation,

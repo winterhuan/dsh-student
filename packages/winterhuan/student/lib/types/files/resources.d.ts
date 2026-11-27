@@ -116,8 +116,8 @@ declare const schemas: {
         lessons: z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             status: z.ZodEnum<{
-                planned: "planned";
                 unknown: "unknown";
+                planned: "planned";
                 generating: "generating";
                 ready: "ready";
                 failed: "failed";
@@ -711,10 +711,10 @@ declare const schemas: {
                 identified: "identified";
             }>;
             kind: z.ZodEnum<{
+                generated: "generated";
                 "official-textbook": "official-textbook";
                 "school-material": "school-material";
                 reference: "reference";
-                generated: "generated";
             }>;
             locator: z.ZodString;
             evidence: z.ZodString;
@@ -897,10 +897,10 @@ declare const schemas: {
                     identified: "identified";
                 }>;
                 kind: z.ZodEnum<{
+                    generated: "generated";
                     "official-textbook": "official-textbook";
                     "school-material": "school-material";
                     reference: "reference";
-                    generated: "generated";
                 }>;
                 locator: z.ZodString;
                 evidence: z.ZodString;
@@ -1255,9 +1255,9 @@ declare const schemas: {
                 guide: "guide";
             }>>;
             variant: z.ZodOptional<z.ZodEnum<{
-                numeric: "numeric";
-                context: "context";
                 reasoning: "reasoning";
+                context: "context";
+                numeric: "numeric";
             }>>;
             space: z.ZodOptional<z.ZodEnum<{
                 line: "line";
@@ -1523,8 +1523,8 @@ declare const schemas: {
                 payload: z.ZodObject<{
                     payloadVersion: z.ZodLiteral<1>;
                     phase: z.ZodEnum<{
-                        draft: "draft";
                         submitted: "submitted";
+                        draft: "draft";
                         reviewed: "reviewed";
                     }>;
                     answers: z.ZodRecord<z.ZodString, z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>>;
@@ -1958,9 +1958,9 @@ declare const schemas: {
                 guide: "guide";
             }>>;
             variant: z.ZodOptional<z.ZodEnum<{
-                numeric: "numeric";
-                context: "context";
                 reasoning: "reasoning";
+                context: "context";
+                numeric: "numeric";
             }>>;
             space: z.ZodOptional<z.ZodEnum<{
                 line: "line";
@@ -2248,12 +2248,12 @@ declare const schemas: {
             reason: z.ZodString;
         }, z.core.$strict>>>;
         mistakes: z.ZodArray<z.ZodObject<{
-            id: z.ZodString;
-            explanation: z.ZodString;
             source: z.ZodOptional<z.ZodObject<{
                 worksheetId: z.ZodString;
                 itemId: z.ZodString;
             }, z.core.$strict>>;
+            explanation: z.ZodString;
+            id: z.ZodString;
             subject: z.ZodEnum<{
                 chinese: "chinese";
                 math: "math";
@@ -2331,9 +2331,9 @@ declare const schemas: {
                 daily: "daily";
             }>;
             variant: z.ZodEnum<{
-                numeric: "numeric";
-                context: "context";
                 reasoning: "reasoning";
+                context: "context";
+                numeric: "numeric";
             }>;
             prompt: z.ZodString;
             choices: z.ZodOptional<z.ZodArray<z.ZodString>>;
@@ -2671,12 +2671,12 @@ declare const schemas: {
             goal: z.ZodString;
             conceptIds: z.ZodArray<z.ZodString>;
             method: z.ZodEnum<{
+                reason: "reason";
                 context: "context";
                 recognize: "recognize";
                 "read-evidence": "read-evidence";
                 express: "express";
                 represent: "represent";
-                reason: "reason";
                 verify: "verify";
                 listen: "listen";
                 speak: "speak";
@@ -2710,10 +2710,10 @@ declare const schemas: {
             }>>>;
             questionPoints: z.ZodOptional<z.ZodArray<z.ZodString>>;
             variationAxes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
+                reverse: "reverse";
                 context: "context";
                 numbers: "numbers";
                 representation: "representation";
-                reverse: "reverse";
                 explain: "explain";
             }>>>;
         }, z.core.$strict>>>;
@@ -2867,10 +2867,10 @@ declare const schemas: {
             at: z.ZodNumber;
             revision: z.ZodNumber;
             action: z.ZodEnum<{
+                stop: "stop";
                 start: "start";
                 continue: "continue";
                 pause: "pause";
-                stop: "stop";
                 defer: "defer";
                 skip: "skip";
                 adjust: "adjust";

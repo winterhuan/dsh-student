@@ -23,7 +23,7 @@ const verdictSchema = z.object({
 /** Immutable independently loaded input; review callers cannot supply a verdict. */
 export interface CourseReviewInput {
   owner: { workspace: string; learnerId: string; termId: string; blockId: string; lessonId: string }
-  provenance: Pick<InteractiveLesson, 'purpose' | 'course' | 'foundationConfirmation' | 'sourceLessonIds'>
+  lessonContext: Pick<InteractiveLesson, 'purpose' | 'course' | 'foundationConfirmation' | 'sourceLessonIds'>
   subject: string
   requirement: string
   teaching: NonNullable<InteractiveLesson['teaching']>

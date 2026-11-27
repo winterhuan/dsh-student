@@ -1,8 +1,8 @@
 import { n as StudyReadCacheOwner, r as StudyBackupRetention, t as applicationStudyFiles } from "./application-BqngjvBs.js";
 import { Et as readInteractiveLessons, J as canonical, t as readWorkspace, vt as readLessonFile } from "./read-BpRrocGx.js";
-import { _ as panelIntentSchema, d as readStudentWorkspace, g as panelDisplay } from "./generation-CWbd-geH.js";
+import { _ as panelIntentSchema, d as readStudentWorkspace, g as panelDisplay } from "./generation-7l-NkDsc.js";
 import { a as queryWorkspace, o as queryWorkspaceDashboard, r as queryJsonData } from "./queries-CiBrxUDd.js";
-import { n as StudentOpenmaic, r as openmaicConfig, t as StudentOpenmaicPlayback } from "./playback-BpHQyQet.js";
+import { n as StudentOpenmaic, r as openmaicConfig, t as StudentOpenmaicPlayback } from "./playback-fLTenIKn.js";
 import { n as saveManual, t as manualFields } from "./manual-JQ22pbom.js";
 import { createRequire } from "node:module";
 import { z } from "zod";

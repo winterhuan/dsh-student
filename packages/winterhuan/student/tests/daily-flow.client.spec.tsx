@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, onTestFinished, vi } from 'vitest'
 import { StudyDesk } from '../src/client/desk.tsx'
+import { DailyHome } from '../src/client/daily-view.tsx'
 import { en } from '../src/client/locales.ts'
 import { createStudentManualActions } from '../src/client/manual-actions.ts'
 import { useDraftFixture } from './draft-fixture.tsx'
@@ -159,4 +160,31 @@ it('opens gains from an unplanned activity and binds pause to that original acti
   fireEvent.click(screen.getByRole('button', { name: en.resumeLearning }))
   await waitFor(() => expect(ask).toHaveBeenCalledTimes(2))
   expect(String(ask.mock.calls[1]![0])).toContain('"action":"continue"')
+})
+
+
+it('shows the current task instead of an earlier paused task and respects the home subject filter', () => {
+  const task = (id: string, subject: 'english' | 'chinese', state: 'paused' | 'active') => dailyPlanSchema.shape.tasks.element.parse({ id, subject, purpose: 'resume', familyIds: [], reason: 'unfinished-question', basis: [], ending: 'original-activity', state, outcomes: [], activity: { blockId: id, questionId: 'q' } })
+  const english = task('old-english', 'english', 'paused'), chinese = task('current-chinese', 'chinese', 'active')
+  const daily: DailyLearning = {
+    day: '2026-11-27', phase: 'learning', saved: null, preview: null, currentTaskId: chinese.id,
+    tasks: [english, chinese].map(task => ({ task, title: task === english ? 'Unit 4 play ping-pong' : 'Current Chinese', attempted: 0, independent: 0, helped: 0, pending: 0, consolidate: 0, invalidScope: false, preparationIncomplete: false })),
+    suggestions: [{ task: { ...english, id: 'new-english', purpose: 'learning', state: 'ready', activity: undefined }, nextAction: { kind: 'learn', reason: 'new-goal', subject: 'english', title: 'Unit 7 Seasons' } }, { task: chinese, nextAction: { kind: 'answer', reason: 'unfinished-question', subject: 'chinese', title: 'Current Chinese', blockId: chinese.id } }],
+    recommended: [], summary: [], completionPending: false, missingSubjects: [], confirmedScopes: [], scopeSuggestions: [], nextAction: { kind: 'answer', reason: 'unfinished-question', subject: 'chinese', title: 'Current Chinese', blockId: chinese.id },
+  }
+  const onResume = vi.fn(), onStart = vi.fn()
+  const props = { daily, disabled: false, extra: false, onStart, onResume, onSummary: vi.fn(), t: (key: keyof typeof en) => en[key] }
+  const view = render(<DailyHome {...props} subject="all" />)
+  expect(screen.queryByText(/Unit 4 play ping-pong/)).toBeNull()
+  expect(screen.getByText(`${en.unfinishedLearning} · ${en.chinese} · Current Chinese`)).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: en.resumeLearning }))
+  expect(onResume).toHaveBeenCalledOnce()
+  view.rerender(<DailyHome {...props} subject="english" />)
+  expect(screen.queryByText(/Unit 4 play ping-pong/)).toBeNull()
+  expect(screen.queryByText(/Current Chinese/)).toBeNull()
+  expect(screen.queryByRole('button', { name: en.resumeLearning })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: en.courseStart }))
+  expect(onStart).toHaveBeenCalledWith(daily.suggestions[0])
+  view.rerender(<DailyHome {...props} subject="chinese" />)
+  expect(screen.getAllByRole('button', { name: en.resumeLearning })).toHaveLength(1)
 })

@@ -6,12 +6,14 @@ import css from './desk.module.css'
 
 /** Home is the only learner surface for browsing subjects or choosing new content. */
 export function DailyHome({ daily, subject, disabled, extra, onStart, onResume, onSummary, t }: { daily: DailyLearning; subject: Subject | 'all'; disabled: boolean; extra: boolean; onStart: (suggestion?: DailySuggestion) => void; onResume: () => void; onSummary: () => void; t: Translate }) {
-  const unfinished = daily.tasks.find(item => ['active', 'paused', 'ready'].includes(item.task.state))
+  const current = daily.tasks.find(item => item.task.id === daily.currentTaskId)
+  const matchesSubject = subject === 'all' || (current?.task.subject ?? daily.nextAction?.subject) === subject
+  const unfinished = matchesSubject && current && ['active', 'paused', 'ready'].includes(current.task.state) ? current : undefined
   const resumedBlock = unfinished?.task.activity?.blockId ?? (daily.phase === 'learning' ? daily.nextAction?.blockId : undefined)
   const suggestions = (subject === 'all' ? daily.recommended : daily.suggestions.filter(item => item.task.subject === subject)).filter(item => !resumedBlock || item.task.activity?.blockId !== resumedBlock)
   return <>
     <section><h3>{t(extra ? 'learnMore' : 'dailyRecommendations')}</h3><p className="student-muted">{t('dailyRecommendationsHelp')}</p>
-      {!unfinished && daily.phase === 'learning' && <button type="button" className="student-primary" disabled={disabled} onClick={onResume}>{t('resumeLearning')}</button>}
+      {!unfinished && matchesSubject && daily.phase === 'learning' && <button type="button" className="student-primary" disabled={disabled} onClick={onResume}>{t('resumeLearning')}</button>}
       {daily.tasks.some(item => item.preparationIncomplete) && <p role="status">{t('dailyPreparationIncomplete')}</p>}
       {unfinished && <div><p>{t('unfinishedLearning')} · {t(unfinished.task.subject)} · {unfinished.title}</p><button type="button" className="student-primary" disabled={disabled} onClick={onResume}>{t('resumeLearning')}</button></div>}
       {(daily.saved || daily.tasks.length > 0 || daily.summary.length > 0 || daily.phase === 'summary') && <button type="button" onClick={onSummary}>{t('todayGains')}</button>}

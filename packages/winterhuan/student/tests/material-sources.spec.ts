@@ -8,7 +8,7 @@ it('discovers usable bundled pages even when the only registered book is a knowl
   const state = stateSchema.parse({ ...updateStudy(undefined, setup, NOW), materials: [{ ...material, id: 'map', subject: 'chinese', title: '语文二年级上册知识地图', publisher: '随包知识地图', locator: 'knowledge/curriculum/chinese-grade2-first.json', evidence: '只确认学校单元' }] })
   const original = structuredClone(state)
   const result = queryStudy(state, 'materials', 0, { subject: 'chinese' }, NOW)
-  expect(result).toMatchObject({ items: [{ id: 'map' }], availableSources: [{ subject: 'chinese', knowledgeMap: { id: 'chinese-grade2-first' }, defaultTextbook: { index: 'textbooks/chinese-grade2-first/index.md' } }] })
+  expect(result).toMatchObject({ items: [{ id: 'map' }], availableSources: [{ subject: 'chinese', knowledgeMap: { id: 'chinese-grade2-first' }, defaultTextbook: { index: 'textbooks/chinese-grade2-first/index.md', schoolMatchQuestion: expect.stringContaining('学校用的也是人教版') } }] })
   const index = readFileSync(new URL('../knowledge/skills/study/textbooks/chinese-grade2-first/index.md', import.meta.url), 'utf8')
   expect(index).toContain('14 八角楼上')
   expect(readFileSync(new URL('../knowledge/skills/study/textbooks/chinese-grade2-first/pages/pdf-072.jpg', import.meta.url)).length).toBeGreaterThan(1000)

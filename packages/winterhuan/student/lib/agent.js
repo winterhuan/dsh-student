@@ -1,7 +1,7 @@
 import { t as applicationStudyFiles } from "./application-CtHMwUtl.js";
 import { J as canonical, O as openmaicAcademicQuestion, Ot as sectionReadiness, Vt as validateCourseWorkspace, t as readWorkspace, vt as readLessonFile } from "./read-uEqxBfJ6.js";
 import { a as courseReviewInput, d as readStudentWorkspace, h as nativeMessageHash, i as courseReviewModel, n as generationRequestSchema, o as reviewQuestionsCurrent, s as reviewedCourseRequirement, u as openmaicEntityId } from "./generation-BaMkyPON.js";
-import { a as queryWorkspace } from "./queries-CNIxA_eZ.js";
+import { a as queryWorkspace } from "./queries-1iZMXoY3.js";
 import "node:module";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";

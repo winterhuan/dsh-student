@@ -293,7 +293,7 @@ export function queryStudy(state: StudyState | undefined, kind: string, offset: 
   const availableSources = kind === 'materials' ? (subject ? [subject] : ['chinese', 'math', 'english'] as const).map(selectedSubject => {
     const map = curriculumFor(state.profile, selectedSubject)
     const defaultTextbook = state.profile.grade === 2 && state.profile.term === 'first' && selectedSubject !== 'english'
-      ? { title: selectedSubject === 'chinese' ? '人教版语文二年级上册' : '北师大版数学二年级上册', index: `textbooks/${selectedSubject}-grade2-first/index.md` }
+      ? { title: selectedSubject === 'chinese' ? '人教版语文二年级上册' : '北师大版数学二年级上册', index: `textbooks/${selectedSubject}-grade2-first/index.md`, schoolMatchQuestion: selectedSubject === 'chinese' ? '学校用的也是人教版二年级上册语文（封面标注2024年审定）吗？现在学到哪一篇？' : '学校用的也是北师大版二年级上册数学（2025年7月第1版）吗？现在学到哪一课？', reuse: 'Already bundled: cover, copyright page, contents and lesson pages. Read these locally first. If school matching is unconfirmed, ask schoolMatchQuestion before asking for photos; request only missing or different pages after the answer.' }
       : null
     return { subject: selectedSubject, knowledgeMap: map ? { id: map.id, query: { kind: 'curriculum', subject: selectedSubject } } : null, defaultTextbook }
   }) : undefined

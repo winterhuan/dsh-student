@@ -1,6 +1,6 @@
 # 教材与答案来源
 
-插件附带二年级上册语文、数学的[默认教材](default-textbooks.md)课页，用户未提供该科教材时按需读取。用户提供的教材优先。校内同步需另行核对实际课本的封面、版权页、目录和学校进度；可使用家长课页或官方资料。仅有网址或书名不能证明模型已经读到正文，也不能据此生成“教材原文”。
+插件附带二年级上册语文、数学的[默认教材](default-textbooks.md)课页，用户未提供该科教材时按需读取。用户提供的教材优先。校内同步需确认学校使用的版本和进度。已有实际核对过的默认教材时，先告诉家长书名与版本特征，询问是否相同及目前课文；家长确认一致即可复用已有封面、版权页、目录和正文。只有版本不同、家长不能确定或所需页缺失时，才补对应照片或官方资料，不重复索取已有页面。仅有网址或书名不能证明模型已经读到正文，也不能据此生成“教材原文”。
 
 ## 官方入口
 
@@ -23,7 +23,7 @@
 
 ## 建立资料记录
 
-工作台保存的教材记录标题是地图标题，出版社是「随包知识地图」，依据写明没有封面或版权页。那只表示家长选了地图单元，即使旧记录标记 official-textbook/identified，也不能据此认定已核对学校课本，或忽略随包默认课页。家长给出实物或官方资料时，settings.materials 的 title、publisher、edition 来自已经看到的内容。scope 保存 region、grade、term、schoolYear 和 schoolSystem（five-four 或 six-three）；年份未知就暂缓校内关联，不猜测。locator 写具体官方页面、教材页码或家长提供的工作区课页路径；evidence 描述核对过的封面、版权页、目录或相关内容。版本不明时 editionStatus 为 unconfirmed，如实写“待核实”；核对后用新的资料 ID 登记 identified 版本，再把确认的课程与当前学校单元共同保存到 settings.courses，校验后确认校内关联。
+工作台保存的教材记录标题是地图标题，出版社是「随包知识地图」，依据写明没有封面或版权页。那只表示家长选了地图单元，即使旧记录标记 official-textbook/identified，也不能据此认定已核对学校课本，或忽略随包默认课页。家长确认学校用书与已核对的默认教材一致，或提供实物/官方资料后，settings.materials 的 title、publisher、edition 来自已经看到的内容；已核对的审定信息可以标识版本，未知出版版次和印次继续保留未知，不补造。scope 保存 region、grade、term、schoolYear 和 schoolSystem（five-four 或 six-three）；年份未知就暂缓校内关联，不猜测。locator 写具体官方页面、教材页码或家长提供的工作区课页路径；evidence 描述核对过的封面、版权页、目录或相关内容。版本不明时 editionStatus 为 unconfirmed，如实写“待核实”；核对后用新的资料 ID 登记 identified 版本，再把确认的课程与当前学校单元共同保存到 settings.courses，校验后确认校内关联。
 
 kind 区分 official-textbook（出版社或官方平台教材）、school-material（学校发放资料）、reference（词典、科普等参考）和 generated（AI 自编练习）。分类仅说明提供者，不自动证明内容正确。仅在家长确认具体版本与当前单元后保存 settings.courses 并运行 CLI；记录实际确认语句，不以搜索摘要或其他地区书单代替。
 

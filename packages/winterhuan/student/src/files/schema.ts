@@ -139,6 +139,7 @@ export const collectionsSchema = z.object({ ...base, kind: z.literal('collection
 /** Arrangements reference original evidence; they never store answers or mastery. */
 const planTaskReference = z.object({ day, taskId: id }).strict()
 const planEvidenceReference = z.object({ termId, ownerKind: z.enum(['block', 'worksheet']), ownerId: id, responseId }).strict()
+/** One daily learning arrangement with activity, evidence and carry-forward references. */
 export const dailyTaskSchema = z.object({
   id, subject, purpose: z.enum(['resume', 'teaching', 'diagnostic', 'learning', 'review']),
   goalId: knowledgeIdSchema.optional(), scope: capabilityScopeSchema.optional(), familyIds: z.array(knowledgeIdSchema).max(2),
@@ -160,6 +161,7 @@ export const dailyPlanSchema = z.object({
 }).strict()
 /** Validated plan and task arrangements, separate from capability evidence. */
 export type DailyPlan = z.infer<typeof dailyPlanSchema>
+/** Validated daily task arrangement; referenced evidence owns learning outcomes. */
 export type DailyTask = z.infer<typeof dailyTaskSchema>
 /** Machine-readable file definitions shared by CLI, application reads and manual saves. */
 export const officialFileSchemas = { 'term-settings': termSettingsSchema, block: blockSchema, worksheet: worksheetSchema, collections: collectionsSchema, 'daily-plan': dailyPlanSchema } as const

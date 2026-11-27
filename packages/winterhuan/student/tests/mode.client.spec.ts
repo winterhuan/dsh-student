@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, expect, it, onTestFinished, vi } from 'vitest'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
-import type { Context } from '@deepseek-ai/cordis'
+import { Context } from '@deepseek-ai/cordis'
 import { registerModeTab } from '../src/client/mode.ts'
 afterEach(() => vi.useRealTimers())
 it('opens Student once per mounted Session and respects manual closure and other presets', () => {
@@ -10,7 +10,13 @@ it('opens Student once per mounted Session and respects manual closure and other
   const mounted = createSnapshotStore<string | undefined>(undefined)
   const list = createSnapshotStore({ byId: { one: { projectionValues: { agentPreset: 'student' } }, two: { projectionValues: { agentPreset: 'student' } }, other: { projectionValues: { agentPreset: 'general' } } } })
   const openTab = vi.fn(), release = vi.fn(), register = vi.fn(() => release)
-  const dispose = registerModeTab({ uiSession: { adapter: { current } }, sessions: { list }, sidebarRight: { mounted, openTab }, sidebarRightTabs: { register } } as unknown as Context, { id: 'student', kind: 'student', title: 'Student' })
+  const ctx = new Context()
+  onTestFinished(() => ctx.fiber.dispose())
+  ctx.provide('uiSession', { adapter: { current } })
+  ctx.provide('sessions', { list })
+  ctx.provide('sidebarRight', { mounted, openTab })
+  ctx.provide('sidebarRightTabs', { register })
+  const dispose = registerModeTab(ctx, { id: 'student', kind: 'student', title: 'Student' })
   expect(openTab).not.toHaveBeenCalled()
   mounted.set('one'); vi.runAllTimers()
   expect(openTab).toHaveBeenCalledExactlyOnceWith('student')

@@ -65,6 +65,7 @@ const MAX_TOTAL_BYTES = 33_554_432
  * @param prior - supplied preserved versions; omitted reads use verified observed-version backups for cold frozen-content checks.
  * @param nativeSources - independently resolved consumed input observations, empty for the read-only CLI.
  * @param openmaicSources - independently authorized original official submissions and grading.
+ * @param options - optional clock timestamp and additional plan day to read alongside today and recent plans.
  * @returns validated facts or an explicit incomplete, invalid or changing result.
  */
 export async function readWorkspace(fs: StudyFiles, signal: AbortSignal, prior?: readonly { path: string; file: OfficialFile }[], nativeSources: readonly NativeInputObservation[] = [], openmaicSources: readonly OpenmaicInputObservation[] = [], options: { now?: number; planDay?: string } = {}): Promise<WorkspaceRead> {

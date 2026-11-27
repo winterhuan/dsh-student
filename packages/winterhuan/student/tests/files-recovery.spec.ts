@@ -91,7 +91,7 @@ it('requires the confirmed same-child identity for legacy terms instead of deriv
   const learnerId = termSettingsSchema.shape.learnerId.unwrap().parse('same-child')
   const plan = describeMigration(read, backup, [], learnerId)
   expect(plan).toMatchObject({ status: 'blocked', outputs: [], issues: [expect.objectContaining({ rule: 'original-byte-backup' })] })
-  await writeFile(join(cwd, '.study/openmaic-lessons.json'), JSON.stringify({ format: 2, lessons: [] }))
+  await writeFile(join(cwd, '.study/openmaic-lessons.json'), JSON.stringify({ format: 3, lessons: [] }))
   expect(describeMigration(read, backup, [], learnerId, { backups: [], lessons: await readLessonFile(fs, signal) })).toMatchObject({ status: 'blocked', outputs: [], issues: [expect.objectContaining({ rule: 'migration-read' })] })
   const confirmed = describeMigration(read, backup, [], learnerId, noLessons)
   expect(confirmed.status).toBe('ready')

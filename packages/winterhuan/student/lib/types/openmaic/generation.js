@@ -4,8 +4,8 @@ import { z } from 'zod';
 import { boundedOpenmaicOperation, OpenmaicError } from "./connection.js";
 const id = z.string().min(1).max(200);
 /** Generation and continuation input with stable Student activity ownership. */
-export const generationRequestSchema = z.object({ learnerId: id, termId: id, blockId: id, jobId: id.optional(), requirement: z.string().trim().min(1).max(8000).optional(), language: z.enum(['zh-CN', 'en-US']).optional(), enableWebSearch: z.boolean().optional(), enableImageGeneration: z.boolean().optional(), enableVideoGeneration: z.boolean().optional(), enableTTS: z.boolean().optional(), agentMode: z.enum(['default', 'generate']).optional() }).strict();
-const jobSchema = z.object({ learnerId: id, termId: id, blockId: id, learnerKey: id, baseUrl: z.string(), requirementHash: z.string(), status: z.enum(['starting', 'generating', 'ready', 'failed']), jobId: id.optional(), pollUrl: z.string().optional(), classroomId: id.optional(), url: z.string().optional() }).strict();
+export const generationRequestSchema = z.object({ learnerId: id, termId: id, blockId: id, reviewId: z.string().regex(/^[a-f0-9]{64}$/u).optional(), jobId: id.optional(), requirement: z.string().trim().min(1).max(8000).optional(), language: z.enum(['zh-CN', 'en-US']).optional(), enableWebSearch: z.boolean().optional(), enableImageGeneration: z.boolean().optional(), enableVideoGeneration: z.boolean().optional(), enableTTS: z.boolean().optional(), agentMode: z.enum(['default', 'generate']).optional() }).strict();
+const jobSchema = z.object({ learnerId: id, termId: id, blockId: id, reviewId: z.string().regex(/^[a-f0-9]{64}$/u).optional(), learnerKey: id, baseUrl: z.string(), requirementHash: z.string(), status: z.enum(['starting', 'generating', 'ready', 'failed']), jobId: id.optional(), pollUrl: z.string().optional(), classroomId: id.optional(), url: z.string().optional() }).strict();
 function object(value) { const parsed = z.record(z.string(), z.unknown()).safeParse(value); if (!parsed.success)
     throw new OpenmaicError('invalid-response'); return parsed.data; }
 function pollingUrl(value, jobId, base) {
@@ -39,6 +39,17 @@ export class OpenmaicGeneration {
         const request = generationRequestSchema.parse(input);
         return boundedOpenmaicOperation(signal, this.connection.operationTimeoutMs, signal => this.resume(request, signal));
     }
+    /** Poll only a previously retained job; this entry can never submit a classroom.
+     * @param input - Original academic owner and optional job ID.
+     * @param signal - Cancels the status read.
+     * @returns Existing generation metadata or a recoverable unknown/missing error.
+     */
+    async poll(input, signal) {
+        const saved = jobSchema.safeParse(await this.jobs.load(input));
+        if (!saved.success || !saved.data.jobId)
+            throw new OpenmaicError('generation-unknown');
+        return this.run({ ...input, jobId: input.jobId ?? saved.data.jobId }, signal);
+    }
     async resume(request, signal) {
         const key = JSON.stringify([request.learnerId, request.termId, request.blockId]);
         const existing = this.running.get(key);
@@ -66,6 +77,14 @@ export class OpenmaicGeneration {
         const job = jobSchema.safeParse(await this.jobs.load(owner));
         return job.success && job.data.status === 'ready' && job.data.classroomId === classroomId && job.data.baseUrl === identity.baseUrl && job.data.learnerKey === identity.learnerKey && job.data.learnerId === owner.learnerId && job.data.termId === owner.termId && job.data.blockId === owner.blockId;
     }
+    /** Read the protected pre-generation review identity for this original job.
+     * @param owner - Original learner, term and block.
+     * @returns The review that authorized submission, absent for legacy jobs.
+     */
+    async reviewedPlan(owner) {
+        const job = jobSchema.safeParse(await this.jobs.load(owner));
+        return job.success ? job.data.reviewId : undefined;
+    }
     async perform(request, signal) {
         const identity = await this.connection.identity(signal);
         const saved = await this.jobs.load(request);
@@ -88,10 +107,10 @@ export class OpenmaicGeneration {
                 throw new OpenmaicError('identity-changed');
             if (!request.requirement)
                 throw new OpenmaicError('invalid-response');
-            job = { learnerId: request.learnerId, termId: request.termId, blockId: request.blockId, learnerKey: identity.learnerKey, baseUrl: identity.baseUrl, requirementHash: createHash('sha256').update(request.requirement).digest('hex'), status: 'starting' };
+            job = { learnerId: request.learnerId, termId: request.termId, blockId: request.blockId, learnerKey: identity.learnerKey, baseUrl: identity.baseUrl, ...(request.reviewId ? { reviewId: request.reviewId } : {}), requirementHash: createHash('sha256').update(request.requirement).digest('hex'), status: 'starting' };
             await this.connection.prepareGeneration(signal);
             await this.jobs.save(request, job);
-            const { learnerId: _learner, termId: _term, blockId: _block, jobId: _job, ...body } = request;
+            const { learnerId: _learner, termId: _term, blockId: _block, jobId: _job, reviewId: _review, ...body } = request;
             const submitted = object(await this.connection.request('/api/generate-classroom', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }, signal));
             if (typeof submitted.jobId !== 'string' || !submitted.jobId || typeof submitted.pollUrl !== 'string')
                 throw new OpenmaicError('invalid-response');

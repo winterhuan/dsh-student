@@ -4,10 +4,10 @@ import { z } from 'zod'
 import { boundedOpenmaicOperation, OpenmaicConnection, OpenmaicError } from './connection.ts'
 const id = z.string().min(1).max(200)
 /** Generation and continuation input with stable Student activity ownership. */
-export const generationRequestSchema = z.object({ learnerId: id, termId: id, blockId: id, jobId: id.optional(), requirement: z.string().trim().min(1).max(8000).optional(), language: z.enum(['zh-CN', 'en-US']).optional(), enableWebSearch: z.boolean().optional(), enableImageGeneration: z.boolean().optional(), enableVideoGeneration: z.boolean().optional(), enableTTS: z.boolean().optional(), agentMode: z.enum(['default', 'generate']).optional() }).strict()
+export const generationRequestSchema = z.object({ learnerId: id, termId: id, blockId: id, reviewId: z.string().regex(/^[a-f0-9]{64}$/u).optional(), jobId: id.optional(), requirement: z.string().trim().min(1).max(8000).optional(), language: z.enum(['zh-CN', 'en-US']).optional(), enableWebSearch: z.boolean().optional(), enableImageGeneration: z.boolean().optional(), enableVideoGeneration: z.boolean().optional(), enableTTS: z.boolean().optional(), agentMode: z.enum(['default', 'generate']).optional() }).strict()
 /** Generation input; a continuation does not need to resend the requirement. */
 export type OpenmaicGenerationRequest = z.infer<typeof generationRequestSchema>
-const jobSchema = z.object({ learnerId: id, termId: id, blockId: id, learnerKey: id, baseUrl: z.string(), requirementHash: z.string(), status: z.enum(['starting', 'generating', 'ready', 'failed']), jobId: id.optional(), pollUrl: z.string().optional(), classroomId: id.optional(), url: z.string().optional() }).strict()
+const jobSchema = z.object({ learnerId: id, termId: id, blockId: id, reviewId: z.string().regex(/^[a-f0-9]{64}$/u).optional(), learnerKey: id, baseUrl: z.string(), requirementHash: z.string(), status: z.enum(['starting', 'generating', 'ready', 'failed']), jobId: id.optional(), pollUrl: z.string().optional(), classroomId: id.optional(), url: z.string().optional() }).strict()
 /** Protected Host transport storage; values never count as learning evidence. */
 export interface OpenmaicJobStore { load(owner: OpenmaicGenerationRequest): Promise<unknown>; save(owner: OpenmaicGenerationRequest, value: unknown): Promise<void> }
 /** Safe generation metadata ready for native tool logging and agent-authored lesson files. */
@@ -33,6 +33,16 @@ export class OpenmaicGeneration {
     const request = generationRequestSchema.parse(input)
     return boundedOpenmaicOperation(signal, this.connection.operationTimeoutMs, signal => this.resume(request, signal))
   }
+  /** Poll only a previously retained job; this entry can never submit a classroom.
+   * @param input - Original academic owner and optional job ID.
+   * @param signal - Cancels the status read.
+   * @returns Existing generation metadata or a recoverable unknown/missing error.
+   */
+  async poll(input: Pick<OpenmaicGenerationRequest, 'learnerId' | 'termId' | 'blockId' | 'jobId'>, signal: AbortSignal): Promise<OpenmaicGenerationResult> {
+    const saved = jobSchema.safeParse(await this.jobs.load(input))
+    if (!saved.success || !saved.data.jobId) throw new OpenmaicError('generation-unknown')
+    return this.run({ ...input, jobId: input.jobId ?? saved.data.jobId }, signal)
+  }
   private async resume(request: OpenmaicGenerationRequest, signal: AbortSignal): Promise<OpenmaicGenerationResult> {
     const key = JSON.stringify([request.learnerId, request.termId, request.blockId])
     const existing = this.running.get(key)
@@ -53,6 +63,14 @@ export class OpenmaicGeneration {
     const job = jobSchema.safeParse(await this.jobs.load(owner))
     return job.success && job.data.status === 'ready' && job.data.classroomId === classroomId && job.data.baseUrl === identity.baseUrl && job.data.learnerKey === identity.learnerKey && job.data.learnerId === owner.learnerId && job.data.termId === owner.termId && job.data.blockId === owner.blockId
   }
+  /** Read the protected pre-generation review identity for this original job.
+   * @param owner - Original learner, term and block.
+   * @returns The review that authorized submission, absent for legacy jobs.
+   */
+  async reviewedPlan(owner: Pick<OpenmaicGenerationRequest, 'learnerId' | 'termId' | 'blockId'>): Promise<string | undefined> {
+    const job = jobSchema.safeParse(await this.jobs.load(owner))
+    return job.success ? job.data.reviewId : undefined
+  }
   private async perform(request: OpenmaicGenerationRequest, signal: AbortSignal): Promise<OpenmaicGenerationResult> {
     const identity = await this.connection.identity(signal)
     const saved = await this.jobs.load(request)
@@ -68,10 +86,10 @@ export class OpenmaicGeneration {
     } else {
       if (request.jobId) throw new OpenmaicError('identity-changed')
       if (!request.requirement) throw new OpenmaicError('invalid-response')
-      job = { learnerId: request.learnerId, termId: request.termId, blockId: request.blockId, learnerKey: identity.learnerKey, baseUrl: identity.baseUrl, requirementHash: createHash('sha256').update(request.requirement).digest('hex'), status: 'starting' }
+      job = { learnerId: request.learnerId, termId: request.termId, blockId: request.blockId, learnerKey: identity.learnerKey, baseUrl: identity.baseUrl, ...(request.reviewId ? { reviewId: request.reviewId } : {}), requirementHash: createHash('sha256').update(request.requirement).digest('hex'), status: 'starting' }
       await this.connection.prepareGeneration(signal)
       await this.jobs.save(request, job)
-      const { learnerId: _learner, termId: _term, blockId: _block, jobId: _job, ...body } = request
+      const { learnerId: _learner, termId: _term, blockId: _block, jobId: _job, reviewId: _review, ...body } = request
       const submitted = object(await this.connection.request('/api/generate-classroom', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }, signal))
       if (typeof submitted.jobId !== 'string' || !submitted.jobId || typeof submitted.pollUrl !== 'string') throw new OpenmaicError('invalid-response')
       const poll = pollingUrl(submitted.pollUrl, submitted.jobId, identity.baseUrl)

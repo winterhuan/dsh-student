@@ -21,7 +21,7 @@ export async function readLessonFile(fs, signal) {
             const raw = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
             const parsed = lessonFileSchema.safeParse(raw);
             if (!parsed.success)
-                return { status: typeof raw === 'object' && raw !== null && 'format' in raw && typeof raw.format === 'number' && raw.format > 1 ? 'future-format' : 'invalid', observation: before, bytes, validRows: parseInteractiveLessons(new TextDecoder().decode(bytes)).lessons,
+                return { status: typeof raw === 'object' && raw !== null && 'format' in raw && typeof raw.format === 'number' && raw.format > 2 ? 'future-format' : 'invalid', observation: before, bytes, validRows: parseInteractiveLessons(new TextDecoder().decode(bytes)).lessons,
                     issues: parsed.error.issues.slice(0, 100).map(issue => ({ path: OPENMAIC_LESSONS_PATH, field: issue.path.join('.'), rule: 'lesson-file', correction: issue.message })) };
             return { status: 'valid', file: parsed.data, observation: before, bytes, issues: [] };
         }

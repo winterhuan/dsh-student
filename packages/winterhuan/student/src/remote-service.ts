@@ -1,3 +1,6 @@
+import { canonical } from './learning/shared.ts'
+import { panelIntentSchema, panelDisplay } from './panel-intent.ts'
+import type { StudentPanelRequest, StudentPanelReply } from './types.ts'
 /** Student Remote methods retain native Session authorization and shared official-file ownership. */
 import { createHash } from 'node:crypto'
 import { setTimeout } from 'node:timers/promises'
@@ -6,7 +9,8 @@ import z from '@deepseek-ai/schemastery'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { z as jsonSchema } from 'zod'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+import type {} from '@deepseek-ai/dsh-attachment'
+import { Remote, RemoteError, TypertRemoteService, principalOf, type Principal } from '@deepseek-ai/dsh-typert-protocol'
 import type {} from '@deepseek-ai/dsh-typert-registry'
 import type {} from '@deepseek-ai/dsh-api-gateway'
 import type {} from '@deepseek-ai/dsh-api-remote-access'
@@ -22,7 +26,8 @@ import type { StudentTransportConfig, StudentQueryRequest, StudentQueryResult, S
 
 declare module '@deepseek-ai/dsh-llm' {
   interface MessageSourceMap {
-    /** Student-owned system intent; never a child's answer or native answer date. */
+    /** Authenticated panel input; source metadata is intent, not verified learning evidence. */
+    'student-panel': { kind: 'user'; rpcId: string; principal?: Principal; studentRequestHash?: string; studentIntent: import('./panel-intent.ts').PanelIntent }
     'student-sync': { kind: 'student-sync'; sessionId: string; lessonId: string; learnerId: string; termId: string; blockId: string; trigger: 'return' | 'continue' | 'resume' }
   }
 }
@@ -41,6 +46,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
 }
 /** Host owner for the generated student Remote namespace. */
 export class StudentRemote extends TypertRemoteService {
+  private readonly panelIntents = new WeakMap<Agent, Map<string, { hash: string; pending: Promise<StudentPanelReply> }>>()
   private readonly feedbackIntents = new WeakMap<Agent, Map<string, { messageId?: string }>>()
   static inject = ['typert', 'sessionQuery', 'agents', 'remoteAccess']
   static Config: z<StudentTransportConfig> = z.object({ refreshIntervalMs: z.number().step(1).min(1).max(2_147_483_647).default(3000), maxWireBytes: z.number().step(1).min(1024).default(1_048_576) })
@@ -49,6 +55,50 @@ export class StudentRemote extends TypertRemoteService {
    * @param config - validated refresh interval and complete wire-response limit.
    */
   constructor(ctx: Context, private readonly config: StudentTransportConfig) { super(ctx, 'student') }
+
+  /**
+   * Admit a compact panel intent as an ordinary native user message.
+   * @param sessionId - Authorized main Session.
+   * @param request - Stable request identity and bounded panel intent.
+   * @param signal - Cancellation before admission.
+   * @returns Admission only; the agent authors and validates business files.
+   */
+  @Remote({ resources: { session: sessionId => sessionId } })
+  async submitIntent(sessionId: StudentSessionId, request: StudentPanelRequest, signal: AbortSignal): Promise<StudentPanelReply> {
+    signal.throwIfAborted()
+    const intent = panelIntentSchema.parse(request.intent)
+    if (intent.nativeSessionId !== sessionId || !/^[a-zA-Z0-9_-]{1,160}$/u.test(request.requestId) || Buffer.byteLength(JSON.stringify(intent)) > 16_384) throw new Error('Invalid Student panel request.')
+    const photo = request.photo === undefined ? undefined : jsonSchema.object({ mediaType: jsonSchema.enum(['image/png', 'image/jpeg', 'image/webp']), data: jsonSchema.string().min(1).max(20_971_520), name: jsonSchema.string().min(1).max(200) }).strict().parse(request.photo)
+    if (!this.ctx.agents.get(sessionId)) await this.ctx.typert.lookups.get('agent')?.resolve(sessionId)
+    const agent = await this.mainAgent(sessionId, signal)
+    const hash = createHash('sha256').update(canonical({ intent, photo: photo ?? null })).digest('hex')
+    const admitted = () => {
+      const prior = agent.session.snapshotEvents().flatMap(event => event.type === 'agent/inbox/spliced' ? event.data.inserted : []).find(message => message.source.kind === 'user' && 'rpcId' in message.source && message.source.rpcId === request.requestId)
+      if (!prior) return false
+      if (!('studentIntent' in prior.source) || prior.source.studentRequestHash !== hash) throw new Error('Student request identity already belongs to a different input.')
+      return true
+    }
+    if (admitted()) return { accepted: true }
+    let requests = this.panelIntents.get(agent)
+    if (!requests) { requests = new Map(); this.panelIntents.set(agent, requests) }
+    const existing = requests.get(request.requestId)
+    if (existing) { if (existing.hash !== hash) throw new Error('Student request identity already belongs to a different input.'); return existing.pending }
+    const principal = principalOf(this.ctx.invocation)
+    const pending = (async (): Promise<StudentPanelReply> => {
+      if (photo) {
+        if (!this.ctx.get('attachments')) throw new Error('Native image admission is unavailable in this session.')
+        const current = agent.model.current()
+        if (current) { const model = await this.ctx.llm.resolveModelInfo(current.provider, current.model); if (model.inputModalities && !model.inputModalities.includes('image')) throw new Error('The current model cannot read images.') }
+      }
+      const content = photo ? await this.ctx.attachments.admitPromptContent([{ type: 'text', text: panelDisplay(intent) }, { type: 'image', ...photo }]) : [{ type: 'text' as const, text: panelDisplay(intent) }]
+      signal.throwIfAborted()
+      if (this.ctx.agents.get(sessionId) !== agent) throw new Error('The original session was closed during admission.')
+      if (!admitted()) agent.followup(createUserMessage({ source: { kind: 'user', rpcId: request.requestId, studentRequestHash: hash, studentIntent: intent, ...(principal ? { principal } : {}) }, content }))
+      return { accepted: true }
+    })()
+    requests.set(request.requestId, { hash, pending })
+    try { return await pending } finally { requests.delete(request.requestId) }
+  }
 
   /**
    * Read a shared validated Student projection without activating an absent Agent.
@@ -66,7 +116,7 @@ export class StudentRemote extends TypertRemoteService {
     let query: WorkspaceQueryResult
     if (request.kind === 'dashboard') {
       const page = queryWorkspaceDashboard(read, now, request.options)
-      query = page.data ? { ...page, data: { ...page.data, interactiveLessons: await readInteractiveLessons(agent, signal, page.data.study?.openmaic.savedBaseUrl) } } : page
+      query = page.data ? { ...page, data: { ...page.data, interactiveLessons: await readInteractiveLessons(agent, signal, page.data.study?.openmaic.savedBaseUrl, read.workspace) } } : page
     } else query = queryWorkspace(read, request, now)
     const { observations: _observations, ...view } = native
     const { data: _data, ...facts } = query

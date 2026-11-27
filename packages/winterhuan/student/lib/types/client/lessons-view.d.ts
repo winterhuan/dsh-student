@@ -1,3 +1,5 @@
+import { type UnitCourse } from '../courses.ts';
+import type { LessonGenerationStatus } from '../openmaic/playback.ts';
 import type { Dashboard } from '../dashboard.ts';
 import type { Translate } from './locales.ts';
 type Lesson = Dashboard['interactiveLessons']['lessons'][number];
@@ -9,7 +11,12 @@ export declare function lessonsForSubject<T extends {
     subject?: 'chinese' | 'math' | 'english' | undefined;
 }>(lessons: readonly T[], subject: 'chinese' | 'math' | 'english'): T[];
 /** Recent OpenMAIC lessons: open or copy the URL, and ask the tutor to generate, retry or review. */
-export declare function LessonsPanel({ lessons, error, disabled, running, t, onGenerate, onOpen, onQuery, onRetry, onReview }: {
+export declare function LessonsPanel({ lessons, error, disabled, running, t, onGenerate, onOpen, onQuery, onRetry, onReview, courses, miniLessons, progress, onCourse, onPrepare }: {
+    courses?: UnitCourse[];
+    miniLessons?: NonNullable<Dashboard['interactiveLessons']['miniLessons']>;
+    progress?: Record<string, LessonGenerationStatus>;
+    onCourse?: (action: string, courseId?: string, sectionId?: string) => void;
+    onPrepare?: (lessonId: string) => void;
     lessons: Lesson[];
     error?: string;
     disabled: boolean;

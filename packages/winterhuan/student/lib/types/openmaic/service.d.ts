@@ -3,6 +3,7 @@ import z from '@deepseek-ai/schemastery';
 import { OpenmaicConnection, type OpenmaicConnectionConfig } from './connection.ts';
 import { OpenmaicBrowser } from './browser.ts';
 import { OpenmaicFeedback } from './feedback.ts';
+import { CourseReviewer } from './review.ts';
 import { OpenmaicGeneration } from './generation.ts';
 declare module '@deepseek-ai/cordis' {
     interface Context {
@@ -23,6 +24,8 @@ export declare class StudentOpenmaic extends Service {
     readonly connection: OpenmaicConnection;
     /** Dedicated Chrome profile and process owned by this service. */
     readonly browser: OpenmaicBrowser;
+    /** Protected content review receipts; academic quality remains agent-authored. */
+    readonly reviewer: CourseReviewer;
     private readonly feedbackReaders;
     private readonly generations;
     constructor(ctx: Context, config: StudentOpenmaicConfig);

@@ -106,9 +106,9 @@ export declare const learningRoundSchema: z.ZodObject<{
             id: z.ZodString;
             description: z.ZodString;
             modality: z.ZodEnum<{
-                listening: "listening";
                 written: "written";
                 oral: "oral";
+                listening: "listening";
                 audiovisual: "audiovisual";
                 performed: "performed";
             }>;
@@ -151,9 +151,9 @@ export declare const archiveEvidenceReferenceSchema: z.ZodObject<{
         id: z.ZodString;
         description: z.ZodString;
         modality: z.ZodEnum<{
-            listening: "listening";
             written: "written";
             oral: "oral";
+            listening: "listening";
             audiovisual: "audiovisual";
             performed: "performed";
         }>;
@@ -183,9 +183,9 @@ export declare const questionSchema: z.ZodObject<{
             id: z.ZodString;
             description: z.ZodString;
             modality: z.ZodEnum<{
-                listening: "listening";
                 written: "written";
                 oral: "oral";
+                listening: "listening";
                 audiovisual: "audiovisual";
                 performed: "performed";
             }>;
@@ -628,6 +628,7 @@ export declare const assessmentSchema: z.ZodObject<{
     userConfirmation: z.ZodOptional<z.ZodString>;
     errorType: z.ZodOptional<z.ZodEnum<{
         pattern: "pattern";
+        listening: "listening";
         "place-value": "place-value";
         "carry-borrow": "carry-borrow";
         "operation-choice": "operation-choice";
@@ -645,7 +646,6 @@ export declare const assessmentSchema: z.ZodObject<{
         order: "order";
         "expression-incomplete": "expression-incomplete";
         punctuation: "punctuation";
-        listening: "listening";
         spelling: "spelling";
         "word-form": "word-form";
         "sentence-pattern": "sentence-pattern";
@@ -781,9 +781,9 @@ export declare const termSettingsSchema: z.ZodObject<{
             id: z.ZodString;
             description: z.ZodString;
             modality: z.ZodEnum<{
-                listening: "listening";
                 written: "written";
                 oral: "oral";
+                listening: "listening";
                 audiovisual: "audiovisual";
                 performed: "performed";
             }>;
@@ -815,9 +815,9 @@ export declare const termSettingsSchema: z.ZodObject<{
             id: z.ZodString;
             description: z.ZodString;
             modality: z.ZodEnum<{
-                listening: "listening";
                 written: "written";
                 oral: "oral";
+                listening: "listening";
                 audiovisual: "audiovisual";
                 performed: "performed";
             }>;
@@ -830,6 +830,12 @@ export declare const termSettingsSchema: z.ZodObject<{
             dueAt: z.ZodNumber;
             independentDays: z.ZodArray<z.ZodString>;
         }, z.core.$strict>>;
+    }, z.core.$strict>>>;
+    retiredEmptyBlocks: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        id: z.ZodPipe<z.ZodString, z.ZodTransform<BlockId, string>>;
+        backupPath: z.ZodString;
+        sha256: z.ZodString;
+        reason: z.ZodString;
     }, z.core.$strict>>>;
     migration: z.ZodOptional<z.ZodObject<{
         sourcePath: z.ZodString;
@@ -850,8 +856,8 @@ export declare const blockSchema: z.ZodObject<{
         english: "english";
     }>;
     mode: z.ZodEnum<{
-        review: "review";
         foundation: "foundation";
+        review: "review";
         school: "school";
         explore: "explore";
         diagnose: "diagnose";
@@ -947,9 +953,9 @@ export declare const blockSchema: z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
-                    listening: "listening";
                     written: "written";
                     oral: "oral";
+                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -1371,9 +1377,9 @@ export declare const blockSchema: z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
-                    listening: "listening";
                     written: "written";
                     oral: "oral";
+                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -1447,6 +1453,7 @@ export declare const blockSchema: z.ZodObject<{
         userConfirmation: z.ZodOptional<z.ZodString>;
         errorType: z.ZodOptional<z.ZodEnum<{
             pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
             "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
@@ -1464,7 +1471,6 @@ export declare const blockSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -1527,9 +1533,9 @@ export declare const blockSchema: z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
-                    listening: "listening";
                     written: "written";
                     oral: "oral";
+                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -1651,9 +1657,9 @@ export declare const worksheetSchema: z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
-                    listening: "listening";
                     written: "written";
                     oral: "oral";
+                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -2094,6 +2100,7 @@ export declare const worksheetSchema: z.ZodObject<{
         userConfirmation: z.ZodOptional<z.ZodString>;
         errorType: z.ZodOptional<z.ZodEnum<{
             pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
             "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
@@ -2111,7 +2118,6 @@ export declare const worksheetSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -2274,24 +2280,29 @@ export declare const collectionsSchema: z.ZodObject<{
     }, z.core.$strict>>>;
     mistakes: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
+        explanation: z.ZodString;
+        source: z.ZodOptional<z.ZodObject<{
+            worksheetId: z.ZodString;
+            itemId: z.ZodString;
+        }, z.core.$strict>>;
         subject: z.ZodEnum<{
             chinese: "chinese";
             math: "math";
             english: "english";
         }>;
+        objectiveId: z.ZodOptional<z.ZodString>;
         materialId: z.ZodOptional<z.ZodString>;
         confirmedAt: z.ZodOptional<z.ZodNumber>;
         topic: z.ZodString;
         prompt: z.ZodString;
         answerEvidence: z.ZodString;
-        objectiveId: z.ZodOptional<z.ZodString>;
         learnerAnswer: z.ZodString;
         correction: z.ZodString;
-        explanation: z.ZodString;
         imagePath: z.ZodOptional<z.ZodString>;
         uncertainties: z.ZodString;
         errorType: z.ZodOptional<z.ZodEnum<{
             pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
             "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
@@ -2309,7 +2320,6 @@ export declare const collectionsSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -2325,19 +2335,15 @@ export declare const collectionsSchema: z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
-                    listening: "listening";
                     written: "written";
                     oral: "oral";
+                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
                 numberMax: z.ZodOptional<z.ZodNumber>;
                 vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
             }, z.core.$strict>;
-        }, z.core.$strict>>;
-        source: z.ZodOptional<z.ZodObject<{
-            worksheetId: z.ZodString;
-            itemId: z.ZodString;
         }, z.core.$strict>>;
     }, z.core.$strict>>;
     exercises: z.ZodDefault<z.ZodArray<z.ZodObject<{
@@ -2642,6 +2648,7 @@ export declare const collectionsSchema: z.ZodObject<{
         answerEvidence: z.ZodString;
         errorType: z.ZodOptional<z.ZodEnum<{
             pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
             "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
@@ -2659,7 +2666,6 @@ export declare const collectionsSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -2708,6 +2714,7 @@ export declare const collectionsSchema: z.ZodObject<{
         }>;
         errorTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
             pattern: "pattern";
+            listening: "listening";
             "place-value": "place-value";
             "carry-borrow": "carry-borrow";
             "operation-choice": "operation-choice";
@@ -2725,7 +2732,6 @@ export declare const collectionsSchema: z.ZodObject<{
             order: "order";
             "expression-incomplete": "expression-incomplete";
             punctuation: "punctuation";
-            listening: "listening";
             spelling: "spelling";
             "word-form": "word-form";
             "sentence-pattern": "sentence-pattern";
@@ -2785,6 +2791,7 @@ export declare const collectionsSchema: z.ZodObject<{
     termId: z.ZodPipe<z.ZodString, z.ZodTransform<TermId, string>>;
     learnerId: z.ZodOptional<z.ZodPipe<z.ZodString, z.ZodTransform<LearnerId, string>>>;
 }, z.core.$strict>;
+/** One daily learning arrangement with activity, evidence and carry-forward references. */
 export declare const dailyTaskSchema: z.ZodObject<{
     id: z.ZodString;
     subject: z.ZodEnum<{
@@ -2794,19 +2801,19 @@ export declare const dailyTaskSchema: z.ZodObject<{
     }>;
     purpose: z.ZodEnum<{
         teaching: "teaching";
+        learning: "learning";
         review: "review";
         resume: "resume";
         diagnostic: "diagnostic";
-        learning: "learning";
     }>;
     goalId: z.ZodOptional<z.ZodString>;
     scope: z.ZodOptional<z.ZodObject<{
         id: z.ZodString;
         description: z.ZodString;
         modality: z.ZodEnum<{
-            listening: "listening";
             written: "written";
             oral: "oral";
+            listening: "listening";
             audiovisual: "audiovisual";
             performed: "performed";
         }>;
@@ -2831,8 +2838,8 @@ export declare const dailyTaskSchema: z.ZodObject<{
     }>;
     state: z.ZodEnum<{
         ready: "ready";
-        active: "active";
         paused: "paused";
+        active: "active";
         completed: "completed";
         deferred: "deferred";
         skipped: "skipped";
@@ -2881,10 +2888,10 @@ export declare const dailyPlanSchema: z.ZodObject<{
         english: "english";
     }>>;
     state: z.ZodEnum<{
-        stopped: "stopped";
         ready: "ready";
-        active: "active";
         paused: "paused";
+        stopped: "stopped";
+        active: "active";
         completed: "completed";
     }>;
     completedAt: z.ZodOptional<z.ZodNumber>;
@@ -2897,19 +2904,19 @@ export declare const dailyPlanSchema: z.ZodObject<{
         }>;
         purpose: z.ZodEnum<{
             teaching: "teaching";
+            learning: "learning";
             review: "review";
             resume: "resume";
             diagnostic: "diagnostic";
-            learning: "learning";
         }>;
         goalId: z.ZodOptional<z.ZodString>;
         scope: z.ZodOptional<z.ZodObject<{
             id: z.ZodString;
             description: z.ZodString;
             modality: z.ZodEnum<{
-                listening: "listening";
                 written: "written";
                 oral: "oral";
+                listening: "listening";
                 audiovisual: "audiovisual";
                 performed: "performed";
             }>;
@@ -2934,8 +2941,8 @@ export declare const dailyPlanSchema: z.ZodObject<{
         }>;
         state: z.ZodEnum<{
             ready: "ready";
-            active: "active";
             paused: "paused";
+            active: "active";
             completed: "completed";
             deferred: "deferred";
             skipped: "skipped";
@@ -2990,6 +2997,7 @@ export declare const dailyPlanSchema: z.ZodObject<{
 }, z.core.$strict>;
 /** Validated plan and task arrangements, separate from capability evidence. */
 export type DailyPlan = z.infer<typeof dailyPlanSchema>;
+/** Validated daily task arrangement; referenced evidence owns learning outcomes. */
 export type DailyTask = z.infer<typeof dailyTaskSchema>;
 /** Machine-readable file definitions shared by CLI, application reads and manual saves. */
 export declare const officialFileSchemas: {
@@ -3083,9 +3091,9 @@ export declare const officialFileSchemas: {
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
-                    listening: "listening";
                     written: "written";
                     oral: "oral";
+                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -3117,9 +3125,9 @@ export declare const officialFileSchemas: {
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
-                    listening: "listening";
                     written: "written";
                     oral: "oral";
+                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -3132,6 +3140,12 @@ export declare const officialFileSchemas: {
                 dueAt: z.ZodNumber;
                 independentDays: z.ZodArray<z.ZodString>;
             }, z.core.$strict>>;
+        }, z.core.$strict>>>;
+        retiredEmptyBlocks: z.ZodOptional<z.ZodArray<z.ZodObject<{
+            id: z.ZodPipe<z.ZodString, z.ZodTransform<BlockId, string>>;
+            backupPath: z.ZodString;
+            sha256: z.ZodString;
+            reason: z.ZodString;
         }, z.core.$strict>>>;
         migration: z.ZodOptional<z.ZodObject<{
             sourcePath: z.ZodString;
@@ -3151,8 +3165,8 @@ export declare const officialFileSchemas: {
             english: "english";
         }>;
         mode: z.ZodEnum<{
-            review: "review";
             foundation: "foundation";
+            review: "review";
             school: "school";
             explore: "explore";
             diagnose: "diagnose";
@@ -3248,9 +3262,9 @@ export declare const officialFileSchemas: {
                     id: z.ZodString;
                     description: z.ZodString;
                     modality: z.ZodEnum<{
-                        listening: "listening";
                         written: "written";
                         oral: "oral";
+                        listening: "listening";
                         audiovisual: "audiovisual";
                         performed: "performed";
                     }>;
@@ -3672,9 +3686,9 @@ export declare const officialFileSchemas: {
                     id: z.ZodString;
                     description: z.ZodString;
                     modality: z.ZodEnum<{
-                        listening: "listening";
                         written: "written";
                         oral: "oral";
+                        listening: "listening";
                         audiovisual: "audiovisual";
                         performed: "performed";
                     }>;
@@ -3748,6 +3762,7 @@ export declare const officialFileSchemas: {
             userConfirmation: z.ZodOptional<z.ZodString>;
             errorType: z.ZodOptional<z.ZodEnum<{
                 pattern: "pattern";
+                listening: "listening";
                 "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
@@ -3765,7 +3780,6 @@ export declare const officialFileSchemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
-                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -3828,9 +3842,9 @@ export declare const officialFileSchemas: {
                     id: z.ZodString;
                     description: z.ZodString;
                     modality: z.ZodEnum<{
-                        listening: "listening";
                         written: "written";
                         oral: "oral";
+                        listening: "listening";
                         audiovisual: "audiovisual";
                         performed: "performed";
                     }>;
@@ -3951,9 +3965,9 @@ export declare const officialFileSchemas: {
                     id: z.ZodString;
                     description: z.ZodString;
                     modality: z.ZodEnum<{
-                        listening: "listening";
                         written: "written";
                         oral: "oral";
+                        listening: "listening";
                         audiovisual: "audiovisual";
                         performed: "performed";
                     }>;
@@ -4394,6 +4408,7 @@ export declare const officialFileSchemas: {
             userConfirmation: z.ZodOptional<z.ZodString>;
             errorType: z.ZodOptional<z.ZodEnum<{
                 pattern: "pattern";
+                listening: "listening";
                 "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
@@ -4411,7 +4426,6 @@ export declare const officialFileSchemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
-                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -4573,24 +4587,29 @@ export declare const officialFileSchemas: {
         }, z.core.$strict>>>;
         mistakes: z.ZodArray<z.ZodObject<{
             id: z.ZodString;
+            explanation: z.ZodString;
+            source: z.ZodOptional<z.ZodObject<{
+                worksheetId: z.ZodString;
+                itemId: z.ZodString;
+            }, z.core.$strict>>;
             subject: z.ZodEnum<{
                 chinese: "chinese";
                 math: "math";
                 english: "english";
             }>;
+            objectiveId: z.ZodOptional<z.ZodString>;
             materialId: z.ZodOptional<z.ZodString>;
             confirmedAt: z.ZodOptional<z.ZodNumber>;
             topic: z.ZodString;
             prompt: z.ZodString;
             answerEvidence: z.ZodString;
-            objectiveId: z.ZodOptional<z.ZodString>;
             learnerAnswer: z.ZodString;
             correction: z.ZodString;
-            explanation: z.ZodString;
             imagePath: z.ZodOptional<z.ZodString>;
             uncertainties: z.ZodString;
             errorType: z.ZodOptional<z.ZodEnum<{
                 pattern: "pattern";
+                listening: "listening";
                 "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
@@ -4608,7 +4627,6 @@ export declare const officialFileSchemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
-                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -4624,19 +4642,15 @@ export declare const officialFileSchemas: {
                     id: z.ZodString;
                     description: z.ZodString;
                     modality: z.ZodEnum<{
-                        listening: "listening";
                         written: "written";
                         oral: "oral";
+                        listening: "listening";
                         audiovisual: "audiovisual";
                         performed: "performed";
                     }>;
                     numberMax: z.ZodOptional<z.ZodNumber>;
                     vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
                 }, z.core.$strict>;
-            }, z.core.$strict>>;
-            source: z.ZodOptional<z.ZodObject<{
-                worksheetId: z.ZodString;
-                itemId: z.ZodString;
             }, z.core.$strict>>;
         }, z.core.$strict>>;
         exercises: z.ZodDefault<z.ZodArray<z.ZodObject<{
@@ -4941,6 +4955,7 @@ export declare const officialFileSchemas: {
             answerEvidence: z.ZodString;
             errorType: z.ZodOptional<z.ZodEnum<{
                 pattern: "pattern";
+                listening: "listening";
                 "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
@@ -4958,7 +4973,6 @@ export declare const officialFileSchemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
-                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -5007,6 +5021,7 @@ export declare const officialFileSchemas: {
             }>;
             errorTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
                 pattern: "pattern";
+                listening: "listening";
                 "place-value": "place-value";
                 "carry-borrow": "carry-borrow";
                 "operation-choice": "operation-choice";
@@ -5024,7 +5039,6 @@ export declare const officialFileSchemas: {
                 order: "order";
                 "expression-incomplete": "expression-incomplete";
                 punctuation: "punctuation";
-                listening: "listening";
                 spelling: "spelling";
                 "word-form": "word-form";
                 "sentence-pattern": "sentence-pattern";
@@ -5101,10 +5115,10 @@ export declare const officialFileSchemas: {
             english: "english";
         }>>;
         state: z.ZodEnum<{
-            stopped: "stopped";
             ready: "ready";
-            active: "active";
             paused: "paused";
+            stopped: "stopped";
+            active: "active";
             completed: "completed";
         }>;
         completedAt: z.ZodOptional<z.ZodNumber>;
@@ -5117,19 +5131,19 @@ export declare const officialFileSchemas: {
             }>;
             purpose: z.ZodEnum<{
                 teaching: "teaching";
+                learning: "learning";
                 review: "review";
                 resume: "resume";
                 diagnostic: "diagnostic";
-                learning: "learning";
             }>;
             goalId: z.ZodOptional<z.ZodString>;
             scope: z.ZodOptional<z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
-                    listening: "listening";
                     written: "written";
                     oral: "oral";
+                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -5154,8 +5168,8 @@ export declare const officialFileSchemas: {
             }>;
             state: z.ZodEnum<{
                 ready: "ready";
-                active: "active";
                 paused: "paused";
+                active: "active";
                 completed: "completed";
                 deferred: "deferred";
                 skipped: "skipped";

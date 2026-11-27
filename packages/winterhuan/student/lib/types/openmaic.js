@@ -1,4 +1,6 @@
+import { validateCourseWorkspace } from "./files/course-validation.js";
 import { z } from 'zod';
+import { unitCourseSchema, miniLessonSchema, teachingPlanSchema, courseReviewSchema, courseQuestionPlanSchema, sectionReadiness } from "./courses.js";
 import { knowledgeIdSchema } from "./capabilities.js";
 import { feedbackBindingSchema, feedbackCheckpointSchema } from "./openmaic/feedback-schema.js";
 import { readLessonFile } from "./files/lessons.js";
@@ -81,7 +83,16 @@ const pollUrl = z.string().trim().max(500).refine(value => value.startsWith('/')
 /** Strict complete lesson row shared by the application and read-only CLI. */
 export const lessonSchema = z.object({
     id: lessonId,
-    status: z.enum(['generating', 'ready', 'failed']),
+    status: z.enum(['planned', 'unknown', 'generating', 'ready', 'failed']),
+    purpose: z.enum(['full', 'foundation', 'synthesis']).optional(),
+    course: z.object({ id: lessonId, sectionId: lessonId, revision: z.number().int().positive(), materialRevision: lessonId }).strict().optional(),
+    teaching: teachingPlanSchema.optional(),
+    quality: courseReviewSchema.optional(),
+    questionPlan: courseQuestionPlanSchema.optional(),
+    foundationConfirmation: z.string().trim().min(1).max(2000).optional(),
+    replacesLessonId: lessonId.optional(),
+    sourceLessonIds: z.array(lessonId).max(80).optional(),
+    activity: z.object({ state: z.enum(['not-started', 'learning', 'paused', 'ended']), blockId: lessonId, position: z.string().max(500).optional() }).strict().optional(),
     createdAt: stamp,
     updatedAt: stamp,
     title: z.string().trim().min(1).max(120),
@@ -113,6 +124,16 @@ export const lessonSchema = z.object({
         }).strict()).max(12),
     }).strict().optional(),
 }).strict().superRefine((lesson, ctx) => {
+    if (lesson.questionPlan && lesson.quality && !lesson.quality.reviewId)
+        ctx.addIssue({ code: 'custom', path: ['quality', 'reviewId'], message: 'Save the complete independent review result, including reviewId, for an approved question plan.' });
+    if (lesson.purpose && (!lesson.teaching || !lesson.learnerId || !lesson.termId || !lesson.blockId))
+        ctx.addIssue({ code: 'custom', path: ['teaching'], message: 'Full courses require a teaching plan and original ownership before submission.' });
+    if (lesson.purpose === 'foundation' && !lesson.foundationConfirmation)
+        ctx.addIssue({ code: 'custom', path: ['foundationConfirmation'], message: 'Record the explicit choice of a foundational lesson with material limitations.' });
+    if ((lesson.purpose === 'full' || lesson.purpose === 'synthesis') && !lesson.course)
+        ctx.addIssue({ code: 'custom', path: ['course'], message: 'Link the original unit section and material revision.' });
+    if (lesson.quality?.status === 'passed' && lesson.quality.questions.filter(question => question.purpose === 'assessment').length > (lesson.teaching?.maxAssessmentQuestions ?? 3))
+        ctx.addIssue({ code: 'custom', path: ['quality'], message: 'The classroom exceeds the assessment question allowance.' });
     if (lesson.feedback && (lesson.feedback.learnerId !== lesson.learnerId || lesson.feedback.termId !== lesson.termId || lesson.feedback.blockId !== lesson.blockId || !lesson.classroomId || !lesson.learnerKey))
         ctx.addIssue({ code: 'custom', path: ['feedback'], message: 'Retain the original learner, term, block and classroom source binding.' });
     if (lesson.checkpoint && lesson.checkpoint.bindingId !== lesson.feedback?.bindingId)
@@ -121,7 +142,38 @@ export const lessonSchema = z.object({
         ctx.addIssue({ code: 'custom', path: ['updatedAt'], message: 'Use lifecycle times with update after creation.' });
 });
 /** Complete independent OpenMAIC business file; validation checks all eighty possible rows before pagination. */
-export const lessonFileSchema = z.object({ format: z.literal(1), lessons: z.array(lessonSchema).max(80) }).strict().superRefine((file, ctx) => {
+export const lessonFileSchema = z.object({ format: z.union([z.literal(1), z.literal(2)]), lessons: z.array(lessonSchema).max(80), courses: z.array(unitCourseSchema).max(40).optional(), miniLessons: z.array(miniLessonSchema).max(80).optional() }).strict().superRefine((file, ctx) => {
+    if (file.format === 1 && (file.courses || file.miniLessons || file.lessons.some(lesson => lesson.purpose)))
+        ctx.addIssue({ code: 'custom', path: ['format'], message: 'Use format 2 for unit courses and retained teaching plans.' });
+    const courses = file.courses ?? [];
+    if (new Set(courses.map(course => course.id)).size !== courses.length)
+        ctx.addIssue({ code: 'custom', path: ['courses'], message: 'Course identities must be unique.' });
+    for (const course of courses)
+        for (const section of course.sections) {
+            if (!section.lessonId)
+                continue;
+            const lesson = file.lessons.find(item => item.id === section.lessonId);
+            if (!lesson || lesson.course?.id !== course.id || lesson.course.sectionId !== section.id)
+                ctx.addIssue({ code: 'custom', path: ['courses'], message: 'Every section classroom must retain its reciprocal course reference.' });
+        }
+    for (const lesson of file.lessons) {
+        if (lesson.course) {
+            const course = courses.find(item => item.id === lesson.course?.id);
+            const section = course?.sections.find(item => item.id === lesson.course?.sectionId);
+            if (!course || !section || course.learnerId !== lesson.learnerId || course.termId !== lesson.termId || course.subject !== lesson.subject || lesson.course.revision > course.revision || !course.materials.some(item => item.revision === lesson.course?.materialRevision))
+                ctx.addIssue({ code: 'custom', path: ['lessons'], message: 'Retain original learner, term, subject, section and material ownership.' });
+            if (course && section && lesson.status === 'planned' && sectionReadiness(course, section.id) !== 'ready')
+                ctx.addIssue({ code: 'custom', path: ['lessons'], message: 'Confirm materials and school position before planning generation.' });
+        }
+        for (const ref of [...(lesson.sourceLessonIds ?? []), ...(lesson.replacesLessonId ? [lesson.replacesLessonId] : [])])
+            if (ref === lesson.id || !file.lessons.some(item => item.id === ref && item.learnerId === lesson.learnerId && item.termId === lesson.termId && item.subject === lesson.subject))
+                ctx.addIssue({ code: 'custom', path: ['lessons'], message: 'Preserve original same-learner source and replacement references.' });
+    }
+    if (new Set((file.miniLessons ?? []).map(mini => mini.id)).size !== (file.miniLessons ?? []).length)
+        ctx.addIssue({ code: 'custom', path: ['miniLessons'], message: 'Mini-lesson identities must be unique.' });
+    for (const mini of file.miniLessons ?? [])
+        if (mini.sourceLessonId && !file.lessons.some(item => item.id === mini.sourceLessonId && item.learnerId === mini.learnerId && item.termId === mini.termId && item.subject === mini.subject))
+            ctx.addIssue({ code: 'custom', path: ['miniLessons'], message: 'Preserve original mini-lesson source ownership.' });
     const seen = new Set();
     const partitions = new Map();
     for (const [index, lesson] of file.lessons.entries()) {
@@ -192,9 +244,10 @@ export function parseInteractiveLessons(text) {
  * @param agent - the session workspace and its filesystem service.
  * @param signal - cancels filesystem reads; cancellation rejects the request.
  * @param savedBase - the parent's saved base, when present.
+ * @param workspace - Independently validated academic records for course ownership.
  * @returns the lesson projection, with an error for an unreadable file.
  */
-export async function readInteractiveLessons(agent, signal, savedBase) {
+export async function readInteractiveLessons(agent, signal, savedBase, workspace) {
     const empty = interactiveLessonsView(savedBase);
     try {
         const fs = agent.ctx?.get('fs');
@@ -213,8 +266,12 @@ export async function readInteractiveLessons(agent, signal, savedBase) {
         }, signal);
         if (read.status === 'missing')
             return empty;
+        if (read.file?.lessons.some(lesson => lesson.purpose) || read.file?.courses?.length || read.file?.miniLessons?.length) {
+            if (!workspace || validateCourseWorkspace(read.file, workspace).length)
+                return { ...empty, error: '课程归属或学习活动引用无效，请修复正式文件后重试' };
+        }
         const lessons = (read.file?.lessons ?? read.validRows ?? []).slice().sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)).slice(0, LESSONS_SHOWN);
-        return interactiveLessonsView(savedBase, lessons, read.status === 'valid' ? undefined : '互动课记录格式、身份或时间无法读取');
+        return { ...interactiveLessonsView(savedBase, lessons, read.status === 'valid' ? undefined : '互动课记录格式、身份或时间无法读取'), ...(read.status === 'valid' ? { courses: read.file?.courses ?? [], miniLessons: read.file?.miniLessons ?? [] } : {}) };
     }
     catch (error) {
         if (signal.aborted)

@@ -1,3 +1,4 @@
+import { parsePanelIntent, panelDisplay } from "../panel-intent.js";
 /** A failed native call retains its request identity for deliberate inspection. */
 export class StudySubmissionError extends Error {
     requestId;
@@ -12,9 +13,10 @@ export function tutorBridge(context, sessionId, unavailable, failed) {
         const session = context.sessions.binding(sessionId)?.session;
         if (!session)
             throw new Error(unavailable);
-        const submission = session.beginSubmission({ mode: 'queue', text, attachments: photo ? [{ type: 'image', value: { previewUrl: photo.preview, name: photo.name } }] : [] });
+        const intent = parsePanelIntent(text);
+        const submission = session.beginSubmission({ mode: 'queue', text: intent ? panelDisplay(intent) : text, attachments: photo ? [{ type: 'image', value: { previewUrl: photo.preview, name: photo.name } }] : [] });
         try {
-            const result = await session.prompt([{ type: 'text', text }, ...(photo ? [{ type: 'image', mediaType: photo.mediaType, data: photo.data, name: photo.name }] : [])], 'queue', undefined, submission.requestId);
+            const result = intent ? await context.remote.student.submitIntent(sessionId, { requestId: submission.requestId, intent, ...(photo ? { photo: { mediaType: photo.mediaType, data: photo.data, name: photo.name } } : {}) }, new AbortController().signal) : await session.prompt([{ type: 'text', text }, ...(photo ? [{ type: 'image', mediaType: photo.mediaType, data: photo.data, name: photo.name }] : [])], 'queue', undefined, submission.requestId);
             if (!result.ok)
                 throw new Error(result.error.message || failed);
             return { requestId: submission.requestId, admission: 'accepted' };

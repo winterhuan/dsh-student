@@ -1,6 +1,6 @@
 {
   "name": "@winterhuan/dsh-student",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Short daily learning, confirmed curricula and spaced mistake review for primary-school students",
   "type": "module",
   "license": "MIT",
@@ -13,7 +13,9 @@
     "directory": "packages/winterhuan/student"
   },
   "main": "lib/index.js",
-  "bin": { "study-validate": "lib/cli.js" },
+  "bin": {
+    "study-validate": "lib/cli.js"
+  },
   "types": "lib/types/index.d.ts",
   "exports": {
     ".": {
@@ -157,7 +159,8 @@
     "@types/react": "18.3.28",
     "@types/react-dom": "18.3.7",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "@deepseek-ai/dsh-attachment": "0.2.2-rc.5"
   },
   "scripts": {
     "build": "pnpm --dir ../../.. run build",

@@ -6,7 +6,7 @@ import type { Dashboard } from '../dashboard.ts';
 type Study = NonNullable<Dashboard['study']>;
 type Act = (command: Command, withTutor?: boolean, prompt?: string) => Promise<void>;
 /** The active activity keeps one question, its original answer and the next permitted action. */
-export declare function TodayView({ nextAction, legalActions, onAction, learnerId, termId, classroomBindingId, onContinue, study, openParent, disabled, pending, running, act, tutor, t, lessons, onOpenClassroom, onHome, onPause, onStop, draftScope, legacyDraftScope, useStore, actions }: DraftProps & {
+export declare function TodayView({ nextAction, legalActions, onAction, learnerId, termId, classroomBindingId, onContinue, study, openParent, disabled, pending, running, act, tutor, t, lessons, generationProgress, onQuery, onRevise, onOpenClassroom, onHome, onPause, onStop, draftScope, legacyDraftScope, useStore, actions }: DraftProps & {
     learnerId: string | undefined;
     termId: string | undefined;
     classroomBindingId: string | undefined;
@@ -24,6 +24,9 @@ export declare function TodayView({ nextAction, legalActions, onAction, learnerI
     act: Act;
     tutor: (text: string, currentBlock?: boolean) => Promise<void>;
     t: Translate;
+    generationProgress?: Record<string, import('../openmaic/playback.ts').LessonGenerationStatus>;
+    onRevise: (lessonId: string) => void;
+    onQuery: (lessonId: string) => void;
     lessons: Dashboard['interactiveLessons']['lessons'];
     onOpenClassroom: (lessonId: string) => void;
     onHome: () => void;

@@ -3,7 +3,7 @@ import { SESSION_FORMAT_VERSION, SessionId, SessionSeq, SessionLogOffset } from 
 import type { SessionEvent, SessionHeader } from '@deepseek-ai/dsh-session'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { resolveNativeSources } from '../src/native-source.ts'
-import { nativeIntentPrompt } from '../src/client/prompts.ts'
+function nativeIntentPrompt(intent: object, request: string) { return `请加载 study 技能。在当前原生会话处理下面的意图，保留来源。\nStudent intention:\n${JSON.stringify({ ...intent, request })}\n${request}` }
 
 const message = { ...createUserMessage({ source: { kind: 'user', rpcId: 'r' }, content: [{ type: 'text', text: '42' }] }), id: 'm' }
 const header: SessionHeader = { version: SESSION_FORMAT_VERSION, id: SessionId('s'), createdAt: 1, isSeeded: false }
@@ -89,4 +89,20 @@ it('refuses incomplete or invalid inbox replay and never attributes inherited in
   expect(resolve([original[0]!, original[0]!, ...original.slice(1)]).status).toBe('unavailable')
   expect(observe(original, 5).observations).toEqual([])
   expect(observe(original, 5).inputs[0]?.receipt.kind).toBe('unknown')
+})
+
+it('extracts one exact answer from structured panel metadata and rejects mismatched ownership or text', () => {
+  const intent = { version: 2 as const, nativeSessionId: 's', learnerId: 'child', termId: 'term', blockId: 'block', questionId: 'q', responseId: 'r', operation: { action: 'answer', taskId: 'q', response: '幕' }, request: 'Save the original answer.' }
+  const events = (studentIntent = intent, text = '幕') => consumed().map(event => {
+    const panel = { ...message, source: { kind: 'user' as const, rpcId: 'r', studentIntent }, content: [{ type: 'text' as const, text }] }
+    return event.type === 'user/message' ? { ...event, data: panel } : event.type === 'agent/inbox/spliced' && event.seq === 0 ? { ...event, data: { ...event.data, inserted: [panel] } } : event
+  })
+  const valid = resolve(events())
+  expect(valid.inputs[0]?.intention).toEqual(intent)
+  expect(valid.observations).toHaveLength(1)
+  expect(valid.observations[0]).toMatchObject({ rawResponse: '幕', learningScope: { learnerId: 'child', blockId: 'block', responseId: 'r' }, receiptAt: 10 })
+  expect(resolve(events({ ...intent, nativeSessionId: 'foreign' })).observations).toEqual([])
+  expect(resolve(events(intent, '改写')).observations).toEqual([])
+  expect(resolve(events({ ...intent, operation: { ...intent.operation, taskId: 'other' } })).observations).toEqual([])
+  expect(resolve(events({ ...intent, operation: { ...intent.operation, action: 'start' } }, '开始互动课')).observations).toEqual([])
 })

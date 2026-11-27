@@ -146,6 +146,11 @@ export async function readStudentWorkspace(exec, invocation, lessonId, planDay) 
                 try {
                     fact.source = await service.feedback(agent.session.header.cwd).read({ learnerId: lesson.learnerId, termId: lesson.termId, blockId: lesson.blockId, classroomId: lesson.classroomId, base: lesson.base, learnerKey: lesson.learnerKey }, lesson.feedback, exec.signal);
                     fact.status = 'available';
+                    for (const observation of fact.source.observations) {
+                        const role = lesson.quality?.questions.find(question => question.sceneId === observation.source.sceneId && question.questionId === observation.source.questionId)?.purpose;
+                        if (role && role !== 'assessment')
+                            observation.answerExposure = 'possible';
+                    }
                     observations.push(...fact.source.observations);
                 }
                 catch (error) {

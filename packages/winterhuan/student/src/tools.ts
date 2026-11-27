@@ -5,8 +5,8 @@ import { readStudentWorkspace } from './transport.ts'
 import { queryWorkspace, type WorkspaceQueryResult } from './learning/queries.ts'
 
 function boundedRead(result: WorkspaceQueryResult, paths: readonly string[]) {
-  const versions = [...result.versions.filter(file => paths.includes(file.path)), ...result.versions.filter(file => !paths.includes(file.path))]
-  return { ...result, versions: versions.slice(0, 20), omittedVersions: Math.max(0, versions.length - 20), issues: result.issues?.slice(0, 20).map(issue => ({ path: issue.path.slice(0, 240), field: issue.field.slice(0, 240), rule: issue.rule.slice(0, 80), correction: issue.correction.slice(0, 500) })), omittedIssues: Math.max(0, (result.issues?.length ?? 0) - 20) }
+  const versions = result.versions.filter(file => paths.includes(file.path))
+  return { ...result, versions: versions.slice(0, 20), omittedVersions: result.versions.length - Math.min(versions.length, 20), issues: result.issues?.slice(0, 20).map(issue => ({ path: issue.path.slice(0, 240), field: issue.field.slice(0, 240), rule: issue.rule.slice(0, 80), correction: issue.correction.slice(0, 500) })), omittedIssues: Math.max(0, (result.issues?.length ?? 0) - 20) }
 }
 
 /** Register the bounded read-only Student lookup in DSH's native tool runtime. */
@@ -45,29 +45,28 @@ export function registerStudyTools(context: Context): void {
           result.data = { curriculum: { ...Object.fromEntries(['id', 'subject', 'grade', 'term', 'title', 'scope', 'units'].filter(key => key in curriculum).map(key => [key, curriculum[key]])), more: 'Use elements with a subject and goal ID for facts/methods, or read the matching installed knowledge/curriculum JSON for the full map.' } }
         }
       }
-      const context = boundedRead(queryWorkspace(read, { kind: 'learning-context', ...(args.subject ? { subject: args.subject } : {}) }, now), paths)
-      if (context.data) {
+      const context = args.kind === 'learning-context' ? result : args.kind === undefined || args.kind === 'status' ? boundedRead(queryWorkspace(read, { kind: 'learning-context', ...(args.subject ? { subject: args.subject } : {}) }, now), paths) : undefined
+      if (context?.data) {
         const data = z.record(z.string(), z.unknown()).parse(context.data)
         const responses = z.array(z.record(z.string(), z.unknown())).parse(data.responses)
         const saved = z.record(z.string(), z.unknown()).nullable().parse(data.savedResponse)
         const selected = responses.filter(response => response.id === saved?.id)
         data.goalProgress = Array.isArray(data.goalProgress) ? data.goalProgress.filter(item => item && typeof item === 'object' && 'id' in item && item.id === (data.nextAction as { goalId?: string } | null)?.goalId).slice(0, 3) : []
-        data.activeQuestions = data.currentQuestion ? [data.currentQuestion] : []
+        delete data.activeQuestions
         if (data.daily && typeof data.daily === 'object') {
           const daily = data.daily as import('./learning/daily.ts').DailyLearning
           data.daily = { day: daily.day, phase: daily.phase, currentTaskId: daily.currentTaskId, planId: daily.saved?.id ?? null, revision: daily.saved?.revision ?? null, nextAction: daily.nextAction, more: 'Read study_status kind=daily-plan for the arrangement and choices.' }
         }
-        data.responses = selected
+        delete data.responses
         data.omittedResponses = responses.length - selected.length
-        data.assessments = data.savedAssessment ? [data.savedAssessment] : []
+        delete data.assessments
         context.data = data
       }
-      if (args.kind === 'learning-context') result.data = context.data
       if (args.kind === undefined || args.kind === 'status') {
         const data = result.data ? z.record(z.string(), z.unknown()).parse(result.data) : undefined
         if (data) result.data = Object.fromEntries(['phase', 'profile', 'interests', 'interestFocus', 'time', 'openmaic', 'unconfirmedSubjects', 'recommendation', 'weakPoints', 'dueToday'].filter(key => key in data).map(key => [key, data[key]]))
       }
-      const native = { status: source.status, cut: source.cut, inputs: source.inputs.slice(), admissions: source.admissions.slice(), omitted: source.omitted, omittedAdmissions: source.omittedAdmissions, reason: source.reason }
+      const native = { status: source.status, cut: source.cut, inputs: source.inputs.slice(-1), admissions: source.admissions.slice(-3), omitted: source.omitted + Math.max(0, source.inputs.length - 1), omittedAdmissions: source.omittedAdmissions + Math.max(0, source.admissions.length - 3), reason: source.reason }
       const payload = { ...result, native, backupIssues: backupIssues.slice(0, 20).map(issue => ({ path: issue.path.slice(0, 240), field: issue.field.slice(0, 240), rule: issue.rule.slice(0, 80), correction: issue.correction.slice(0, 500) })), omittedBackupIssues: Math.max(0, backupIssues.length - 20), ...(args.kind === undefined || args.kind === 'status' ? { learningContext: context } : {}) }
       const renderedBytes = () => Buffer.byteLength(JSON.stringify([{ type: 'text', text: JSON.stringify(payload) }]))
       while (renderedBytes() > 32768 && native.inputs.length > 0) { native.inputs.shift(); native.omitted += 1 }

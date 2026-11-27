@@ -1,6 +1,18 @@
 import { z } from 'zod';
 import { OpenmaicConnection } from './connection.ts';
 import { feedbackBindingSchema, feedbackCheckpointSchema, officialAnswerSchema, officialResultSchema, openmaicQuestionSchema, type OpenmaicInputObservation, type OpenmaicGrading, type PendingOpenmaic } from './feedback-schema.ts';
+declare const documentSchema: z.ZodObject<{
+    dslVersion: z.ZodLiteral<"0.3.0">;
+    stage: z.ZodObject<{
+        id: z.ZodString;
+    }, z.core.$loose>;
+    scenes: z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        stageId: z.ZodString;
+        type: z.ZodString;
+        content: z.ZodUnknown;
+    }, z.core.$loose>>;
+}, z.core.$loose>;
 /** Protected source-capture storage owns partition admission, never grades or learner responses. */
 export interface OpenmaicCaptureStore {
     load(key: string): Promise<unknown>;
@@ -57,6 +69,15 @@ export declare class OpenmaicFeedback {
     private authorize;
     private manifest;
     private runtime;
+    /** Read a stable classroom document for content review without changing learning records.
+     * @param owner - Original authorized classroom.
+     * @param signal - Cancels both revision reads and the bounded document fetch.
+     * @returns Original scenes and their complete content fingerprint.
+     */
+    content(owner: OpenmaicLessonOwner, signal: AbortSignal): Promise<{
+        contentHash: string;
+        scenes: z.infer<typeof documentSchema>['scenes'];
+    }>;
     /**
      * Capture the original generated classroom before playback; an existing partition keeps its owner and capture.
      * @param owner - Independently validated original lesson and Student ownership.
@@ -85,4 +106,5 @@ export declare class OpenmaicFeedback {
      */
     read(owner: OpenmaicLessonOwner, binding: z.infer<typeof feedbackBindingSchema>, signal: AbortSignal): Promise<OpenmaicFeedbackRead>;
 }
+export {};
 //# sourceMappingURL=feedback.d.ts.map

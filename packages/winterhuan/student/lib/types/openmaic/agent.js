@@ -3,9 +3,15 @@ import { z } from 'zod';
 import { defineTool } from '@deepseek-ai/dsh-tools';
 import { readStudentWorkspace } from "../transport.js";
 import { registerOpenmaicFeedback } from "./feedback-agent.js";
+import { applicationStudyFiles } from "../files/application.js";
+import { readLessonFile } from "../files/lessons.js";
+import { validateCourseWorkspace } from "../files/course-validation.js";
+import { sectionReadiness } from "../courses.js";
+import { courseReviewInput, reviewedCourseRequirement } from "./review-input.js";
+import { courseReviewModel } from "./review.js";
 import { generationRequestSchema } from "./generation.js";
 export const name = 'student-openmaic-agent';
-export const inject = ['studentOpenmaic', 'tools', 'skills', 'systemPrompt'];
+export const inject = ['llm', 'studentOpenmaic', 'tools', 'skills', 'systemPrompt'];
 /** Official render/widget/slide and four bundled skills retain their original implementations. */
 export function apply(ctx) {
     registerOpenmaicFeedback(ctx);
@@ -36,6 +42,30 @@ export function apply(ctx) {
             const settings = z.object({ learnerId: z.string(), termId: z.string() }).safeParse(read.workspace?.settings);
             if (!settings.success || settings.data.learnerId !== request.learnerId || settings.data.termId !== request.termId || !read.workspace?.blocks.some(block => block.id === request.blockId))
                 throw new Error('Confirm the original Student learner, term and learning block before generating or continuing a classroom.');
+            if (request.requirement && !request.jobId) {
+                const lessons = await readLessonFile(applicationStudyFiles(exec), exec.signal);
+                const lesson = lessons.file?.lessons.find(item => item.blockId === request.blockId && item.learnerId === request.learnerId && item.termId === request.termId);
+                if (!lesson?.purpose || !lesson.teaching || lessons.status !== 'valid' || !read.workspace || validateCourseWorkspace(lessons.file, read.workspace).length)
+                    throw new Error('Save and validate the unit section or explicitly chosen foundational lesson and full teaching plan before submission. Read references/unit-courses.md.');
+                const course = lessons.file.courses?.find(item => item.id === lesson.course?.id);
+                if (lesson.course && (!course || sectionReadiness(course, lesson.course.sectionId) !== 'ready'))
+                    throw new Error('Confirm the material and school position before generating this section.');
+                if (request.requirement !== lesson.requirement)
+                    throw new Error('Use the saved teaching requirement without replacing the original request.');
+                const input = await courseReviewInput(applicationStudyFiles(exec), workspace, lesson, lessons.file, exec.signal);
+                request.requirement = reviewedCourseRequirement(input);
+                const model = courseReviewModel(ctx, exec);
+                const review = await ctx.studentOpenmaic.reviewer.review(input, model.model, model.generate, exec.signal);
+                if (review.status !== 'passed')
+                    return { status: 'review-rejected', submitted: false, lessonId: lesson.id, reviewId: review.reviewId, issues: review.issues };
+                request.reviewId = review.reviewId;
+                const latest = await readLessonFile(applicationStudyFiles(exec), exec.signal);
+                if (latest.observation?.version !== lessons.observation?.version || latest.observation?.targetKey !== lessons.observation?.targetKey)
+                    throw new Error('The lesson changed during review. Read the current version before submission.');
+                await courseReviewInput(applicationStudyFiles(exec), workspace, lesson, lessons.file, exec.signal);
+            }
+            if ((request.requirement?.length ?? 0) > 8000)
+                throw new Error('Keep the saved requirement and teaching plan within 8000 characters in total before submitting.');
             return z.json().parse(await ctx.studentOpenmaic.generation(workspace).run(request, exec.signal));
         },
     });
@@ -46,7 +76,7 @@ export function apply(ctx) {
         } });
     const systemPrompt = new Proxy(ctx.systemPrompt, { get(target, key, receiver) {
             if (key === 'section')
-                return (section) => target.section(section.name === 'tool:dsh-openmaic' ? { ...section, text: 'Use openmaic_generate for a complete classroom. It returns the official job identity promptly; continue the same job, then let the agent save validated lesson metadata. Use independent inline OpenMAIC widgets, slides and cards whenever they fit the current goal. Load the matching authoring skill first.' } : section);
+                return (section) => target.section(section.name === 'tool:dsh-openmaic' ? { ...section, text: 'Use openmaic_generate for a complete classroom. It returns the official job identity promptly; continue the same job, then let the agent save validated lesson metadata. New learning starts with a full classroom. Use inline OpenMAIC widgets, slides and cards for targeted explanation and later review; review begins with recall or an attempt. Read study references/unit-courses.md and save the teaching and question plans before generation; questions receive independent review. Once ready, use openmaic_feedback action=review and save its returned quality, binding and questions. Load the matching authoring skill first.' } : section);
             return Reflect.get(target, key, receiver);
         } });
     officialApply(new Proxy(ctx, { get(target, key, receiver) { if (key === 'tools')

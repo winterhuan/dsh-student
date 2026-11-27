@@ -1,3 +1,4 @@
+import { pruneRetiredPlan, retiredBlockIds } from "./cleanup.js";
 import { effectiveLearningScopes } from "../learning/scopes.js";
 import { effectiveKnowledge, scopeSupports } from "../capabilities.js";
 import { canonical, studyDay } from "../learning/shared.js";
@@ -11,6 +12,8 @@ export function validateDailyPlans(workspace, prior, fail) {
     for (const plan of plans) {
         const path = `.study/plans/${plan.day}.json`;
         const issue = (field, rule, correction) => fail(path, field, rule, correction);
+        if (!plan.tasks.length && (plan.state !== 'stopped' || !settings.retiredEmptyBlocks?.length))
+            issue('tasks', 'plan-empty', 'Only explicit empty-activity cleanup may leave a stopped plan without tasks.');
         if (plan.id !== `day-${plan.day}` || plan.day !== studyDay(plan.createdAt) || plan.updatedAt < plan.createdAt || new Set(plan.subjects).size !== plan.subjects.length)
             issue('id', 'plan-identity', 'Use day-YYYY-MM-DD for this learner and term, with its original Shanghai creation day and distinct subjects.');
         if (plan.tasks.length !== new Set(plan.tasks.map(task => task.id)).size || plan.choices.length !== new Set(plan.choices.map(choice => choice.id)).size)
@@ -71,7 +74,17 @@ export function validateDailyPlans(workspace, prior, fail) {
                 owners.set(task.activity.blockId, `${plan.day}/${task.id}`);
             }
         }
-        for (const old of prior.flatMap(entry => entry.path === path && entry.file.kind === 'daily-plan' ? [entry.file] : [])) {
+        for (const entry of prior.filter(entry => entry.path === path && entry.file.kind === 'daily-plan')) {
+            if (entry.file.kind !== 'daily-plan')
+                continue;
+            let old = entry.file;
+            try {
+                old = pruneRetiredPlan(old, retiredBlockIds(settings));
+            }
+            catch {
+                issue('', 'plan-history', 'An activity with evidence or completion cannot be retired.');
+                continue;
+            }
             if (old.learnerId !== plan.learnerId || old.termId !== plan.termId || old.id !== plan.id || old.createdAt !== plan.createdAt || old.completedAt !== undefined && old.completedAt !== plan.completedAt || old.revision > plan.revision || old.revision === plan.revision && canonical(old) !== canonical(plan))
                 issue('', 'plan-history', 'Retain plan identity and completion, and increment revision for every explicit amendment.');
             if (old.state === 'completed' && plan.state !== 'completed' || old.tasks.some(task => task.state === 'completed' && plan.tasks.find(next => next.id === task.id)?.state !== 'completed'))

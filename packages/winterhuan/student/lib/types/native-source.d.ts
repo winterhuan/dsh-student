@@ -1,3 +1,4 @@
+import { type PanelIntent } from './panel-intent.ts';
 /** Exact consumed native input versions from one immutable Session observation. */
 import { z } from 'zod';
 import type { UserMessage } from '@deepseek-ai/dsh-llm';
@@ -23,6 +24,7 @@ export type NativeReceipt = {
 /** Bounded consumed text context, with a version of the complete source and attachment snapshot. */
 export interface NativeConsumedInput {
     status: 'consumed';
+    intention?: PanelIntent;
     messageId: string;
     requestId?: string;
     inputVersion: string;

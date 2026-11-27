@@ -1,4 +1,6 @@
+import type { ValidatedWorkspace } from './files/validation.ts';
 import { z } from 'zod';
+import { miniLessonSchema, type UnitCourse } from './courses.ts';
 /** Default OpenMAIC origin when the parent has not saved one and OPENMAIC_BASE is unset. */
 export declare const DEFAULT_OPENMAIC_BASE = "https://open.maic.chat";
 /** Lesson log written by the tutor shell. It is not learning evidence and is not inside state.json. */
@@ -30,10 +32,120 @@ export declare function lessonHttpUrl(value: string): string | undefined;
 export declare const lessonSchema: z.ZodObject<{
     id: z.ZodString;
     status: z.ZodEnum<{
-        ready: "ready";
+        planned: "planned";
+        unknown: "unknown";
         generating: "generating";
+        ready: "ready";
         failed: "failed";
     }>;
+    purpose: z.ZodOptional<z.ZodEnum<{
+        full: "full";
+        foundation: "foundation";
+        synthesis: "synthesis";
+    }>>;
+    course: z.ZodOptional<z.ZodObject<{
+        id: z.ZodString;
+        sectionId: z.ZodString;
+        revision: z.ZodNumber;
+        materialRevision: z.ZodString;
+    }, z.core.$strict>>;
+    teaching: z.ZodOptional<z.ZodObject<{
+        revision: z.ZodString;
+        goal: z.ZodString;
+        scope: z.ZodString;
+        materialLimitations: z.ZodString;
+        introduction: z.ZodString;
+        explanation: z.ZodString;
+        demonstration: z.ZodString;
+        guidedPractice: z.ZodString;
+        independentPractice: z.ZodString;
+        summary: z.ZodString;
+        maxAssessmentQuestions: z.ZodNumber;
+    }, z.core.$strict>>;
+    quality: z.ZodOptional<z.ZodObject<{
+        reviewId: z.ZodOptional<z.ZodString>;
+        status: z.ZodEnum<{
+            passed: "passed";
+            rejected: "rejected";
+        }>;
+        checkedAt: z.ZodNumber;
+        contentHash: z.ZodString;
+        stages: z.ZodObject<{
+            introduction: z.ZodString;
+            explanation: z.ZodString;
+            demonstration: z.ZodString;
+            guidedPractice: z.ZodString;
+            independentPractice: z.ZodString;
+            summary: z.ZodString;
+        }, z.core.$strict>;
+        questions: z.ZodArray<z.ZodObject<{
+            sceneId: z.ZodString;
+            questionId: z.ZodString;
+            purpose: z.ZodEnum<{
+                example: "example";
+                guided: "guided";
+                assessment: "assessment";
+            }>;
+            rationale: z.ZodString;
+        }, z.core.$strict>>;
+        scopeChecked: z.ZodLiteral<true>;
+        criterionChecked: z.ZodLiteral<true>;
+        notes: z.ZodString;
+    }, z.core.$strict>>;
+    questionPlan: z.ZodOptional<z.ZodObject<{
+        revision: z.ZodString;
+        source: z.ZodObject<{
+            path: z.ZodString;
+            sha256: z.ZodString;
+        }, z.core.$strict>;
+        target: z.ZodObject<{
+            scope: z.ZodObject<{
+                id: z.ZodString;
+                description: z.ZodString;
+                modality: z.ZodEnum<{
+                    written: "written";
+                    oral: "oral";
+                    listening: "listening";
+                    audiovisual: "audiovisual";
+                    performed: "performed";
+                }>;
+                numberMax: z.ZodOptional<z.ZodNumber>;
+                vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+            }, z.core.$strict>;
+            goalId: z.ZodString;
+            familyId: z.ZodString;
+        }, z.core.$strict>;
+        questions: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            type: z.ZodEnum<{
+                single: "single";
+                multiple: "multiple";
+                short_answer: "short_answer";
+            }>;
+            question: z.ZodString;
+            options: z.ZodArray<z.ZodObject<{
+                value: z.ZodString;
+                label: z.ZodString;
+            }, z.core.$strict>>;
+            answer: z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>;
+            analysis: z.ZodString;
+            sourceQuote: z.ZodString;
+            completedAnswer: z.ZodString;
+        }, z.core.$strict>>;
+    }, z.core.$strict>>;
+    foundationConfirmation: z.ZodOptional<z.ZodString>;
+    replacesLessonId: z.ZodOptional<z.ZodString>;
+    sourceLessonIds: z.ZodOptional<z.ZodArray<z.ZodString>>;
+    activity: z.ZodOptional<z.ZodObject<{
+        state: z.ZodEnum<{
+            "not-started": "not-started";
+            learning: "learning";
+            paused: "paused";
+            ended: "ended";
+        }>;
+        blockId: z.ZodString;
+        position: z.ZodOptional<z.ZodString>;
+    }, z.core.$strict>>;
     createdAt: z.ZodString;
     updatedAt: z.ZodString;
     title: z.ZodString;
@@ -69,9 +181,9 @@ export declare const lessonSchema: z.ZodObject<{
             id: z.ZodString;
             description: z.ZodString;
             modality: z.ZodEnum<{
-                listening: "listening";
                 written: "written";
                 oral: "oral";
+                listening: "listening";
                 audiovisual: "audiovisual";
                 performed: "performed";
             }>;
@@ -97,14 +209,124 @@ export declare const lessonSchema: z.ZodObject<{
 }, z.core.$strict>;
 /** Complete independent OpenMAIC business file; validation checks all eighty possible rows before pagination. */
 export declare const lessonFileSchema: z.ZodObject<{
-    format: z.ZodLiteral<1>;
+    format: z.ZodUnion<readonly [z.ZodLiteral<1>, z.ZodLiteral<2>]>;
     lessons: z.ZodArray<z.ZodObject<{
         id: z.ZodString;
         status: z.ZodEnum<{
-            ready: "ready";
+            planned: "planned";
+            unknown: "unknown";
             generating: "generating";
+            ready: "ready";
             failed: "failed";
         }>;
+        purpose: z.ZodOptional<z.ZodEnum<{
+            full: "full";
+            foundation: "foundation";
+            synthesis: "synthesis";
+        }>>;
+        course: z.ZodOptional<z.ZodObject<{
+            id: z.ZodString;
+            sectionId: z.ZodString;
+            revision: z.ZodNumber;
+            materialRevision: z.ZodString;
+        }, z.core.$strict>>;
+        teaching: z.ZodOptional<z.ZodObject<{
+            revision: z.ZodString;
+            goal: z.ZodString;
+            scope: z.ZodString;
+            materialLimitations: z.ZodString;
+            introduction: z.ZodString;
+            explanation: z.ZodString;
+            demonstration: z.ZodString;
+            guidedPractice: z.ZodString;
+            independentPractice: z.ZodString;
+            summary: z.ZodString;
+            maxAssessmentQuestions: z.ZodNumber;
+        }, z.core.$strict>>;
+        quality: z.ZodOptional<z.ZodObject<{
+            reviewId: z.ZodOptional<z.ZodString>;
+            status: z.ZodEnum<{
+                passed: "passed";
+                rejected: "rejected";
+            }>;
+            checkedAt: z.ZodNumber;
+            contentHash: z.ZodString;
+            stages: z.ZodObject<{
+                introduction: z.ZodString;
+                explanation: z.ZodString;
+                demonstration: z.ZodString;
+                guidedPractice: z.ZodString;
+                independentPractice: z.ZodString;
+                summary: z.ZodString;
+            }, z.core.$strict>;
+            questions: z.ZodArray<z.ZodObject<{
+                sceneId: z.ZodString;
+                questionId: z.ZodString;
+                purpose: z.ZodEnum<{
+                    example: "example";
+                    guided: "guided";
+                    assessment: "assessment";
+                }>;
+                rationale: z.ZodString;
+            }, z.core.$strict>>;
+            scopeChecked: z.ZodLiteral<true>;
+            criterionChecked: z.ZodLiteral<true>;
+            notes: z.ZodString;
+        }, z.core.$strict>>;
+        questionPlan: z.ZodOptional<z.ZodObject<{
+            revision: z.ZodString;
+            source: z.ZodObject<{
+                path: z.ZodString;
+                sha256: z.ZodString;
+            }, z.core.$strict>;
+            target: z.ZodObject<{
+                scope: z.ZodObject<{
+                    id: z.ZodString;
+                    description: z.ZodString;
+                    modality: z.ZodEnum<{
+                        written: "written";
+                        oral: "oral";
+                        listening: "listening";
+                        audiovisual: "audiovisual";
+                        performed: "performed";
+                    }>;
+                    numberMax: z.ZodOptional<z.ZodNumber>;
+                    vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+                }, z.core.$strict>;
+                goalId: z.ZodString;
+                familyId: z.ZodString;
+            }, z.core.$strict>;
+            questions: z.ZodArray<z.ZodObject<{
+                id: z.ZodString;
+                type: z.ZodEnum<{
+                    single: "single";
+                    multiple: "multiple";
+                    short_answer: "short_answer";
+                }>;
+                question: z.ZodString;
+                options: z.ZodArray<z.ZodObject<{
+                    value: z.ZodString;
+                    label: z.ZodString;
+                }, z.core.$strict>>;
+                answer: z.ZodUnion<readonly [z.ZodString, z.ZodArray<z.ZodString>]>;
+                analysis: z.ZodString;
+                sourceQuote: z.ZodString;
+                completedAnswer: z.ZodString;
+            }, z.core.$strict>>;
+        }, z.core.$strict>>;
+        foundationConfirmation: z.ZodOptional<z.ZodString>;
+        replacesLessonId: z.ZodOptional<z.ZodString>;
+        sourceLessonIds: z.ZodOptional<z.ZodArray<z.ZodString>>;
+        activity: z.ZodOptional<z.ZodObject<{
+            state: z.ZodEnum<{
+                "not-started": "not-started";
+                learning: "learning";
+                paused: "paused";
+                ended: "ended";
+            }>;
+            blockId: z.ZodString;
+            position: z.ZodOptional<z.ZodString>;
+        }, z.core.$strict>>;
         createdAt: z.ZodString;
         updatedAt: z.ZodString;
         title: z.ZodString;
@@ -140,9 +362,9 @@ export declare const lessonFileSchema: z.ZodObject<{
                 id: z.ZodString;
                 description: z.ZodString;
                 modality: z.ZodEnum<{
-                    listening: "listening";
                     written: "written";
                     oral: "oral";
+                    listening: "listening";
                     audiovisual: "audiovisual";
                     performed: "performed";
                 }>;
@@ -166,6 +388,103 @@ export declare const lessonFileSchema: z.ZodObject<{
             }, z.core.$strict>>;
         }, z.core.$strict>>;
     }, z.core.$strict>>;
+    courses: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        learnerId: z.ZodString;
+        termId: z.ZodString;
+        subject: z.ZodEnum<{
+            chinese: "chinese";
+            math: "math";
+            english: "english";
+        }>;
+        unit: z.ZodString;
+        revision: z.ZodNumber;
+        materials: z.ZodArray<z.ZodObject<{
+            revision: z.ZodString;
+            edition: z.ZodString;
+            sourcePath: z.ZodString;
+            sourceRevision: z.ZodString;
+            directory: z.ZodArray<z.ZodString>;
+            position: z.ZodEnum<{
+                entering: "entering";
+                studying: "studying";
+                finished: "finished";
+            }>;
+            currentSectionId: z.ZodOptional<z.ZodString>;
+            confirmation: z.ZodObject<{
+                quote: z.ZodString;
+                at: z.ZodNumber;
+            }, z.core.$strict>;
+        }, z.core.$strict>>;
+        currentMaterialRevision: z.ZodOptional<z.ZodString>;
+        sections: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            title: z.ZodString;
+            goalIds: z.ZodArray<z.ZodString>;
+            scope: z.ZodObject<{
+                id: z.ZodString;
+                description: z.ZodString;
+                modality: z.ZodEnum<{
+                    written: "written";
+                    oral: "oral";
+                    listening: "listening";
+                    audiovisual: "audiovisual";
+                    performed: "performed";
+                }>;
+                numberMax: z.ZodOptional<z.ZodNumber>;
+                vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+            }, z.core.$strict>;
+            kind: z.ZodEnum<{
+                synthesis: "synthesis";
+                lesson: "lesson";
+            }>;
+            materialRevision: z.ZodOptional<z.ZodString>;
+            lessonId: z.ZodOptional<z.ZodString>;
+            prerequisiteIds: z.ZodArray<z.ZodString>;
+            testPreparation: z.ZodOptional<z.ZodObject<{
+                quote: z.ZodString;
+                at: z.ZodNumber;
+            }, z.core.$strict>>;
+            advanceConfirmation: z.ZodOptional<z.ZodObject<{
+                quote: z.ZodString;
+                at: z.ZodNumber;
+            }, z.core.$strict>>;
+        }, z.core.$strict>>;
+    }, z.core.$strict>>>;
+    miniLessons: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        id: z.ZodString;
+        learnerId: z.ZodString;
+        termId: z.ZodString;
+        subject: z.ZodEnum<{
+            chinese: "chinese";
+            math: "math";
+            english: "english";
+        }>;
+        revision: z.ZodString;
+        goalIds: z.ZodArray<z.ZodString>;
+        scope: z.ZodObject<{
+            id: z.ZodString;
+            description: z.ZodString;
+            modality: z.ZodEnum<{
+                written: "written";
+                oral: "oral";
+                listening: "listening";
+                audiovisual: "audiovisual";
+                performed: "performed";
+            }>;
+            numberMax: z.ZodOptional<z.ZodNumber>;
+            vocabulary: z.ZodOptional<z.ZodArray<z.ZodString>>;
+        }, z.core.$strict>;
+        purpose: z.ZodEnum<{
+            explanation: "explanation";
+            review: "review";
+            temporary: "temporary";
+        }>;
+        sourceLessonId: z.ZodOptional<z.ZodString>;
+        contentPath: z.ZodString;
+        contentHash: z.ZodString;
+        createdAt: z.ZodNumber;
+    }, z.core.$strict>>>;
 }, z.core.$strict>;
 /** Validated complete lesson log; distinct from its twenty-row display projection. */
 export type LessonFile = z.infer<typeof lessonFileSchema>;
@@ -177,6 +496,8 @@ export interface InteractiveLessons {
     lessonsPath: typeof OPENMAIC_LESSONS_PATH;
     cookiePath: typeof OPENMAIC_COOKIE_PATH;
     lessons: InteractiveLesson[];
+    courses?: UnitCourse[];
+    miniLessons?: z.infer<typeof miniLessonSchema>[];
     /** Set when the file exists but some or all of it cannot be shown. The rest of the desk still loads. */
     error?: string;
 }
@@ -204,6 +525,7 @@ export declare function parseInteractiveLessons(text: string): {
  * @param agent - the session workspace and its filesystem service.
  * @param signal - cancels filesystem reads; cancellation rejects the request.
  * @param savedBase - the parent's saved base, when present.
+ * @param workspace - Independently validated academic records for course ownership.
  * @returns the lesson projection, with an error for an unreadable file.
  */
 export declare function readInteractiveLessons(agent: {
@@ -215,5 +537,5 @@ export declare function readInteractiveLessons(agent: {
             cwd?: string;
         };
     };
-}, signal: AbortSignal, savedBase: string | undefined): Promise<InteractiveLessons>;
+}, signal: AbortSignal, savedBase: string | undefined, workspace?: ValidatedWorkspace): Promise<InteractiveLessons>;
 //# sourceMappingURL=openmaic.d.ts.map

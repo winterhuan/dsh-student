@@ -22,7 +22,7 @@ import { IdeasView } from './ideas-view.tsx'
 import { MapView } from './map-view.tsx'
 import { PracticeView } from './practice-view.tsx'
 import { LessonsPanel, lessonsForSubject } from './lessons-view.tsx'
-import { dailyPlanPrompt, scopeConfirmationPrompt, continuePrompt, loadLearningPrompt, diagnosePrompt, goalPrompt, openmaicQueryPrompt, openmaicRetryPrompt, openmaicReviewPrompt, organizePrompt, nativeIntentPrompt, pendingRecordPrompt, pendingRecordsPrompt } from './prompts.ts'
+import { unitCoursePrompt, dailyPlanPrompt, scopeConfirmationPrompt, continuePrompt, loadLearningPrompt, diagnosePrompt, goalPrompt, openmaicQueryPrompt, openmaicRetryPrompt, openmaicReviewPrompt, organizePrompt, nativeIntentPrompt, pendingRecordPrompt, pendingRecordsPrompt } from './prompts.ts'
 import { CapabilityProgressView } from './capability-progress.tsx'
 import { TodayView } from './today-view.tsx'
 import css from './desk.module.css'
@@ -39,7 +39,7 @@ function storeSubject(value: Subject) {
 }
 
 /** Workbench actions share the same persisted state as the native tutoring tools. */
-export function StudyDesk({ sessionId, visible, ask, running, pending = false, syncFeedback, cancel, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, openLesson, useStore, actions }: DraftProps & StudentManualActions & Partial<StudentSessionActions> & { sessionId: StudentSessionId; useResource: UseStudentResource; visible: boolean; ask: AskTutor; running: boolean; pending?: boolean; t: Translate; openLesson?: (lessonId: string) => Promise<import('../openmaic/playback.ts').OpenmaicPlaybackResult> }) {
+export function StudyDesk({ sessionId, visible, ask, running, pending = false, syncFeedback, cancel, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, openLesson, pollLesson, readMini, useStore, actions }: DraftProps & StudentManualActions & Partial<StudentSessionActions> & { sessionId: StudentSessionId; useResource: UseStudentResource; visible: boolean; ask: AskTutor; running: boolean; pending?: boolean; t: Translate; readMini?: (miniId: string) => Promise<{ id: string; html: string }>; openLesson?: (lessonId: string) => Promise<import('../openmaic/playback.ts').OpenmaicPlaybackResult>; pollLesson?: (lessonId: string, signal: AbortSignal) => Promise<import('../openmaic/playback.ts').LessonGenerationStatus> }) {
   const [homeSubject, setHomeSubject] = useState<Subject | 'all'>('all')
   const [viewAt, setViewAt] = useState<{ identity: string; scene: 'home' | 'summary' }>()
   const [extra, setExtra] = useState(false)
@@ -64,6 +64,7 @@ export function StudyDesk({ sessionId, visible, ask, running, pending = false, s
   const [selectedObjectiveId, setSelectedObjectiveId] = useState('')
   const [localNow, setLocalNow] = useState(Date.now())
   const [sending, setSending] = useState(false)
+  const [miniContent, setMiniContent] = useState<{ id: string; html: string }>()
   const [sendError, setSendError] = useState('')
   const [syncStatus, setSyncStatus] = useState<'queued' | 'coalesced' | 'paused' | 'unavailable'>()
   const paused = useRef(false)
@@ -98,10 +99,10 @@ export function StudyDesk({ sessionId, visible, ask, running, pending = false, s
     if (command?.action === 'answer' && !responseIds.current.has(key)) responseIds.current.set(key, crypto.randomUUID())
     return { learnerId: workspace.learnerId, termId: workspace.termId, blockId: ownerId, questionId: task?.id, responseId: task?.responseId ?? responseIds.current.get(key) }
   }
-  async function tutor(text = continuePrompt, photo?: StudyPhoto, command?: Command, currentBlock = false, continuation = false, continuationAction?: string, dailyAction?: { action: string; suggestion?: DailySuggestion }) {
+  async function tutor(text = continuePrompt, photo?: StudyPhoto, command?: Command, currentBlock = false, continuation = false, continuationAction?: string, dailyAction?: { action: string; suggestion?: DailySuggestion }, courseAction?: { action: string; courseId?: string; sectionId?: string }) {
     if (readOnly) throw new Error(t('legacyFilesHelp'))
     const previous = identity(command)
-    const next = continuation ? workspace.nextAction : null
+    const next = dailyAction?.suggestion?.nextAction ?? (continuation ? workspace.nextAction : null)
     if (continuation && (!workspace.contextReady || !next)) return
     const ids = next ? { learnerId: workspace.learnerId, termId: workspace.termId, blockId: next.blockId, questionId: next.questionId, responseId: next.responseId } : previous
     if (command?.action === 'answer' && submissions.some(item => item.response?.responseId === ids.responseId && item.admission === 'unknown')) { setSendError(t('messageUnknown')); throw new Error(t('messageUnknown')) }
@@ -109,7 +110,7 @@ export function StudyDesk({ sessionId, visible, ask, running, pending = false, s
     const active = data?.study?.active
     const retainBlock = active && (currentBlock || command?.action === 'answer' || command?.action === 'hint' || command?.action === 'stuck' || command?.action === 'stop')
     const selection = next ? { subject: next.subject, goalId: next.goalId, scope: next.scope } : retainBlock ? { subject: active.subject, goalId: data?.study?.task?.objectiveId, scope: active.scope } : { subject: command?.action === 'start' ? command.subject : subject, goalId: selectedObjectiveId || undefined, scope: command?.action === 'start' ? command.scope : scopeCommand(subject).scope }
-    const intent = { nativeSessionId: sessionId, observedVersions: workspace.contextState.versions, ...(workspace.daily ? { dailyContext: { planId: workspace.daily.saved?.id, revision: workspace.daily.saved?.revision, taskId: workspace.daily.currentTaskId, day: workspace.daily.day } } : {}), ...(dailyAction ? { dailyAction: { ...dailyAction, operationId: crypto.randomUUID() } } : {}), ...ids, selection, nextAction: workspace.nextAction, round: workspace.round, legalActions: workspace.legalActions, ...(continuation ? { previousActivity: { blockId: previous.blockId, questionId: previous.questionId, responseId: previous.responseId }, continuationAction } : {}), ...(command ? { operation: command } : {}), request: text.trim() === '' ? continuePrompt : text }
+    const intent = { ...(courseAction ? { courseAction } : {}), nativeSessionId: sessionId, observedVersions: workspace.contextState.versions, ...(workspace.daily ? { dailyContext: { planId: workspace.daily.saved?.id, revision: workspace.daily.saved?.revision, taskId: workspace.daily.currentTaskId, day: workspace.daily.day } } : {}), ...(dailyAction ? { dailyAction: { ...dailyAction, operationId: crypto.randomUUID() } } : {}), ...ids, selection, nextAction: dailyAction?.suggestion ? undefined : next, round: workspace.round, legalActions: workspace.legalActions, ...(continuation ? { previousActivity: { blockId: previous.blockId, questionId: previous.questionId, responseId: previous.responseId }, continuationAction } : {}), ...(command ? { operation: command } : {}), request: text.trim() === '' ? continuePrompt : text }
     const retain = (requestId: string, admission: 'accepted' | 'unknown') => setSubmissions(previous => [...previous, { requestId, admission, ...(ids.questionId ? { questionId: ids.questionId } : {}), ...(command?.action === 'answer' && ids.termId && ids.blockId && ids.responseId ? { response: { termId: ids.termId as TermId, owner: { kind: 'block' as const, id: ids.blockId as BlockId }, responseId: ids.responseId as ResponseId } } : {}) }].slice(-12))
     try { const result = await ask(nativeIntentPrompt(intent, intent.request), photo); if (result) retain(result.requestId, result.admission) }
     catch (reason) { if (reason instanceof StudySubmissionError) retain(reason.requestId, 'unknown'); setSendError(reason instanceof Error ? reason.message : t('sendError')); throw reason }
@@ -162,43 +163,45 @@ export function StudyDesk({ sessionId, visible, ask, running, pending = false, s
     }
   }, [active?.id, sessionId])
   const ownerBlockId = active?.subject === subject ? active.id : workspace.round?.blockId
-  const currentLesson = workspace.learnerId && workspace.termId ? data?.interactiveLessons.lessons.find(item => item.blockId === ownerBlockId && item.learnerId === workspace.learnerId && item.termId === workspace.termId && item.status !== 'failed') : undefined
+  const currentLesson = workspace.learnerId && workspace.termId ? data?.interactiveLessons.lessons.find(item => item.blockId === ownerBlockId && item.learnerId === workspace.learnerId && item.termId === workspace.termId && (item.status !== 'failed' || item.purpose !== undefined)) : undefined
+  const [generationProgress, setGenerationProgress] = useState<Record<string, import('../openmaic/playback.ts').LessonGenerationStatus>>({})
+  async function checkProgress(lessonId: string, signal = new AbortController().signal) {
+    if (!pollLesson) return
+    try { const result = await pollLesson(lessonId, signal); if (!signal.aborted) setGenerationProgress(previous => ({ ...previous, [lessonId]: result })); return result }
+    catch (error) { if (!signal.aborted) setSendError(t('courseProgressError')) }
+  }
+  useEffect(() => {
+    if (!visible || !pollLesson || !currentLesson || !['generating', 'unknown'].includes(currentLesson.status)) return
+    const controller = new AbortController()
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const poll = async () => { const result = await checkProgress(currentLesson.id, controller.signal); if (!controller.signal.aborted && !result?.failure && result?.result?.status === 'generating') timer = setTimeout(() => { void poll() }, 10000) }
+    void poll()
+    return () => { controller.abort(); clearTimeout(timer) }
+  }, [visible, currentLesson?.id, currentLesson?.status])
+  function courseAction(action: string, courseId?: string, sectionId?: string) {
+    if (action === 'mini' && sectionId) {
+      if (readMini) void readMini(sectionId).then(setMiniContent).catch(() => setSendError(t('courseMiniError')))
+      return
+    }
+    void tutor(unitCoursePrompt(action, courseId, sectionId), undefined, undefined, false, false, undefined, undefined, { action, ...(courseId ? { courseId } : {}), ...(sectionId ? { sectionId } : {}) }).catch(() => {})
+  }
   async function requestSync(lessonId: string, trigger: Parameters<StudentSessionActions['syncFeedback']>[1]) {
     if (!syncFeedback) return
     try { const result = await syncFeedback(lessonId, trigger); setSyncStatus(result.status) }
     catch (reason) { setSyncStatus('unavailable'); setSendError(reason instanceof Error ? reason.message : t('classroomUnavailable')); throw reason }
   }
-  const returnState = useRef({ currentLesson, syncFeedback, round: workspace.round, contextReady: workspace.contextReady, requestSync })
-  returnState.current = { currentLesson, syncFeedback, round: workspace.round, contextReady: workspace.contextReady, requestSync }
-  const resumed = useRef<string>()
-  useEffect(() => {
-    if (!visible || tab !== 'today') { resumed.current = undefined; return }
-    if (!workspace.contextReady || !currentLesson || currentLesson.status !== 'ready' || paused.current || workspace.round?.status === 'paused') return
-    const owner = JSON.stringify([sessionId, currentLesson.id])
-    if (resumed.current === owner) return
-    resumed.current = owner
-    void requestSync(currentLesson.id, 'resume').catch(() => {})
-  }, [visible, tab, currentLesson?.id, sessionId, workspace.contextReady])
-  useEffect(() => {
-    if (!visible || tab !== 'today') return
-    const returned = () => {
-      const current = returnState.current
-      if (!current.contextReady || document.visibilityState === 'hidden' || paused.current || current.round?.status === 'paused' || current.currentLesson?.status !== 'ready') return
-      void current.requestSync(current.currentLesson.id, 'return').catch(() => {})
-    }
-    window.addEventListener('focus', returned)
-    document.addEventListener('visibilitychange', returned)
-    return () => { window.removeEventListener('focus', returned); document.removeEventListener('visibilitychange', returned) }
-  }, [visible, tab, sessionId])
   async function continueLearning(continuationAction?: string) {
     const next = workspace.nextAction
     if (!workspace.contextReady || !next || running || nativePending || sending) return
     paused.current = false
+    if (currentLesson?.purpose && (!currentLesson.feedback || (currentLesson.quality?.status !== 'passed' || !currentLesson.quality.reviewId)) && (currentLesson.status === 'ready' || generationProgress[currentLesson.id]?.result?.status === 'ready')) { await tutor(openmaicQueryPrompt(currentLesson.id), undefined, undefined, true); return }
+    if (currentLesson?.purpose && ['planned', 'failed'].includes(currentLesson.status)) { await tutor(openmaicQueryPrompt(currentLesson.id), undefined, undefined, true); return }
     const sourceLesson = next.source?.kind === 'openmaic' ? next.source.verification.lessonId : undefined
     if ((!continuationAction || continuationAction === 'sync-feedback') && syncFeedback && (sourceLesson || currentLesson?.status === 'ready' && next.blockId === currentLesson.blockId)) {
       await requestSync(sourceLesson ?? currentLesson!.id, 'continue')
       return
     }
+    if (currentLesson && ['generating', 'unknown'].includes(currentLesson.status) && next.blockId === currentLesson.blockId) { await checkProgress(currentLesson.id); return }
     const request = continuationAction ? `请按共享 legalActions 执行 ${continuationAction}，保留当前 round 与原作答。${continuePrompt}` : currentLesson?.status === 'generating' && next.blockId === currentLesson.blockId ? openmaicQueryPrompt(currentLesson.id) : continuePrompt
     await tutor(workspace.daily ? `${dailyPlanPrompt}\n${request}` : request, undefined, undefined, true, true, continuationAction, workspace.daily ? { action: 'continue' } : undefined)
   }
@@ -213,7 +216,7 @@ export function StudyDesk({ sessionId, visible, ask, running, pending = false, s
     if (!daily && (action === 'pause' || action === 'stop')) { if (active) await act({ action: 'stop', sessionId: active.id, reflection: '' }); return }
     if (action === 'pause' || action === 'stop') { paused.current = true; if (currentLesson && syncFeedback) await requestSync(currentLesson.id, 'pause'); await cancel?.() }
     else paused.current = false
-    suggestion ??= active && !daily?.saved?.tasks.some(task => task.activity?.blockId === active.id) ? daily?.suggestions.find(item => item.task.activity?.blockId === active.id) : undefined
+    suggestion ??= (action === 'start' || action === 'extra') ? daily?.recommended[0] : active && !daily?.saved?.tasks.some(task => task.activity?.blockId === active.id) ? daily?.suggestions.find(item => item.task.activity?.blockId === active.id) : undefined
     await tutor(dailyPlanPrompt, undefined, undefined, true, false, undefined, { action, ...(suggestion ? { suggestion } : {}) })
     setViewAt(undefined)
   }
@@ -268,6 +271,7 @@ export function StudyDesk({ sessionId, visible, ask, running, pending = false, s
     {readOnly && data && <p role="status">{t('legacyFilesHelp')}</p>}
     {workspace.error && !workspace.loadNeeded && <p role="alert">{t(workspace.invalidRecords ? 'recordsNeedCheck' : 'staleData')}</p>}
     {study && !workspace.contextReady && !workspace.stale && <p role="status">{t(workspace.contextState.readStatus === 'partial' ? 'partialLearningRecords' : 'continueWaiting')}</p>}
+    {miniContent && <section aria-label={t('courseMini')}><button type="button" onClick={() => setMiniContent(undefined)}>{t('courseMiniClose')}</button><iframe title={t('courseMini')} sandbox="allow-scripts" referrerPolicy="no-referrer" style={{ width: '100%', minHeight: 400 }} srcDoc={`<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: https:; font-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'">${miniContent.html}`} /></section>}
     {sendError && <p role="alert">{sendError}</p>}
     {syncStatus && <p role="status">{t(syncStatus === 'queued' ? 'feedbackSyncQueued' : syncStatus === 'coalesced' ? 'feedbackSyncCoalesced' : syncStatus === 'paused' ? 'feedbackSyncPaused' : 'feedbackSyncUnavailable')}</p>}
     {!data ? workspace.loadNeeded ? <section><p>{t('continueSavedLearning')}</p><button type="button" disabled={sending || running} onClick={() => { void tutor(loadLearningPrompt).catch(() => {}) }}>{t('continueLearning')}</button></section> : workspace.value?.status === 'missing' ? <section><p>{t('setupFirst')}</p><button disabled={sending} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('setupConversation')}</button></section> : workspace.value ? <section><p>{t(workspace.value.status === 'legacy' ? 'legacyFilesHelp' : 'unavailableFilesHelp')}</p></section> : !workspace.error && <div className={css.empty} aria-busy="true" aria-label={t('busy')}><span className={css.spinner} /></div> : !study && tab === 'today' ? <section><p>{t('setupFirst')}</p><button disabled={sending} onClick={() => { void tutor(t('setupIntent')).catch(() => {}) }}>{t('setupConversation')}</button></section> : <>
@@ -275,9 +279,9 @@ export function StudyDesk({ sessionId, visible, ask, running, pending = false, s
       {study && tab === 'today' && daily && scene === 'summary' && <DailySummary daily={daily} disabled={disabled || !workspace.contextReady || running || nativePending} t={t} onContinue={() => { void dailyChoice('continue').catch(() => {}) }} onExtra={() => home(true)} onHome={() => home()} />}
       {study && tab === 'today' && (scene === 'learning' || !daily) && <>
         {daily?.tasks.find(item => item.task.id === daily.currentTaskId)?.invalidScope && <p role="status">{t('scopeChanged')}</p>}
-        <TodayView {...draft} draftScope={draftScope} legacyDraftScope={`student:draft:${sessionId}:${workspace.termId ?? 'setup'}`} nextAction={workspace.nextAction} learnerId={workspace.learnerId} termId={workspace.termId} classroomBindingId={workspace.classroomBindingId} onContinue={() => { void continueLearning().catch(() => {}) }} legalActions={workspace.legalActions} onAction={action => { void continueLearning(action).catch(() => {}) }} study={study} openParent={() => scopeSetup(workspace.nextAction?.subject ?? subject)} disabled={disabled || !workspace.contextReady || !!daily?.tasks.find(item => item.task.id === daily.currentTaskId)?.invalidScope} pending={nativePending} running={running} act={act} tutor={(text, currentBlock) => tutor(text, undefined, undefined, currentBlock)} t={t} lessons={data.interactiveLessons?.lessons ?? []} onOpenClassroom={lessonId => { void openSavedLesson(lessonId).catch(() => {}) }} onHome={() => home()} onPause={() => { void dailyChoice('pause').catch(() => {}) }} onStop={() => { void dailyChoice('stop').catch(() => {}) }} />
+        <TodayView {...draft} draftScope={draftScope} legacyDraftScope={`student:draft:${sessionId}:${workspace.termId ?? 'setup'}`} nextAction={workspace.nextAction} learnerId={workspace.learnerId} termId={workspace.termId} classroomBindingId={workspace.classroomBindingId} onContinue={() => { void continueLearning().catch(() => {}) }} legalActions={workspace.legalActions} onAction={action => { void continueLearning(action).catch(() => {}) }} study={study} openParent={() => scopeSetup(workspace.nextAction?.subject ?? subject)} disabled={disabled || !workspace.contextReady || !!daily?.tasks.find(item => item.task.id === daily.currentTaskId)?.invalidScope} pending={nativePending} running={running} act={act} tutor={(text, currentBlock) => tutor(text, undefined, undefined, currentBlock)} t={t} generationProgress={generationProgress} onQuery={lessonId => { void checkProgress(lessonId) }} onRevise={lessonId => courseAction('revise', currentLesson?.course?.id, lessonId)} lessons={data.interactiveLessons?.lessons ?? []} onOpenClassroom={lessonId => { void openSavedLesson(lessonId).catch(() => {}) }} onHome={() => home()} onPause={() => { void dailyChoice('pause').catch(() => {}) }} onStop={() => { void dailyChoice('stop').catch(() => {}) }} />
       </>}
-      {study && tab === 'lessons' && data.interactiveLessons && <LessonsPanel lessons={lessonsForSubject(data.interactiveLessons.lessons, subject)} {...(data.interactiveLessons.error !== undefined ? { error: data.interactiveLessons.error } : {})} disabled={disabled} running={running} t={t} onOpen={lessonId => { void openSavedLesson(lessonId).catch(() => {}) }} onQuery={lessonId => { void tutor(openmaicQueryPrompt(lessonId)).catch(() => {}) }} onRetry={runId => { void tutor(openmaicRetryPrompt(runId)).catch(() => {}) }} onReview={classroomId => { void tutor(openmaicReviewPrompt(classroomId)).catch(() => {}) }} />}
+      {study && tab === 'lessons' && data.interactiveLessons && <LessonsPanel lessons={lessonsForSubject(data.interactiveLessons.lessons, subject)} {...(data.interactiveLessons.error !== undefined ? { error: data.interactiveLessons.error } : {})} disabled={disabled} running={running} t={t} onOpen={lessonId => { void openSavedLesson(lessonId).catch(() => {}) }} courses={(data.interactiveLessons.courses ?? []).filter(course => course.subject === subject)} miniLessons={(data.interactiveLessons.miniLessons ?? []).filter(mini => mini.subject === subject)} progress={generationProgress} onCourse={courseAction} onGenerate={() => courseAction('start')} onPrepare={lessonId => { void tutor(openmaicQueryPrompt(lessonId)).catch(() => {}) }} onQuery={lessonId => { void checkProgress(lessonId) }} onRetry={runId => { void tutor(openmaicRetryPrompt(runId)).catch(() => {}) }} onReview={classroomId => { void tutor(openmaicReviewPrompt(classroomId)).catch(() => {}) }} />}
       {study && tab === 'map' && <nav className="student-segments" aria-label={t('parentProgress')}><button type="button" aria-pressed={knowledgeView === 'map'} onClick={() => setKnowledgeView('map')}>{t('map')}</button><button type="button" aria-pressed={knowledgeView === 'ideas'} onClick={() => setKnowledgeView('ideas')}>{t('ideas')}</button></nav>}
       {study && showMap && <MapView study={study} curriculum={curriculum} subject={subject} selectedConceptId={selectedConceptId} setSelectedConceptId={setSelectedConceptId} selectedObjectiveId={selectedObjectiveId} clearGoal={() => setSelectedObjectiveId('')} chooseGoal={chooseGoal} active={!!active} scopeGrade={scopeGrade} scopeTerm={scopeTerm} setMapGrade={setMapGrade} setMapTerm={setMapTerm} clearBrowse={() => { setMapGrade(undefined); setMapTerm(undefined) }} intensities={intensities} setIntensity={(target, level) => setIntensities(previous => ({ ...previous, [target]: level }))} scopeOf={scopeOf} setScope={(target, next) => setScopeChoice(previous => ({ ...previous, [target]: next }))} selectSubject={selectSubject} startDiagnosis={startDiagnosis} disabled={disabled} running={running} organize={() => { void tutor(organizePrompt(subject)).catch(() => {}) }} change={command => change(command).then(() => undefined)} t={t} />}
       {study && tab === 'map' && knowledgeView === 'ideas' && <IdeasView study={study} curriculum={curriculum} t={t} onOpenConcept={id => { setSelectedConceptId(id); setKnowledgeView('map') }} />}

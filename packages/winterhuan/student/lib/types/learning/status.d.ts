@@ -24,7 +24,7 @@ export declare function studyStatus(state: StudyState, now: number): {
     active: {
         id: string;
         subject: "chinese" | "math" | "english";
-        mode: "review" | "foundation" | "school" | "explore" | "diagnose";
+        mode: "foundation" | "review" | "school" | "explore" | "diagnose";
         startedAt: number;
         intensity?: "light" | "standard" | "deep" | undefined;
         endedAt?: number | undefined;

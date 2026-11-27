@@ -1,4 +1,4 @@
-import { Bt as knowledgeSources, C as evidenceDay, Ht as scopeSupports, J as canonical, K as DAY, Kt as stateSchema, S as evidenceAtCutoff, St as interactiveLessonsView, Xt as interestTagsOf, Yt as interestFocus, Z as formatDuration, _ as replayMistake, _t as subjectIdeas, b as demonstrablyAfter, bt as OPENMAIC_LESSONS_PATH, ct as todaySpent, ft as builtinObjectives, g as dayStart, gt as subjectExercises, h as migrateStudyFile, ht as exercisesForObjective, lt as builtinObjective, m as effectiveLearningScopes, mt as curriculumFor, nt as schoolGate, ot as studyDay, p as automaticLearningScopes, pt as builtinObjectivesIn, q as activeSession, rn as StudyReadCache, rt as scopeSelects, st as taughtUnit, ut as builtinObjectiveAnywhere, v as scheduleMistakes, w as evidenceOf, x as deriveEvidence, xt as effectiveOpenmaicBase, y as attachEvidence, yt as OPENMAIC_COOKIE_PATH, zt as effectiveKnowledge } from "./read-BKnscgN2.js";
+import { $t as interestTagsOf, C as evidenceDay, Gt as scopeSupports, Ht as effectiveKnowledge, J as canonical, K as DAY, Qt as interestFocus, S as evidenceAtCutoff, St as interactiveLessonsView, Ut as knowledgeSources, Yt as stateSchema, Z as formatDuration, _ as replayMistake, _t as subjectIdeas, b as demonstrablyAfter, bt as OPENMAIC_LESSONS_PATH, cn as StudyReadCache, ct as todaySpent, ft as builtinObjectives, g as dayStart, gt as subjectExercises, h as migrateStudyFile, ht as exercisesForObjective, lt as builtinObjective, m as effectiveLearningScopes, mt as curriculumFor, nt as schoolGate, ot as studyDay, p as automaticLearningScopes, pt as builtinObjectivesIn, q as activeSession, rt as scopeSelects, st as taughtUnit, ut as builtinObjectiveAnywhere, v as scheduleMistakes, w as evidenceOf, x as deriveEvidence, xt as effectiveOpenmaicBase, y as attachEvidence, yt as OPENMAIC_COOKIE_PATH } from "./read-BpRrocGx.js";
 import { z } from "zod";
 import { createHash } from "node:crypto";
 //#region lib/types/learning/mastery.js
@@ -2049,7 +2049,7 @@ function dailyLearning(read, state, now, selectedSubject, requestedDay) {
 		const binding = blocks.find((block) => block.id === next.blockId)?.questions.find((question) => question.id === next.questionId)?.capability;
 		const goalId = next.goalId ?? binding?.goalId;
 		const scope = next.scope ?? binding?.scope;
-		const purpose = next.blockId ? "resume" : next.kind === "teach" ? "teaching" : next.kind === "review" ? "review" : next.kind === "learn" && !all.goalProgress.some((item) => item.id === goalId && item.feedback.some((row) => row.sourceStatus === "known")) ? "diagnostic" : "learning";
+		const purpose = next.blockId ? "resume" : next.kind === "teach" ? "teaching" : next.kind === "review" ? "review" : "learning";
 		const familyIds = next.review?.familyIds.filter((id) => knowledge.families.some((family) => family.id === id)) ?? (next.familyId ? [next.familyId] : []);
 		const basis = entries.filter((entry) => entry.subject === next.subject && entry.termId === settings.termId && entry.sourceStatus === "known" && (next.blockId ? entry.ownerId === next.blockId : entry.capability?.goalId === goalId)).slice(-20).map((entry) => ({
 			termId: settings.termId,
@@ -2090,10 +2090,9 @@ function dailyLearning(read, state, now, selectedSubject, requestedDay) {
 			day: prior.day,
 			taskId: priorTask.id
 		};
-		const { requirement: _requirement, ...nextAction } = next;
 		return {
 			task,
-			nextAction
+			nextAction: next
 		};
 	};
 	const executable = (action) => !!action && (action.kind !== "hold" || !!action.blockId);

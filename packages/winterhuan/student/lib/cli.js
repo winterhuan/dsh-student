@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { Ct as lessonFileSchema, Gt as figureSchema, Kt as stateSchema, Qt as capabilityGoalSchema, en as knowledgeExtensionSchema, l as readBackups, nn as questionFamilySchema, r as backupVersions, t as readWorkspace, vt as readLessonFile, z as officialFileSchemas } from "./read-BKnscgN2.js";
+import { Ct as lessonFileSchema, Jt as figureSchema, L as dailyTaskSchema, Vt as validateCourseWorkspace, Yt as stateSchema, an as questionFamilySchema, l as readBackups, r as backupVersions, rn as knowledgeExtensionSchema, t as readWorkspace, tn as capabilityGoalSchema, vt as readLessonFile, z as officialFileSchemas } from "./read-BpRrocGx.js";
 import { t as nodeStudyFiles } from "./node-sZCrHR59.js";
 import { z } from "zod";
 import { parseArgs } from "node:util";
@@ -63,6 +63,7 @@ function authoringExample(kind) {
 	if (kind in officialFileSchemas) value.learnerId = "example";
 	if (kind === "daily-plan") {
 		const at = Date.parse("2026-11-25T00:00:00+08:00");
+		value.tasks = [sample(z.toJSONSchema(dailyTaskSchema, { io: "input" }))];
 		Object.assign(value, {
 			day: "2026-11-25",
 			id: "day-2026-11-25",
@@ -129,8 +130,13 @@ try {
 		const backups = await readBackups(fs, signal);
 		const read = await readWorkspace(fs, signal, backupVersions(backups.backups));
 		const lessons = await readLessonFile(fs, signal);
-		const ok = ["valid", "archived"].includes(read.status) && ["valid", "missing"].includes(lessons.status);
-		const issues = [...read.issues, ...lessons.issues];
+		const courseIssues = lessons.file && read.workspace ? validateCourseWorkspace(lessons.file, read.workspace) : [];
+		const ok = courseIssues.length === 0 && ["valid", "archived"].includes(read.status) && ["valid", "missing"].includes(lessons.status);
+		const issues = [
+			...read.issues,
+			...lessons.issues,
+			...courseIssues
+		];
 		if (!ok && issues.length === 0) issues.push({
 			path: ".study/settings.json",
 			field: "",

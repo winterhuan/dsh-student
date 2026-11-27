@@ -120,6 +120,22 @@ export class OpenmaicFeedback {
     if (canonical([...sessions].sort((a, b) => a.id.localeCompare(b.id))) !== canonical(final.sort((a, b) => a.id.localeCompare(b.id)))) throw new OpenmaicError('incomplete-read')
     return attempts.sort((left, right) => left.id.localeCompare(right.id))
   }
+  /** Read a stable classroom document for content review without changing learning records.
+   * @param owner - Original authorized classroom.
+   * @param signal - Cancels both revision reads and the bounded document fetch.
+   * @returns Original scenes and their complete content fingerprint.
+   */
+  async content(owner: OpenmaicLessonOwner, signal: AbortSignal): Promise<{ contentHash: string; scenes: z.infer<typeof documentSchema>['scenes'] }> {
+    return boundedOpenmaicOperation(signal, this.connection.operationTimeoutMs, async signal => {
+      await this.authorize(owner, signal)
+      const before = await this.manifest(owner.classroomId, signal)
+      const document = parseSource(documentSchema, await this.connection.read(`/api/persistence/documents/${part(owner.classroomId)}`, signal))
+      const after = await this.manifest(owner.classroomId, signal)
+      if (canonical(before) !== canonical(after)) throw new OpenmaicError('service-unavailable')
+      if (document.stage.id !== owner.classroomId || document.scenes.some(scene => scene.stageId !== owner.classroomId) || new Set(document.scenes.map(scene => scene.id)).size !== document.scenes.length) throw new OpenmaicError('invalid-response')
+      return { contentHash: digest(document), scenes: document.scenes }
+    })
+  }
   /**
    * Capture the original generated classroom before playback; an existing partition keeps its owner and capture.
    * @param owner - Independently validated original lesson and Student ownership.

@@ -81,14 +81,32 @@ describe('interactive lesson desk', () => {
     const generating = { ...ready, id: 'om-gen', learnerId: 'learner-one', termId: 'term-one', blockId: start.id, status: 'generating' as const, title: '正在生成', runId: 'run-1', pollUrl: '/api/generate-classroom/run-1', url: undefined, classroomId: undefined, summary: undefined }
     backend = studentClientFixture(state, { lessons: [generating] }, { learnerId: 'learner-one', termId: 'term-one', nextAction: { kind: 'teach', reason: 'current-gap', subject: 'math', title: 'Make ten', blockId: start.id } })
     const ask = vi.fn().mockResolvedValue(undefined)
-    render(<StudyDesk sessionId="ready-lesson" visible running={false} ask={ask} t={t} />)
+    const pollLesson = vi.fn().mockResolvedValue({ checkedAt: NOW, result: { status: 'generating' } })
+    render(<StudyDesk sessionId="ready-lesson" visible running={false} ask={ask} pollLesson={pollLesson} t={t} />)
     expect(screen.getByText(/Generating · 正在生成/)).toBeTruthy()
     expect(screen.queryByRole('button', { name: en.goToClass })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: en.continueLearning }))
     expect(open).not.toHaveBeenCalled()
-    await waitFor(() => expect(ask).toHaveBeenCalledOnce())
-    expect(ask.mock.calls[0]).toMatchSnapshot()
-    expect(String(ask.mock.calls[0]?.[0])).toContain('id=om-gen')
+    await waitFor(() => expect(pollLesson).toHaveBeenCalledWith('om-gen', expect.any(AbortSignal)))
+    expect(ask).not.toHaveBeenCalled()
+  })
+
+  it.each(['planned', 'generating'] as const)('uses the original full lesson for %s without showing an unrelated question', async status => {
+    const state = updateStudy(updateStudy(undefined, setup, NOW), start, NOW)
+    const lesson = { ...ready, id: 'full-lesson', learnerId: 'learner-one', termId: 'term-one', blockId: start.id, purpose: 'full' as const, status, url: undefined, classroomId: undefined, summary: undefined }
+    backend = studentClientFixture(state, { lessons: [lesson] }, { learnerId: 'learner-one', termId: 'term-one', nextAction: { kind: 'learn', reason: 'new-goal', subject: 'math', title: 'Make ten', blockId: start.id } })
+    const ask = vi.fn().mockResolvedValue(undefined)
+    const pollLesson = vi.fn().mockResolvedValue({ checkedAt: NOW, result: { status: 'generating' } })
+    render(<StudyDesk sessionId="full-lesson-test" visible running={status === 'generating'} ask={ask} pollLesson={pollLesson} t={t} />)
+    fireEvent.click(screen.getByRole('button', { name: status === 'planned' ? en.courseStart : en.openmaicQuery }))
+    if (status === 'planned') {
+      await waitFor(() => expect(ask).toHaveBeenCalledOnce())
+      expect(String(ask.mock.calls[0]?.[0])).toContain('full-lesson')
+      expect(pollLesson).not.toHaveBeenCalled()
+    } else {
+      await waitFor(() => expect(pollLesson).toHaveBeenCalledWith('full-lesson', expect.any(AbortSignal)))
+      expect(ask).not.toHaveBeenCalled()
+    }
   })
 
   it('saves interest tags from parent setup', async () => {
@@ -118,7 +136,7 @@ describe('interactive lesson desk', () => {
     expect(ask.mock.calls[0]).toMatchSnapshot()
   })
 
-  it('can check an older failed record without a retryable run and disables requests while busy', () => {
+  it('can check an older failed record without a retryable run while the model is busy and blocks stale workspace queries', () => {
     const onQuery = vi.fn()
     const lesson = {
       ...ready, id: 'om-old-timeout', status: 'failed' as const,
@@ -131,13 +149,41 @@ describe('interactive lesson desk', () => {
     expect(onQuery).toHaveBeenCalledWith('om-old-timeout')
     view.rerender(<LessonsPanel {...props} running />)
     fireEvent.click(screen.getByRole('button', { name: en.openmaicQuery }))
-    expect(onQuery).toHaveBeenCalledOnce()
+    expect(onQuery).toHaveBeenCalledTimes(2)
     view.rerender(<LessonsPanel {...props} disabled />)
     fireEvent.click(screen.getByRole('button', { name: en.openmaicQuery }))
-    expect(onQuery).toHaveBeenCalledOnce()
+    expect(onQuery).toHaveBeenCalledTimes(2)
     view.rerender(<LessonsPanel {...props} lessons={[ready]} />)
     expect(screen.queryByRole('button', { name: en.openmaicQuery })).toBeNull()
   })
 })
 
 function ParentSettings(props: Omit<import('react').ComponentProps<typeof RealParentSettings>, keyof import('../src/client/drafts.tsx').DraftProps>) { return <RealParentSettings {...props} {...useDraftFixture()} /> }
+
+
+it('reopens a retained mini lesson in an isolated frame without asking the model', async () => {
+  const ask = vi.fn(), readMini = vi.fn().mockResolvedValue({ id: 'mini-1', html: '<h2>Make ten</h2>' })
+  backend = studentClientFixture(updateStudy(undefined, setup, NOW), { lessons: [], miniLessons: [{ id: 'mini-1', learnerId: 'learner-one', termId: 'term-one', subject: 'math', revision: 'v1', goalIds: ['m.add'], scope: { id: 'within20', description: 'Within20', modality: 'written', numberMax: 20 }, purpose: 'review', contentPath: 'mini.html', contentHash: 'a'.repeat(64), createdAt: NOW }] })
+  render(<StudyDesk sessionId="mini" visible running={false} ask={ask} readMini={readMini} t={t} />)
+  fireEvent.click(screen.getByRole('button', { name: en.lessonHistory }))
+  fireEvent.click(screen.getByRole('button', { name: `${en.courseMiniOpen} · mini-1` }))
+  const frame = await screen.findByTitle(en.courseMini)
+  expect(frame.getAttribute('sandbox')).toBe('allow-scripts')
+  expect(frame.getAttribute('srcdoc')).toContain('Make ten')
+  expect(readMini).toHaveBeenCalledExactlyOnceWith('mini-1')
+  expect(ask).not.toHaveBeenCalled()
+})
+
+it('shows rejected content and offers an explicit revision without opening or silently replacing it', () => {
+  const onCourse = vi.fn(), onOpen = vi.fn(), onPrepare = vi.fn()
+  const lesson = { ...ready, purpose: 'full' as const, quality: { status: 'rejected' as const, checkedAt: NOW, contentHash: 'a'.repeat(64), stages: { introduction: 's1', explanation: 's1', demonstration: 's1', guidedPractice: 's1', independentPractice: 's1', summary: 's1' }, questions: [], scopeChecked: true as const, criterionChecked: true as const, notes: 'The answer produces an ungrammatical sentence.' } }
+  render(<LessonsPanel lessons={[lesson]} disabled={false} running={false} t={t} onCourse={onCourse} onOpen={onOpen} onPrepare={onPrepare} onQuery={vi.fn()} onRetry={vi.fn()} onReview={vi.fn()} />)
+  expect(screen.getByRole('alert').textContent).toContain(en.courseRejectedHelp)
+  expect(screen.getByText(lesson.quality.notes).closest('details')?.open).toBe(false)
+  expect(screen.queryByRole('button', { name: en.openmaicOpen })).toBeNull()
+  expect(screen.queryByRole('button', { name: en.courseCheck })).toBeNull()
+  expect(onCourse).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: en.courseRevise }))
+  expect(onCourse).toHaveBeenCalledWith('revise', undefined, lesson.id)
+  expect(onOpen).not.toHaveBeenCalled()
+})

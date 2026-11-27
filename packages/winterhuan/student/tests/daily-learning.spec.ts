@@ -31,7 +31,7 @@ async function fixture() {
 it('uses the existing profile for unconfigured subjects without writing confirmations or claiming weakness', async () => {
   const f = await fixture()
   const before = await f.read(), first = await f.daily(), second = await f.daily()
-  expect(first.preview).toMatchObject({ id: 'day-2026-11-25', subjects: ['math'], tasks: [{ purpose: 'diagnostic', goalId: 'm.count', state: 'ready' }] })
+  expect(first.preview).toMatchObject({ id: 'day-2026-11-25', subjects: ['math'], tasks: [{ purpose: 'learning', goalId: 'm.count', state: 'ready' }] })
   expect(first.missingSubjects).toEqual([])
   expect(first.suggestions.map(item => item.task.subject)).toEqual(expect.arrayContaining(['chinese', 'math', 'english']))
   expect(second.preview?.tasks.map(task => task.id)).toEqual(first.preview?.tasks.map(task => task.id))
@@ -45,7 +45,7 @@ it('starts a grade-based plan without requiring new learning-scope confirmations
   const before = (await f.read()).files.map(file => file.version)
   const daily = await f.daily()
   expect(daily.missingSubjects).toEqual([])
-  expect(daily.recommended[0]?.task.purpose).toBe('diagnostic')
+  expect(daily.recommended[0]?.task.purpose).toBe('learning')
   expect((await f.read()).files.map(file => file.version)).toEqual(before)
   const plan = dailyPlanSchema.parse(daily.preview)
   await f.save(`.study/plans/${plan.day}.json`, plan)
@@ -119,7 +119,7 @@ it('retains ended weak goals and distinguishes progression from long-term master
   // A separate learner with the same scope and a verified successful check can progress.
   const other = await fixture(); other.answer('correct'); other.block.endedAt = NOW
   await other.save('.study/blocks/counting.json', other.block)
-  expect((await other.daily()).recommended[0]).toMatchObject({ task: { goalId: 'm.zero', purpose: 'diagnostic' } })
+  expect((await other.daily()).recommended[0]).toMatchObject({ task: { goalId: 'm.zero', purpose: 'learning' } })
   expect(queryWorkspace(await other.read(), { kind: 'capability-progress', subject: 'math' }, NOW).data).toContainEqual(expect.objectContaining({ id: 'm.count', level: 'practising', independentDays: ['2026-11-25'] }))
 })
 

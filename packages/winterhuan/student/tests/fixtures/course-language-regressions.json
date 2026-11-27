@@ -1,0 +1,97 @@
+{
+  "source": "山指地面上高起的部分。水是液体。游泳是在水中运动。河流中有水。",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single",
+      "answer": [
+        "A"
+      ],
+      "points": 10,
+      "options": [
+        {
+          "label": "高大的地面",
+          "value": "A"
+        },
+        {
+          "label": "流动或静止的液体",
+          "value": "B"
+        },
+        {
+          "label": "天空中的云朵",
+          "value": "C"
+        },
+        {
+          "label": "动物住的小屋",
+          "value": "D"
+        }
+      ],
+      "analysis": "“山”指高大的地面，所以选A。B说的是“水”的意思，C和D都与“山”的意思无关。",
+      "question": "词语“山水”中，“山”指的是什么？",
+      "hasAnswer": true
+    },
+    {
+      "id": "q2",
+      "type": "single",
+      "answer": [
+        "B"
+      ],
+      "points": 10,
+      "options": [
+        {
+          "label": "山",
+          "value": "A"
+        },
+        {
+          "label": "水",
+          "value": "B"
+        },
+        {
+          "label": "日",
+          "value": "C"
+        },
+        {
+          "label": "月",
+          "value": "D"
+        }
+      ],
+      "analysis": "游泳需要在水边进行，“水”表示流动或静止的液体，所以选B。“山”是高大的地面，不能用于游泳的场景。C和D没有出现在本课要求中。",
+      "question": "句子“小狗爱在（  ）边游泳。”括号里应填哪个字？",
+      "hasAnswer": true
+    },
+    {
+      "id": "q3",
+      "type": "single",
+      "answer": [
+        "A"
+      ],
+      "points": 10,
+      "options": [
+        {
+          "label": "山、水",
+          "value": "A"
+        },
+        {
+          "label": "水、山",
+          "value": "B"
+        },
+        {
+          "label": "山、山",
+          "value": "C"
+        },
+        {
+          "label": "水、水",
+          "value": "D"
+        }
+      ],
+      "analysis": "“山形”像高大的地面，“水”表示河流的液体，所以依次填“山、水”，选A。B把两个字的顺序颠倒了，C和D没有根据词语意思正确搭配。",
+      "question": "小明用积木拼了一座（  ）形玩具，还拼了一条（  ）的河流。两个括号依次应填什么？",
+      "hasAnswer": true
+    }
+  ],
+  "expected": {
+    "q1": "passed",
+    "q2": "rejected",
+    "q3": "rejected"
+  }
+}

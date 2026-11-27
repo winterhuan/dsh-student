@@ -39,3 +39,19 @@ it('uses native system synchronization and cancellation without creating a user 
   expect(beginSubmission).not.toHaveBeenCalled()
   expect(prompt).not.toHaveBeenCalled()
 })
+
+it('shows the exact short answer while admitting compact metadata once through the authorized Remote', async () => {
+  const { nativeIntentPrompt } = await import('../src/client/prompts.ts')
+  const submitIntent = vi.fn().mockResolvedValue({ ok: true, value: { accepted: true } })
+  const beginSubmission = vi.fn().mockReturnValue({ requestId: 'request-1', abandon: vi.fn() })
+  const prompt = vi.fn()
+  const context = { remote: { student: { submitIntent } }, sessions: { binding: () => ({ session: { beginSubmission, prompt } }) } } as Context
+  const text = nativeIntentPrompt({ nativeSessionId: 's', learnerId: 'child', termId: 'term', blockId: 'block', questionId: 'q', responseId: 'r', observedVersions: Array.from({ length: 40 }, (_, i) => ({ path: `file-${i}`, version: 'v'.repeat(200) })), operation: { action: 'answer', taskId: 'q', response: '幕' } }, 'Save original answer, then assess.')
+  expect(new TextEncoder().encode(text).length).toBeLessThan(4096)
+  expect(text).not.toContain('observedVersions')
+  await tutorBridge(context, 's' as SessionId, 'No session', 'Failed')(text)
+  expect(beginSubmission).toHaveBeenCalledWith({ mode: 'queue', text: '幕', attachments: [] })
+  expect(submitIntent).toHaveBeenCalledOnce()
+  expect(submitIntent.mock.calls[0]?.[1]).toMatchObject({ requestId: 'request-1', intent: { operation: { response: '幕' } } })
+  expect(prompt).not.toHaveBeenCalled()
+})

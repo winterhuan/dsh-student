@@ -1,3 +1,4 @@
+import { panelIntentSchema } from "./panel-intent.js";
 /** Exact consumed native input versions from one immutable Session observation. */
 import { z } from 'zod';
 import { createHash } from 'node:crypto';
@@ -154,18 +155,22 @@ export function resolveNativeSources(observation) {
                 const receipt = event.seq < observation.inheritedEventCount ? { kind: 'unknown', reason: 'Inherited consumption is not new input in this Session.' } : consumed?.receipt ?? { kind: 'unknown', reason: 'No exact claim in the entered step.' };
                 const inputVersion = `dsh-native-v1:${createHash('sha256').update(canonical({ algorithm: 'dsh-native-v1', sessionId: cut.sessionId, consumedSeq: event.seq, message })).digest('hex')}`;
                 const text = message.content.filter(block => block.type === 'text').map(block => block.text).join('');
-                const panel = panelAnswer(text, cut.sessionId);
+                const structured = 'studentIntent' in message.source ? panelIntentSchema.safeParse(message.source.studentIntent) : undefined;
+                const intent = structured?.success && structured.data.nativeSessionId === cut.sessionId ? structured.data : undefined;
+                const answer = intent ? z.object({ action: z.literal('answer'), taskId: z.string(), response: z.string().min(1).max(2000) }).passthrough().safeParse(intent.operation) : undefined;
+                const scope = intent ? learningScopeSchema.safeParse(intent) : undefined;
+                const panel = structured ? answer?.success && scope?.success && intent?.responseId && answer.data.taskId === scope.data.questionId && text === answer.data.response ? { rawResponse: answer.data.response, scope: { ...scope.data, responseId: intent.responseId } } : 'invalid' : panelAnswer(text, cut.sessionId);
                 const rawResponse = panel === 'invalid' ? undefined : panel?.rawResponse ?? (text.length > 0 && text.length <= 2000 ? text : undefined);
                 const attachments = message.content.flatMap(block => block.type === 'image' || block.type === 'file' ? [{ kind: block.type, attachmentId: block.attachment.attachmentId }] : []);
                 const explicitScope = panel && panel !== 'invalid' ? panel.scope : rawResponse === undefined ? undefined : learningScope(rawResponse);
                 const captured = panel === undefined && !explicitScope && !/Student (?:intention|grading correction):/u.test(text) ? consumed?.capture : undefined;
                 const originalScope = explicitScope ?? (captured ? { ...captured.scope, responseId: `native_${inputVersion.slice('dsh-native-v1:'.length)}` } : undefined);
-                const input = { status: 'consumed', messageId: message.id, inputVersion, consumedSeq: event.seq, ...(rawResponse === undefined ? { textUnavailable: 'Exact native text is empty or exceeds 2000 characters.' } : { rawResponse }), receipt, ...(originalScope ? { learningScope: originalScope } : {}), ...('rpcId' in message.source ? { requestId: message.source.rpcId } : {}), attachments: attachments.slice(0, 8), omittedAttachments: Math.max(0, attachments.length - 8) };
+                const input = { status: 'consumed', ...(intent ? { intention: intent } : {}), messageId: message.id, inputVersion, consumedSeq: event.seq, ...(rawResponse === undefined ? { textUnavailable: 'Exact native text is empty or exceeds 2000 characters.' } : { rawResponse }), receipt, ...(originalScope ? { learningScope: originalScope } : {}), ...('rpcId' in message.source ? { requestId: message.source.rpcId } : {}), attachments: attachments.slice(0, 8), omittedAttachments: Math.max(0, attachments.length - 8) };
                 inputs.push(input);
                 if (receipt.kind === 'known' && rawResponse !== undefined)
                     observations.push({ sessionId: cut.sessionId, messageId: message.id, inputVersion, rawResponse, receiptAt: receipt.at, ...(originalScope ? { learningScope: originalScope } : {}), ...(captured ? { questionSnapshot: captured.questionSnapshot } : {}) });
                 // Previously saved short panel envelopes retain their exact input reference during answer extraction.
-                if (receipt.kind === 'known' && panel && panel !== 'invalid' && text.length <= 2000)
+                if (receipt.kind === 'known' && !structured && panel && panel !== 'invalid' && text.length <= 2000)
                     observations.push({ sessionId: cut.sessionId, messageId: message.id, inputVersion, rawResponse: text, receiptAt: receipt.at, learningScope: panel.scope });
                 break;
             }

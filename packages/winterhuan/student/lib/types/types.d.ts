@@ -116,4 +116,18 @@ export interface StudentFeedbackSyncReply {
     status: 'queued' | 'coalesced' | 'paused' | 'unavailable';
     messageId?: string;
 }
+/** Compact panel admission uses the native request identity without writing learning files. */
+export interface StudentPanelRequest {
+    requestId: string;
+    intent: import('./panel-intent.ts').PanelIntent;
+    photo?: {
+        mediaType: 'image/png' | 'image/jpeg' | 'image/webp';
+        data: string;
+        name: string;
+    };
+}
+/** Admission does not imply the learning operation or answer has been saved. */
+export interface StudentPanelReply {
+    accepted: true;
+}
 //# sourceMappingURL=types.d.ts.map

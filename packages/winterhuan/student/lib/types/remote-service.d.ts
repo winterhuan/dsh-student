@@ -1,11 +1,19 @@
+import type { StudentPanelRequest, StudentPanelReply } from './types.ts';
 import type { Context } from '@deepseek-ai/cordis';
 import z from '@deepseek-ai/schemastery';
-import { TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol';
+import { TypertRemoteService, type Principal } from '@deepseek-ai/dsh-typert-protocol';
 import { type ManualSaveRequest } from './files/manual.ts';
 import type { StudentTransportConfig, StudentQueryRequest, StudentQueryResult, StudentManualContext, StudentManualReply, StudentManualSaveRequest, StudentWatchFrame, StudentSessionId, StudentSubmissionRequest, StudentSubmissionInspection, StudentFeedbackSyncRequest, StudentFeedbackSyncReply } from './types.ts';
 declare module '@deepseek-ai/dsh-llm' {
     interface MessageSourceMap {
-        /** Student-owned system intent; never a child's answer or native answer date. */
+        /** Authenticated panel input; source metadata is intent, not verified learning evidence. */
+        'student-panel': {
+            kind: 'user';
+            rpcId: string;
+            principal?: Principal;
+            studentRequestHash?: string;
+            studentIntent: import('./panel-intent.ts').PanelIntent;
+        };
         'student-sync': {
             kind: 'student-sync';
             sessionId: string;
@@ -32,6 +40,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
 /** Host owner for the generated student Remote namespace. */
 export declare class StudentRemote extends TypertRemoteService {
     private readonly config;
+    private readonly panelIntents;
     private readonly feedbackIntents;
     static inject: string[];
     static Config: z<StudentTransportConfig>;
@@ -40,6 +49,14 @@ export declare class StudentRemote extends TypertRemoteService {
      * @param config - validated refresh interval and complete wire-response limit.
      */
     constructor(ctx: Context, config: StudentTransportConfig);
+    /**
+     * Admit a compact panel intent as an ordinary native user message.
+     * @param sessionId - Authorized main Session.
+     * @param request - Stable request identity and bounded panel intent.
+     * @param signal - Cancellation before admission.
+     * @returns Admission only; the agent authors and validates business files.
+     */
+    submitIntent(sessionId: StudentSessionId, request: StudentPanelRequest, signal: AbortSignal): Promise<StudentPanelReply>;
     /**
      * Read a shared validated Student projection without activating an absent Agent.
      * @param sessionId - native Session identity resolved through the registered main Agent lookup.

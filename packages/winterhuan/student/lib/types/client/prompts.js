@@ -1,3 +1,4 @@
+import { PANEL_PREFIX, panelIntentSchema } from "../panel-intent.js";
 import { intensityKeys } from "./display.js";
 /** Natural-language tutor requests. The study skill owns the teaching rules. */
 export const continuePrompt = '请加载 study，读取 references/continuation.md 和独立 learning-context，按 nextAction、round、legalActions 处理明确的下一步。执行身份仅来自 nextAction，保留 previousActivity 的原题和回答；不另排目标或重置轮次。按需选择官方课堂或独立组件，沿 requirement 教学。原生写入后运行随包只读 CLI，再独立读取确认；来源未接受时保留状态。';
@@ -66,7 +67,7 @@ export function paperPhotoPrompt(worksheetId) {
 }
 /** Recover one original job, prepare its saved questions and continue authorized playback. */
 export function openmaicQueryPrompt(lessonId) {
-    return `请加载 study、openmaic-teach，阅读 references/openmaic.md 和 references/openmaic-feedback.md。继续 .study/openmaic-lessons.json 中 id=${lessonId} 的原课堂。读取原 learnerId/termId/blockId/jobId，调用 openmaic_generate 恢复或查询原 jobId，超时或提交未知不新建任务。ready 后用 openmaic_feedback prepare 读取全部有界页，保存所有原题面、选项、修订及反馈绑定，运行只读 CLI 并独立读取，再打开原课堂。已有作答先读取并保存原记录，接受后才更新 checkpoint；已确认范围内继续教学，无需逐课确认。`;
+    return `请加载 study、openmaic-teach，阅读 references/unit-courses.md 和 references/openmaic-feedback.md。继续 .study/openmaic-lessons.json 中 id=${lessonId} 的原课堂。读取原 learnerId/termId/blockId/jobId；已有任务只恢复或查询。仅 planned 且已确认未提交时，复用已保存并校验的 requirement、teaching 与 questionPlan 调用 openmaic_generate；超时或提交未知不新建任务。旧格式且无 purpose 的既有课堂沿用 prepare 绑定流程；新增完整课 ready 后调用一次 openmaic_feedback action=review，原样保存返回 quality、feedback 和原题，运行只读 CLI 并独立读取；rejected、缺失或无法核验均不可打开。不得自己填写通过声明。已有作答先读取并保存原记录，接受后才更新 checkpoint；已确认范围内继续教学，无需逐课确认。`;
 }
 /** Recover a failed original job without creating a replacement requirement. */
 export function openmaicRetryPrompt(runId) {
@@ -80,12 +81,16 @@ export function openmaicReviewPrompt(classroomId) {
 export const workbookPhotoPrompt = '请加载 study 技能。这是练习册照片，事先没有练习单。用 workbook-draft 按题保存草稿：不会用 stuck，提示后才对用 hinted，独立做错用 independent-wrong，独立做对用 independent-correct。能对应目标就写 objectiveId。不要直接入库，等家长确认。';
 /** Complete panel intention; official file validation determines business completion. */
 export function nativeIntentPrompt(intent, request) {
-    return `请加载 study 技能。在当前原生会话处理下面的意图，先核对 learnerId、termId、blockId、questionId 和 nextAction。通过原生文件工具读写正式业务文件，再运行安装包中的只读校验 CLI，随后独立 study_status 读取确认实际保存结果；保留学生原话、回答身份和附件关联。未完成的回答先保存再评估；结束或切换时保留待评估回答，迟到的反馈仍属于原题。不要自动换题或重发不确定的回答。\nStudent intention:\n${JSON.stringify(intent)}\n${request}`;
+    return PANEL_PREFIX + JSON.stringify(panelIntentSchema.strip().parse(JSON.parse(JSON.stringify({ ...intent, version: 2, request }))));
 }
 /** Daily choices are persisted by the native executor after checking observed versions. */
-export const dailyPlanPrompt = '请加载 study，读取 references/daily-planning.md、references/continuation.md 和 study_status kind=daily-plan。执行本次 dailyAction：先核对意图携带的正式文件版本、计划 revision 和任务身份；变化时保留用户选择，重新核对，不能覆盖别的会话的新记录。若当前原活动还未关联计划，按“接续已有活动”仅登记该原活动，记录本次真实 continue/pause/stop 选择，不把其他推荐一起加入，也不补造历史 start 或完成。首次开始复用 day-YYYY-MM-DD 和稳定任务身份，先保存计划，再准备当前任务，独立读取确认两者关联。继续原题和草稿；暂停与结束不能制造学习完成或掌握。只有明确继续才调整未开始内容；只有 extra 才添加可选活动。计划结束后不自动生成新题。';
+export const dailyPlanPrompt = '请加载 study，先读 study_status kind=daily-plan，按 references/daily-planning.md 执行 dailyAction。保留选中 suggestion 的任务身份与 nextAction.requirement；核对相关文件实际版本和计划 revision 后写入，再运行只读 CLI 并独立读取。新学按 references/unit-courses.md 先确认教材与学校位置，再建立目录和完整互动课；缺资料时只询问缺项并结束，不探索 schema、写计划或自动摸底。继续沿原活动、题目、回答和额度；暂停和结束不制造完成或掌握。';
 /** Adjust an optional family preference while retaining existing profile and school progress. */
 export function scopeConfirmationPrompt(subject, suggestion) {
-    return `请加载 study，读取 references/daily-planning.md。家长想调整 ${subject} 的学习内容。先读取已有档案、教材、学校进度、有效作答和当前建议：${JSON.stringify(suggestion ?? null)}。说明当前依据，询问希望改变的内容；默认沿用已有资料，不要求逐科解锁。只有家长明确提出额外限制时才保存此学科的 learningScopes 与原话，不替其他学科补写确认。缺少学校进度时使用年级范围做简短摸底，不猜正在教的单元。保存后只读校验并独立读取，再回到今日推荐。`;
+    return `请加载 study，读取 references/daily-planning.md。家长想调整 ${subject} 的学习内容。先读取已有档案、教材、学校进度、有效作答和当前建议：${JSON.stringify(suggestion ?? null)}。说明当前依据，询问希望改变的内容；默认沿用已有资料，不要求逐科解锁。只有家长明确提出额外限制时才保存此学科的 learningScopes 与原话，不替其他学科补写确认。缺少学校进度时只补问实际位置，不猜正在教的单元。保存后只读校验并独立读取，再回到今日推荐。`;
+}
+/** Explicit course actions retain source ownership and never substitute the previously active subject. */
+export function unitCoursePrompt(action, courseId, sectionId) {
+    return `请加载 study 并读取 references/unit-courses.md。执行用户明确选择的课程动作 ${JSON.stringify({ action, courseId, sectionId })}。revise 表示用户要求按旧 lesson 的 quality.notes 修正内容：先确认旧任务结果确定，为修订版建立新 block/lesson，写 replacesLessonId，保留原记录与证据；旧 daily-plan task 仅暂停或 deferred，保留 activity.blockId；为新 block 追加新 task 与 choice，不能替换旧 task 的 blockId。sectionId 在此动作中是旧 lessonId。先读取现有课程文件和相关学业记录，复用已保存教材确认和原任务；只问缺失资料。新学先完整互动课；复习先回忆或尝试，困难才补讲。暂停旧活动但保留原题、回答及反馈归属。生成前保存完整 teaching 和 questionPlan 并校验；预审拒绝时修正尚未提交的草稿，ready 后用 action=review 复核；结果未知不重复提交。`;
 }
 //# sourceMappingURL=prompts.js.map

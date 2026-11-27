@@ -46,9 +46,10 @@ it('persists the generation identity before returning and resumes it after a Hos
   }
   const connection = new OpenmaicConnection(config, store(), { fetch: external, now: () => 0, encryptPassword: async () => 'encrypted' })
   const jobs = { async load() { return saved }, async save(_owner: unknown, value: unknown) { saved = structuredClone(value) } }
-  const request = { learnerId: 'student-1', termId: 'term-1', blockId: 'block-1', requirement: 'Count to ten' }
+  const request = { learnerId: 'student-1', termId: 'term-1', blockId: 'block-1', requirement: 'Count to ten', reviewId: 'a'.repeat(64) }
   expect(await new OpenmaicGeneration(connection, jobs).run(request, new AbortController().signal)).toMatchObject({ status: 'generating', jobId: 'job-1' })
   expect(await new OpenmaicGeneration(connection, jobs).run({ ...request, jobId: 'job-1' }, new AbortController().signal)).toMatchObject({ status: 'ready', classroomId: 'stage-1' })
+  expect(await new OpenmaicGeneration(connection, jobs).reviewedPlan(request)).toBe(request.reviewId)
   expect(submissions).toBe(1)
   await expect(new OpenmaicGeneration(connection, jobs).run({ ...request, learnerId: 'other-child', jobId: 'job-1' }, new AbortController().signal)).rejects.toMatchObject({ code: 'identity-changed' })
 })
@@ -316,4 +317,13 @@ it.each([401, 403, 404])('renews only an expired bootstrap token (%s) on a fresh
     await expect(connection.read('/api/persistence/test', new AbortController().signal)).rejects.toMatchObject({ status })
     expect(logins).toBe(0); expect(reads).toBe(0)
   }
+})
+
+it('never submits or authenticates when progress is requested for a missing or unknown job', async () => {
+  let requests = 0
+  const connection = new OpenmaicConnection(config, store(), { fetch: async () => { requests++; throw new Error('No request is allowed') }, now: () => 0, encryptPassword: async () => 'encrypted' })
+  const owner = { learnerId: 'child', termId: 'term', blockId: 'block' }
+  const generation = new OpenmaicGeneration(connection, { async load() { return undefined }, async save() { throw new Error('No save is allowed') } })
+  await expect(generation.poll(owner, new AbortController().signal)).rejects.toMatchObject({ code: 'generation-unknown' })
+  expect(requests).toBe(0)
 })

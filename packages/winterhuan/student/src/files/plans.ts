@@ -1,3 +1,4 @@
+import { pruneRetiredPlan, retiredBlockIds } from './cleanup.ts'
 import { effectiveLearningScopes } from '../learning/scopes.ts'
 import type { OfficialFile, DailyTask } from './schema.ts'
 import type { ValidatedWorkspace } from './validation.ts'
@@ -14,6 +15,7 @@ export function validateDailyPlans(workspace: ValidatedWorkspace, prior: readonl
   for (const plan of plans) {
     const path = `.study/plans/${plan.day}.json`
     const issue = (field: string, rule: string, correction: string) => fail(path, field, rule, correction)
+    if (!plan.tasks.length && (plan.state !== 'stopped' || !settings.retiredEmptyBlocks?.length)) issue('tasks', 'plan-empty', 'Only explicit empty-activity cleanup may leave a stopped plan without tasks.')
     if (plan.id !== `day-${plan.day}` || plan.day !== studyDay(plan.createdAt) || plan.updatedAt < plan.createdAt || new Set(plan.subjects).size !== plan.subjects.length) issue('id', 'plan-identity', 'Use day-YYYY-MM-DD for this learner and term, with its original Shanghai creation day and distinct subjects.')
     if (plan.tasks.length !== new Set(plan.tasks.map(task => task.id)).size || plan.choices.length !== new Set(plan.choices.map(choice => choice.id)).size) issue('tasks', 'plan-identity', 'Retain distinct task and choice identities.')
     if (plan.tasks.filter(task => task.state === 'active').length > 1) issue('tasks', 'plan-active', 'Keep one active task; pause or defer the original before changing activities.')
@@ -56,7 +58,11 @@ export function validateDailyPlans(workspace: ValidatedWorkspace, prior: readonl
         owners.set(task.activity.blockId, `${plan.day}/${task.id}`)
       }
     }
-    for (const old of prior.flatMap(entry => entry.path === path && entry.file.kind === 'daily-plan' ? [entry.file] : [])) {
+    for (const entry of prior.filter(entry => entry.path === path && entry.file.kind === 'daily-plan')) {
+      if (entry.file.kind !== 'daily-plan') continue
+      let old = entry.file
+      try { old = pruneRetiredPlan(old, retiredBlockIds(settings)) }
+      catch { issue('', 'plan-history', 'An activity with evidence or completion cannot be retired.'); continue }
       if (old.learnerId !== plan.learnerId || old.termId !== plan.termId || old.id !== plan.id || old.createdAt !== plan.createdAt || old.completedAt !== undefined && old.completedAt !== plan.completedAt || old.revision > plan.revision || old.revision === plan.revision && canonical(old) !== canonical(plan)) issue('', 'plan-history', 'Retain plan identity and completion, and increment revision for every explicit amendment.')
       if (old.state === 'completed' && plan.state !== 'completed' || old.tasks.some(task => task.state === 'completed' && plan.tasks.find(next => next.id === task.id)?.state !== 'completed')) issue('state', 'plan-history', 'Keep completed arrangements and tasks closed; attach explicitly requested extra work separately.')
       if (plan.tasks.some(task => !old.tasks.some(previous => previous.id === task.id) && !plan.choices.some(choice => !old.choices.some(previous => previous.id === choice.id) && (['start', 'adjust', 'extra', 'carry'].includes(choice.action) || ['continue', 'pause', 'stop'].includes(choice.action) && task.purpose === 'resume' && blocks.some(block => block.id === task.activity?.blockId && block.startedAt <= choice.at)) && choice.taskIds.includes(task.id)))) issue('choices', 'plan-choice', 'Record the explicit choice that added each new task.')

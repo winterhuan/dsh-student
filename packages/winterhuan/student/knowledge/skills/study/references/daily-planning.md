@@ -8,11 +8,11 @@
 
 ## 沿用已有资料
 
-已有档案直接沿用教材、已确认学校进度和历史学习范围，不因缺少 learningScopes 要求逐科解锁。查询根据这些资料生成 scopeSuggestions；无进度时使用年级目录做简短摸底，不猜学校正在教的单元，也不把没有证据称为薄弱。默认使用书面活动，不能据此评定听说能力。learningScopes 仅保存家长额外指定的内容限制，优先于同科默认建议；不为迁移或自动建议伪造 parentConfirmation。家长主动调整时，保存实际意图和修改后的 settings revision/updatedAt，运行只读 CLI 并独立读取。
+已有档案直接沿用教材、已确认学校进度和历史学习范围，不因缺少 learningScopes 要求逐科解锁。查询根据这些资料生成 scopeSuggestions；无进度时说明缺少学校位置，新学先按 unit-courses.md 补齐资料；用户明确选择基础目标课才使用年级目录，不猜学校正在教的单元，也不把没有证据称为薄弱。默认使用书面活动，不能据此评定听说能力。learningScopes 仅保存家长额外指定的内容限制，优先于同科默认建议；不为迁移或自动建议伪造 parentConfirmation。家长主动调整时，保存实际意图和修改后的 settings revision/updatedAt，运行只读 CLI 并独立读取。
 
 ## 首次开始
 
-1. 核对意图 `observedVersions` 与计划 revision；读到变化先保留用户选择，重新核对，不能覆盖新记录。原生文件写入仍使用实际文件观察版本；模型声明不能替代冲突检查。
+1. 读取相关正式文件的实际版本并核对意图中的计划 revision；读到变化先保留用户选择，重新核对，不能覆盖新记录。原生文件写入仍使用实际文件观察版本；模型声明不能替代冲突检查。
 2. 读取当天 `.study/plans/YYYY-MM-DD.json`。已存在则沿原 id、任务与活动继续，不再创建默认计划。消息接收结果未知时先检查原操作，不再次提交回答或课堂。
 3. 无计划时使用当前查询 `preview`。选科或明确任务时使用匹配 suggestion，其他内容按实际需要调整。计划 ID 固定 `day-YYYY-MM-DD`；任务 ID 使用投影提供的稳定 ID。计划必须属于已确认 learnerId/termId，timezone 固定 Asia/Shanghai，policyVersion=1。从随包 CLI 读取 `schema daily-plan`。
 4. 保存计划 ready 和用户 start choice，随后绑定当前任务的同一 block，并把 `block.plan={day,taskId}` 写回该原活动。将任务与计划设为 active，增加 revision/updatedAt。计划、活动非原子写入：中断后恢复原身份，不新建替代。
@@ -26,7 +26,7 @@
 
 暂停或结束只保存接续点，不出新题、不把其他建议加入安排。今天已经结束但未关联计划的旧活动也可直接查看今日收获；没有当天实际作答就如实显示为空，不把历史回答计入今天。
 
-任务的 `basis`、`outcomes` 只保存原 term/ownerKind/ownerId/responseId 引用。题目、答案、评分、掌握状态不能复制到计划。`reason` 解释真实选择依据；没历史就探索已会什么，不能称薄弱。`ending` 是 short-check、review-attempts 或 original-activity。任务顺序就是 tasks 数组顺序。
+任务的 `basis`、`outcomes` 只保存原 term/ownerKind/ownerId/responseId 引用。题目、答案、评分、掌握状态不能复制到计划。`reason` 解释真实选择依据；没历史就在完整课内嵌入简短了解，不能称薄弱。`ending` 是 short-check、review-attempts 或 original-activity。任务顺序就是 tasks 数组顺序。
 
 ## 回答与推进
 

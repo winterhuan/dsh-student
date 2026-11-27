@@ -100,6 +100,7 @@ export const termSettingsSchema = z.object({ ...base, kind: z.literal('term-sett
   learningScopes: z.array(z.object({ subject, goalIds: z.array(knowledgeIdSchema).min(1).max(100).optional(), scope: capabilityScopeSchema, parentConfirmation: text }).strict()).max(30).optional(),
   interests: stateSchema.shape.interests, openmaic: stateSchema.shape.openmaic, archivedAt: time.optional(),
   evidenceReferences: z.array(archiveEvidenceReferenceSchema).max(20000).optional(),
+  retiredEmptyBlocks: z.array(z.object({ id: blockId, backupPath: z.string().regex(/^\.study\/cleanup\/[a-f0-9]{64}\.json$/u), sha256: z.string().regex(/^[a-f0-9]{64}$/u), reason: text }).strict()).max(1000).optional(),
   migration: z.object({ sourcePath: text, sourceSha256: z.string().regex(/^[a-f0-9]{64}$/u), backupPath: text }).strict().optional(),
 }).strict()
 /** One block owns its historical course context, questions, responses, hints and assessments. */
@@ -156,7 +157,7 @@ export const dailyPlanSchema = z.object({
   revision: time, createdAt: time, updatedAt: time, policyVersion: z.literal(1),
   settingsVersion: text, subjects: z.array(subject).min(1).max(3),
   state: z.enum(['ready', 'active', 'paused', 'completed', 'stopped']), completedAt: time.optional(),
-  tasks: z.array(dailyTaskSchema).min(1).max(100),
+  tasks: z.array(dailyTaskSchema).max(100),
   choices: z.array(z.object({ id, at: time, revision: time, action: z.enum(['start', 'continue', 'pause', 'stop', 'defer', 'skip', 'adjust', 'carry', 'extra']), reason: text, taskIds: z.array(id).max(100), replacedTaskIds: z.array(id).max(100) }).strict()).min(1).max(500),
 }).strict()
 /** Validated plan and task arrangements, separate from capability evidence. */

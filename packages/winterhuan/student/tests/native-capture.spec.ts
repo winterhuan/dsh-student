@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+import { StudentOpenmaicPlayback } from '../src/openmaic/playback.ts'
 import { Context } from '@deepseek-ai/cordis'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
@@ -398,4 +400,40 @@ it('reauthenticates every original native answer before accepting a sole archive
   expect(revoked.read.sourceVerification?.native).toMatchObject([{ status: 'unavailable', reason: 'Original Session ownership or access changed before publication.' }])
   await writeFile(f.settingsPath, JSON.stringify({ ...settings, evidenceReferences: [{ ...settings.evidenceReferences[0], review: { ...review, stage: 4 } }] }))
   expect((await read()).read.workspace?.archivedEvidence).toEqual([])
+})
+
+it('admits compact panel answers once and rejects reused request IDs with a different answer', async () => {
+  const f = await syncFixture()
+  const intent = { version: 2 as const, nativeSessionId: f.agent.session.id, learnerId: f.settings.learnerId, termId: f.settings.termId, blockId: f.block.id, questionId: 'q1', responseId: 'panel-r1', operation: { action: 'answer', taskId: 'q1', response: '24' }, request: 'Save original answer first.' }
+  const request = { requestId: 'panel-input-1', intent }
+  const signal = new AbortController().signal
+  await Promise.all([f.ctx.student.submitIntent(f.agent.session.id, request, signal), f.ctx.student.submitIntent(f.agent.session.id, request, signal)])
+  await f.agent.whenIdle()
+  await f.ctx.student.submitIntent(f.agent.session.id, request, signal)
+  await expect(f.ctx.student.submitIntent(f.agent.session.id, { ...request, intent: { ...intent, operation: { ...intent.operation, response: '25' } } }, signal)).rejects.toThrow('different input')
+  const observed = (await f.read()).native
+  expect(observed.inputs).toHaveLength(1)
+  expect(observed.inputs[0]).toMatchObject({ intention: intent, rawResponse: '24', learningScope: { responseId: 'panel-r1', questionId: 'q1' } })
+  expect(f.agent.session.snapshotEvents().filter(event => event.type === 'user/message' && event.data.source.kind === 'user').map(event => event.data.content)).toEqual([[{ type: 'text', text: '24' }]])
+  expect(JSON.parse(await readFile(f.blockPath, 'utf8')).responses).toEqual([])
+})
+
+
+it('opens only an owned unchanged mini lesson without inference or writes', async () => {
+  const f = await syncFixture()
+  const playback = new StudentOpenmaicPlayback(f.ctx)
+  const html = '<h2>Make ten</h2>'
+  await writeFile(join(f.cwd, 'mini.html'), html)
+  const mini = { id: 'mini-1', learnerId: f.settings.learnerId, termId: f.settings.termId, subject: 'math', revision: 'v1', goalIds: ['m.add'], scope: { id: 'within20', description: 'Within20', modality: 'written', numberMax: 20 }, purpose: 'review', contentPath: 'mini.html', contentHash: createHash('sha256').update(html).digest('hex'), createdAt: NOW }
+  const path = join(f.cwd, '.study/openmaic-lessons.json')
+  const original = JSON.stringify({ format: 2, lessons: [], miniLessons: [mini] })
+  await writeFile(path, original)
+  const signal = new AbortController().signal
+  expect(await playback.mini(f.agent.session.id, mini.id, signal)).toEqual({ id: mini.id, html })
+  expect(f.adapter.requests).toEqual([])
+  expect(await readFile(path, 'utf8')).toBe(original)
+  await writeFile(join(f.cwd, 'mini.html'), '<h2>Changed</h2>')
+  await expect(playback.mini(f.agent.session.id, mini.id, signal)).rejects.toThrow('changed')
+  await writeFile(path, JSON.stringify({ format: 2, lessons: [], miniLessons: [{ ...mini, learnerId: 'another-child' }] }))
+  await expect(playback.mini(f.agent.session.id, mini.id, signal)).rejects.toThrow('ownership')
 })

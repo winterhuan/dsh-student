@@ -8,6 +8,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { OpenmaicBrowser } from "./browser.js";
 import { OpenmaicFeedback } from "./feedback.js";
+import { CourseReviewer } from "./review.js";
 import { OpenmaicGeneration } from "./generation.js";
 /** Host defaults for the official service, credential references and private browser root. */
 export const openmaicConfig = z.object({
@@ -30,6 +31,8 @@ export class StudentOpenmaic extends Service {
     connection;
     /** Dedicated Chrome profile and process owned by this service. */
     browser;
+    /** Protected content review receipts; academic quality remains agent-authored. */
+    reviewer;
     feedbackReaders = new Map();
     generations = new Map();
     constructor(ctx, config) {
@@ -46,6 +49,10 @@ export class StudentOpenmaic extends Service {
         this.browser = new OpenmaicBrowser(this.connection, {
             profileRoot: config.browserProfileRoot || join(process.env.DSH_HOME || join(homedir(), '.dsh'), 'student-openmaic-browser'),
             async credentials() { const account = await ctx.credentials.resolve(credentialRef(config.accountRef)); const password = await ctx.credentials.resolve(credentialRef(config.passwordRef)); return account && password ? { account: account.value, password: password.value } : undefined; },
+        });
+        this.reviewer = new CourseReviewer({
+            load: async (id) => { const record = await ctx.credentials.readRecord(credentialKey('student-openmaic', `review-${id}`)); return record?.kind === 'grant' ? record.payload : undefined; },
+            save: async (id, payload) => { await ctx.credentials.modifyRecord(credentialKey('student-openmaic', `review-${id}`), async () => ({ kind: 'grant', payload })); },
         });
         ctx.effect(() => () => this.browser.dispose(), 'student-openmaic: browser');
     }

@@ -36,7 +36,7 @@ export declare function todaySpent(state: StudyState, now: number): number;
 export declare function activeSession(state: StudyState): {
     id: string;
     subject: "chinese" | "math" | "english";
-    mode: "review" | "foundation" | "school" | "explore" | "diagnose";
+    mode: "foundation" | "review" | "school" | "explore" | "diagnose";
     startedAt: number;
     intensity?: "light" | "standard" | "deep" | undefined;
     endedAt?: number | undefined;

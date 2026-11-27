@@ -1,12 +1,12 @@
 # OpenMAIC 教学与恢复
 
-一次 Student 安装固定官方 `@openmaic/dsh-openmaic@0.4.0`（修订 `09c1693cfe83224db89fdd4abd245ac9174d3a05`）。官方四个工具为 `openmaic_generate`、`openmaic_slide`、`openmaic_widget`、`openmaic_render`；四个 DSH skill 为 `openmaic-teach` 及对应三个编写契约。完整课堂、独立交互组件、卡片和课件均可直接用于当前目标。slide/widget/render 呈现 agent 编写的内容，generate 由官方服务异步生成课堂。
+一次 Student 安装固定官方 `@openmaic/dsh-openmaic@0.4.0`（修订 `09c1693cfe83224db89fdd4abd245ac9174d3a05`）。官方四个工具为 `openmaic_generate`、`openmaic_slide`、`openmaic_widget`、`openmaic_render`；四个 DSH skill 为 `openmaic-teach` 及对应三个编写契约。新学先生成完整互动课堂；独立交互组件、卡片和课件用于复习中的定向补讲或用户明确选择的临时小课。slide/widget/render 呈现 agent 编写的内容，generate 由官方服务异步生成课堂。
 
 ## 选择并教学
 
-先读取正式学习文件中的稳定 learnerId、termId、当前 blockId、选定目标、母题和已有证据。身份缺失须由家长确认并由 agent 写入；不得从服务账号、工作区或 DSH Session 猜测孩子身份。以共享 `nextAction.requirement` 指定范围与接受判据，原生会话先按官方苏格拉底 openmaic-teach 一次问一个引导问题、等待回答并给最小提示。当前目标适合操作时加载 `openmaic-widget`，编写 simulation/game/code 文档后调用 widget；图解或提示可用 render，结构课件用 slide。组件点击、组件即时评分、观看、生成成功和自报学完都不自动形成学业证据；直接组件通过原生真实作答形成证据。
+先读取正式学习文件中的稳定 learnerId、termId、当前 blockId、选定目标、母题和已有证据。身份缺失须由家长确认并由 agent 写入；不得从服务账号、工作区或 DSH Session 猜测孩子身份。以共享 `nextAction.requirement` 指定范围与接受判据，新学先按 [单元课程](unit-courses.md) 核对教材与校内位置、保存六环节教学计划并生成完整课；复习先回忆或尝试，再按官方苏格拉底 openmaic-teach 一次问一个引导问题、等待回答并给最小提示。当前目标适合操作时加载 `openmaic-widget`，编写 simulation/game/code 文档后调用 widget；图解或提示可用 render，结构课件用 slide。组件点击、组件即时评分、观看、生成成功和自报学完都不自动形成学业证据；直接组件通过原生真实作答形成证据。
 
-完整课堂调用 `openmaic_generate`，传入稳定 learnerId、termId、blockId 和明确 requirement：目标、范围、困难、兴趣情境及接受证据。初次返回结构化 status/jobId/pollUrl/base；立即由 agent 保存课程生命周期到 `.study/openmaic-lessons.json` 并运行只读 CLI。状态 generating 时继续原 blockId/jobId；刷新、超时、换科目或服务中断均不得新建替代课堂。Host 保留任务传输身份，但不写学习文件。ready 后通过 [真实反馈导入](openmaic-feedback.md)准备并保存原题面与学习归属，再打开无凭据课堂 URL。失败、未知提交结果或身份冲突保留当前活动；先检查原任务，家长恢复服务后继续。
+完整课堂调用 `openmaic_generate`，传入稳定 learnerId、termId、blockId 和明确 requirement：目标、范围、困难、兴趣情境及接受证据。初次返回结构化 status/jobId/pollUrl/base；立即由 agent 保存课程生命周期到 `.study/openmaic-lessons.json` 并运行只读 CLI。状态 generating 时继续原 blockId/jobId；刷新、超时、换科目或服务中断均不得新建替代课堂。Host 保留任务传输身份，但不写学习文件。ready 后按 unit-courses.md 读取实际内容并完成质量检查，再通过 [真实反馈导入](openmaic-feedback.md)准备并保存原题面与学习归属，再打开无凭据课堂 URL。失败、未知提交结果或身份冲突保留当前活动；先检查原任务，家长恢复服务后继续。
 
 ## 授权与课堂作答
 

@@ -253,7 +253,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                         };
                     })[];
                 } | undefined;
-                errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+                errorType?: "pattern" | "listening" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
                 savedAt?: number | undefined;
             }[];
             workbookDrafts: {
@@ -522,7 +522,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 id: string;
                 subject: "chinese" | "math" | "english";
                 title: string;
-                level: "due" | "weak" | "practising" | "stalled" | "mastered" | "untouched";
+                level: "practising" | "due" | "weak" | "stalled" | "mastered" | "untouched";
                 priority: number;
                 reasons: import("../learning/mastery.ts").InsightReason[];
             }[];
@@ -562,7 +562,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 goal: string;
                 conceptIds: string[];
                 method: "context" | "recognize" | "read-evidence" | "express" | "represent" | "reason" | "verify" | "listen" | "speak";
-                errorTypes?: ("pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
+                errorTypes?: ("pattern" | "listening" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete")[] | undefined;
                 questionPoints?: string[] | undefined;
                 variationAxes?: ("context" | "numbers" | "representation" | "reverse" | "explain")[] | undefined;
             }[];
@@ -578,7 +578,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 objectiveTitle: string;
                 open: boolean;
                 results: {
-                    errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
+                    errorType?: "pattern" | "listening" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                     itemId: string;
                     result: "correct" | "partial" | "incorrect" | "unassessed";
                     response: string;
@@ -586,7 +586,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 }[];
                 drafts: {
                     confidence?: "high" | "low";
-                    errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
+                    errorType?: "pattern" | "listening" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete";
                     itemId: string;
                     response: string;
                     result: "correct" | "partial" | "incorrect" | "unassessed";
@@ -841,7 +841,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 imagePath?: string | undefined;
                 materialId?: string | undefined;
                 objectiveId?: string | undefined;
-                errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+                errorType?: "pattern" | "listening" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
                 confirmedAt?: number | undefined;
                 userConfirmation?: string | undefined;
                 capability?: {
@@ -850,7 +850,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                     scope: {
                         id: string;
                         description: string;
-                        modality: "listening" | "written" | "oral" | "audiovisual" | "performed";
+                        modality: "written" | "oral" | "listening" | "audiovisual" | "performed";
                         numberMax?: number | undefined;
                         vocabulary?: string[] | undefined;
                     };
@@ -877,7 +877,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                 imagePath?: string | undefined;
                 materialId?: string | undefined;
                 objectiveId?: string | undefined;
-                errorType?: "pattern" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "listening" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
+                errorType?: "pattern" | "listening" | "place-value" | "carry-borrow" | "operation-choice" | "calculation" | "unit-quantity" | "reading-task" | "geometry-feature" | "money-measure" | "reasoning-incomplete" | "pinyin-tone" | "character-form" | "character-usage" | "word-meaning" | "reading-evidence" | "order" | "expression-incomplete" | "punctuation" | "spelling" | "word-form" | "sentence-pattern" | "usage-context" | "spoken-response" | "writing-complete" | undefined;
                 confirmedAt?: number | undefined;
                 userConfirmation?: string | undefined;
                 capability?: {
@@ -886,7 +886,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
                     scope: {
                         id: string;
                         description: string;
-                        modality: "listening" | "written" | "oral" | "audiovisual" | "performed";
+                        modality: "written" | "oral" | "listening" | "audiovisual" | "performed";
                         numberMax?: number | undefined;
                         vocabulary?: string[] | undefined;
                     };
@@ -917,7 +917,7 @@ export declare function useStudy(sessionId: StudentSessionId, visible: boolean, 
             active: {
                 id: string;
                 subject: "chinese" | "math" | "english";
-                mode: "review" | "foundation" | "school" | "explore" | "diagnose";
+                mode: "foundation" | "review" | "school" | "explore" | "diagnose";
                 startedAt: number;
                 intensity?: "light" | "standard" | "deep" | undefined;
                 endedAt?: number | undefined;

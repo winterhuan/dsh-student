@@ -313,6 +313,13 @@ it('exposes complete source, unavailable source and an oversized original event 
   expect(oversized).not.toHaveProperty('consumption')
   source.pending[0]!.record.originalExtension = 'retained'
   expect(await read()).toMatchObject({ status: 'available', complete: true, records: [{ pendingOpenmaic: source.pending[0] }], consumption: { status: 'pending', checkpoint: { attempts: [{ seq: 0 }] } } })
+  const path = join(f.cwd, '.study/openmaic-lessons.json')
+  const lessons = JSON.parse(await readFile(path, 'utf8'))
+  lessons.lessons[0].quality = { status: 'passed', checkedAt: NOW, contentHash: 'a'.repeat(64), stages: Object.fromEntries(['introduction', 'explanation', 'demonstration', 'guidedPractice', 'independentPractice', 'summary'].map(stage => [stage, 'scene-1'])), questions: [{ sceneId: 'scene-1', questionId: 'q1', purpose: 'guided', rationale: 'Answer is demonstrated first' }], scopeChecked: true, criterionChecked: true, notes: 'A worked example, never independent evidence' }
+  await writeFile(path, JSON.stringify(lessons))
+  source.observations = [{ binding, questionId: 'q1', responseId: 'r1', question: { bindingId: binding.bindingId, sceneId: 'scene-1', questionId: 'q1', snapshot: { id: 'q1', type: 'short_answer', question: '2 - 1?', answer: '1', analysis: 'Subtract one' }, snapshotHash: 'b'.repeat(64), revision: { kind: 'unavailable' } }, source: { kind: 'openmaic', bindingId: binding.bindingId, attemptId: 'attempt-1', sceneId: 'scene-1', questionId: 'q1', submission: { id: 'submitted-1', seq: 0, createdAt: new Date(NOW).toISOString() }, submittedAnswer: '1' }, result: 'correct', grading: 'equivalent', sourceStatus: 'known' }]
+  expect(await read()).toMatchObject({ records: [expect.objectContaining({ answerExposure: 'possible' }), expect.anything()] })
+
 })
 
 

@@ -1,6 +1,7 @@
 /** Bounded consistent discovery and version reads shared by Node CLI and DSH application. */
 import type { FsInfo, FsTargetKey, FsVersion, FsWriteIntent } from '@deepseek-ai/dsh-fs'
 import { createHash } from 'node:crypto'
+import { emptyRetiredBlock, retiredBlockIds } from './cleanup.ts'
 import { stateSchema } from '../schema.ts'
 import { readLessonFile, type LessonFileRead } from './lessons.ts'
 import { scopeSupports } from '../capabilities.ts'
@@ -238,6 +239,17 @@ async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: re
     const origins = input.flatMap(entry => { const parsed = dailyPlanSchema.safeParse(entry.value); return parsed.success ? parsed.data.tasks.flatMap(task => task.original ? [task.original.day] : []) : [] })
     for (const day of new Set(origins)) await readPlan(`.study/plans/${day}.json`)
     const validation: ValidationResult = validateStudyFiles(input, available, nativeSources, openmaicSources)
+    const retired = validation.workspace ? retiredBlockIds(validation.workspace.settings) : new Set<string>()
+    for (const entry of validation.workspace?.settings.retiredEmptyBlocks ?? []) {
+      try {
+        const before = await fs.stat(entry.backupPath, signal)
+        if (!before || before.type !== 'file') throw new Error('Retain the original empty block backup.')
+        const bytes = await fs.read(entry.backupPath, signal, MAX_FILE_BYTES)
+        const after = await fs.stat(entry.backupPath, signal)
+        const block = blockSchema.parse(JSON.parse(new TextDecoder().decode(bytes)))
+        if (before.version !== after?.version || before.targetKey !== after.targetKey || createHash('sha256').update(bytes).digest('hex') !== entry.sha256 || block.id !== entry.id || block.learnerId !== validation.workspace?.settings.learnerId || block.termId !== validation.workspace?.settings.termId || !emptyRetiredBlock(block) || validation.workspace?.blocks.some(item => item.id === entry.id)) throw new Error('Retirement requires the exact original ended block with no questions, answers, help or rounds.')
+      } catch (error) { if (signal.aborted) throw error; discoveryIssues.push({ path: '.study/settings.json', field: 'retiredEmptyBlocks', rule: 'cleanup-source', correction: error instanceof Error ? error.message : 'Restore the original cleanup source.' }) }
+    }
     const migration = validation.workspace?.settings.migration
     if (migration) {
       const backup = await fs.stat(migration.backupPath, signal)
@@ -248,7 +260,9 @@ async function readWorkspaceFiles(fs: StudyFiles, signal: AbortSignal, prior: re
         if (createHash('sha256').update(bytes).digest('hex') !== migration.sourceSha256) throw new Error('The preserved migration source bytes do not match their recorded digest.')
         const expected = migrationOutputPaths(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)))
         const present = new Set(validation.files.filter(file => file.file).map(file => file.path))
-        const missing = expected.filter(path => !present.has(path))
+        const legacy = stateSchema.parse(migrateStudyFile(JSON.parse(new TextDecoder().decode(bytes))))
+        for (const id of retired) if (legacy.attempts.some(attempt => attempt.sessionId === id) || legacy.task?.sessionId === id) throw new Error('A legacy answer or current question cannot be removed by empty-block cleanup.')
+        const missing = expected.filter(path => !present.has(path) && ![...retired].some(id => path === `.study/blocks/${id}.json`))
         if (missing.length) discoveryIssues.push({ path: '.study/settings.json', field: 'migration', rule: 'migration-incomplete', correction: `Resume the verified migration under the same identities; missing outputs: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? ` and ${missing.length - 5} more` : ''}.` })
         const original = await fs.stat(migration.sourcePath, signal)
         if (original) {

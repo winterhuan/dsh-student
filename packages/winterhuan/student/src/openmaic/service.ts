@@ -8,6 +8,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { OpenmaicBrowser } from './browser.ts'
 import { OpenmaicFeedback } from './feedback.ts'
+import { CourseReviewer } from './review.ts'
 import { OpenmaicGeneration } from './generation.ts'
 
 declare module '@deepseek-ai/cordis' { interface Context { /** Protected account transport and official job recovery, without learning writes. */ studentOpenmaic: StudentOpenmaic } }
@@ -34,6 +35,8 @@ export class StudentOpenmaic extends Service {
   readonly connection: OpenmaicConnection
   /** Dedicated Chrome profile and process owned by this service. */
   readonly browser: OpenmaicBrowser
+  /** Protected content review receipts; academic quality remains agent-authored. */
+  readonly reviewer: CourseReviewer
   private readonly feedbackReaders = new Map<string, OpenmaicFeedback>()
   private readonly generations = new Map<string, OpenmaicGeneration>()
   constructor(ctx: Context, config: StudentOpenmaicConfig) {
@@ -48,6 +51,10 @@ export class StudentOpenmaic extends Service {
     this.browser = new OpenmaicBrowser(this.connection, {
       profileRoot: config.browserProfileRoot || join(process.env.DSH_HOME || join(homedir(), '.dsh'), 'student-openmaic-browser'),
       async credentials() { const account = await ctx.credentials.resolve(credentialRef(config.accountRef)); const password = await ctx.credentials.resolve(credentialRef(config.passwordRef)); return account && password ? { account: account.value, password: password.value } : undefined },
+    })
+    this.reviewer = new CourseReviewer({
+      load: async id => { const record = await ctx.credentials.readRecord(credentialKey('student-openmaic', `review-${id}`)); return record?.kind === 'grant' ? record.payload : undefined },
+      save: async (id, payload) => { await ctx.credentials.modifyRecord(credentialKey('student-openmaic', `review-${id}`), async () => ({ kind: 'grant', payload })) },
     })
     ctx.effect(() => () => this.browser.dispose(), 'student-openmaic: browser')
   }

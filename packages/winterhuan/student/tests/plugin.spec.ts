@@ -109,7 +109,7 @@ describe('independently loaded student plugin', () => {
     await writeFile(join(cwd, '.study/blocks/zzz-active.json'), JSON.stringify({ ...block, id: 'zzz-active' }))
     const tool = ctx.tools.get('study_status')!
     const status = await tool.execute({}, execution())
-    expect(status).toMatchObject({ omittedVersions: 83, learningContext: { data: { activeBlock: { id: 'zzz-active' } } } })
+    expect(status).toMatchObject({ omittedVersions: 101, learningContext: { data: { activeBlock: { id: 'zzz-active' } } } })
     expect(JSON.stringify(status)).toContain('.study/blocks/zzz-active.json')
     const catalog = await tool.execute({ kind: 'files' }, execution())
     expect(catalog).toMatchObject({ data: { total: 103, items: expect.any(Array), nextOffset: 20 } })

@@ -5,6 +5,9 @@ import { applicationStudyFiles } from "../files/application.js";
 import { readLessonFile } from "../files/lessons.js";
 import { openmaicAcademicQuestion } from "./feedback-consumer.js";
 import { openmaicEntityId } from "./feedback.js";
+import { courseReviewInput, reviewQuestionsCurrent } from "./review-input.js";
+import { courseReviewModel } from "./review.js";
+import { validateCourseWorkspace } from "../files/course-validation.js";
 /**
  * Register the source read alongside the official teaching tools in the Student preset.
  * @param ctx - Preset-scoped tool registry and protected Host connection.
@@ -14,14 +17,14 @@ export function registerOpenmaicFeedback(ctx) {
         name: 'openmaic_feedback',
         description: 'Read original authorized classroom answers and grading, or prepare its frozen question binding before playback. Returns bounded authoring facts and independent saved-file acceptance; the agent writes the formal files and runs the read-only CLI before advancing a checkpoint.',
         parameters: {
-            action: { type: 'string', enum: ['prepare', 'read'], required: true, description: 'prepare freezes the original generated classroom before playback; read rereads original submitted/reviewed records after return, continue or restart.' },
+            action: { type: 'string', enum: ['prepare', 'read', 'content', 'review'], required: true, description: 'review independently checks all actual scenes and returns quality plus original binding/questions in one call; content pages original scenes; prepare freezes the original generated classroom before playback; read rereads original submitted/reviewed records after return, continue or restart.' },
             lessonId: { type: 'string', required: true, description: 'Original ID in .study/openmaic-lessons.json.' },
             offset: { type: 'integer', description: 'Zero-based source-question/response page; defaults to 0. Each page returns at most twenty records.' },
         },
         output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
         isConcurrencySafe: () => true,
         async execute(args, exec) {
-            const { action, lessonId, offset = 0 } = z.object({ action: z.enum(['prepare', 'read']), lessonId: z.string().min(1).max(80), offset: z.number().int().nonnegative().optional() }).parse(args);
+            const { action, lessonId, offset = 0 } = z.object({ action: z.enum(['prepare', 'read', 'content', 'review']), lessonId: z.string().min(1).max(80), offset: z.number().int().nonnegative().optional() }).parse(args);
             const { read, openmaic } = await readStudentWorkspace(exec, undefined, lessonId);
             const lessonRead = await readLessonFile(applicationStudyFiles(exec), exec.signal);
             const lesson = [...(lessonRead.status === 'valid' ? lessonRead.file.lessons : []), ...(read.archiveSources ?? []).flatMap(archive => archive.lessons.status === 'valid' ? archive.lessons.file.lessons.filter(lesson => lesson.termId === archive.workspace.settings.termId) : [])].find(lesson => lesson.id === lessonId);
@@ -36,8 +39,42 @@ export function registerOpenmaicFeedback(ctx) {
             if (!block || !exec.agent?.session.header.cwd)
                 throw new Error('Original classroom block ownership is unresolved.');
             let result;
-            if (action === 'prepare') {
-                const target = block.questions.find(question => question.id === block.currentQuestionId)?.capability;
+            if (action === 'review') {
+                if (!lessonRead.file || validateCourseWorkspace(lessonRead.file, workspace).length)
+                    throw new Error('Restore valid course and target references before review.');
+                const files = applicationStudyFiles(exec);
+                const input = await courseReviewInput(files, exec.agent.session.header.cwd, lesson, lessonRead.file, exec.signal);
+                const approved = await ctx.studentOpenmaic.generation(exec.agent.session.header.cwd).reviewedPlan(input.owner);
+                if (!await ctx.studentOpenmaic.reviewer.approvedPlan(input, approved))
+                    throw new Error('This plan does not match the original approved submission. Preserve the old course and generate an explicitly requested replacement.');
+                const owner = { learnerId: lesson.learnerId, termId: lesson.termId, blockId: lesson.blockId, base: lesson.base, classroomId: lesson.classroomId, learnerKey: lesson.learnerKey };
+                const feedback = ctx.studentOpenmaic.feedback(exec.agent.session.header.cwd);
+                const prepared = await feedback.prepare(owner, input.plan.target, exec.signal);
+                input.content = await feedback.content(owner, exec.signal);
+                input.questions = prepared.questions;
+                if (!reviewQuestionsCurrent(input))
+                    throw new Error('The current quiz differs from its original frozen capture. Preserve this version and create an explicitly requested replacement.');
+                const model = courseReviewModel(ctx, exec);
+                const review = await ctx.studentOpenmaic.reviewer.review(input, model.model, model.generate, exec.signal);
+                const latest = await readLessonFile(files, exec.signal);
+                if (latest.observation?.version !== lessonRead.observation?.version || latest.observation?.targetKey !== lessonRead.observation?.targetKey)
+                    throw new Error('The lesson changed during review. Read its current version.');
+                await courseReviewInput(files, exec.agent.session.header.cwd, lesson, lessonRead.file, exec.signal);
+                result = { status: 'reviewed', lessonId, quality: review.quality, issues: review.issues, feedback: prepared.binding, questions: prepared.questions.map(question => openmaicAcademicQuestion({ binding: prepared.binding, questionId: openmaicEntityId('q', [prepared.binding.bindingId, question.sceneId, question.questionId]), question })), total: prepared.questions.length, nextOffset: null };
+            }
+            else if (action === 'content') {
+                const content = await ctx.studentOpenmaic.feedback(exec.agent.session.header.cwd).content({ learnerId: lesson.learnerId, termId: lesson.termId, blockId: lesson.blockId, base: lesson.base, classroomId: lesson.classroomId, learnerKey: lesson.learnerKey }, exec.signal);
+                result = { status: 'content', lessonId, contentHash: content.contentHash, scenes: content.scenes.slice(offset, offset + 4), total: content.scenes.length, nextOffset: offset + 4 < content.scenes.length ? offset + 4 : null };
+            }
+            else if (action === 'prepare') {
+                if (lesson.questionPlan) {
+                    if (!lessonRead.file || validateCourseWorkspace(lessonRead.file, workspace).length)
+                        throw new Error('Restore valid original course targets before preparing feedback.');
+                    const plan = await courseReviewInput(applicationStudyFiles(exec), exec.agent.session.header.cwd, lesson, lessonRead.file, exec.signal);
+                    if (!await ctx.studentOpenmaic.reviewer.approvedPlan(plan, await ctx.studentOpenmaic.generation(exec.agent.session.header.cwd).reviewedPlan(plan.owner)))
+                        throw new Error('Prepare only the original approved question plan.');
+                }
+                const target = lesson.questionPlan?.target ?? block.questions.find(question => question.id === block.currentQuestionId)?.capability;
                 if (!target)
                     throw new Error('Save the current capability, family and tested scope before preparing classroom feedback.');
                 const prepared = await ctx.studentOpenmaic.feedback(exec.agent.session.header.cwd).prepare({ learnerId: lesson.learnerId, termId: lesson.termId, blockId: lesson.blockId, base: lesson.base, classroomId: lesson.classroomId, learnerKey: lesson.learnerKey }, target, exec.signal);
@@ -50,7 +87,7 @@ export function registerOpenmaicFeedback(ctx) {
                     total: fact?.source ? fact.source.observations.length + fact.source.pending.length : null, drafts: fact?.source?.drafts ?? null, nextOffset: fact?.source && offset + 20 < fact.source.observations.length + fact.source.pending.length ? offset + 20 : null };
             }
             const bounded = z.record(z.string(), z.json()).parse(JSON.parse(JSON.stringify(result)));
-            const rows = Array.isArray(bounded.records) ? bounded.records : Array.isArray(bounded.questions) ? bounded.questions : undefined;
+            const rows = Array.isArray(bounded.records) ? bounded.records : Array.isArray(bounded.questions) ? bounded.questions : Array.isArray(bounded.scenes) ? bounded.scenes : undefined;
             const originalLength = rows?.length ?? 0;
             if (bounded.consumption && typeof bounded.consumption === 'object' && !Array.isArray(bounded.consumption)) {
                 for (const field of ['missingResponseIds', 'missingPendingIds', 'conflicts'])

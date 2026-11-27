@@ -16,13 +16,17 @@ function studentCallbacks(scope) {
     return {
         ...createStudentManualActions(scope.remote.student),
         sessionActions: (sessionId) => studentSessionBridge(scope, sessionId, t('sessionError')),
+        readMini: async (sessionId, miniId) => { const result = await scope.remote.studentOpenmaicPlayback.mini(sessionId, miniId, new AbortController().signal); if (!result.ok)
+            throw new Error(result.error.message); return result.value; },
+        pollLesson: async (sessionId, lessonId, signal) => { const result = await scope.remote.studentOpenmaicPlayback.progress(sessionId, lessonId, signal); if (!result.ok)
+            throw new Error(result.error.message); return result.value; },
         openLesson: async (sessionId, lessonId) => { const result = await scope.remote.studentOpenmaicPlayback.open(sessionId, lessonId, new AbortController().signal); if (!result.ok)
             throw new Error(result.error.message); return result.value; },
         askStudent: (sessionId, text, photo) => tutorBridge(scope, sessionId, t('sessionError'), t('sendError'))(text, photo),
     };
 }
-function Desk({ sessionId, visible, running, pending, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission, openLesson, sessionActions }) {
-    return _jsx(StudyDesk, { sessionId, visible, running, pending, ...sessionActions(sessionId), ask: (text, photo) => askStudent(sessionId, text, photo), t: t, useResource: useResource, openLesson: lessonId => openLesson(sessionId, lessonId), useStore, actions, saveSettings, saveWorksheet, inspectSubmission }, sessionId);
+function Desk({ sessionId, visible, running, pending, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission, openLesson, pollLesson, readMini, sessionActions }) {
+    return _jsx(StudyDesk, { sessionId, visible, running, pending, ...sessionActions(sessionId), ask: (text, photo) => askStudent(sessionId, text, photo), t: t, useResource: useResource, readMini: miniId => readMini(sessionId, miniId), openLesson: lessonId => openLesson(sessionId, lessonId), pollLesson: (lessonId, signal) => pollLesson(sessionId, lessonId, signal), useStore, actions, saveSettings, saveWorksheet, inspectSubmission }, sessionId);
 }
 function Sidebar({ sessionId, useTabInfo, useSession, useSessions, renderSlot }) {
     const preset = useSessions(state => state.byId[sessionId]?.projectionValues?.agentPreset);

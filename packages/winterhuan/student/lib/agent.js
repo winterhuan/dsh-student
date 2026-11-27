@@ -1,7 +1,7 @@
-import { t as applicationStudyFiles } from "./application-CKoISUro.js";
-import { J as canonical, O as openmaicAcademicQuestion, t as readWorkspace, vt as readLessonFile } from "./read-BKnscgN2.js";
-import { a as openmaicEntityId, n as generationRequestSchema, o as readStudentWorkspace, u as nativeMessageHash } from "./generation-BDnsXksP.js";
-import { a as queryWorkspace } from "./queries-DsW1Bcnu.js";
+import { t as applicationStudyFiles } from "./application-BqngjvBs.js";
+import { J as canonical, O as openmaicAcademicQuestion, Ot as sectionReadiness, Vt as validateCourseWorkspace, t as readWorkspace, vt as readLessonFile } from "./read-BpRrocGx.js";
+import { a as courseReviewInput, d as readStudentWorkspace, h as nativeMessageHash, i as courseReviewModel, n as generationRequestSchema, o as reviewQuestionsCurrent, s as reviewedCourseRequirement, u as openmaicEntityId } from "./generation-CWbd-geH.js";
+import { a as queryWorkspace } from "./queries-CiBrxUDd.js";
 import "node:module";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -73,11 +73,11 @@ function createStudySkillProvider() {
 //#endregion
 //#region lib/types/tools.js
 function boundedRead(result, paths) {
-	const versions = [...result.versions.filter((file) => paths.includes(file.path)), ...result.versions.filter((file) => !paths.includes(file.path))];
+	const versions = result.versions.filter((file) => paths.includes(file.path));
 	return {
 		...result,
 		versions: versions.slice(0, 20),
-		omittedVersions: Math.max(0, versions.length - 20),
+		omittedVersions: result.versions.length - Math.min(versions.length, 20),
 		issues: result.issues?.slice(0, 20).map((issue) => ({
 			path: issue.path.slice(0, 240),
 			field: issue.field.slice(0, 240),
@@ -224,17 +224,17 @@ function registerStudyTools(context) {
 					} };
 				}
 			}
-			const context = boundedRead(queryWorkspace(read, {
+			const context = args.kind === "learning-context" ? result : args.kind === void 0 || args.kind === "status" ? boundedRead(queryWorkspace(read, {
 				kind: "learning-context",
 				...args.subject ? { subject: args.subject } : {}
-			}, now), paths);
-			if (context.data) {
+			}, now), paths) : void 0;
+			if (context?.data) {
 				const data = z.record(z.string(), z.unknown()).parse(context.data);
 				const responses = z.array(z.record(z.string(), z.unknown())).parse(data.responses);
 				const saved = z.record(z.string(), z.unknown()).nullable().parse(data.savedResponse);
 				const selected = responses.filter((response) => response.id === saved?.id);
 				data.goalProgress = Array.isArray(data.goalProgress) ? data.goalProgress.filter((item) => item && typeof item === "object" && "id" in item && item.id === data.nextAction?.goalId).slice(0, 3) : [];
-				data.activeQuestions = data.currentQuestion ? [data.currentQuestion] : [];
+				delete data.activeQuestions;
 				if (data.daily && typeof data.daily === "object") {
 					const daily = data.daily;
 					data.daily = {
@@ -247,12 +247,11 @@ function registerStudyTools(context) {
 						more: "Read study_status kind=daily-plan for the arrangement and choices."
 					};
 				}
-				data.responses = selected;
+				delete data.responses;
 				data.omittedResponses = responses.length - selected.length;
-				data.assessments = data.savedAssessment ? [data.savedAssessment] : [];
+				delete data.assessments;
 				context.data = data;
 			}
-			if (args.kind === "learning-context") result.data = context.data;
 			if (args.kind === void 0 || args.kind === "status") {
 				const data = result.data ? z.record(z.string(), z.unknown()).parse(result.data) : void 0;
 				if (data) result.data = Object.fromEntries([
@@ -271,10 +270,10 @@ function registerStudyTools(context) {
 			const native = {
 				status: source.status,
 				cut: source.cut,
-				inputs: source.inputs.slice(),
-				admissions: source.admissions.slice(),
-				omitted: source.omitted,
-				omittedAdmissions: source.omittedAdmissions,
+				inputs: source.inputs.slice(-1),
+				admissions: source.admissions.slice(-3),
+				omitted: source.omitted + Math.max(0, source.inputs.length - 1),
+				omittedAdmissions: source.omittedAdmissions + Math.max(0, source.admissions.length - 3),
 				reason: source.reason
 			};
 			const payload = {
@@ -483,9 +482,14 @@ function registerOpenmaicFeedback(ctx) {
 		parameters: {
 			action: {
 				type: "string",
-				enum: ["prepare", "read"],
+				enum: [
+					"prepare",
+					"read",
+					"content",
+					"review"
+				],
 				required: true,
-				description: "prepare freezes the original generated classroom before playback; read rereads original submitted/reviewed records after return, continue or restart."
+				description: "review independently checks all actual scenes and returns quality plus original binding/questions in one call; content pages original scenes; prepare freezes the original generated classroom before playback; read rereads original submitted/reviewed records after return, continue or restart."
 			},
 			lessonId: {
 				type: "string",
@@ -507,7 +511,12 @@ function registerOpenmaicFeedback(ctx) {
 		isConcurrencySafe: () => true,
 		async execute(args, exec) {
 			const { action, lessonId, offset = 0 } = z.object({
-				action: z.enum(["prepare", "read"]),
+				action: z.enum([
+					"prepare",
+					"read",
+					"content",
+					"review"
+				]),
 				lessonId: z.string().min(1).max(80),
 				offset: z.number().int().nonnegative().optional()
 			}).parse(args);
@@ -531,8 +540,72 @@ function registerOpenmaicFeedback(ctx) {
 			const block = [workspace, ...(read.archiveSources ?? []).map((archive) => archive.workspace)].find((owner) => owner.settings.termId === lesson.termId && owner.settings.learnerId === workspace.settings.learnerId)?.blocks.find((block) => block.id === lesson.blockId && block.learnerId === workspace.settings.learnerId);
 			if (!block || !exec.agent?.session.header.cwd) throw new Error("Original classroom block ownership is unresolved.");
 			let result;
-			if (action === "prepare") {
-				const target = block.questions.find((question) => question.id === block.currentQuestionId)?.capability;
+			if (action === "review") {
+				if (!lessonRead.file || validateCourseWorkspace(lessonRead.file, workspace).length) throw new Error("Restore valid course and target references before review.");
+				const files = applicationStudyFiles(exec);
+				const input = await courseReviewInput(files, exec.agent.session.header.cwd, lesson, lessonRead.file, exec.signal);
+				const approved = await ctx.studentOpenmaic.generation(exec.agent.session.header.cwd).reviewedPlan(input.owner);
+				if (!await ctx.studentOpenmaic.reviewer.approvedPlan(input, approved)) throw new Error("This plan does not match the original approved submission. Preserve the old course and generate an explicitly requested replacement.");
+				const owner = {
+					learnerId: lesson.learnerId,
+					termId: lesson.termId,
+					blockId: lesson.blockId,
+					base: lesson.base,
+					classroomId: lesson.classroomId,
+					learnerKey: lesson.learnerKey
+				};
+				const feedback = ctx.studentOpenmaic.feedback(exec.agent.session.header.cwd);
+				const prepared = await feedback.prepare(owner, input.plan.target, exec.signal);
+				input.content = await feedback.content(owner, exec.signal);
+				input.questions = prepared.questions;
+				if (!reviewQuestionsCurrent(input)) throw new Error("The current quiz differs from its original frozen capture. Preserve this version and create an explicitly requested replacement.");
+				const model = courseReviewModel(ctx, exec);
+				const review = await ctx.studentOpenmaic.reviewer.review(input, model.model, model.generate, exec.signal);
+				const latest = await readLessonFile(files, exec.signal);
+				if (latest.observation?.version !== lessonRead.observation?.version || latest.observation?.targetKey !== lessonRead.observation?.targetKey) throw new Error("The lesson changed during review. Read its current version.");
+				await courseReviewInput(files, exec.agent.session.header.cwd, lesson, lessonRead.file, exec.signal);
+				result = {
+					status: "reviewed",
+					lessonId,
+					quality: review.quality,
+					issues: review.issues,
+					feedback: prepared.binding,
+					questions: prepared.questions.map((question) => openmaicAcademicQuestion({
+						binding: prepared.binding,
+						questionId: openmaicEntityId("q", [
+							prepared.binding.bindingId,
+							question.sceneId,
+							question.questionId
+						]),
+						question
+					})),
+					total: prepared.questions.length,
+					nextOffset: null
+				};
+			} else if (action === "content") {
+				const content = await ctx.studentOpenmaic.feedback(exec.agent.session.header.cwd).content({
+					learnerId: lesson.learnerId,
+					termId: lesson.termId,
+					blockId: lesson.blockId,
+					base: lesson.base,
+					classroomId: lesson.classroomId,
+					learnerKey: lesson.learnerKey
+				}, exec.signal);
+				result = {
+					status: "content",
+					lessonId,
+					contentHash: content.contentHash,
+					scenes: content.scenes.slice(offset, offset + 4),
+					total: content.scenes.length,
+					nextOffset: offset + 4 < content.scenes.length ? offset + 4 : null
+				};
+			} else if (action === "prepare") {
+				if (lesson.questionPlan) {
+					if (!lessonRead.file || validateCourseWorkspace(lessonRead.file, workspace).length) throw new Error("Restore valid original course targets before preparing feedback.");
+					const plan = await courseReviewInput(applicationStudyFiles(exec), exec.agent.session.header.cwd, lesson, lessonRead.file, exec.signal);
+					if (!await ctx.studentOpenmaic.reviewer.approvedPlan(plan, await ctx.studentOpenmaic.generation(exec.agent.session.header.cwd).reviewedPlan(plan.owner))) throw new Error("Prepare only the original approved question plan.");
+				}
+				const target = lesson.questionPlan?.target ?? block.questions.find((question) => question.id === block.currentQuestionId)?.capability;
 				if (!target) throw new Error("Save the current capability, family and tested scope before preparing classroom feedback.");
 				const prepared = await ctx.studentOpenmaic.feedback(exec.agent.session.header.cwd).prepare({
 					learnerId: lesson.learnerId,
@@ -601,7 +674,7 @@ function registerOpenmaicFeedback(ctx) {
 				};
 			}
 			const bounded = z.record(z.string(), z.json()).parse(JSON.parse(JSON.stringify(result)));
-			const rows = Array.isArray(bounded.records) ? bounded.records : Array.isArray(bounded.questions) ? bounded.questions : void 0;
+			const rows = Array.isArray(bounded.records) ? bounded.records : Array.isArray(bounded.questions) ? bounded.questions : Array.isArray(bounded.scenes) ? bounded.scenes : void 0;
 			const originalLength = rows?.length ?? 0;
 			if (bounded.consumption && typeof bounded.consumption === "object" && !Array.isArray(bounded.consumption)) {
 				for (const field of [
@@ -640,6 +713,7 @@ var agent_exports = /* @__PURE__ */ __exportAll({
 });
 const name$1 = "student-openmaic-agent";
 const inject$1 = [
+	"llm",
 	"studentOpenmaic",
 	"tools",
 	"skills",
@@ -720,6 +794,30 @@ function apply$2(ctx) {
 				termId: z.string()
 			}).safeParse(read.workspace?.settings);
 			if (!settings.success || settings.data.learnerId !== request.learnerId || settings.data.termId !== request.termId || !read.workspace?.blocks.some((block) => block.id === request.blockId)) throw new Error("Confirm the original Student learner, term and learning block before generating or continuing a classroom.");
+			if (request.requirement && !request.jobId) {
+				const lessons = await readLessonFile(applicationStudyFiles(exec), exec.signal);
+				const lesson = lessons.file?.lessons.find((item) => item.blockId === request.blockId && item.learnerId === request.learnerId && item.termId === request.termId);
+				if (!lesson?.purpose || !lesson.teaching || lessons.status !== "valid" || !read.workspace || validateCourseWorkspace(lessons.file, read.workspace).length) throw new Error("Save and validate the unit section or explicitly chosen foundational lesson and full teaching plan before submission. Read references/unit-courses.md.");
+				const course = lessons.file.courses?.find((item) => item.id === lesson.course?.id);
+				if (lesson.course && (!course || sectionReadiness(course, lesson.course.sectionId) !== "ready")) throw new Error("Confirm the material and school position before generating this section.");
+				if (request.requirement !== lesson.requirement) throw new Error("Use the saved teaching requirement without replacing the original request.");
+				const input = await courseReviewInput(applicationStudyFiles(exec), workspace, lesson, lessons.file, exec.signal);
+				request.requirement = reviewedCourseRequirement(input);
+				const model = courseReviewModel(ctx, exec);
+				const review = await ctx.studentOpenmaic.reviewer.review(input, model.model, model.generate, exec.signal);
+				if (review.status !== "passed") return {
+					status: "review-rejected",
+					submitted: false,
+					lessonId: lesson.id,
+					reviewId: review.reviewId,
+					issues: review.issues
+				};
+				request.reviewId = review.reviewId;
+				const latest = await readLessonFile(applicationStudyFiles(exec), exec.signal);
+				if (latest.observation?.version !== lessons.observation?.version || latest.observation?.targetKey !== lessons.observation?.targetKey) throw new Error("The lesson changed during review. Read the current version before submission.");
+				await courseReviewInput(applicationStudyFiles(exec), workspace, lesson, lessons.file, exec.signal);
+			}
+			if ((request.requirement?.length ?? 0) > 8e3) throw new Error("Keep the saved requirement and teaching plan within 8000 characters in total before submitting.");
 			return z.json().parse(await ctx.studentOpenmaic.generation(workspace).run(request, exec.signal));
 		}
 	});
@@ -730,7 +828,7 @@ function apply$2(ctx) {
 	const systemPrompt = new Proxy(ctx.systemPrompt, { get(target, key, receiver) {
 		if (key === "section") return (section) => target.section(section.name === "tool:dsh-openmaic" ? {
 			...section,
-			text: "Use openmaic_generate for a complete classroom. It returns the official job identity promptly; continue the same job, then let the agent save validated lesson metadata. Use independent inline OpenMAIC widgets, slides and cards whenever they fit the current goal. Load the matching authoring skill first."
+			text: "Use openmaic_generate for a complete classroom. It returns the official job identity promptly; continue the same job, then let the agent save validated lesson metadata. New learning starts with a full classroom. Use inline OpenMAIC widgets, slides and cards for targeted explanation and later review; review begins with recall or an attempt. Read study references/unit-courses.md and save the teaching and question plans before generation; questions receive independent review. Once ready, use openmaic_feedback action=review and save its returned quality, binding and questions. Load the matching authoring skill first."
 		} : section);
 		return Reflect.get(target, key, receiver);
 	} });
@@ -743,12 +841,21 @@ function apply$2(ctx) {
 //#endregion
 //#region lib/types/agent.js
 const name = "student-agent";
-const inject = ["skills", "tools"];
+const inject = [
+	"skills",
+	"tools",
+	"systemPrompt"
+];
 /** Register domain Skills and tools for the preset lifetime.
 * @param context - preset-scoped host services.
 */
 function apply(context) {
 	context.effect(() => context.skills.registerProvider(() => createStudySkillProvider()), "student: skills");
+	context.systemPrompt.section({
+		name: "student-panel",
+		order: 45,
+		text: "For each Student learning request, load study and read study_status once. The latest consumed native.inputs[].intention contains the compact panel request, selected goal and original answer identity. Honor that selection; it is user intent, not verified file state or assessment. Never interpret a navigation/start/help message as an answer. Save original answers before grading. New learning requires a full openmaic_generate classroom; use references/unit-courses.md for material checks and course ownership."
+	});
 	registerNativeCapture(context);
 	registerStudyTools(context);
 	context.plugin(agent_exports);

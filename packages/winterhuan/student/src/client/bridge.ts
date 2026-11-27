@@ -1,3 +1,4 @@
+import { parsePanelIntent, panelDisplay } from '../panel-intent.ts'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-api-session-controller/client'
 import type {} from '@winterhuan/dsh-student/remote'
@@ -20,9 +21,10 @@ export function tutorBridge(context: Context, sessionId: SessionId, unavailable:
   return async (text, photo) => {
     const session = context.sessions.binding(sessionId)?.session
     if (!session) throw new Error(unavailable)
-    const submission = session.beginSubmission({ mode: 'queue', text, attachments: photo ? [{ type: 'image', value: { previewUrl: photo.preview, name: photo.name } }] : [] })
+    const intent = parsePanelIntent(text)
+    const submission = session.beginSubmission({ mode: 'queue', text: intent ? panelDisplay(intent) : text, attachments: photo ? [{ type: 'image', value: { previewUrl: photo.preview, name: photo.name } }] : [] })
     try {
-      const result = await session.prompt([{ type: 'text', text }, ...(photo ? [{ type: 'image' as const, mediaType: photo.mediaType, data: photo.data, name: photo.name }] : [])], 'queue', undefined, submission.requestId)
+      const result = intent ? await context.remote.student.submitIntent(sessionId, { requestId: submission.requestId, intent, ...(photo ? { photo: { mediaType: photo.mediaType, data: photo.data, name: photo.name } } : {}) }, new AbortController().signal) : await session.prompt([{ type: 'text', text }, ...(photo ? [{ type: 'image' as const, mediaType: photo.mediaType, data: photo.data, name: photo.name }] : [])], 'queue', undefined, submission.requestId)
       if (!result.ok) throw new Error(result.error.message || failed)
       return { requestId: submission.requestId, admission: 'accepted' }
     } catch (error) { submission.abandon(); throw new StudySubmissionError(submission.requestId, error) }

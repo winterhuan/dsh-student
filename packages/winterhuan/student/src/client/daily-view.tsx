@@ -21,7 +21,7 @@ export function DailyHome({ daily, subject, disabled, extra, onStart, onResume, 
       <h3>{item.nextAction.title}</h3><p>{t(continuationReasons[item.nextAction.reason])}</p>
       {item.task.scope && <p className="student-muted">{item.task.scope.description}</p>}
       <p className="student-muted">{t(item.task.ending === 'review-attempts' ? 'reviewEnding' : 'learningEnding')}</p>
-      <button type="button" className={index === 0 && !unfinished && daily.phase !== 'learning' ? 'student-primary' : undefined} disabled={disabled} onClick={() => onStart(subject === 'all' && index === 0 && !extra ? undefined : item)}>{t(extra ? 'learnThis' : item.task.purpose === 'resume' ? 'resumeLearning' : 'startToday')}</button>
+      <button type="button" className={index === 0 && !unfinished && daily.phase !== 'learning' ? 'student-primary' : undefined} disabled={disabled} onClick={() => onStart(subject === 'all' && index === 0 && !extra ? undefined : item)}>{t(extra ? 'learnThis' : item.task.purpose === 'resume' ? 'resumeLearning' : item.task.purpose === 'learning' ? 'courseStart' : 'startToday')}</button>
     </article>)}</section> : !unfinished && daily.phase !== 'learning' && <section><p>{t('noDailySuggestion')}</p></section>}
   </>
 }

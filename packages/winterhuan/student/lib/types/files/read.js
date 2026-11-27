@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { emptyRetiredBlock, retiredBlockIds } from "./cleanup.js";
 import { stateSchema } from "../schema.js";
 import { readLessonFile } from "./lessons.js";
 import { scopeSupports } from "../capabilities.js";
@@ -19,6 +20,7 @@ const MAX_TOTAL_BYTES = 33_554_432;
  * @param prior - supplied preserved versions; omitted reads use verified observed-version backups for cold frozen-content checks.
  * @param nativeSources - independently resolved consumed input observations, empty for the read-only CLI.
  * @param openmaicSources - independently authorized original official submissions and grading.
+ * @param options - optional clock timestamp and additional plan day to read alongside today and recent plans.
  * @returns validated facts or an explicit incomplete, invalid or changing result.
  */
 export async function readWorkspace(fs, signal, prior, nativeSources = [], openmaicSources = [], options = {}) {
@@ -250,6 +252,24 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
         for (const day of new Set(origins))
             await readPlan(`.study/plans/${day}.json`);
         const validation = validateStudyFiles(input, available, nativeSources, openmaicSources);
+        const retired = validation.workspace ? retiredBlockIds(validation.workspace.settings) : new Set();
+        for (const entry of validation.workspace?.settings.retiredEmptyBlocks ?? []) {
+            try {
+                const before = await fs.stat(entry.backupPath, signal);
+                if (!before || before.type !== 'file')
+                    throw new Error('Retain the original empty block backup.');
+                const bytes = await fs.read(entry.backupPath, signal, MAX_FILE_BYTES);
+                const after = await fs.stat(entry.backupPath, signal);
+                const block = blockSchema.parse(JSON.parse(new TextDecoder().decode(bytes)));
+                if (before.version !== after?.version || before.targetKey !== after.targetKey || createHash('sha256').update(bytes).digest('hex') !== entry.sha256 || block.id !== entry.id || block.learnerId !== validation.workspace?.settings.learnerId || block.termId !== validation.workspace?.settings.termId || !emptyRetiredBlock(block) || validation.workspace?.blocks.some(item => item.id === entry.id))
+                    throw new Error('Retirement requires the exact original ended block with no questions, answers, help or rounds.');
+            }
+            catch (error) {
+                if (signal.aborted)
+                    throw error;
+                discoveryIssues.push({ path: '.study/settings.json', field: 'retiredEmptyBlocks', rule: 'cleanup-source', correction: error instanceof Error ? error.message : 'Restore the original cleanup source.' });
+            }
+        }
         const migration = validation.workspace?.settings.migration;
         if (migration) {
             const backup = await fs.stat(migration.backupPath, signal);
@@ -263,7 +283,11 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
                     throw new Error('The preserved migration source bytes do not match their recorded digest.');
                 const expected = migrationOutputPaths(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)));
                 const present = new Set(validation.files.filter(file => file.file).map(file => file.path));
-                const missing = expected.filter(path => !present.has(path));
+                const legacy = stateSchema.parse(migrateStudyFile(JSON.parse(new TextDecoder().decode(bytes))));
+                for (const id of retired)
+                    if (legacy.attempts.some(attempt => attempt.sessionId === id) || legacy.task?.sessionId === id)
+                        throw new Error('A legacy answer or current question cannot be removed by empty-block cleanup.');
+                const missing = expected.filter(path => !present.has(path) && ![...retired].some(id => path === `.study/blocks/${id}.json`));
                 if (missing.length)
                     discoveryIssues.push({ path: '.study/settings.json', field: 'migration', rule: 'migration-incomplete', correction: `Resume the verified migration under the same identities; missing outputs: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? ` and ${missing.length - 5} more` : ''}.` });
                 const original = await fs.stat(migration.sourcePath, signal);

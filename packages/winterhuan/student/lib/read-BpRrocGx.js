@@ -19,11 +19,50 @@ var StudyReadCache = class {
 	}
 };
 //#endregion
+//#region lib/types/files/cleanup.js
+/**
+* Decide whether an ended block contains no learning or pending question evidence.
+* @param block - Complete original record before deletion.
+* @returns Whether this empty activity can be selected for explicit retirement.
+*/
+function emptyRetiredBlock(block) {
+	return block.endedAt !== void 0 && block.questions.length === 0 && block.responses.length === 0 && block.assessments.length === 0 && block.hints.length === 0 && !block.stuckSignals?.length && !block.rounds?.length;
+}
+/**
+* Remove only tasks owned by explicitly retired empty blocks and their local choice references.
+* @param plan - Original plan; the caller retains an exact backup and verifies versions.
+* @param removed - Stable retired block identities.
+* @returns Repaired tasks and choices; no learning outcome is created.
+*/
+function pruneRetiredPlan(plan, removed) {
+	const ids = new Set(plan.tasks.filter((task) => task.activity && removed.has(task.activity.blockId)).map((task) => task.id));
+	if (!ids.size) return plan;
+	if (plan.tasks.some((task) => ids.has(task.id) && (task.basis.length || task.outcomes.length || task.state === "completed"))) throw new Error("An activity with evidence or completion cannot be retired.");
+	return {
+		...plan,
+		state: plan.tasks.every((task) => ids.has(task.id)) ? "stopped" : plan.state,
+		tasks: plan.tasks.filter((task) => !ids.has(task.id)),
+		choices: plan.choices.map((choice) => ({
+			...choice,
+			taskIds: choice.taskIds.filter((id) => !ids.has(id)),
+			replacedTaskIds: choice.replacedTaskIds.filter((id) => !ids.has(id))
+		}))
+	};
+}
+/**
+* Identify explicit retired blocks; independent reading verifies every preserved empty source.
+* @param settings - Current formal settings.
+* @returns IDs used solely for cleanup reference reconciliation.
+*/
+function retiredBlockIds(settings) {
+	return new Set(settings.retiredEmptyBlocks?.map((item) => item.id) ?? []);
+}
+//#endregion
 //#region lib/types/capability-schema.js
 /** Capability contracts shared by the browser and Host. Packaged content is loaded by the Host. */
 /** Stable capability, family and source IDs admit dots; entity filenames retain their existing alphabet. */
 const knowledgeIdSchema = z.string().regex(/^[a-zA-Z0-9_.-]{1,80}$/u);
-const text$4 = z.string().trim().min(1).max(4e3);
+const text$5 = z.string().trim().min(1).max(4e3);
 const ids$1 = z.array(knowledgeIdSchema).max(500);
 const subject$3 = z.enum([
 	"chinese",
@@ -33,7 +72,7 @@ const subject$3 = z.enum([
 /** The tested range is explicit; a broader range never inherits merely by goal name. */
 const capabilityScopeSchema = z.object({
 	id: knowledgeIdSchema,
-	description: text$4,
+	description: text$5,
 	modality: z.enum([
 		"written",
 		"oral",
@@ -42,7 +81,7 @@ const capabilityScopeSchema = z.object({
 		"performed"
 	]),
 	numberMax: z.number().int().positive().max(1e4).optional(),
-	vocabulary: z.array(text$4.max(240)).max(2e3).optional()
+	vocabulary: z.array(text$5.max(240)).max(2e3).optional()
 }).strict();
 /** Reviewed capability, mother and learning range; classification alone grants no answer evidence. */
 const capabilityBindingSchema = z.object({
@@ -55,47 +94,47 @@ const capabilityGoalSchema = z.object({
 	id: knowledgeIdSchema,
 	subject: subject$3,
 	domain: knowledgeIdSchema,
-	title: text$4,
-	scope: text$4,
-	criterion: text$4,
+	title: text$5,
+	scope: text$5,
+	criterion: text$5,
 	prerequisites: ids$1,
 	familyIds: ids$1,
 	sourceIds: ids$1,
 	curriculumAssociationIds: ids$1,
-	titleEn: text$4.optional(),
-	criterionEn: text$4.optional(),
-	curriculumAssociationGap: text$4.optional(),
-	coverageStatus: text$4.optional(),
-	activation: text$4.optional(),
-	evidenceRequirements: z.array(text$4).max(20).optional(),
-	progressKind: text$4.optional(),
-	prerequisitePolicy: text$4.optional(),
+	titleEn: text$5.optional(),
+	criterionEn: text$5.optional(),
+	curriculumAssociationGap: text$5.optional(),
+	coverageStatus: text$5.optional(),
+	activation: text$5.optional(),
+	evidenceRequirements: z.array(text$5).max(20).optional(),
+	progressKind: text$5.optional(),
+	prerequisitePolicy: text$5.optional(),
 	requirementIds: ids$1.optional(),
 	sourceLocators: z.array(z.object({
 		sourceId: knowledgeIdSchema,
 		pdfPages: z.array(z.number().int().positive()).max(120).optional(),
-		section: text$4
+		section: text$5
 	}).strict()).max(20).optional()
 }).strict();
 /** One method/structure family owns exactly one representative exercise. Stimuli are blueprints, not completed media evidence. */
 const questionFamilySchema = z.object({
 	id: knowledgeIdSchema,
 	subject: subject$3,
-	coreMethod: text$4,
-	structure: text$4,
+	coreMethod: text$5,
+	structure: text$5,
 	goalIds: ids$1.min(1),
-	variationAxes: z.array(text$4).min(1).max(20),
-	boundary: text$4,
+	variationAxes: z.array(text$5).min(1).max(20),
+	boundary: text$5,
 	representative: z.object({
 		id: knowledgeIdSchema,
-		prompt: text$4,
-		rubric: text$4,
+		prompt: text$5,
+		rubric: text$5,
 		stimulus: z.json().optional()
 	}).strict(),
 	signature: z.object({
 		capabilityIds: ids$1.min(1),
-		coreMethod: text$4,
-		problemStructure: text$4
+		coreMethod: text$5,
+		problemStructure: text$5
 	}).strict()
 }).strict();
 /** Workspace content extensions stay in the existing collection; this is not a second question bank. */
@@ -214,8 +253,8 @@ const focusBySubject = {
 };
 //#endregion
 //#region lib/types/schema.js
-const text$3 = z.string().trim().min(1).max(2e3);
-const id$1 = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u);
+const text$4 = z.string().trim().min(1).max(2e3);
+const id$2 = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u);
 const time$1 = z.number().int().nonnegative();
 const subject$2 = z.enum([
 	"chinese",
@@ -288,24 +327,24 @@ const customObjectiveMethods = {
 	]
 };
 const scope$1 = z.object({
-	region: text$3,
+	region: text$4,
 	grade: z.number().int().min(1).max(6),
 	term: z.enum(["first", "second"]),
-	schoolYear: text$3,
+	schoolYear: text$4,
 	schoolSystem: z.enum(["five-four", "six-three"])
 }).strict();
 const profile = scope$1.extend({
-	nickname: text$3,
+	nickname: text$4,
 	schoolAlias: z.string().trim().max(2e3),
-	parentConfirmation: text$3.default("家长已确认学习档案")
+	parentConfirmation: text$4.default("家长已确认学习档案")
 }).strict();
 const material = z.object({
-	id: id$1,
+	id: id$2,
 	subject: subject$2,
 	scope: scope$1,
-	title: text$3,
-	publisher: text$3,
-	edition: text$3,
+	title: text$4,
+	publisher: text$4,
+	edition: text$4,
 	editionStatus: z.enum(["unconfirmed", "identified"]),
 	kind: z.enum([
 		"official-textbook",
@@ -313,11 +352,11 @@ const material = z.object({
 		"reference",
 		"generated"
 	]),
-	locator: text$3,
-	evidence: text$3
+	locator: text$4,
+	evidence: text$4
 }).strict();
 const schoolProgress = z.object({
-	unitId: id$1,
+	unitId: id$2,
 	confirmedAt: time$1,
 	posture: z.enum(["keep-up", "catch-up"]),
 	preview: z.boolean(),
@@ -325,42 +364,42 @@ const schoolProgress = z.object({
 }).strict();
 const courseInput = z.object({
 	subject: subject$2,
-	materialId: id$1,
-	unit: text$3,
-	parentConfirmation: text$3.default("家长已确认教材与当前单元")
+	materialId: id$2,
+	unit: text$4,
+	parentConfirmation: text$4.default("家长已确认教材与当前单元")
 }).strict();
 const course = courseInput.extend({ progress: schoolProgress.optional() }).strict();
 const mistake = z.object({
-	id: id$1,
+	id: id$2,
 	subject: subject$2,
-	topic: text$3,
-	prompt: text$3,
-	learnerAnswer: text$3,
-	correction: text$3,
-	explanation: text$3,
-	answerEvidence: text$3,
-	imagePath: text$3.optional(),
+	topic: text$4,
+	prompt: text$4,
+	learnerAnswer: text$4,
+	correction: text$4,
+	explanation: text$4,
+	answerEvidence: text$4,
+	imagePath: text$4.optional(),
 	uncertainties: z.string().max(2e3),
-	materialId: id$1.optional(),
+	materialId: id$2.optional(),
 	objectiveId: knowledgeIdSchema.optional(),
 	errorType: errorTypeSchema.optional()
 }).strict();
 const concept = z.object({
-	id: id$1,
+	id: id$2,
 	subject: subject$2,
-	name: text$3,
-	definition: text$3,
-	example: text$3,
-	source: text$3,
+	name: text$4,
+	definition: text$4,
+	example: text$4,
+	source: text$4,
 	facts: z.array(stepText).min(2).max(8).optional(),
-	misconceptions: z.array(text$3).max(3).optional()
+	misconceptions: z.array(text$4).max(3).optional()
 }).strict();
 const objective = z.object({
-	id: id$1,
+	id: id$2,
 	subject: subject$2,
-	title: text$3,
-	goal: text$3,
-	conceptIds: z.array(id$1).min(1).max(5),
+	title: text$4,
+	goal: text$4,
+	conceptIds: z.array(id$2).min(1).max(5),
 	method: z.enum([
 		"recognize",
 		"read-evidence",
@@ -373,13 +412,13 @@ const objective = z.object({
 		"speak"
 	]),
 	errorTypes: z.array(errorTypeSchema).max(4).optional(),
-	questionPoints: z.array(text$3).max(4).optional(),
+	questionPoints: z.array(text$4).max(4).optional(),
 	variationAxes: z.array(variationAxisSchema).max(4).optional()
 }).strict();
 const relation = z.object({
-	id: id$1,
-	fromId: id$1,
-	toId: id$1,
+	id: id$2,
+	fromId: id$2,
+	toId: id$2,
 	kind: z.enum([
 		"prerequisite",
 		"part-of",
@@ -387,8 +426,8 @@ const relation = z.object({
 		"explains",
 		"cause-effect"
 	]),
-	explanation: text$3,
-	source: text$3
+	explanation: text$4,
+	source: text$4
 }).strict();
 const label = z.string().trim().max(24);
 const count = (max) => z.number().int().min(0).max(max);
@@ -694,33 +733,33 @@ const figureSchema = z.discriminatedUnion("kind", [
 const figure = figureSchema;
 /** One structured exercise item shared by the shipped exercise bank and the workspace collection. */
 const exerciseItemSchema = z.object({
-	id: id$1,
+	id: id$2,
 	subject: subject$2,
 	objectiveId: knowledgeIdSchema,
 	role: exerciseRoleSchema,
 	variant: variantSchema,
-	prompt: text$3,
-	choices: z.array(text$3).min(2).max(4).optional(),
+	prompt: text$4,
+	choices: z.array(text$4).min(2).max(4).optional(),
 	figure: figure.optional(),
 	steps: z.array(stepText).min(2).max(4),
-	answer: text$3,
-	explanation: text$3,
-	answerEvidence: text$3,
+	answer: text$4,
+	explanation: text$4,
+	answerEvidence: text$4,
 	errorType: errorTypeSchema.optional()
 }).strict();
 const workspaceExerciseInput = z.object({
-	id: id$1,
+	id: id$2,
 	subject: subject$2,
 	objectiveId: knowledgeIdSchema,
 	role: exerciseRoleSchema.default("try"),
 	variant: variantSchema.default("numeric"),
-	prompt: text$3,
-	choices: z.array(text$3).min(2).max(4).optional(),
+	prompt: text$4,
+	choices: z.array(text$4).min(2).max(4).optional(),
 	figure: figure.optional(),
 	steps: z.array(stepText).min(2).max(4),
-	answer: text$3,
-	explanation: text$3,
-	answerEvidence: text$3,
+	answer: text$4,
+	explanation: text$4,
+	answerEvidence: text$4,
 	errorType: errorTypeSchema.optional()
 }).strict();
 /** One step of teaching the current task: show, guide, independent try, then a variation. */
@@ -744,15 +783,15 @@ const assistance = z.enum([
 	"unknown"
 ]);
 const attemptBody = {
-	id: id$1,
-	sessionId: id$1,
+	id: id$2,
+	sessionId: id$2,
 	subject: subject$2,
-	topic: text$3,
-	prompt: text$3,
-	response: text$3,
-	feedback: text$3,
-	answerEvidence: text$3,
-	mistakeId: id$1.optional(),
+	topic: text$4,
+	prompt: text$4,
+	response: text$4,
+	feedback: text$4,
+	answerEvidence: text$4,
+	mistakeId: id$2.optional(),
 	objectiveId: knowledgeIdSchema.optional(),
 	variant: variantSchema.optional(),
 	figure: figure.optional()
@@ -769,16 +808,16 @@ const recordAttempt = z.object({
 	assistance: assistance.optional()
 }).strict();
 const task = z.object({
-	id: id$1,
-	sessionId: id$1,
+	id: id$2,
+	sessionId: id$2,
 	subject: subject$2,
-	topic: text$3,
-	prompt: text$3,
-	choices: z.array(text$3).min(2).max(4).optional(),
+	topic: text$4,
+	prompt: text$4,
+	choices: z.array(text$4).min(2).max(4).optional(),
 	steps: z.array(stepText).min(2).max(5).optional(),
 	phase: phaseSchema.optional(),
 	variant: variantSchema.optional(),
-	mistakeId: id$1.optional(),
+	mistakeId: id$2.optional(),
 	objectiveId: knowledgeIdSchema.optional(),
 	figure: figure.optional()
 }).strict();
@@ -789,19 +828,19 @@ const answerSpace = z.enum([
 	"box"
 ]);
 const worksheetItem = z.object({
-	id: id$1,
+	id: id$2,
 	objectiveId: knowledgeIdSchema.optional(),
-	mistakeId: id$1.optional(),
+	mistakeId: id$2.optional(),
 	variant: variantSchema.optional(),
-	prompt: text$3,
+	prompt: text$4,
 	figure: figure.optional(),
 	space: answerSpace.optional(),
-	answer: text$3,
-	explanation: text$3,
-	answerEvidence: text$3
+	answer: text$4,
+	explanation: text$4,
+	answerEvidence: text$4
 }).strict();
 const worksheet = z.object({
-	id: id$1,
+	id: id$2,
 	subject: subject$2,
 	kind: sheetKindSchema.optional(),
 	objectiveId: knowledgeIdSchema.optional(),
@@ -814,19 +853,19 @@ const result = z.enum([
 	"unassessed"
 ]);
 const paperResult = z.object({
-	worksheetId: id$1,
-	itemId: id$1,
-	response: text$3,
+	worksheetId: id$2,
+	itemId: id$2,
+	response: text$4,
 	result,
 	assistance,
-	feedback: text$3,
-	answerEvidence: text$3,
-	userConfirmation: text$3.default("家长在面板批改")
+	feedback: text$4,
+	answerEvidence: text$4,
+	userConfirmation: text$4.default("家长在面板批改")
 }).strict();
 const paperDraft = z.object({
-	worksheetId: id$1,
-	itemId: id$1,
-	response: text$3,
+	worksheetId: id$2,
+	itemId: id$2,
+	response: text$4,
 	result,
 	assistance,
 	uncertainties: z.string().max(2e3),
@@ -834,19 +873,19 @@ const paperDraft = z.object({
 	confidence: z.enum(["high", "low"]).optional()
 }).strict();
 const gradeSheet = z.object({
-	worksheetId: id$1,
+	worksheetId: id$2,
 	results: z.array(z.object({
-		itemId: id$1,
+		itemId: id$2,
 		result: z.enum([
 			"correct",
 			"partial",
 			"incorrect"
 		]),
-		response: text$3.optional(),
+		response: text$4.optional(),
 		assistance: assistance.optional(),
 		errorType: errorTypeSchema.optional()
 	}).strict()).min(1).max(8),
-	userConfirmation: text$3.default("家长在面板批改")
+	userConfirmation: text$4.default("家长在面板批改")
 }).strict();
 const workbookOutcome = z.enum([
 	"stuck",
@@ -855,29 +894,29 @@ const workbookOutcome = z.enum([
 	"independent-correct"
 ]);
 const workbookDraft = z.object({
-	id: id$1,
+	id: id$2,
 	subject: subject$2,
-	prompt: text$3,
-	response: text$3.optional(),
+	prompt: text$4,
+	response: text$4.optional(),
 	outcome: workbookOutcome,
 	objectiveId: knowledgeIdSchema.optional(),
 	uncertainties: z.string().max(2e3),
-	imagePath: text$3.optional()
+	imagePath: text$4.optional()
 }).strict();
 const teachingItem = z.object({
-	id: id$1,
+	id: id$2,
 	subject: subject$2,
-	prompt: text$3,
+	prompt: text$4,
 	objectiveId: knowledgeIdSchema.optional(),
 	confirmedAt: time$1,
-	sourceDraftId: id$1.optional()
+	sourceDraftId: id$2.optional()
 }).strict();
 const schoolProgressInput = z.object({
-	unitId: id$1,
+	unitId: id$2,
 	posture: z.enum(["keep-up", "catch-up"]),
 	preview: z.enum(["on", "off"]),
 	pace: z.enum(["teaching", "review"]),
-	parentConfirmation: text$3.default("家长确认学校进度")
+	parentConfirmation: text$4.default("家长确认学校进度")
 }).strict();
 /** Validated mutations; confirmation fields record user statements, not authenticated identities. */
 const commandSchema = z.discriminatedUnion("action", [
@@ -895,7 +934,7 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("start"),
-		id: id$1,
+		id: id$2,
 		subject: subject$2,
 		mode: z.enum([
 			"foundation",
@@ -912,7 +951,7 @@ const commandSchema = z.discriminatedUnion("action", [
 		scope: z.object({
 			grade: z.number().int().min(1).max(6),
 			term: z.enum(["first", "second"]),
-			units: z.array(id$1).max(20).optional(),
+			units: z.array(id$2).max(20).optional(),
 			objectiveIds: z.array(knowledgeIdSchema).max(60).optional()
 		}).strict().optional()
 	}).strict(),
@@ -922,12 +961,12 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("answer"),
-		taskId: id$1,
-		response: text$3
+		taskId: id$2,
+		response: text$4
 	}).strict(),
 	z.object({
 		action: z.literal("hint"),
-		taskId: id$1
+		taskId: id$2
 	}).strict(),
 	z.object({
 		action: z.literal("configure-course"),
@@ -946,11 +985,11 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("stuck"),
-		taskId: id$1
+		taskId: id$2
 	}).strict(),
 	z.object({
 		action: z.literal("stop"),
-		sessionId: id$1,
+		sessionId: id$2,
 		reflection: z.string().max(2e3)
 	}).strict(),
 	z.object({
@@ -959,21 +998,21 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("confirm-mistake"),
-		id: id$1,
+		id: id$2,
 		subject: subject$2.optional(),
-		topic: text$3.optional(),
-		objectiveId: z.union([id$1, z.literal("")]).optional(),
-		prompt: text$3,
-		learnerAnswer: text$3.optional(),
-		correction: text$3,
-		explanation: text$3,
-		answerEvidence: text$3,
+		topic: text$4.optional(),
+		objectiveId: z.union([id$2, z.literal("")]).optional(),
+		prompt: text$4,
+		learnerAnswer: text$4.optional(),
+		correction: text$4,
+		explanation: text$4,
+		answerEvidence: text$4,
 		errorType: errorTypeSchema.optional(),
-		userConfirmation: text$3.default("家长已核对错题与订正")
+		userConfirmation: text$4.default("家长已核对错题与订正")
 	}).strict(),
 	z.object({
 		action: z.literal("delete-mistake"),
-		id: id$1
+		id: id$2
 	}).strict(),
 	z.object({
 		action: z.literal("save-exercise"),
@@ -981,7 +1020,7 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("delete-exercise"),
-		id: id$1
+		id: id$2
 	}).strict(),
 	z.object({
 		action: z.literal("concept"),
@@ -989,11 +1028,11 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("confirm-concept"),
-		id: id$1,
-		definition: text$3.optional(),
-		example: text$3.optional(),
-		source: text$3.optional(),
-		userConfirmation: text$3.default("家长已核对概念")
+		id: id$2,
+		definition: text$4.optional(),
+		example: text$4.optional(),
+		source: text$4.optional(),
+		userConfirmation: text$4.default("家长已核对概念")
 	}).strict(),
 	z.object({
 		action: z.literal("objective"),
@@ -1005,12 +1044,12 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("link-mistake"),
-		mistakeId: id$1,
+		mistakeId: id$2,
 		objectiveId: knowledgeIdSchema
 	}).strict(),
 	z.object({
 		action: z.literal("classify-mistake"),
-		mistakeId: id$1,
+		mistakeId: id$2,
 		errorType: z.union([errorTypeSchema, z.literal("")]).optional()
 	}).strict(),
 	z.object({
@@ -1027,23 +1066,23 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("confirm-paper"),
-		worksheetId: id$1,
+		worksheetId: id$2,
 		results: z.array(z.object({
-			itemId: id$1,
+			itemId: id$2,
 			result: z.enum([
 				"correct",
 				"partial",
 				"incorrect"
 			]),
-			response: text$3.optional(),
+			response: text$4.optional(),
 			assistance: assistance.optional(),
 			errorType: errorTypeSchema.optional()
 		}).strict()).min(1).max(8),
-		userConfirmation: text$3.default("家长已核对转录结果")
+		userConfirmation: text$4.default("家长已核对转录结果")
 	}).strict(),
 	z.object({
 		action: z.literal("discard-sheet"),
-		worksheetId: id$1
+		worksheetId: id$2
 	}).strict(),
 	z.object({
 		action: z.literal("workbook-draft"),
@@ -1051,31 +1090,31 @@ const commandSchema = z.discriminatedUnion("action", [
 	}).strict(),
 	z.object({
 		action: z.literal("confirm-workbook"),
-		id: id$1,
+		id: id$2,
 		outcome: workbookOutcome.optional(),
-		objectiveId: z.union([id$1, z.literal("")]).optional(),
-		correction: text$3.optional(),
-		explanation: text$3.optional(),
-		answerEvidence: text$3.optional(),
-		userConfirmation: text$3.default("家长已核对练习册题目")
+		objectiveId: z.union([id$2, z.literal("")]).optional(),
+		correction: text$4.optional(),
+		explanation: text$4.optional(),
+		answerEvidence: text$4.optional(),
+		userConfirmation: text$4.default("家长已核对练习册题目")
 	}).strict(),
 	z.object({
 		action: z.literal("dismiss-teaching"),
-		id: id$1
+		id: id$2
 	}).strict(),
 	z.object({
 		action: z.literal("archive-term"),
-		parentConfirmation: text$3.default("家长确认归档本学期")
+		parentConfirmation: text$4.default("家长确认归档本学期")
 	}).strict(),
 	z.object({
 		action: z.literal("openmaic-settings"),
 		baseUrl: z.string().trim().max(200),
-		parentConfirmation: text$3.default("家长确认 OpenMAIC 地址")
+		parentConfirmation: text$4.default("家长确认 OpenMAIC 地址")
 	}).strict(),
 	z.object({
 		action: z.literal("interests"),
 		tags: z.array(z.string().trim().regex(INTEREST_TAG)).min(3).max(8),
-		parentConfirmation: text$3.default("家长确认兴趣标签")
+		parentConfirmation: text$4.default("家长确认兴趣标签")
 	}).strict()
 ]);
 /** One learner and term per workspace; previous materials and attempts are retained. */
@@ -1089,7 +1128,7 @@ const stateSchema = z.object({
 	materials: z.array(material).max(500),
 	courses: z.array(course).max(3),
 	sessions: z.array(z.object({
-		id: id$1,
+		id: id$2,
 		subject: subject$2,
 		mode: z.enum([
 			"foundation",
@@ -1106,32 +1145,32 @@ const stateSchema = z.object({
 		startedAt: time$1,
 		endedAt: time$1.optional(),
 		spentMs: time$1.optional(),
-		materialId: id$1.optional(),
-		unit: text$3.optional(),
+		materialId: id$2.optional(),
+		unit: text$4.optional(),
 		reflection: z.string().max(2e3).optional(),
 		scope: z.object({
 			grade: z.number().int().min(1).max(6),
 			term: z.enum(["first", "second"]),
-			units: z.array(id$1).max(20).optional(),
+			units: z.array(id$2).max(20).optional(),
 			objectiveIds: z.array(knowledgeIdSchema).max(60).optional()
 		}).strict().optional()
 	}).strict()).max(5e3),
 	attempts: z.array(attempt.extend({
 		feedback: z.string().max(2e3),
 		at: time$1,
-		materialId: id$1.optional(),
-		rawResponse: text$3.optional(),
-		questionId: id$1.optional(),
-		responseId: id$1.optional()
+		materialId: id$2.optional(),
+		rawResponse: text$4.optional(),
+		questionId: id$2.optional(),
+		responseId: id$2.optional()
 	}).strict()).max(2e4),
 	mistakes: z.array(mistake.extend({
 		confirmedAt: time$1.optional(),
-		userConfirmation: text$3.optional(),
+		userConfirmation: text$4.optional(),
 		capability: capabilityBindingSchema.optional(),
 		dueAt: time$1.optional(),
 		source: z.object({
-			worksheetId: id$1,
-			itemId: id$1
+			worksheetId: id$2,
+			itemId: id$2
 		}).strict().optional(),
 		independentDays: z.array(z.string()).default([]),
 		stage: z.number().int().min(0).max(4).default(0)
@@ -1139,7 +1178,7 @@ const stateSchema = z.object({
 	exercises: z.array(exerciseItemSchema.extend({ savedAt: time$1.optional() }).strict()).max(1e3).default([]),
 	concepts: z.array(concept.extend({
 		confirmedAt: time$1.optional(),
-		userConfirmation: text$3.optional()
+		userConfirmation: text$4.optional()
 	}).strict()).max(1e3).default([]),
 	objectives: z.array(objective).max(1e3).default([]),
 	relations: z.array(relation).max(2e3).default([]),
@@ -1154,31 +1193,31 @@ const stateSchema = z.object({
 	workbookResults: z.array(workbookDraft.extend({
 		receivedAt: time$1,
 		confirmedAt: time$1,
-		userConfirmation: text$3,
-		correction: text$3.optional(),
-		explanation: text$3.optional(),
-		answerEvidence: text$3.optional()
+		userConfirmation: text$4,
+		correction: text$4.optional(),
+		explanation: text$4.optional(),
+		answerEvidence: text$4.optional()
 	}).strict()).max(500).default([]),
 	teachingQueue: z.array(teachingItem).max(500).default([]),
 	/** Parent override for the OpenMAIC origin. Absent means the environment or the localhost default. */
 	openmaic: z.object({
 		baseUrl: z.string().trim().min(1).max(200),
-		parentConfirmation: text$3
+		parentConfirmation: text$4
 	}).strict().optional(),
 	/** Parent theme tags. Absent profiles still read the example list; facts stay on the knowledge map. */
 	interests: z.object({
 		tags: z.array(z.string().trim().regex(INTEREST_TAG)).min(3).max(8),
-		parentConfirmation: text$3
+		parentConfirmation: text$4
 	}).strict().optional(),
 	rewards: z.array(z.object({
 		day: z.string(),
 		reason: z.enum(["participation", "reflection"])
 	}).strict()).max(1e3),
 	task: task.extend({
-		response: text$3.optional(),
-		rawResponse: text$3.optional(),
+		response: text$4.optional(),
+		rawResponse: text$4.optional(),
 		answeredAt: time$1.optional(),
-		responseId: id$1.optional(),
+		responseId: id$2.optional(),
 		hintLevel: z.number().int().min(0).max(3),
 		stuck: z.boolean().optional()
 	}).strict().optional()
@@ -1190,7 +1229,7 @@ z.object({
 //#endregion
 //#region lib/types/capabilities.js
 /** Learning content and legacy reference routing; learner responses never belong to this catalog. */
-const text$2 = z.string().trim().min(1).max(4e3);
+const text$3 = z.string().trim().min(1).max(4e3);
 const ids = z.array(knowledgeIdSchema).max(500);
 const subject$1 = z.enum([
 	"chinese",
@@ -1199,8 +1238,8 @@ const subject$1 = z.enum([
 ]);
 const catalogSchema = knowledgeExtensionSchema.extend({
 	formatVersion: z.literal(1),
-	status: text$2,
-	reconstructedOn: text$2,
+	status: text$3,
+	reconstructedOn: text$3,
 	subjects: z.array(subject$1),
 	gradeScope: z.array(z.number().int()),
 	termScope: z.array(z.enum(["first", "second"]))
@@ -1208,38 +1247,38 @@ const catalogSchema = knowledgeExtensionSchema.extend({
 const routeSchema = z.object({
 	goalId: knowledgeIdSchema,
 	familyId: knowledgeIdSchema,
-	evidenceGates: z.array(text$2),
-	creditPolicy: text$2,
-	evidenceUse: text$2
+	evidenceGates: z.array(text$3),
+	creditPolicy: text$3,
+	evidenceUse: text$3
 }).strict();
 const legacySchema = z.object({
-	status: text$2,
-	workspaceBanks: text$2,
+	status: text$3,
+	workspaceBanks: text$3,
 	objectives: z.array(z.object({
 		oldObjectiveId: knowledgeIdSchema,
-		oldTitle: text$2,
+		oldTitle: text$3,
 		subject: subject$1,
 		grade: z.number().int(),
 		term: z.enum(["first", "second"]),
 		unitIds: ids,
-		classification: text$2,
+		classification: text$3,
 		candidateGoalIds: ids,
-		scopeStatus: text$2,
-		inheritance: text$2
+		scopeStatus: text$3,
+		inheritance: text$3
 	}).strict()),
 	exercises: z.array(z.object({
 		oldExerciseId: knowledgeIdSchema,
 		oldObjectiveId: knowledgeIdSchema,
 		subject: subject$1,
-		originalPrompt: text$2,
-		originalRecordPolicy: text$2,
+		originalPrompt: text$3,
+		originalRecordPolicy: text$3,
 		routes: z.array(routeSchema),
-		pendingReasons: z.array(text$2),
-		automationStatus: text$2,
-		routePolicy: text$2.optional()
+		pendingReasons: z.array(text$3),
+		automationStatus: text$3,
+		routePolicy: text$3.optional()
 	}).strict()),
 	sourceFingerprints: z.array(z.object({
-		path: text$2,
+		path: text$3,
 		sha256: z.string().regex(/^[a-f0-9]{64}$/u)
 	}).strict())
 }).strict();
@@ -1381,20 +1420,20 @@ function scopeSupports(tested, requested) {
 	return requested.numberMax !== void 0 || requested.vocabulary !== void 0 || tested.id === requested.id && tested.description === requested.description;
 }
 const sources = immutable(z.object({
-	retrievedOn: text$2,
+	retrievedOn: text$3,
 	sources: z.array(z.object({
 		id: knowledgeIdSchema,
-		label: text$2,
-		url: text$2.optional(),
-		sha256: text$2.optional(),
+		label: text$3,
+		url: text$3.optional(),
+		sha256: text$3.optional(),
 		pdfPages: z.number().int().positive().optional(),
-		retrievedOn: text$2.optional(),
-		paths: z.array(text$2).optional(),
-		status: text$2.optional()
+		retrievedOn: text$3.optional(),
+		paths: z.array(text$3).optional(),
+		status: text$3.optional()
 	}).strict()),
 	coverage: z.array(z.json()),
 	quantitativeCoverageLedgers: z.array(z.json()),
-	scopeCaveats: z.array(text$2)
+	scopeCaveats: z.array(text$3)
 }).strict().parse(read("sources")));
 const legacy = immutable(legacySchema.parse(read("legacy-map")));
 const shipped = immutable(catalogSchema.parse(read("catalog")));
@@ -1405,6 +1444,39 @@ validateCatalog(shipped);
 */
 function knowledgeSources() {
 	return sources;
+}
+//#endregion
+//#region lib/types/files/course-validation.js
+/** Cross-file course references are checked by both the CLI and the application. */
+/**
+* Check directories and activities without deriving mastery from course status.
+* @param file - Structurally valid lesson file.
+* @param workspace - Independently validated academic records.
+* @returns Broken ownership and activity references.
+*/
+function validateCourseWorkspace(file, workspace) {
+	const issues = [];
+	const reject = (field, correction) => issues.push({
+		path: ".study/openmaic-lessons.json",
+		field,
+		rule: "course-reference",
+		correction
+	});
+	for (const course of file.courses ?? []) if (course.learnerId !== workspace.settings.learnerId || course.termId !== workspace.settings.termId) reject("courses", "Retain the current learner and term for this course directory.");
+	for (const mini of file.miniLessons ?? []) if (mini.learnerId !== workspace.settings.learnerId || mini.termId !== workspace.settings.termId) reject("miniLessons", "Retain the current learner and term for this mini-lesson.");
+	for (const lesson of file.lessons.filter((item) => item.purpose)) {
+		if (lesson.questionPlan) {
+			const target = lesson.questionPlan.target;
+			const knowledge = effectiveKnowledge(workspace.collections?.knowledge);
+			const family = knowledge.families.find((f) => f.id === (knowledge.familyAliases[target.familyId] ?? target.familyId));
+			if (!knowledge.goals.some((g) => g.id === target.goalId && g.subject === lesson.subject) || !family || family.subject !== lesson.subject || !family.goalIds.includes(target.goalId)) reject(`lessons.${lesson.id}.questionPlan.target`, "Use a compatible goal and family of the same subject.");
+		}
+		const block = workspace.blocks.find((item) => item.id === lesson.blockId);
+		if (!block || block.learnerId !== lesson.learnerId || block.termId !== lesson.termId || block.subject !== lesson.subject) reject(`lessons.${lesson.id}`, "Retain the original generation block and subject.");
+		if (lesson.activity && !workspace.blocks.some((item) => item.id === lesson.activity?.blockId && item.learnerId === lesson.learnerId && item.termId === lesson.termId && item.subject === lesson.subject)) reject(`lessons.${lesson.id}.activity`, "The learning activity must exist under the same academic owner.");
+		if (lesson.activity?.state === "ended" && !workspace.blocks.find((item) => item.id === lesson.activity?.blockId)?.endedAt) reject(`lessons.${lesson.id}.activity`, "End the actual activity before showing the lesson as ended.");
+	}
+	return issues;
 }
 //#endregion
 //#region lib/types/openmaic/feedback-schema.js
@@ -1533,6 +1605,215 @@ const officialQuestionSchema = z.object({
 	points: z.number().finite().nonnegative().optional()
 }).passthrough();
 //#endregion
+//#region lib/types/courses.js
+/** Unit organization and reusable teaching content never grant learning evidence. */
+const id$1 = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/u);
+const text$2 = z.string().trim().min(1).max(2e3);
+const path = z.string().min(1).max(500).refine((value) => !value.startsWith("/") && !value.includes("\\") && !value.split("/").includes("..") && !value.includes(":"), "Use a workspace-relative material path.");
+const confirmation = z.object({
+	quote: text$2,
+	at: z.number().int().nonnegative()
+}).strict();
+/** A retained source revision, including the confirmed within-unit school position. */
+const courseMaterialSchema = z.object({
+	revision: id$1,
+	edition: text$2,
+	sourcePath: path,
+	sourceRevision: text$2,
+	directory: z.array(text$2).min(1).max(80),
+	position: z.enum([
+		"entering",
+		"studying",
+		"finished"
+	]),
+	currentSectionId: id$1.optional(),
+	confirmation
+}).strict();
+/** Stable sections are ordered by their array position; classroom versions retain their own original ownership. */
+const unitCourseSchema = z.object({
+	id: id$1,
+	learnerId: id$1,
+	termId: id$1,
+	subject: z.enum([
+		"chinese",
+		"math",
+		"english"
+	]),
+	unit: text$2,
+	revision: z.number().int().positive(),
+	materials: z.array(courseMaterialSchema).max(20),
+	currentMaterialRevision: id$1.optional(),
+	sections: z.array(z.object({
+		id: id$1,
+		title: text$2,
+		goalIds: z.array(knowledgeIdSchema).min(1).max(8),
+		scope: capabilityScopeSchema,
+		kind: z.enum(["lesson", "synthesis"]),
+		materialRevision: id$1.optional(),
+		lessonId: id$1.optional(),
+		prerequisiteIds: z.array(id$1).max(40),
+		testPreparation: confirmation.optional(),
+		advanceConfirmation: confirmation.optional()
+	}).strict()).max(80)
+}).strict().superRefine((course, ctx) => {
+	for (const [field, values] of [["materials", course.materials.map((item) => item.revision)], ["sections", course.sections.map((item) => item.id)]]) if (new Set(values).size !== values.length) ctx.addIssue({
+		code: "custom",
+		path: [field],
+		message: "Use unique stable identities."
+	});
+	if (course.currentMaterialRevision && !course.materials.some((material) => material.revision === course.currentMaterialRevision)) ctx.addIssue({
+		code: "custom",
+		path: ["currentMaterialRevision"],
+		message: "Retain the referenced material revision."
+	});
+	for (const material of course.materials) if (material.position === "studying" && !course.sections.some((section) => section.id === material.currentSectionId)) ctx.addIssue({
+		code: "custom",
+		path: ["materials"],
+		message: "Confirm the section currently studied at school."
+	});
+	for (const [index, section] of course.sections.entries()) {
+		if (section.materialRevision && !course.materials.some((material) => material.revision === section.materialRevision)) ctx.addIssue({
+			code: "custom",
+			path: [
+				"sections",
+				index,
+				"materialRevision"
+			],
+			message: "Retain the section material revision."
+		});
+		if (section.prerequisiteIds.some((value) => !course.sections.slice(0, index).some((item) => item.id === value))) ctx.addIssue({
+			code: "custom",
+			path: [
+				"sections",
+				index,
+				"prerequisiteIds"
+			],
+			message: "Prerequisites must refer to earlier sections."
+		});
+	}
+});
+/** Required full-classroom pedagogy, checked before submission and against content before playback. */
+const teachingPlanSchema = z.object({
+	revision: id$1,
+	goal: text$2,
+	scope: text$2,
+	materialLimitations: text$2,
+	introduction: text$2,
+	explanation: text$2,
+	demonstration: text$2,
+	guidedPractice: text$2,
+	independentPractice: text$2,
+	summary: text$2,
+	maxAssessmentQuestions: z.number().int().min(1).max(3)
+}).strict();
+/** Authored assessment plan grounded in a retained local source, independently checked before generation. */
+const courseQuestionPlanSchema = z.object({
+	revision: id$1,
+	source: z.object({
+		path,
+		sha256: z.string().regex(/^[a-f0-9]{64}$/u)
+	}).strict(),
+	target: feedbackBindingSchema.pick({
+		goalId: true,
+		familyId: true,
+		scope: true
+	}),
+	questions: z.array(z.object({
+		id: id$1,
+		type: z.enum([
+			"single",
+			"multiple",
+			"short_answer"
+		]),
+		question: text$2,
+		options: z.array(z.object({
+			value: text$2,
+			label: text$2
+		}).strict()).max(8),
+		answer: z.union([text$2, z.array(text$2).min(1).max(8)]),
+		analysis: text$2,
+		sourceQuote: text$2,
+		completedAnswer: text$2
+	}).strict()).min(1).max(3)
+}).strict().superRefine((plan, ctx) => {
+	if (new Set(plan.questions.map((q) => q.id)).size !== plan.questions.length) ctx.addIssue({
+		code: "custom",
+		message: "Use distinct assessment question IDs."
+	});
+	for (const [index, q] of plan.questions.entries()) {
+		const answer = typeof q.answer === "string" ? [q.answer] : q.answer;
+		if (new Set(q.options.map((o) => o.value)).size !== q.options.length || new Set(q.options.map((o) => o.label)).size !== q.options.length || new Set(answer).size !== answer.length || q.type !== "short_answer" && (q.options.length < 2 || answer.some((a) => !q.options.some((o) => o.value === a))) || q.type === "single" && answer.length !== 1) ctx.addIssue({
+			code: "custom",
+			path: ["questions", index],
+			message: "Use distinct options and an explicit valid answer key."
+		});
+	}
+});
+/** Content review names the frozen scenes and classifies every original quiz question. */
+const courseReviewSchema = z.object({
+	reviewId: z.string().regex(/^[a-f0-9]{64}$/u).optional(),
+	status: z.enum(["passed", "rejected"]),
+	checkedAt: z.number().int().nonnegative(),
+	contentHash: z.string().regex(/^[a-f0-9]{64}$/u),
+	stages: z.object({
+		introduction: text$2,
+		explanation: text$2,
+		demonstration: text$2,
+		guidedPractice: text$2,
+		independentPractice: text$2,
+		summary: text$2
+	}).strict(),
+	questions: z.array(z.object({
+		sceneId: text$2,
+		questionId: text$2,
+		purpose: z.enum([
+			"example",
+			"guided",
+			"assessment"
+		]),
+		rationale: text$2
+	}).strict()).max(200),
+	scopeChecked: z.literal(true),
+	criterionChecked: z.literal(true),
+	notes: text$2
+}).strict();
+/** Content can be reused by a later activity without replacing original generation ownership. */
+const miniLessonSchema = z.object({
+	id: id$1,
+	learnerId: id$1,
+	termId: id$1,
+	subject: z.enum([
+		"chinese",
+		"math",
+		"english"
+	]),
+	revision: id$1,
+	goalIds: z.array(knowledgeIdSchema).min(1).max(8),
+	scope: capabilityScopeSchema,
+	purpose: z.enum([
+		"review",
+		"explanation",
+		"temporary"
+	]),
+	sourceLessonId: id$1.optional(),
+	contentPath: path,
+	contentHash: z.string().regex(/^[a-f0-9]{64}$/u),
+	createdAt: z.number().int().nonnegative()
+}).strict();
+/**
+* Explain why the directory cannot yet launch a particular section.
+* @param course - Independently validated directory.
+* @param sectionId - Explicitly selected section.
+* @returns Missing source/progress facts; no implicit preview authorization.
+*/
+function sectionReadiness(course, sectionId) {
+	const section = course.sections.find((item) => item.id === sectionId);
+	const material = course.materials.find((item) => item.revision === section?.materialRevision);
+	if (!section || !material) return "materials";
+	if (section.kind === "synthesis") return material.position === "finished" || section.testPreparation ? "ready" : "synthesis-confirmation";
+	return course.sections.indexOf(section) <= (material.position === "finished" ? course.sections.length : material.position === "entering" ? 0 : course.sections.findIndex((item) => item.id === material.currentSectionId)) || section.advanceConfirmation ? "ready" : "school-position";
+}
+//#endregion
 //#region lib/types/openmaic.js
 /** Default OpenMAIC origin when the parent has not saved one and OPENMAIC_BASE is unset. */
 const DEFAULT_OPENMAIC_BASE = "https://open.maic.chat";
@@ -1602,10 +1883,39 @@ const pollUrl = z.string().trim().max(500).refine((value) => value.startsWith("/
 const lessonSchema = z.object({
 	id: lessonId,
 	status: z.enum([
+		"planned",
+		"unknown",
 		"generating",
 		"ready",
 		"failed"
 	]),
+	purpose: z.enum([
+		"full",
+		"foundation",
+		"synthesis"
+	]).optional(),
+	course: z.object({
+		id: lessonId,
+		sectionId: lessonId,
+		revision: z.number().int().positive(),
+		materialRevision: lessonId
+	}).strict().optional(),
+	teaching: teachingPlanSchema.optional(),
+	quality: courseReviewSchema.optional(),
+	questionPlan: courseQuestionPlanSchema.optional(),
+	foundationConfirmation: z.string().trim().min(1).max(2e3).optional(),
+	replacesLessonId: lessonId.optional(),
+	sourceLessonIds: z.array(lessonId).max(80).optional(),
+	activity: z.object({
+		state: z.enum([
+			"not-started",
+			"learning",
+			"paused",
+			"ended"
+		]),
+		blockId: lessonId,
+		position: z.string().max(500).optional()
+	}).strict().optional(),
 	createdAt: stamp,
 	updatedAt: stamp,
 	title: z.string().trim().min(1).max(120),
@@ -1641,6 +1951,31 @@ const lessonSchema = z.object({
 		}).strict()).max(12)
 	}).strict().optional()
 }).strict().superRefine((lesson, ctx) => {
+	if (lesson.questionPlan && lesson.quality && !lesson.quality.reviewId) ctx.addIssue({
+		code: "custom",
+		path: ["quality", "reviewId"],
+		message: "Save the complete independent review result, including reviewId, for an approved question plan."
+	});
+	if (lesson.purpose && (!lesson.teaching || !lesson.learnerId || !lesson.termId || !lesson.blockId)) ctx.addIssue({
+		code: "custom",
+		path: ["teaching"],
+		message: "Full courses require a teaching plan and original ownership before submission."
+	});
+	if (lesson.purpose === "foundation" && !lesson.foundationConfirmation) ctx.addIssue({
+		code: "custom",
+		path: ["foundationConfirmation"],
+		message: "Record the explicit choice of a foundational lesson with material limitations."
+	});
+	if ((lesson.purpose === "full" || lesson.purpose === "synthesis") && !lesson.course) ctx.addIssue({
+		code: "custom",
+		path: ["course"],
+		message: "Link the original unit section and material revision."
+	});
+	if (lesson.quality?.status === "passed" && lesson.quality.questions.filter((question) => question.purpose === "assessment").length > (lesson.teaching?.maxAssessmentQuestions ?? 3)) ctx.addIssue({
+		code: "custom",
+		path: ["quality"],
+		message: "The classroom exceeds the assessment question allowance."
+	});
 	if (lesson.feedback && (lesson.feedback.learnerId !== lesson.learnerId || lesson.feedback.termId !== lesson.termId || lesson.feedback.blockId !== lesson.blockId || !lesson.classroomId || !lesson.learnerKey)) ctx.addIssue({
 		code: "custom",
 		path: ["feedback"],
@@ -1659,9 +1994,62 @@ const lessonSchema = z.object({
 });
 /** Complete independent OpenMAIC business file; validation checks all eighty possible rows before pagination. */
 const lessonFileSchema = z.object({
-	format: z.literal(1),
-	lessons: z.array(lessonSchema).max(80)
+	format: z.union([z.literal(1), z.literal(2)]),
+	lessons: z.array(lessonSchema).max(80),
+	courses: z.array(unitCourseSchema).max(40).optional(),
+	miniLessons: z.array(miniLessonSchema).max(80).optional()
 }).strict().superRefine((file, ctx) => {
+	if (file.format === 1 && (file.courses || file.miniLessons || file.lessons.some((lesson) => lesson.purpose))) ctx.addIssue({
+		code: "custom",
+		path: ["format"],
+		message: "Use format 2 for unit courses and retained teaching plans."
+	});
+	const courses = file.courses ?? [];
+	if (new Set(courses.map((course) => course.id)).size !== courses.length) ctx.addIssue({
+		code: "custom",
+		path: ["courses"],
+		message: "Course identities must be unique."
+	});
+	for (const course of courses) for (const section of course.sections) {
+		if (!section.lessonId) continue;
+		const lesson = file.lessons.find((item) => item.id === section.lessonId);
+		if (!lesson || lesson.course?.id !== course.id || lesson.course.sectionId !== section.id) ctx.addIssue({
+			code: "custom",
+			path: ["courses"],
+			message: "Every section classroom must retain its reciprocal course reference."
+		});
+	}
+	for (const lesson of file.lessons) {
+		if (lesson.course) {
+			const course = courses.find((item) => item.id === lesson.course?.id);
+			const section = course?.sections.find((item) => item.id === lesson.course?.sectionId);
+			if (!course || !section || course.learnerId !== lesson.learnerId || course.termId !== lesson.termId || course.subject !== lesson.subject || lesson.course.revision > course.revision || !course.materials.some((item) => item.revision === lesson.course?.materialRevision)) ctx.addIssue({
+				code: "custom",
+				path: ["lessons"],
+				message: "Retain original learner, term, subject, section and material ownership."
+			});
+			if (course && section && lesson.status === "planned" && sectionReadiness(course, section.id) !== "ready") ctx.addIssue({
+				code: "custom",
+				path: ["lessons"],
+				message: "Confirm materials and school position before planning generation."
+			});
+		}
+		for (const ref of [...lesson.sourceLessonIds ?? [], ...lesson.replacesLessonId ? [lesson.replacesLessonId] : []]) if (ref === lesson.id || !file.lessons.some((item) => item.id === ref && item.learnerId === lesson.learnerId && item.termId === lesson.termId && item.subject === lesson.subject)) ctx.addIssue({
+			code: "custom",
+			path: ["lessons"],
+			message: "Preserve original same-learner source and replacement references."
+		});
+	}
+	if (new Set((file.miniLessons ?? []).map((mini) => mini.id)).size !== (file.miniLessons ?? []).length) ctx.addIssue({
+		code: "custom",
+		path: ["miniLessons"],
+		message: "Mini-lesson identities must be unique."
+	});
+	for (const mini of file.miniLessons ?? []) if (mini.sourceLessonId && !file.lessons.some((item) => item.id === mini.sourceLessonId && item.learnerId === mini.learnerId && item.termId === mini.termId && item.subject === mini.subject)) ctx.addIssue({
+		code: "custom",
+		path: ["miniLessons"],
+		message: "Preserve original mini-lesson source ownership."
+	});
 	const seen = /* @__PURE__ */ new Set();
 	const partitions = /* @__PURE__ */ new Map();
 	for (const [index, lesson] of file.lessons.entries()) {
@@ -1761,9 +2149,10 @@ function parseInteractiveLessons(text) {
 * @param agent - the session workspace and its filesystem service.
 * @param signal - cancels filesystem reads; cancellation rejects the request.
 * @param savedBase - the parent's saved base, when present.
+* @param workspace - Independently validated academic records for course ownership.
 * @returns the lesson projection, with an error for an unreadable file.
 */
-async function readInteractiveLessons(agent, signal, savedBase) {
+async function readInteractiveLessons(agent, signal, savedBase, workspace) {
 	const empty = interactiveLessonsView(savedBase);
 	try {
 		const fs = agent.ctx?.get("fs");
@@ -1795,7 +2184,19 @@ async function readInteractiveLessons(agent, signal, savedBase) {
 			}
 		}, signal);
 		if (read.status === "missing") return empty;
-		return interactiveLessonsView(savedBase, (read.file?.lessons ?? read.validRows ?? []).slice().sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)).slice(0, LESSONS_SHOWN), read.status === "valid" ? void 0 : "互动课记录格式、身份或时间无法读取");
+		if (read.file?.lessons.some((lesson) => lesson.purpose) || read.file?.courses?.length || read.file?.miniLessons?.length) {
+			if (!workspace || validateCourseWorkspace(read.file, workspace).length) return {
+				...empty,
+				error: "课程归属或学习活动引用无效，请修复正式文件后重试"
+			};
+		}
+		return {
+			...interactiveLessonsView(savedBase, (read.file?.lessons ?? read.validRows ?? []).slice().sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)).slice(0, LESSONS_SHOWN), read.status === "valid" ? void 0 : "互动课记录格式、身份或时间无法读取"),
+			...read.status === "valid" ? {
+				courses: read.file?.courses ?? [],
+				miniLessons: read.file?.miniLessons ?? []
+			} : {}
+		};
 	} catch (error) {
 		if (signal.aborted) throw error;
 		return {
@@ -1828,7 +2229,7 @@ async function readLessonFile(fs, signal) {
 			const raw = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
 			const parsed = lessonFileSchema.safeParse(raw);
 			if (!parsed.success) return {
-				status: typeof raw === "object" && raw !== null && "format" in raw && typeof raw.format === "number" && raw.format > 1 ? "future-format" : "invalid",
+				status: typeof raw === "object" && raw !== null && "format" in raw && typeof raw.format === "number" && raw.format > 2 ? "future-format" : "invalid",
 				observation: before,
 				bytes,
 				validRows: parseInteractiveLessons(new TextDecoder().decode(bytes)).lessons,
@@ -2593,6 +2994,12 @@ const termSettingsSchema = z.object({
 	openmaic: stateSchema.shape.openmaic,
 	archivedAt: time.optional(),
 	evidenceReferences: z.array(archiveEvidenceReferenceSchema).max(2e4).optional(),
+	retiredEmptyBlocks: z.array(z.object({
+		id: blockId,
+		backupPath: z.string().regex(/^\.study\/cleanup\/[a-f0-9]{64}\.json$/u),
+		sha256: z.string().regex(/^[a-f0-9]{64}$/u),
+		reason: text
+	}).strict()).max(1e3).optional(),
 	migration: z.object({
 		sourcePath: text,
 		sourceSha256: z.string().regex(/^[a-f0-9]{64}$/u),
@@ -2722,6 +3129,7 @@ const planEvidenceReference = z.object({
 	ownerId: id,
 	responseId
 }).strict();
+/** One daily learning arrangement with activity, evidence and carry-forward references. */
 const dailyTaskSchema = z.object({
 	id,
 	subject,
@@ -2784,7 +3192,7 @@ const dailyPlanSchema = z.object({
 		"stopped"
 	]),
 	completedAt: time.optional(),
-	tasks: z.array(dailyTaskSchema).min(1).max(100),
+	tasks: z.array(dailyTaskSchema).max(100),
 	choices: z.array(z.object({
 		id,
 		at: time,
@@ -3379,6 +3787,7 @@ function validateDailyPlans(workspace, prior, fail) {
 	for (const plan of plans) {
 		const path = `.study/plans/${plan.day}.json`;
 		const issue = (field, rule, correction) => fail(path, field, rule, correction);
+		if (!plan.tasks.length && (plan.state !== "stopped" || !settings.retiredEmptyBlocks?.length)) issue("tasks", "plan-empty", "Only explicit empty-activity cleanup may leave a stopped plan without tasks.");
 		if (plan.id !== `day-${plan.day}` || plan.day !== studyDay(plan.createdAt) || plan.updatedAt < plan.createdAt || new Set(plan.subjects).size !== plan.subjects.length) issue("id", "plan-identity", "Use day-YYYY-MM-DD for this learner and term, with its original Shanghai creation day and distinct subjects.");
 		if (plan.tasks.length !== new Set(plan.tasks.map((task) => task.id)).size || plan.choices.length !== new Set(plan.choices.map((choice) => choice.id)).size) issue("tasks", "plan-identity", "Retain distinct task and choice identities.");
 		if (plan.tasks.filter((task) => task.state === "active").length > 1) issue("tasks", "plan-active", "Keep one active task; pause or defer the original before changing activities.");
@@ -3418,7 +3827,15 @@ function validateDailyPlans(workspace, prior, fail) {
 				owners.set(task.activity.blockId, `${plan.day}/${task.id}`);
 			}
 		}
-		for (const old of prior.flatMap((entry) => entry.path === path && entry.file.kind === "daily-plan" ? [entry.file] : [])) {
+		for (const entry of prior.filter((entry) => entry.path === path && entry.file.kind === "daily-plan")) {
+			if (entry.file.kind !== "daily-plan") continue;
+			let old = entry.file;
+			try {
+				old = pruneRetiredPlan(old, retiredBlockIds(settings));
+			} catch {
+				issue("", "plan-history", "An activity with evidence or completion cannot be retired.");
+				continue;
+			}
 			if (old.learnerId !== plan.learnerId || old.termId !== plan.termId || old.id !== plan.id || old.createdAt !== plan.createdAt || old.completedAt !== void 0 && old.completedAt !== plan.completedAt || old.revision > plan.revision || old.revision === plan.revision && canonical(old) !== canonical(plan)) issue("", "plan-history", "Retain plan identity and completion, and increment revision for every explicit amendment.");
 			if (old.state === "completed" && plan.state !== "completed" || old.tasks.some((task) => task.state === "completed" && plan.tasks.find((next) => next.id === task.id)?.state !== "completed")) issue("state", "plan-history", "Keep completed arrangements and tasks closed; attach explicitly requested extra work separately.");
 			if (plan.tasks.some((task) => !old.tasks.some((previous) => previous.id === task.id) && !plan.choices.some((choice) => !old.choices.some((previous) => previous.id === choice.id) && ([
@@ -3598,6 +4015,7 @@ function validateStudyFiles(input, prior = [], nativeSources = [], openmaicSourc
 	}
 	for (const previous of prior) if (previous.file.kind === "term-settings" && previous.file.termId === settings.termId && previous.file.learnerId && previous.file.learnerId !== settings.learnerId) fail(".study/settings.json", "learnerId", "learner-identity", "Retain the stable learner identity for this term.");
 	unique(".study/settings.json", "materials", settings.materials);
+	unique(".study/settings.json", "retiredEmptyBlocks", settings.retiredEmptyBlocks ?? []);
 	if (new Set(settings.courses.map((course) => course.subject)).size !== settings.courses.length) fail(".study/settings.json", "courses", "duplicate-subject", "Keep one course per subject.");
 	for (const course of settings.courses) {
 		const material = settings.materials.find((item) => item.id === course.materialId);
@@ -4835,6 +5253,7 @@ const MAX_TOTAL_BYTES = 33554432;
 * @param prior - supplied preserved versions; omitted reads use verified observed-version backups for cold frozen-content checks.
 * @param nativeSources - independently resolved consumed input observations, empty for the read-only CLI.
 * @param openmaicSources - independently authorized original official submissions and grading.
+* @param options - optional clock timestamp and additional plan day to read alongside today and recent plans.
 * @returns validated facts or an explicit incomplete, invalid or changing result.
 */
 async function readWorkspace(fs, signal, prior, nativeSources = [], openmaicSources = [], options = {}) {
@@ -5274,6 +5693,23 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
 		});
 		for (const day of new Set(origins)) await readPlan(`.study/plans/${day}.json`);
 		const validation = validateStudyFiles(input, available, nativeSources, openmaicSources);
+		const retired = validation.workspace ? retiredBlockIds(validation.workspace.settings) : /* @__PURE__ */ new Set();
+		for (const entry of validation.workspace?.settings.retiredEmptyBlocks ?? []) try {
+			const before = await fs.stat(entry.backupPath, signal);
+			if (!before || before.type !== "file") throw new Error("Retain the original empty block backup.");
+			const bytes = await fs.read(entry.backupPath, signal, MAX_FILE_BYTES);
+			const after = await fs.stat(entry.backupPath, signal);
+			const block = blockSchema.parse(JSON.parse(new TextDecoder().decode(bytes)));
+			if (before.version !== after?.version || before.targetKey !== after.targetKey || createHash("sha256").update(bytes).digest("hex") !== entry.sha256 || block.id !== entry.id || block.learnerId !== validation.workspace?.settings.learnerId || block.termId !== validation.workspace?.settings.termId || !emptyRetiredBlock(block) || validation.workspace?.blocks.some((item) => item.id === entry.id)) throw new Error("Retirement requires the exact original ended block with no questions, answers, help or rounds.");
+		} catch (error) {
+			if (signal.aborted) throw error;
+			discoveryIssues.push({
+				path: ".study/settings.json",
+				field: "retiredEmptyBlocks",
+				rule: "cleanup-source",
+				correction: error instanceof Error ? error.message : "Restore the original cleanup source."
+			});
+		}
 		const migration = validation.workspace?.settings.migration;
 		if (migration) {
 			const backup = await fs.stat(migration.backupPath, signal);
@@ -5284,7 +5720,9 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
 				if (createHash("sha256").update(bytes).digest("hex") !== migration.sourceSha256) throw new Error("The preserved migration source bytes do not match their recorded digest.");
 				const expected = migrationOutputPaths(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)));
 				const present = new Set(validation.files.filter((file) => file.file).map((file) => file.path));
-				const missing = expected.filter((path) => !present.has(path));
+				const legacy = stateSchema.parse(migrateStudyFile(JSON.parse(new TextDecoder().decode(bytes))));
+				for (const id of retired) if (legacy.attempts.some((attempt) => attempt.sessionId === id) || legacy.task?.sessionId === id) throw new Error("A legacy answer or current question cannot be removed by empty-block cleanup.");
+				const missing = expected.filter((path) => !present.has(path) && ![...retired].some((id) => path === `.study/blocks/${id}.json`));
 				if (missing.length) discoveryIssues.push({
 					path: ".study/settings.json",
 					field: "migration",
@@ -5366,4 +5804,4 @@ async function readWorkspaceFiles(fs, signal, prior, nativeSources, openmaicSour
 	};
 }
 //#endregion
-export { requireValue as $, capabilityScopeSchema as $t, archiveEvidencePath as A, officialQuestionSchema as At, questionSchema as B, knowledgeSources as Bt, evidenceDay as C, lessonFileSchema as Ct, matchOpenmaicResponse as D, feedbackBindingSchema as Dt, effectiveOpenmaicAssessment as E, readInteractiveLessons as Et, collectionsSchema as F, openmaicQuestionSchema as Ft, worksheetSchema as G, figureSchema as Gt, responseSchema as H, scopeSupports as Ht, dailyPlanSchema as I, openmaicResponseSourceSchema as It, canonical as J, DEFAULT_INTEREST_TAGS as Jt, DAY as K, stateSchema as Kt, dailyTaskSchema as L, pendingOpenmaicSchema as Lt, assessmentSchema as M, officialReviewSchema as Mt, assistanceSchema as N, officialRuntimePayloadSchema as Nt, openmaicAcademicQuestion as O, feedbackCheckpointSchema as Ot, blockSchema as P, officialRuntimeRecordSchema as Pt, matchChoice as Q, capabilityGoalSchema as Qt, learningRoundSchema as R, snapshotRevisionSchema as Rt, evidenceAtCutoff as S, interactiveLessonsView as St, consumeOpenmaicFeedback as T, normalizeOpenmaicBase as Tt, responseSourceSchema as U, commandSchema as Ut, questionSourceSchema as V, resolveLegacyReference as Vt, termSettingsSchema as W, customObjectiveMethods as Wt, foldText as X, interestTagsOf as Xt, choiceMismatch as Y, interestFocus as Yt, formatDuration as Z, capabilityBindingSchema as Zt, replayMistake as _, subjectIdeas as _t, describeKnowledgeMigration as a, spent as at, demonstrablyAfter as b, OPENMAIC_LESSONS_PATH as bt, migrationOutputPaths as c, todaySpent as ct, sourceSha256 as d, builtinObjectiveIn as dt, knowledgeExtensionSchema as en, sameSavedAnswer as et, validateStudyFiles as f, builtinObjectives as ft, dayStart as g, subjectExercises as gt, migrateStudyFile as h, exercisesForObjective as ht, describeArchive as i, showValue as it, archiveEvidenceReferenceSchema as j, officialResultSchema as jt, answerDateSchema as k, officialAnswerSchema as kt, readBackups as l, builtinObjective as lt, effectiveLearningScopes as m, curriculumFor as mt, backupSchema as n, questionFamilySchema as nn, schoolGate as nt, describeMigration as o, studyDay as ot, automaticLearningScopes as p, builtinObjectivesIn as pt, activeSession as q, errorTypesBySubject as qt, backupVersions as r, StudyReadCache as rn, scopeSelects as rt, describeRestore as s, taughtUnit as st, readWorkspace as t, knowledgeIdSchema as tn, sameScope as tt, retainObservedBackups as u, builtinObjectiveAnywhere as ut, scheduleMistakes as v, readLessonFile as vt, evidenceOf as w, lessonSchema as wt, deriveEvidence as x, effectiveOpenmaicBase as xt, attachEvidence as y, OPENMAIC_COOKIE_PATH as yt, officialFileSchemas as z, effectiveKnowledge as zt };
+export { requireValue as $, interestTagsOf as $t, archiveEvidencePath as A, feedbackCheckpointSchema as At, questionSchema as B, snapshotRevisionSchema as Bt, evidenceDay as C, lessonFileSchema as Ct, matchOpenmaicResponse as D, courseReviewSchema as Dt, effectiveOpenmaicAssessment as E, readInteractiveLessons as Et, collectionsSchema as F, officialRuntimePayloadSchema as Ft, worksheetSchema as G, scopeSupports as Gt, responseSchema as H, effectiveKnowledge as Ht, dailyPlanSchema as I, officialRuntimeRecordSchema as It, canonical as J, figureSchema as Jt, DAY as K, commandSchema as Kt, dailyTaskSchema as L, openmaicQuestionSchema as Lt, assessmentSchema as M, officialQuestionSchema as Mt, assistanceSchema as N, officialResultSchema as Nt, openmaicAcademicQuestion as O, sectionReadiness as Ot, blockSchema as P, officialReviewSchema as Pt, matchChoice as Q, interestFocus as Qt, learningRoundSchema as R, openmaicResponseSourceSchema as Rt, evidenceAtCutoff as S, interactiveLessonsView as St, consumeOpenmaicFeedback as T, normalizeOpenmaicBase as Tt, responseSourceSchema as U, knowledgeSources as Ut, questionSourceSchema as V, validateCourseWorkspace as Vt, termSettingsSchema as W, resolveLegacyReference as Wt, foldText as X, errorTypesBySubject as Xt, choiceMismatch as Y, stateSchema as Yt, formatDuration as Z, DEFAULT_INTEREST_TAGS as Zt, replayMistake as _, subjectIdeas as _t, describeKnowledgeMigration as a, questionFamilySchema as an, spent as at, demonstrablyAfter as b, OPENMAIC_LESSONS_PATH as bt, migrationOutputPaths as c, StudyReadCache as cn, todaySpent as ct, sourceSha256 as d, builtinObjectiveIn as dt, capabilityBindingSchema as en, sameSavedAnswer as et, validateStudyFiles as f, builtinObjectives as ft, dayStart as g, subjectExercises as gt, migrateStudyFile as h, exercisesForObjective as ht, describeArchive as i, knowledgeIdSchema as in, showValue as it, archiveEvidenceReferenceSchema as j, officialAnswerSchema as jt, answerDateSchema as k, feedbackBindingSchema as kt, readBackups as l, builtinObjective as lt, effectiveLearningScopes as m, curriculumFor as mt, backupSchema as n, capabilityScopeSchema as nn, schoolGate as nt, describeMigration as o, emptyRetiredBlock as on, studyDay as ot, automaticLearningScopes as p, builtinObjectivesIn as pt, activeSession as q, customObjectiveMethods as qt, backupVersions as r, knowledgeExtensionSchema as rn, scopeSelects as rt, describeRestore as s, pruneRetiredPlan as sn, taughtUnit as st, readWorkspace as t, capabilityGoalSchema as tn, sameScope as tt, retainObservedBackups as u, builtinObjectiveAnywhere as ut, scheduleMistakes as v, readLessonFile as vt, evidenceOf as w, lessonSchema as wt, deriveEvidence as x, effectiveOpenmaicBase as xt, attachEvidence as y, OPENMAIC_COOKIE_PATH as yt, officialFileSchemas as z, pendingOpenmaicSchema as zt };

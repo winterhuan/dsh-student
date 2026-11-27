@@ -3,6 +3,7 @@
 import { parseArgs } from 'node:util';
 import { readWorkspace } from "./files/read.js";
 import { nodeStudyFiles } from "./files/node.js";
+import { validateCourseWorkspace } from "./files/course-validation.js";
 import { readLessonFile } from "./files/lessons.js";
 import { readBackups, backupVersions } from "./files/recovery.js";
 import { authoringKind, authoringSchema, authoringExample } from "./files/resources.js";
@@ -23,8 +24,9 @@ try {
         const backups = await readBackups(fs, signal);
         const read = await readWorkspace(fs, signal, backupVersions(backups.backups));
         const lessons = await readLessonFile(fs, signal);
-        const ok = ['valid', 'archived'].includes(read.status) && ['valid', 'missing'].includes(lessons.status);
-        const issues = [...read.issues, ...lessons.issues];
+        const courseIssues = lessons.file && read.workspace ? validateCourseWorkspace(lessons.file, read.workspace) : [];
+        const ok = courseIssues.length === 0 && ['valid', 'archived'].includes(read.status) && ['valid', 'missing'].includes(lessons.status);
+        const issues = [...read.issues, ...lessons.issues, ...courseIssues];
         if (!ok && issues.length === 0)
             issues.push({ path: '.study/settings.json', field: '', rule: read.status, correction: read.status === 'legacy' ? 'Preserve the legacy source and explicitly migrate it before publishing format 2 files.' : 'Create valid term settings, then validate the complete operation.' });
         const files = read.files.map(file => ({ path: file.path, version: file.version, ...(file.file ? { kind: file.file.kind, termId: file.file.termId, ...('id' in file.file ? { id: file.file.id } : {}) } : {}) }));

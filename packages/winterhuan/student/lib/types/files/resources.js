@@ -1,7 +1,7 @@
 /** Authoring resources derive structural constraints from the shared input schemas. */
 import { z } from 'zod';
 import { capabilityGoalSchema, questionFamilySchema, knowledgeExtensionSchema } from "../capabilities.js";
-import { officialFileSchemas } from "./schema.js";
+import { officialFileSchemas, dailyTaskSchema } from "./schema.js";
 import { figureSchema, stateSchema } from "../schema.js";
 import { lessonFileSchema } from "../openmaic.js";
 const schemas = { ...officialFileSchemas, 'capability-goal': capabilityGoalSchema, 'question-family': questionFamilySchema, 'knowledge-extension': knowledgeExtensionSchema, 'openmaic-lessons': lessonFileSchema, figure: figureSchema };
@@ -62,6 +62,7 @@ export function authoringExample(kind) {
         value.learnerId = 'example';
     if (kind === 'daily-plan') {
         const at = Date.parse('2026-11-25T00:00:00+08:00');
+        value.tasks = [sample(z.toJSONSchema(dailyTaskSchema, { io: 'input' }))];
         Object.assign(value, { day: '2026-11-25', id: 'day-2026-11-25', createdAt: at, updatedAt: at, choices: [{ id: 'example', at, revision: 0, action: 'start', reason: 'Explicit example choice', taskIds: ['example'], replacedTaskIds: [] }] });
     }
     if (kind === 'block' || kind === 'worksheet') {

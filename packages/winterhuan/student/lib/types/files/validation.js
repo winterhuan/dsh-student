@@ -166,6 +166,7 @@ export function validateStudyFiles(input, prior = [], nativeSources = [], openma
         if (previous.file.kind === 'term-settings' && previous.file.termId === settings.termId && previous.file.learnerId && previous.file.learnerId !== settings.learnerId)
             fail('.study/settings.json', 'learnerId', 'learner-identity', 'Retain the stable learner identity for this term.');
     unique('.study/settings.json', 'materials', settings.materials);
+    unique('.study/settings.json', 'retiredEmptyBlocks', settings.retiredEmptyBlocks ?? []);
     if (new Set(settings.courses.map(course => course.subject)).size !== settings.courses.length)
         fail('.study/settings.json', 'courses', 'duplicate-subject', 'Keep one course per subject.');
     for (const course of settings.courses) {

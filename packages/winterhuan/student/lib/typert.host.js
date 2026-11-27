@@ -3,6 +3,12 @@ import { z } from 'zod'
 
 import { createTypertRemoteInfo } from '@deepseek-ai/dsh-typert-protocol/remote-info'
 
+let PanelJsonValueRemoteCodec$schema$value
+const PanelJsonValueRemoteCodec$schema = () => (PanelJsonValueRemoteCodec$schema$value ??= z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]))
+let PanelJsonValueRemoteCodec$schema2$value
+const PanelJsonValueRemoteCodec$schema2 = () => (PanelJsonValueRemoteCodec$schema2$value ??= z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]))
+let PanelJsonValueRemoteCodec$schema3$value
+const PanelJsonValueRemoteCodec$schema3 = () => (PanelJsonValueRemoteCodec$schema3$value ??= z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]))
 let StudentJsonValueRemoteCodec$schema$value
 const StudentJsonValueRemoteCodec$schema = () => (StudentJsonValueRemoteCodec$schema$value ??= z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema()))]))
 let StudentJsonValueRemoteCodec$schema2$value
@@ -49,9 +55,9 @@ const _winterhuan_dsh_student_student_inspectSubmission_result$schema = () => (_
   'assessment': z.union([z.literal("unavailable"), z.literal("pending"), z.literal("valid"), z.literal("not-requested")]),
   'readStatus': z.union([z.literal("valid"), z.literal("missing"), z.literal("invalid"), z.literal("future-format"), z.literal("changing"), z.literal("legacy"), z.literal("archived")]),
   'versions': z.array(z.object({
+  'version': z.string(),
   'path': z.string(),
   'targetKey': z.string(),
-  'version': z.string(),
 })),
   'issues': z.array(z.object({
   'path': z.string(),
@@ -169,7 +175,7 @@ const _winterhuan_dsh_student_student_manualContext_parameter_1$schema = () => (
   'status': z.union([z.literal("correct"), z.literal("incorrect")]),
   'earned': z.number(),
   'aiComment': z.union([z.undefined(), z.string()]).optional(),
-}), z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema2()))])))]),
+}), z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema4())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema4()))])))]),
 })]).optional(),
   'officialHistory': z.union([z.undefined(), z.array(z.object({
   'recordId': z.string(),
@@ -181,7 +187,7 @@ const _winterhuan_dsh_student_student_manualContext_parameter_1$schema = () => (
   'status': z.union([z.literal("correct"), z.literal("incorrect")]),
   'earned': z.number(),
   'aiComment': z.union([z.undefined(), z.string()]).optional(),
-}), z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema2()))])))]),
+}), z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema4())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema4()))])))]),
 }))]).optional(),
   'grading': z.union([z.undefined(), z.literal("pending"), z.literal("aligned"), z.literal("equivalent"), z.literal("conflict")]).optional(),
 })),
@@ -210,11 +216,11 @@ const _winterhuan_dsh_student_student_manualContext_result$schema = () => (_wint
   'readStatus': z.union([z.literal("valid"), z.literal("missing"), z.literal("invalid"), z.literal("future-format"), z.literal("changing"), z.literal("legacy"), z.literal("archived")]),
   'termId': z.union([z.undefined(), z.string()]).optional(),
   'versions': z.array(z.object({
+  'version': z.string(),
   'path': z.string(),
   'targetKey': z.string(),
-  'version': z.string(),
 })),
-  'baseline': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema()))])),
+  'baseline': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema3()))])),
   'issues': z.array(z.object({
   'path': z.string(),
   'field': z.string(),
@@ -255,7 +261,7 @@ const _winterhuan_dsh_student_student_query_parameter_1$schema = () => (_winterh
 })]))
 let _winterhuan_dsh_student_student_query_result$schema$value
 const _winterhuan_dsh_student_student_query_result$schema = () => (_winterhuan_dsh_student_student_query_result$schema$value ??= z.object({
-  'data': z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema5())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema5()))]),
+  'data': z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema()))]),
   'readAt': z.number(),
   'refreshAfter': z.number(),
   'token': z.string(),
@@ -270,6 +276,24 @@ const _winterhuan_dsh_student_student_query_result$schema = () => (_winterhuan_d
 })]).optional(),
   'inputs': z.array(z.object({
   'status': z.literal("consumed"),
+  'intention': z.union([z.undefined(), z.object({
+  'version': z.literal(2),
+  'nativeSessionId': z.string(),
+  'request': z.string(),
+  'learnerId': z.union([z.undefined(), z.string()]).optional(),
+  'termId': z.union([z.undefined(), z.string()]).optional(),
+  'blockId': z.union([z.undefined(), z.string()]).optional(),
+  'questionId': z.union([z.undefined(), z.string()]).optional(),
+  'responseId': z.union([z.undefined(), z.string()]).optional(),
+  'selection': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'dailyContext': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'dailyAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'nextAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'previousActivity': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'continuationAction': z.union([z.undefined(), z.string()]).optional(),
+  'operation': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'courseAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+})]).optional(),
   'messageId': z.string(),
   'requestId': z.union([z.undefined(), z.string()]).optional(),
   'inputVersion': z.string(),
@@ -314,9 +338,9 @@ const _winterhuan_dsh_student_student_query_result$schema = () => (_winterhuan_d
 })),
   'status': z.union([z.literal("partial"), z.literal("valid"), z.literal("missing"), z.literal("invalid"), z.literal("future-format"), z.literal("changing"), z.literal("legacy"), z.literal("archived")]),
   'versions': z.array(z.object({
+  'version': z.string(),
   'path': z.string(),
   'targetKey': z.string(),
-  'version': z.string(),
 })),
   'issues': z.union([z.undefined(), z.array(z.object({
   'path': z.string(),
@@ -329,7 +353,8 @@ let _winterhuan_dsh_student_student_saveManual_parameter_0$schema$value
 const _winterhuan_dsh_student_student_saveManual_parameter_0$schema = () => (_winterhuan_dsh_student_student_saveManual_parameter_0$schema$value ??= z.string())
 let _winterhuan_dsh_student_student_saveManual_parameter_1$schema$value
 const _winterhuan_dsh_student_student_saveManual_parameter_1$schema = () => (_winterhuan_dsh_student_student_saveManual_parameter_1$schema$value ??= z.object({
-  'baseline': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema4())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema4()))])),
+  'baseline': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema6())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema6()))])),
+  'termId': z.string(),
   'intent': z.union([z.object({
   'kind': z.literal("settings"),
   'command': z.object({
@@ -430,7 +455,7 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1$schema = () => (_wi
   'status': z.union([z.literal("correct"), z.literal("incorrect")]),
   'earned': z.number(),
   'aiComment': z.union([z.undefined(), z.string()]).optional(),
-}), z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema4())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema4()))])))]),
+}), z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema6())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema6()))])))]),
 })]).optional(),
   'officialHistory': z.union([z.undefined(), z.array(z.object({
   'recordId': z.string(),
@@ -442,7 +467,7 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1$schema = () => (_wi
   'status': z.union([z.literal("correct"), z.literal("incorrect")]),
   'earned': z.number(),
   'aiComment': z.union([z.undefined(), z.string()]).optional(),
-}), z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema4())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema4()))])))]),
+}), z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema6())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema6()))])))]),
 }))]).optional(),
   'grading': z.union([z.undefined(), z.literal("pending"), z.literal("aligned"), z.literal("equivalent"), z.literal("conflict")]).optional(),
 })),
@@ -466,7 +491,6 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1$schema = () => (_wi
   'userConfirmation': z.string(),
 }))]).optional(),
 })]),
-  'termId': z.string(),
   'expectedVersions': z.array(z.object({
   'path': z.string(),
   'version': z.string(),
@@ -475,12 +499,12 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1$schema = () => (_wi
 let _winterhuan_dsh_student_student_saveManual_result$schema$value
 const _winterhuan_dsh_student_student_saveManual_result$schema = () => (_winterhuan_dsh_student_student_saveManual_result$schema$value ??= z.object({
   'status': z.union([z.literal("unknown"), z.literal("invalid"), z.literal("conflict"), z.literal("saved"), z.literal("unchanged"), z.literal("old-term")]),
-  'current': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema3()))])),
+  'current': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema5())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema5()))])),
   'termId': z.union([z.undefined(), z.string()]).optional(),
   'versions': z.array(z.object({
+  'version': z.string(),
   'path': z.string(),
   'targetKey': z.string(),
-  'version': z.string(),
 })),
   'readStatus': z.union([z.literal("valid"), z.literal("missing"), z.literal("invalid"), z.literal("future-format"), z.literal("changing"), z.literal("legacy"), z.literal("archived")]),
   'issues': z.array(z.object({
@@ -496,6 +520,39 @@ const _winterhuan_dsh_student_student_saveManual_result$schema = () => (_winterh
   'correction': z.string(),
 }))]).optional(),
   'reason': z.union([z.undefined(), z.string()]).optional(),
+}))
+let _winterhuan_dsh_student_student_submitIntent_parameter_0$schema$value
+const _winterhuan_dsh_student_student_submitIntent_parameter_0$schema = () => (_winterhuan_dsh_student_student_submitIntent_parameter_0$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_submitIntent_parameter_1$schema$value
+const _winterhuan_dsh_student_student_submitIntent_parameter_1$schema = () => (_winterhuan_dsh_student_student_submitIntent_parameter_1$schema$value ??= z.object({
+  'requestId': z.string(),
+  'intent': z.object({
+  'version': z.literal(2),
+  'nativeSessionId': z.string(),
+  'request': z.string(),
+  'learnerId': z.union([z.undefined(), z.string()]).optional(),
+  'termId': z.union([z.undefined(), z.string()]).optional(),
+  'blockId': z.union([z.undefined(), z.string()]).optional(),
+  'questionId': z.union([z.undefined(), z.string()]).optional(),
+  'responseId': z.union([z.undefined(), z.string()]).optional(),
+  'selection': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+  'dailyContext': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+  'dailyAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+  'nextAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+  'previousActivity': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+  'continuationAction': z.union([z.undefined(), z.string()]).optional(),
+  'operation': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+  'courseAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+}),
+  'photo': z.union([z.undefined(), z.object({
+  'mediaType': z.union([z.literal("image/png"), z.literal("image/jpeg"), z.literal("image/webp")]),
+  'data': z.string(),
+  'name': z.string(),
+})]).optional(),
+}))
+let _winterhuan_dsh_student_student_submitIntent_result$schema$value
+const _winterhuan_dsh_student_student_submitIntent_result$schema = () => (_winterhuan_dsh_student_student_submitIntent_result$schema$value ??= z.object({
+  'accepted': z.literal(true),
 }))
 let _winterhuan_dsh_student_student_syncFeedback_parameter_0$schema$value
 const _winterhuan_dsh_student_student_syncFeedback_parameter_0$schema = () => (_winterhuan_dsh_student_student_syncFeedback_parameter_0$schema$value ??= z.string())
@@ -539,7 +596,7 @@ let _winterhuan_dsh_student_student_watch_result$schema$value
 const _winterhuan_dsh_student_student_watch_result$schema = () => (_winterhuan_dsh_student_student_watch_result$schema$value ??= z.union([z.object({
   'kind': z.literal("snapshot"),
   'value': z.object({
-  'data': z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema6())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema6()))]),
+  'data': z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => StudentJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => StudentJsonValueRemoteCodec$schema2()))]),
   'readAt': z.number(),
   'refreshAfter': z.number(),
   'token': z.string(),
@@ -554,6 +611,24 @@ const _winterhuan_dsh_student_student_watch_result$schema = () => (_winterhuan_d
 })]).optional(),
   'inputs': z.array(z.object({
   'status': z.literal("consumed"),
+  'intention': z.union([z.undefined(), z.object({
+  'version': z.literal(2),
+  'nativeSessionId': z.string(),
+  'request': z.string(),
+  'learnerId': z.union([z.undefined(), z.string()]).optional(),
+  'termId': z.union([z.undefined(), z.string()]).optional(),
+  'blockId': z.union([z.undefined(), z.string()]).optional(),
+  'questionId': z.union([z.undefined(), z.string()]).optional(),
+  'responseId': z.union([z.undefined(), z.string()]).optional(),
+  'selection': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+  'dailyContext': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+  'dailyAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+  'nextAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+  'previousActivity': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+  'continuationAction': z.union([z.undefined(), z.string()]).optional(),
+  'operation': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+  'courseAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+})]).optional(),
   'messageId': z.string(),
   'requestId': z.union([z.undefined(), z.string()]).optional(),
   'inputVersion': z.string(),
@@ -598,9 +673,9 @@ const _winterhuan_dsh_student_student_watch_result$schema = () => (_winterhuan_d
 })),
   'status': z.union([z.literal("partial"), z.literal("valid"), z.literal("missing"), z.literal("invalid"), z.literal("future-format"), z.literal("changing"), z.literal("legacy"), z.literal("archived")]),
   'versions': z.array(z.object({
+  'version': z.string(),
   'path': z.string(),
   'targetKey': z.string(),
-  'version': z.string(),
 })),
   'issues': z.union([z.undefined(), z.array(z.object({
   'path': z.string(),
@@ -614,6 +689,15 @@ const _winterhuan_dsh_student_student_watch_result$schema = () => (_winterhuan_d
   'message': z.string(),
   'reason': z.union([z.undefined(), z.literal("main-session-required")]).optional(),
 })]))
+let _winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_0$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_0$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_0$schema$value ??= z.string())
+let _winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_1$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_1$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_1$schema$value ??= z.string())
+let _winterhuan_dsh_student_studentOpenmaicPlayback_mini_result$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_mini_result$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_mini_result$schema$value ??= z.object({
+  'id': z.string(),
+  'html': z.string(),
+}))
 let _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0$schema$value
 const _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0$schema$value ??= z.string())
 let _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1$schema$value
@@ -629,6 +713,30 @@ const _winterhuan_dsh_student_studentOpenmaicPlayback_open_result$schema = () =>
   'status': z.union([z.literal("unavailable"), z.literal("ownership-unresolved")]),
   'reason': z.string(),
 })]))
+let _winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_0$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_0$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_0$schema$value ??= z.string())
+let _winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_1$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_1$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_1$schema$value ??= z.string())
+let _winterhuan_dsh_student_studentOpenmaicPlayback_progress_result$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_progress_result$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_progress_result$schema$value ??= z.object({
+  'checkedAt': z.number(),
+  'result': z.union([z.undefined(), z.object({
+  'status': z.union([z.literal("generating"), z.literal("ready"), z.literal("failed")]),
+  'jobId': z.string(),
+  'pollUrl': z.string(),
+  'base': z.string(),
+  'learnerId': z.string(),
+  'termId': z.string(),
+  'blockId': z.string(),
+  'learnerKey': z.string(),
+  'classroomId': z.union([z.undefined(), z.string()]).optional(),
+  'url': z.union([z.undefined(), z.string()]).optional(),
+  'retryable': z.boolean(),
+})]).optional(),
+  'failure': z.union([z.undefined(), z.string()]).optional(),
+}))
+let closed$PanelJsonValueRemoteCodec$schema$value
+const closed$PanelJsonValueRemoteCodec$schema = () => (closed$PanelJsonValueRemoteCodec$schema$value ??= z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))]))
 let closed$StudentJsonValueRemoteCodec$schema$value
 const closed$StudentJsonValueRemoteCodec$schema = () => (closed$StudentJsonValueRemoteCodec$schema$value ??= z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema()))]))
 let closed$StudentJsonValueRemoteCodec$schema2$value
@@ -819,6 +927,7 @@ const _winterhuan_dsh_student_student_saveManual_parameter_0_strict$schema = () 
 let _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema$value
 const _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema = () => (_winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema$value ??= z.strictObject({
   'baseline': z.record(z.string(), z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => closed$StudentJsonValueRemoteCodec$schema2()))])),
+  'termId': z.string(),
   'intent': z.union([z.strictObject({
   'kind': z.literal("settings"),
   'command': z.strictObject({
@@ -955,11 +1064,39 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema = () 
   'userConfirmation': z.string(),
 }))]).optional(),
 })]),
-  'termId': z.string(),
   'expectedVersions': z.array(z.strictObject({
   'path': z.string(),
   'version': z.string(),
 })),
+}))
+let _winterhuan_dsh_student_student_submitIntent_parameter_0_strict$schema$value
+const _winterhuan_dsh_student_student_submitIntent_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_submitIntent_parameter_0_strict$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_submitIntent_parameter_1_strict$schema$value
+const _winterhuan_dsh_student_student_submitIntent_parameter_1_strict$schema = () => (_winterhuan_dsh_student_student_submitIntent_parameter_1_strict$schema$value ??= z.strictObject({
+  'requestId': z.string(),
+  'intent': z.strictObject({
+  'version': z.literal(2),
+  'nativeSessionId': z.string(),
+  'request': z.string(),
+  'learnerId': z.union([z.undefined(), z.string()]).optional(),
+  'termId': z.union([z.undefined(), z.string()]).optional(),
+  'blockId': z.union([z.undefined(), z.string()]).optional(),
+  'questionId': z.union([z.undefined(), z.string()]).optional(),
+  'responseId': z.union([z.undefined(), z.string()]).optional(),
+  'selection': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'dailyContext': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'dailyAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'nextAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'previousActivity': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'continuationAction': z.union([z.undefined(), z.string()]).optional(),
+  'operation': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'courseAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))]).optional(),
+}),
+  'photo': z.union([z.undefined(), z.strictObject({
+  'mediaType': z.union([z.literal("image/png"), z.literal("image/jpeg"), z.literal("image/webp")]),
+  'data': z.string(),
+  'name': z.string(),
+})]).optional(),
 }))
 let _winterhuan_dsh_student_student_syncFeedback_parameter_0_strict$schema$value
 const _winterhuan_dsh_student_student_syncFeedback_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_syncFeedback_parameter_0_strict$schema$value ??= z.string())
@@ -993,10 +1130,18 @@ const _winterhuan_dsh_student_student_watch_parameter_1_strict$schema = () => (_
   'tab': z.union([z.undefined(), z.literal("mistakes"), z.literal("map"), z.literal("today"), z.literal("parent")]).optional(),
 })]).optional(),
 })]))
+let _winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_0_strict$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_0_strict$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_0_strict$schema$value ??= z.string())
+let _winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_1_strict$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_1_strict$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_1_strict$schema$value ??= z.string())
 let _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0_strict$schema$value
 const _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0_strict$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_0_strict$schema$value ??= z.string())
 let _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1_strict$schema$value
 const _winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1_strict$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_open_parameter_1_strict$schema$value ??= z.string())
+let _winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_0_strict$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_0_strict$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_0_strict$schema$value ??= z.string())
+let _winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_1_strict$schema$value
+const _winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_1_strict$schema = () => (_winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_1_strict$schema$value ??= z.string())
 
 const $remote = createTypertRemoteInfo({
   package: '@winterhuan/dsh-student',
@@ -1047,9 +1192,9 @@ const $remote = createTypertRemoteInfo({
         typeSymbol: '@winterhuan/dsh-student/types#StudentSubmissionInspection',
         create: _winterhuan_dsh_student_student_inspectSubmission_result$schema,
         description: 'admission, saved-answer and valid-assessment facts separately; omitted admission remains unknown.',
-        jsonSchema: {"type":"object","properties":{"requestId":{"type":"string"},"admission":{"type":"string","enum":["unknown","accepted"]},"nativeStates":{"type":"array","items":{"type":"string","enum":["pending","consumed","claimed","removed"]}},"nativeSourceStatus":{"type":"string","enum":["unavailable","available"]},"cut":{"type":"object","properties":{"sessionId":{"type":"string"},"cursor":{"type":"number"},"source":{"type":"string","enum":["live","prepared"]},"inheritedEventCount":{"type":"number"},"revision":{"type":"string"}},"required":["sessionId","cursor","source","inheritedEventCount"],"additionalProperties":true},"answer":{"type":"string","enum":["unavailable","missing","saved","not-requested"]},"assessment":{"type":"string","enum":["unavailable","pending","valid","not-requested"]},"readStatus":{"type":"string","enum":["valid","missing","invalid","future-format","changing","legacy","archived"]},"versions":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"targetKey":{"type":"string"},"version":{"type":"string"}},"required":["path","targetKey","version"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}},"backupIssues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}}},"required":["requestId","admission","nativeStates","nativeSourceStatus","answer","assessment","readStatus","versions","issues"],"additionalProperties":true},
+        jsonSchema: {"type":"object","properties":{"requestId":{"type":"string"},"admission":{"type":"string","enum":["unknown","accepted"]},"nativeStates":{"type":"array","items":{"type":"string","enum":["pending","consumed","claimed","removed"]}},"nativeSourceStatus":{"type":"string","enum":["unavailable","available"]},"cut":{"type":"object","properties":{"sessionId":{"type":"string"},"cursor":{"type":"number"},"source":{"type":"string","enum":["live","prepared"]},"inheritedEventCount":{"type":"number"},"revision":{"type":"string"}},"required":["sessionId","cursor","source","inheritedEventCount"],"additionalProperties":true},"answer":{"type":"string","enum":["unavailable","missing","saved","not-requested"]},"assessment":{"type":"string","enum":["unavailable","pending","valid","not-requested"]},"readStatus":{"type":"string","enum":["valid","missing","invalid","future-format","changing","legacy","archived"]},"versions":{"type":"array","items":{"type":"object","properties":{"version":{"type":"string"},"path":{"type":"string"},"targetKey":{"type":"string"}},"required":["version","path","targetKey"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}},"backupIssues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}}},"required":["requestId","admission","nativeStates","nativeSourceStatus","answer","assessment","readStatus","versions","issues"],"additionalProperties":true},
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":141,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":191,"column":9},
     },
     'student/manualContext': {
       service: 'student',
@@ -1099,7 +1244,7 @@ const $remote = createTypertRemoteInfo({
         description: 'exact current term identity, observed versions, draft baseline and read issues.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":111,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":161,"column":9},
     },
     'student/query': {
       service: 'student',
@@ -1149,7 +1294,7 @@ const $remote = createTypertRemoteInfo({
         description: 'current projection, actual file versions, cut and explicit partial or unavailable status.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":61,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":111,"column":9},
     },
     'student/saveManual': {
       service: 'student',
@@ -1199,7 +1344,57 @@ const $remote = createTypertRemoteInfo({
         description: 'thin save outcome, current edited values and versions for subsequent draft saves.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":126,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":176,"column":9},
+    },
+    'student/submitIntent': {
+      service: 'student',
+      description: 'Admit a compact panel intent as an ordinary native user message.',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'sessionId',
+          description: 'Authorized main Session.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_submitIntent_parameter_0$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_submitIntent_parameter_0_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+        {
+          name: 'request',
+          description: 'Stable request identity and bounded panel intent.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentPanelRequest',
+            create: _winterhuan_dsh_student_student_submitIntent_parameter_1$schema,
+            jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentPanelRequest',
+            create: _winterhuan_dsh_student_student_submitIntent_parameter_1_strict$schema,
+            jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
+          },
+        },
+      ],
+      cancellation: { parameter: 'signal' },
+      result: {
+        mode: 'strict',
+        typeSymbol: '@winterhuan/dsh-student/types#StudentPanelReply',
+        create: _winterhuan_dsh_student_student_submitIntent_result$schema,
+        description: 'Admission only; the agent authors and validates business files.',
+        jsonSchema: {"type":"object","properties":{"accepted":{"type":"boolean","const":true}},"required":["accepted"],"additionalProperties":true},
+      },
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":67,"column":9},
     },
     'student/syncFeedback': {
       service: 'student',
@@ -1249,7 +1444,7 @@ const $remote = createTypertRemoteInfo({
         description: 'Queue state only. Failure, cancellation and completion allow a later explicit retry; no automatic wake loop or academic write occurs.',
         jsonSchema: {"type":"object","properties":{"lessonId":{"type":"string"},"status":{"type":"string","enum":["unavailable","queued","coalesced","paused"]},"messageId":{"type":"string"}},"required":["lessonId","status"],"additionalProperties":true},
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":168,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":218,"column":9},
     },
     'student/watch': {
       service: 'student',
@@ -1300,7 +1495,57 @@ const $remote = createTypertRemoteInfo({
         description: 'an initial snapshot and later changes or recoverable read-failure frames.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":85,"column":10},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":135,"column":10},
+    },
+    'studentOpenmaicPlayback/mini': {
+      service: 'studentOpenmaicPlayback',
+      description: 'Read a versioned teaching card without model inference or learning writes.',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'sessionId',
+          description: 'Authorized main session.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_0$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_0_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+        {
+          name: 'miniId',
+          description: 'Saved mini-lesson identity; never an arbitrary path.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#studentOpenmaicPlayback/mini:miniId',
+            create: _winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_1$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#studentOpenmaicPlayback/mini:miniId',
+            create: _winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_1_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+      ],
+      cancellation: { parameter: 'signal' },
+      result: {
+        mode: 'strict',
+        typeSymbol: '@winterhuan/dsh-student#studentOpenmaicPlayback/mini:result',
+        create: _winterhuan_dsh_student_studentOpenmaicPlayback_mini_result$schema,
+        description: 'Verified original HTML for sandboxed display.',
+        jsonSchema: {"type":"object","properties":{"id":{"type":"string"},"html":{"type":"string"}},"required":["id","html"],"additionalProperties":true},
+      },
+      sourceLocation: {"file":"packages/winterhuan/student/src/openmaic/playback.ts","line":36,"column":9},
     },
     'studentOpenmaicPlayback/open': {
       service: 'studentOpenmaicPlayback',
@@ -1350,7 +1595,57 @@ const $remote = createTypertRemoteInfo({
         description: 'Safe playback, unresolved ownership or recovery outcome.',
         jsonSchema: {"oneOf":[{"type":"object","properties":{"status":{"type":"string","enum":["opened","login-required","identity-mismatch"]},"browser":{"type":"string","const":"dedicated-chrome"},"classroomUrl":{"type":"string"},"loginUrl":{"type":"string"},"reason":{"type":"string","enum":["credentials-missing","form-unavailable","callback-pending"]}},"required":["status","browser","classroomUrl"],"additionalProperties":true},{"type":"object","properties":{"status":{"type":"string","enum":["unavailable","ownership-unresolved"]},"reason":{"type":"string"}},"required":["status","reason"],"additionalProperties":true}]},
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/openmaic/playback.ts","line":30,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/openmaic/playback.ts","line":76,"column":9},
+    },
+    'studentOpenmaicPlayback/progress': {
+      service: 'studentOpenmaicPlayback',
+      description: 'Poll an existing authorized job without inference or academic writes.',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'sessionId',
+          description: 'Authorized main session.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_0$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_0_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+        {
+          name: 'lessonId',
+          description: 'Saved lesson identity.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#studentOpenmaicPlayback/progress:lessonId',
+            create: _winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_1$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#studentOpenmaicPlayback/progress:lessonId',
+            create: _winterhuan_dsh_student_studentOpenmaicPlayback_progress_parameter_1_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+      ],
+      cancellation: { parameter: 'signal' },
+      result: {
+        mode: 'strict',
+        typeSymbol: '@winterhuan/dsh-student/openmaic#LessonGenerationStatus',
+        create: _winterhuan_dsh_student_studentOpenmaicPlayback_progress_result$schema,
+        description: 'Real transport result or a safe recovery reason and check time.',
+        jsonSchema: {"type":"object","properties":{"checkedAt":{"type":"number"},"result":{"type":"object","properties":{"status":{"type":"string","enum":["generating","ready","failed"]},"jobId":{"type":"string"},"pollUrl":{"type":"string"},"base":{"type":"string"},"learnerId":{"type":"string"},"termId":{"type":"string"},"blockId":{"type":"string"},"learnerKey":{"type":"string"},"classroomId":{"type":"string"},"url":{"type":"string"},"retryable":{"type":"boolean"}},"required":["status","jobId","pollUrl","base","learnerId","termId","blockId","learnerKey","retryable"],"additionalProperties":true},"failure":{"type":"string"}},"required":["checkedAt"],"additionalProperties":true},
+      },
+      sourceLocation: {"file":"packages/winterhuan/student/src/openmaic/playback.ts","line":57,"column":9},
     },
   },
 }, z)
@@ -1371,6 +1666,13 @@ export const TYPERT = {
         "key": "student",
         "exportName": "StudentRemote",
         "members": [
+          {
+            "kind": "method",
+            "name": "submitIntent",
+            "signature": "@Remote({ resources: { session: sessionId => sessionId } }) async submitIntent(sessionId: StudentSessionId, request: StudentPanelRequest, signal: AbortSignal): Promise<StudentPanelReply>",
+            "summary": "Admit a compact panel intent as an ordinary native user message.",
+            "jsDoc": "/**\n * Admit a compact panel intent as an ordinary native user message.\n * @param sessionId - Authorized main Session.\n * @param request - Stable request identity and bounded panel intent.\n * @param signal - Cancellation before admission.\n * @returns Admission only; the agent authors and validates business files.\n */"
+          },
           {
             "kind": "method",
             "name": "query",
@@ -1497,7 +1799,7 @@ export const TYPERT = {
           },
           {
             "name": "NativeConsumedInput",
-            "declaration": "export interface NativeConsumedInput {\n    status: 'consumed';\n    messageId: string;\n    requestId?: string;\n    inputVersion: string;\n    consumedSeq: number;\n    rawResponse?: string;\n    textUnavailable?: string;\n    receipt: NativeReceipt;\n    learningScope?: NativeInputObservation['learningScope'];\n    attachments: { kind: 'image' | 'file'; attachmentId: string; }[];\n    omittedAttachments: number;\n}"
+            "declaration": "export interface NativeConsumedInput {\n    status: 'consumed';\n    intention?: PanelIntent;\n    messageId: string;\n    requestId?: string;\n    inputVersion: string;\n    consumedSeq: number;\n    rawResponse?: string;\n    textUnavailable?: string;\n    receipt: NativeReceipt;\n    learningScope?: NativeInputObservation['learningScope'];\n    attachments: { kind: 'image' | 'file'; attachmentId: string; }[];\n    omittedAttachments: number;\n}"
           },
           {
             "name": "NativeHistoryVerification",
@@ -1548,6 +1850,10 @@ export const TYPERT = {
             "declaration": "export interface OpenmaicSourceVerification {\n    bindingId?: string;\n    lessonId: string;\n    learnerId?: string;\n    termId?: string;\n    blockId?: string;\n    status: 'available' | 'unavailable' | 'ownership-unresolved';\n    reason?: string;\n    failure?: import('./connection.ts').OpenmaicError['code'];\n    consumption?: 'pending' | 'accepted';\n    pendingCount?: number;\n    conflictCount?: number;\n    omitted: number;\n}"
           },
           {
+            "name": "PanelIntent",
+            "declaration": "export type PanelIntent = z.infer<typeof panelIntentSchema>;"
+          },
+          {
             "name": "ResponseId",
             "declaration": "export type ResponseId = Branded<'StudentResponseId'>;"
           },
@@ -1574,6 +1880,14 @@ export const TYPERT = {
           {
             "name": "StudentManualSaveRequest",
             "declaration": "export interface StudentManualSaveRequest extends Omit<ManualSaveRequest, 'baseline'> {\n    baseline: Record<string, StudentJsonValue>;\n}"
+          },
+          {
+            "name": "StudentPanelReply",
+            "declaration": "export interface StudentPanelReply {\n    accepted: true;\n}"
+          },
+          {
+            "name": "StudentPanelRequest",
+            "declaration": "export interface StudentPanelRequest {\n    requestId: string;\n    intent: import('./panel-intent.ts').PanelIntent;\n    photo?: { mediaType: 'image/png' | 'image/jpeg' | 'image/webp'; data: string; name: string; };\n}"
           },
           {
             "name": "StudentQueryRequest",
@@ -1684,6 +1998,13 @@ export const TYPERT = {
             "jsDoc": "/** Dedicated Chrome profile and process owned by this service. */"
           },
           {
+            "kind": "property",
+            "name": "reviewer",
+            "signature": "readonly reviewer: CourseReviewer",
+            "summary": "Protected content review receipts; academic quality remains agent-authored.",
+            "jsDoc": "/** Protected content review receipts; academic quality remains agent-authored. */"
+          },
+          {
             "kind": "method",
             "name": "feedback",
             "signature": "feedback(workspace: string): OpenmaicFeedback",
@@ -1700,6 +2021,22 @@ export const TYPERT = {
         ],
         "types": [
           {
+            "name": "CourseReviewer",
+            "declaration": "export class CourseReviewer {\n    review(input: CourseReviewInput, model: string, generate: (system: string, user: string, signal: AbortSignal) => Promise<string>, signal: AbortSignal): Promise<CourseReviewResult>;\n    accepts(input: CourseReviewInput, quality: NonNullable<InteractiveLesson['quality']>): Promise<boolean>;\n    approvedPlan(input: CourseReviewInput, reviewId: string | undefined): Promise<boolean>;\n}"
+          },
+          {
+            "name": "CourseReviewInput",
+            "declaration": "export interface CourseReviewInput {\n    owner: { workspace: string; learnerId: string; termId: string; blockId: string; lessonId: string; };\n    provenance: Pick<InteractiveLesson, 'purpose' | 'course' | 'foundationConfirmation' | 'sourceLessonIds'>;\n    subject: string;\n    requirement: string;\n    teaching: NonNullable<InteractiveLesson['teaching']>;\n    plan: NonNullable<InteractiveLesson['questionPlan']>;\n    source: string;\n    content?: Awaited<ReturnType<OpenmaicFeedback['content']>>;\n    questions?: OpenmaicPreparation['questions'];\n}"
+          },
+          {
+            "name": "CourseReviewResult",
+            "declaration": "export type CourseReviewResult = z.infer<typeof resultSchema>;"
+          },
+          {
+            "name": "InteractiveLesson",
+            "declaration": "export type InteractiveLesson = z.infer<typeof lessonSchema>;"
+          },
+          {
             "name": "OpenmaicBrowser",
             "declaration": "export class OpenmaicBrowser {\n    open(classroomId: string, signal: AbortSignal): Promise<OpenmaicBrowserResult>;\n    dispose(): Promise<void>;\n}"
           },
@@ -1713,7 +2050,7 @@ export const TYPERT = {
           },
           {
             "name": "OpenmaicFeedback",
-            "declaration": "export class OpenmaicFeedback {\n    prepare(owner: OpenmaicLessonOwner, target: Omit<z.infer<typeof feedbackBindingSchema>, 'bindingId' | 'learnerId' | 'termId' | 'blockId'>, signal: AbortSignal): Promise<OpenmaicPreparation>;\n    verify(owner: OpenmaicLessonOwner, binding: z.infer<typeof feedbackBindingSchema>, signal: AbortSignal, revision?: string): Promise<boolean>;\n    read(owner: OpenmaicLessonOwner, binding: z.infer<typeof feedbackBindingSchema>, signal: AbortSignal): Promise<OpenmaicFeedbackRead>;\n}"
+            "declaration": "export class OpenmaicFeedback {\n    content(owner: OpenmaicLessonOwner, signal: AbortSignal): Promise<{ contentHash: string; scenes: z.infer<typeof documentSchema>['scenes']; }>;\n    prepare(owner: OpenmaicLessonOwner, target: Omit<z.infer<typeof feedbackBindingSchema>, 'bindingId' | 'learnerId' | 'termId' | 'blockId'>, signal: AbortSignal): Promise<OpenmaicPreparation>;\n    verify(owner: OpenmaicLessonOwner, binding: z.infer<typeof feedbackBindingSchema>, signal: AbortSignal, revision?: string): Promise<boolean>;\n    read(owner: OpenmaicLessonOwner, binding: z.infer<typeof feedbackBindingSchema>, signal: AbortSignal): Promise<OpenmaicFeedbackRead>;\n}"
           },
           {
             "name": "OpenmaicFeedbackRead",
@@ -1721,7 +2058,7 @@ export const TYPERT = {
           },
           {
             "name": "OpenmaicGeneration",
-            "declaration": "export class OpenmaicGeneration {\n    run(input: OpenmaicGenerationRequest, signal: AbortSignal): Promise<OpenmaicGenerationResult>;\n    verify(owner: Pick<OpenmaicGenerationRequest, 'learnerId' | 'termId' | 'blockId'>, classroomId: string, signal: AbortSignal): Promise<boolean>;\n}"
+            "declaration": "export class OpenmaicGeneration {\n    run(input: OpenmaicGenerationRequest, signal: AbortSignal): Promise<OpenmaicGenerationResult>;\n    poll(input: Pick<OpenmaicGenerationRequest, 'learnerId' | 'termId' | 'blockId' | 'jobId'>, signal: AbortSignal): Promise<OpenmaicGenerationResult>;\n    verify(owner: Pick<OpenmaicGenerationRequest, 'learnerId' | 'termId' | 'blockId'>, classroomId: string, signal: AbortSignal): Promise<boolean>;\n    reviewedPlan(owner: Pick<OpenmaicGenerationRequest, 'learnerId' | 'termId' | 'blockId'>): Promise<string | undefined>;\n}"
           },
           {
             "name": "OpenmaicGenerationRequest",
@@ -1767,6 +2104,20 @@ export const TYPERT = {
         "members": [
           {
             "kind": "method",
+            "name": "mini",
+            "signature": "@Remote({ resources: { session: sessionId => sessionId } }) async mini(sessionId: StudentSessionId, miniId: string, signal: AbortSignal): Promise<{ id: string; html: string }>",
+            "summary": "Read a versioned teaching card without model inference or learning writes.",
+            "jsDoc": "/** Read a versioned teaching card without model inference or learning writes.\n * @param sessionId - Authorized main session.\n * @param miniId - Saved mini-lesson identity; never an arbitrary path.\n * @param signal - Cancels bounded content reads.\n * @returns Verified original HTML for sandboxed display.\n */"
+          },
+          {
+            "kind": "method",
+            "name": "progress",
+            "signature": "@Remote({ resources: { session: sessionId => sessionId } }) async progress(sessionId: StudentSessionId, lessonId: string, signal: AbortSignal): Promise<LessonGenerationStatus>",
+            "summary": "Poll an existing authorized job without inference or academic writes.",
+            "jsDoc": "/** Poll an existing authorized job without inference or academic writes.\n * @param sessionId - Authorized main session.\n * @param lessonId - Saved lesson identity.\n * @param signal - Cancels transport polling.\n * @returns Real transport result or a safe recovery reason and check time.\n */"
+          },
+          {
+            "kind": "method",
             "name": "open",
             "signature": "@Remote({ resources: { session: sessionId => sessionId } }) async open(sessionId: StudentSessionId, lessonId: string, signal: AbortSignal): Promise<OpenmaicPlaybackResult>",
             "summary": "Open one independently read lesson after checking original learner, term and block.",
@@ -1775,8 +2126,16 @@ export const TYPERT = {
         ],
         "types": [
           {
+            "name": "LessonGenerationStatus",
+            "declaration": "export type LessonGenerationStatus = { checkedAt: number; result?: OpenmaicGenerationResult; failure?: string; };"
+          },
+          {
             "name": "OpenmaicBrowserResult",
             "declaration": "export interface OpenmaicBrowserResult {\n    status: 'opened' | 'login-required' | 'identity-mismatch';\n    browser: 'dedicated-chrome';\n    classroomUrl: string;\n    loginUrl?: string;\n    reason?: 'credentials-missing' | 'form-unavailable' | 'callback-pending';\n}"
+          },
+          {
+            "name": "OpenmaicGenerationResult",
+            "declaration": "export interface OpenmaicGenerationResult {\n    status: 'generating' | 'ready' | 'failed';\n    jobId: string;\n    pollUrl: string;\n    base: string;\n    learnerId: string;\n    termId: string;\n    blockId: string;\n    learnerKey: string;\n    classroomId?: string;\n    url?: string;\n    retryable: boolean;\n}"
           },
           {
             "name": "OpenmaicPlaybackResult",

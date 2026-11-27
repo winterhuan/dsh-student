@@ -1,21 +1,9 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`interactive lesson desk > queries the original generating job without creating another classroom 1`] = `
-[
-  "请加载 study 技能。在当前原生会话处理下面的意图，先核对 learnerId、termId、blockId、questionId 和 nextAction。通过原生文件工具读写正式业务文件，再运行安装包中的只读校验 CLI，随后独立 study_status 读取确认实际保存结果；保留学生原话、回答身份和附件关联。未完成的回答先保存再评估；结束或切换时保留待评估回答，迟到的反馈仍属于原题。不要自动换题或重发不确定的回答。
-Student intention:
-{"nativeSessionId":"ready-lesson","observedVersions":[],"learnerId":"learner-one","termId":"term-one","blockId":"block-1","selection":{"subject":"math"},"nextAction":{"kind":"teach","reason":"current-gap","subject":"math","title":"Make ten","blockId":"block-1"},"round":null,"legalActions":[],"previousActivity":{"blockId":"block-1"},"request":"请加载 study、openmaic-teach，阅读 references/openmaic.md 和 references/openmaic-feedback.md。继续 .study/openmaic-lessons.json 中 id=om-gen 的原课堂。读取原 learnerId/termId/blockId/jobId，调用 openmaic_generate 恢复或查询原 jobId，超时或提交未知不新建任务。ready 后用 openmaic_feedback prepare 读取全部有界页，保存所有原题面、选项、修订及反馈绑定，运行只读 CLI 并独立读取，再打开原课堂。已有作答先读取并保存原记录，接受后才更新 checkpoint；已确认范围内继续教学，无需逐课确认。"}
-请加载 study、openmaic-teach，阅读 references/openmaic.md 和 references/openmaic-feedback.md。继续 .study/openmaic-lessons.json 中 id=om-gen 的原课堂。读取原 learnerId/termId/blockId/jobId，调用 openmaic_generate 恢复或查询原 jobId，超时或提交未知不新建任务。ready 后用 openmaic_feedback prepare 读取全部有界页，保存所有原题面、选项、修订及反馈绑定，运行只读 CLI 并独立读取，再打开原课堂。已有作答先读取并保存原记录，接受后才更新 checkpoint；已确认范围内继续教学，无需逐课确认。",
-  undefined,
-]
-`;
-
 exports[`interactive lesson desk > rechecks a failed lesson before retrying from the workbench 1`] = `
 [
-  "请加载 study 技能。在当前原生会话处理下面的意图，先核对 learnerId、termId、blockId、questionId 和 nextAction。通过原生文件工具读写正式业务文件，再运行安装包中的只读校验 CLI，随后独立 study_status 读取确认实际保存结果；保留学生原话、回答身份和附件关联。未完成的回答先保存再评估；结束或切换时保留待评估回答，迟到的反馈仍属于原题。不要自动换题或重发不确定的回答。
-Student intention:
-{"nativeSessionId":"retry-lesson","observedVersions":[],"termId":"term-one","selection":{"subject":"math"},"nextAction":null,"round":null,"legalActions":[],"request":"请加载 study，阅读 references/openmaic.md。读取 runId=run-paused 对应原课堂的身份，用 openmaic_generate 查询和恢复同一 jobId，按官方实际状态提供恢复步骤，保存同一条课堂记录并校验。提交未知先核对原任务；不得重新提交 requirement 或换课堂。"}
-请加载 study，阅读 references/openmaic.md。读取 runId=run-paused 对应原课堂的身份，用 openmaic_generate 查询和恢复同一 jobId，按官方实际状态提供恢复步骤，保存同一条课堂记录并校验。提交未知先核对原任务；不得重新提交 requirement 或换课堂。",
+  "Student panel v2
+{"version":2,"nativeSessionId":"retry-lesson","termId":"term-one","selection":{"subject":"math"},"nextAction":null,"request":"请加载 study，阅读 references/openmaic.md。读取 runId=run-paused 对应原课堂的身份，用 openmaic_generate 查询和恢复同一 jobId，按官方实际状态提供恢复步骤，保存同一条课堂记录并校验。提交未知先核对原任务；不得重新提交 requirement 或换课堂。"}",
   undefined,
 ]
 `;

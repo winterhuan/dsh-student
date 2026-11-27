@@ -1,14 +1,14 @@
-import { n as StudyReadCacheOwner, r as StudyBackupRetention, t as applicationStudyFiles } from "./application-CKoISUro.js";
-import { Et as readInteractiveLessons, t as readWorkspace, vt as readLessonFile } from "./read-BKnscgN2.js";
-import { o as readStudentWorkspace } from "./generation-BDnsXksP.js";
-import { a as queryWorkspace, o as queryWorkspaceDashboard, r as queryJsonData } from "./queries-DsW1Bcnu.js";
-import { n as StudentOpenmaic, r as openmaicConfig, t as StudentOpenmaicPlayback } from "./playback-ljFdWZ3Q.js";
-import { n as saveManual, t as manualFields } from "./manual-BvA8Z2vt.js";
+import { n as StudyReadCacheOwner, r as StudyBackupRetention, t as applicationStudyFiles } from "./application-BqngjvBs.js";
+import { Et as readInteractiveLessons, J as canonical, t as readWorkspace, vt as readLessonFile } from "./read-BpRrocGx.js";
+import { _ as panelIntentSchema, d as readStudentWorkspace, g as panelDisplay } from "./generation-CWbd-geH.js";
+import { a as queryWorkspace, o as queryWorkspaceDashboard, r as queryJsonData } from "./queries-CiBrxUDd.js";
+import { n as StudentOpenmaic, r as openmaicConfig, t as StudentOpenmaicPlayback } from "./playback-BpHQyQet.js";
+import { n as saveManual, t as manualFields } from "./manual-JQ22pbom.js";
 import { createRequire } from "node:module";
 import { z } from "zod";
 import { createHash } from "node:crypto";
 import z$1 from "@deepseek-ai/schemastery";
-import { Remote, RemoteError, TypertRemoteService } from "@deepseek-ai/dsh-typert-protocol";
+import { Remote, RemoteError, TypertRemoteService, principalOf } from "@deepseek-ai/dsh-typert-protocol";
 import Include from "@deepseek-ai/cordis-plugin-include";
 import { setTimeout as setTimeout$1 } from "node:timers/promises";
 import { brandString } from "@deepseek-ai/dsh-brand";
@@ -694,7 +694,7 @@ function deepFreeze(value) {
 * Random v4 UUID, minted from `crypto.getRandomValues`.
 * @returns the UUID string.
 */
-function randomUUID() {
+function randomUUID$1() {
 	const bytes = globalThis.crypto.getRandomValues(/* @__PURE__ */ new Uint8Array(16));
 	const hex = Array.from(bytes, (byte, index) => {
 		return (index === 6 ? byte & 15 | 64 : index === 8 ? byte & 63 | 128 : byte).toString(16).padStart(2, "0");
@@ -745,7 +745,7 @@ function freezeMessage(message) {
 function createMessage(input) {
 	return deepFreeze(structuredClone({
 		...input,
-		id: brandString(randomUUID())
+		id: brandString(randomUUID$1())
 	}));
 }
 /**
@@ -2066,6 +2066,7 @@ var __esDecorate = function(ctor, descriptorIn, decorators, contextIn, initializ
 let StudentRemote = (() => {
 	let _classSuper = TypertRemoteService;
 	let _instanceExtraInitializers = [];
+	let _submitIntent_decorators;
 	let _query_decorators;
 	let _watch_decorators;
 	let _manualContext_decorators;
@@ -2075,6 +2076,7 @@ let StudentRemote = (() => {
 	return class StudentRemote extends _classSuper {
 		static {
 			const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+			_submitIntent_decorators = [Remote({ resources: { session: (sessionId) => sessionId } })];
 			_query_decorators = [Remote({ resources: { session: (sessionId) => sessionId } })];
 			_watch_decorators = [Remote({
 				mode: "stream",
@@ -2084,6 +2086,17 @@ let StudentRemote = (() => {
 			_saveManual_decorators = [Remote({ resources: { session: (sessionId) => sessionId } })];
 			_inspectSubmission_decorators = [Remote({ resources: { session: (sessionId) => sessionId } })];
 			_syncFeedback_decorators = [Remote({ resources: { session: (sessionId) => sessionId } })];
+			__esDecorate(this, null, _submitIntent_decorators, {
+				kind: "method",
+				name: "submitIntent",
+				static: false,
+				private: false,
+				access: {
+					has: (obj) => "submitIntent" in obj,
+					get: (obj) => obj.submitIntent
+				},
+				metadata: _metadata
+			}, null, _instanceExtraInitializers);
 			__esDecorate(this, null, _query_decorators, {
 				kind: "method",
 				name: "query",
@@ -2158,6 +2171,7 @@ let StudentRemote = (() => {
 			});
 		}
 		config = __runInitializers(this, _instanceExtraInitializers);
+		panelIntents = /* @__PURE__ */ new WeakMap();
 		feedbackIntents = /* @__PURE__ */ new WeakMap();
 		static inject = [
 			"typert",
@@ -2176,6 +2190,93 @@ let StudentRemote = (() => {
 		constructor(ctx, config) {
 			super(ctx, "student");
 			this.config = config;
+		}
+		/**
+		* Admit a compact panel intent as an ordinary native user message.
+		* @param sessionId - Authorized main Session.
+		* @param request - Stable request identity and bounded panel intent.
+		* @param signal - Cancellation before admission.
+		* @returns Admission only; the agent authors and validates business files.
+		*/
+		async submitIntent(sessionId, request, signal) {
+			signal.throwIfAborted();
+			const intent = panelIntentSchema.parse(request.intent);
+			if (intent.nativeSessionId !== sessionId || !/^[a-zA-Z0-9_-]{1,160}$/u.test(request.requestId) || Buffer.byteLength(JSON.stringify(intent)) > 16384) throw new Error("Invalid Student panel request.");
+			const photo = request.photo === void 0 ? void 0 : z.object({
+				mediaType: z.enum([
+					"image/png",
+					"image/jpeg",
+					"image/webp"
+				]),
+				data: z.string().min(1).max(20971520),
+				name: z.string().min(1).max(200)
+			}).strict().parse(request.photo);
+			if (!this.ctx.agents.get(sessionId)) await this.ctx.typert.lookups.get("agent")?.resolve(sessionId);
+			const agent = await this.mainAgent(sessionId, signal);
+			const hash = createHash("sha256").update(canonical({
+				intent,
+				photo: photo ?? null
+			})).digest("hex");
+			const admitted = () => {
+				const prior = agent.session.snapshotEvents().flatMap((event) => event.type === "agent/inbox/spliced" ? event.data.inserted : []).find((message) => message.source.kind === "user" && "rpcId" in message.source && message.source.rpcId === request.requestId);
+				if (!prior) return false;
+				if (!("studentIntent" in prior.source) || prior.source.studentRequestHash !== hash) throw new Error("Student request identity already belongs to a different input.");
+				return true;
+			};
+			if (admitted()) return { accepted: true };
+			let requests = this.panelIntents.get(agent);
+			if (!requests) {
+				requests = /* @__PURE__ */ new Map();
+				this.panelIntents.set(agent, requests);
+			}
+			const existing = requests.get(request.requestId);
+			if (existing) {
+				if (existing.hash !== hash) throw new Error("Student request identity already belongs to a different input.");
+				return existing.pending;
+			}
+			const principal = principalOf(this.ctx.invocation);
+			const pending = (async () => {
+				if (photo) {
+					if (!this.ctx.get("attachments")) throw new Error("Native image admission is unavailable in this session.");
+					const current = agent.model.current();
+					if (current) {
+						const model = await this.ctx.llm.resolveModelInfo(current.provider, current.model);
+						if (model.inputModalities && !model.inputModalities.includes("image")) throw new Error("The current model cannot read images.");
+					}
+				}
+				const content = photo ? await this.ctx.attachments.admitPromptContent([{
+					type: "text",
+					text: panelDisplay(intent)
+				}, {
+					type: "image",
+					...photo
+				}]) : [{
+					type: "text",
+					text: panelDisplay(intent)
+				}];
+				signal.throwIfAborted();
+				if (this.ctx.agents.get(sessionId) !== agent) throw new Error("The original session was closed during admission.");
+				if (!admitted()) agent.followup(createUserMessage({
+					source: {
+						kind: "user",
+						rpcId: request.requestId,
+						studentRequestHash: hash,
+						studentIntent: intent,
+						...principal ? { principal } : {}
+					},
+					content
+				}));
+				return { accepted: true };
+			})();
+			requests.set(request.requestId, {
+				hash,
+				pending
+			});
+			try {
+				return await pending;
+			} finally {
+				requests.delete(request.requestId);
+			}
 		}
 		/**
 		* Read a shared validated Student projection without activating an absent Agent.
@@ -2199,7 +2300,7 @@ let StudentRemote = (() => {
 					...page,
 					data: {
 						...page.data,
-						interactiveLessons: await readInteractiveLessons(agent, signal, page.data.study?.openmaic.savedBaseUrl)
+						interactiveLessons: await readInteractiveLessons(agent, signal, page.data.study?.openmaic.savedBaseUrl, read.workspace)
 					}
 				} : page;
 			} else query = queryWorkspace(read, request, now);

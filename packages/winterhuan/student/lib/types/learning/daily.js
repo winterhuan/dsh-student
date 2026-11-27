@@ -31,7 +31,7 @@ export function dailyLearning(read, state, now, selectedSubject, requestedDay) {
         const binding = owner?.questions.find(question => question.id === next.questionId)?.capability;
         const goalId = next.goalId ?? binding?.goalId;
         const scope = next.scope ?? binding?.scope;
-        const purpose = next.blockId ? 'resume' : next.kind === 'teach' ? 'teaching' : next.kind === 'review' ? 'review' : next.kind === 'learn' && !all.goalProgress.some(item => item.id === goalId && item.feedback.some(row => row.sourceStatus === 'known')) ? 'diagnostic' : 'learning';
+        const purpose = next.blockId ? 'resume' : next.kind === 'teach' ? 'teaching' : next.kind === 'review' ? 'review' : 'learning';
         const familyIds = next.review?.familyIds.filter(id => knowledge.families.some(family => family.id === id)) ?? (next.familyId ? [next.familyId] : []);
         const basis = entries.filter(entry => entry.subject === next.subject && entry.termId === settings.termId && entry.sourceStatus === 'known' && (next.blockId ? entry.ownerId === next.blockId : entry.capability?.goalId === goalId)).slice(-20).map(entry => ({ termId: settings.termId, ownerKind: entry.ownerKind, ownerId: entry.ownerId, responseId: entry.responseId }));
         const id = `task-${createHash('sha256').update(canonical([day, purpose, next.subject, goalId, scope, next.blockId, familyIds])).digest('hex').slice(0, 20)}`;
@@ -40,8 +40,7 @@ export function dailyLearning(read, state, now, selectedSubject, requestedDay) {
         const priorTask = prior?.tasks.find(task => task.activity?.blockId === next.blockId && !task.original);
         if (prior && priorTask)
             task.original = { day: prior.day, taskId: priorTask.id };
-        const { requirement: _requirement, ...nextAction } = next;
-        return { task, nextAction };
+        return { task, nextAction: next };
     };
     const executable = (action) => !!action && (action.kind !== 'hold' || !!action.blockId);
     const question = active?.questions.find(question => question.id === active.currentQuestionId);

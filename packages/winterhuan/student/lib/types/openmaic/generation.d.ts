@@ -5,6 +5,7 @@ export declare const generationRequestSchema: z.ZodObject<{
     learnerId: z.ZodString;
     termId: z.ZodString;
     blockId: z.ZodString;
+    reviewId: z.ZodOptional<z.ZodString>;
     jobId: z.ZodOptional<z.ZodString>;
     requirement: z.ZodOptional<z.ZodString>;
     language: z.ZodOptional<z.ZodEnum<{
@@ -54,6 +55,12 @@ export declare class OpenmaicGeneration {
      * @returns Safe generation state from the same durable official job.
      */
     run(input: OpenmaicGenerationRequest, signal: AbortSignal): Promise<OpenmaicGenerationResult>;
+    /** Poll only a previously retained job; this entry can never submit a classroom.
+     * @param input - Original academic owner and optional job ID.
+     * @param signal - Cancels the status read.
+     * @returns Existing generation metadata or a recoverable unknown/missing error.
+     */
+    poll(input: Pick<OpenmaicGenerationRequest, 'learnerId' | 'termId' | 'blockId' | 'jobId'>, signal: AbortSignal): Promise<OpenmaicGenerationResult>;
     private resume;
     /**
      * Verify the protected original job without polling or creating another classroom.
@@ -63,6 +70,11 @@ export declare class OpenmaicGeneration {
      * @returns Whether the protected ready job owns this exact classroom.
      */
     verify(owner: Pick<OpenmaicGenerationRequest, 'learnerId' | 'termId' | 'blockId'>, classroomId: string, signal: AbortSignal): Promise<boolean>;
+    /** Read the protected pre-generation review identity for this original job.
+     * @param owner - Original learner, term and block.
+     * @returns The review that authorized submission, absent for legacy jobs.
+     */
+    reviewedPlan(owner: Pick<OpenmaicGenerationRequest, 'learnerId' | 'termId' | 'blockId'>): Promise<string | undefined>;
     private perform;
     private result;
 }

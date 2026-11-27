@@ -32,7 +32,7 @@ export function studentClientFixture(initial: ReturnType<typeof updateStudy>, le
     read: () => state,
     replace(next: typeof state) { state = next; publish() },
     async consume(text: string) {
-      const content = text.split('Student intention:\n')[1]?.split('\n')[0]
+      const content = text.split('Student panel v2\n')[1]?.split('\n')[0]
       if (!content) return
       const intention = JSON.parse(content)
       if (intention.operation) { requests.push({ revision: state.revision, change: intention.operation }); state = updateStudy(state, intention.operation, Date.now()); publish() }

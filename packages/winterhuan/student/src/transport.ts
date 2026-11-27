@@ -74,7 +74,12 @@ export async function readStudentWorkspace(exec: Pick<ToolExecution, 'agent' | '
       sourceReads++
       try {
         fact.source = await service.feedback(agent.session.header.cwd).read({ learnerId: lesson.learnerId, termId: lesson.termId, blockId: lesson.blockId, classroomId: lesson.classroomId, base: lesson.base, learnerKey: lesson.learnerKey }, lesson.feedback, exec.signal)
-        fact.status = 'available'; observations.push(...fact.source.observations)
+        fact.status = 'available'
+        for (const observation of fact.source.observations) {
+          const role = lesson.quality?.questions.find(question => question.sceneId === observation.source.sceneId && question.questionId === observation.source.questionId)?.purpose
+          if (role && role !== 'assessment') observation.answerExposure = 'possible'
+        }
+        observations.push(...fact.source.observations)
       } catch (error) { if (exec.signal.aborted) throw error; fact.status = 'unavailable'; fact.failure = error instanceof OpenmaicError ? error.code : 'invalid-response'; fact.reason = error instanceof OpenmaicError ? error.message : 'Original official source could not be read completely. Retry the same classroom.' }
     }
     let read = await readWorkspace(files, exec.signal, backupVersions(backups.backups), [...native.observations, ...historical.observations], observations, planDay ? { planDay } : {})

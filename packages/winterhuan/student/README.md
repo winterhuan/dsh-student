@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Guide a primary-school learner through Chinese, mathematics and English in the current DSH conversation, with Learning desk shortcuts or `/study`. Keep original answers, help, feedback and later practice across conversations. Parents confirm setup, school progress and photographed work in chat; optional manual forms provide another way to save. There is no time limit. The package supplies selected grade-two first-term Chinese and mathematics pages, grade-one/two knowledge maps and validated reference questions; foundation materials do not establish school alignment.
+Guide a primary-school learner through Chinese, mathematics and English in the current DSH conversation, with Learning desk shortcuts or `/study`. Keep answers, feedback and review across conversations without time limits. Parents confirm setup, school progress and photographed work in chat or optional forms. Import textbook photographs from a paired phone, retain originals, and proofread Markdown with cropped illustrations. Included reference materials and imported books do not establish school alignment or learner mastery.
 
 ## Table of Contents
 
@@ -28,7 +28,7 @@ Guide a primary-school learner through Chinese, mathematics and English in the c
 Install the prebuilt release through the [plugin market](https://winterhuan.github.io/dsh-creative/index.json), or use this pinned Git source with DSH `0.2.2-rc.5`:
 
 ```sh
-dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.11&path:/packages/winterhuan/student'
+dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.12&path:/packages/winterhuan/student'
 ```
 
 Replace `market` with the name of your existing DSH profile.
@@ -56,6 +56,16 @@ DSH `0.2.2-rc.5` Headless does not select the Web preset roster. For a non-Web p
 ```
 
 The profile must provide the same native tools and filesystem services. Installation already enables the existing `fs-observation-policy` row; keep one instance. Loading the Student entry after `agent/created` cannot capture ordinary input ownership for that Agent. Restart the profile, create a new Agent, then invoke `/study`.
+
+### Import photographed textbooks
+
+Open textbook import in the workbench to retain original photographs, transcribe pages through a native Harness vision session, and save Markdown with cropped illustrations. Manual corrections and new parsing candidates are separate revisions. Complete-book confirmation requires an expected page count, contiguous positions, unique photographs and confirmed proofreading. Excluded pages retain their originals and can be restored.
+
+The phone transport is disabled by default. Configure the Student Host with `textbooks: { host: "specific LAN IP", port: 3082, certFile: "absolute certificate path", keyFile: "absolute private key path" }` to serve `/student/textbooks/v1` over HTTPS in the same process. The management UI can keep listening on `127.0.0.1:3082`. Preserve other Student settings. Generate a ten-minute, single-device pairing grant from the authorized learning session; revocable device credentials grant only that workspace's textbook operations. Never give the phone management credentials.
+
+Files live under `.study/textbooks/<book>/pages/<page>/`: `page.json` references `original.*`, immutable `revisions/*.md` and `assets/*.png`. Agents discover imported books through `study_status kind=materials`; pass `id=book ID` to page through Markdown paths. Provider failures and disconnections preserve originals and corrections. Restart scans persisted jobs. Parsing uses the session's selected vision model and may incur provider charges.
+
+After building, run `node packages/winterhuan/student/tests/textbook-native.e2e.mjs` for isolated TLS, pairing, scoped native tool, conflict and revision-preservation acceptance with a deterministic model. Real textbook transcription quality still requires representative human-reviewed samples.
 
 ### Use the Learning desk
 

@@ -1,6 +1,8 @@
 import { canonical } from './learning/shared.ts'
 import { panelIntentSchema, panelDisplay } from './panel-intent.ts'
 import type { StudentPanelRequest, StudentPanelReply } from './types.ts'
+import type { TextbookCommand, TextbookReply } from './textbooks/schema.ts'
+import type { TextbookDevice, TextbookPairing } from './textbooks/service.ts'
 /** Student Remote methods retain native Session authorization and shared official-file ownership. */
 import { createHash } from 'node:crypto'
 import { setTimeout } from 'node:timers/promises'
@@ -48,13 +50,74 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
 export class StudentRemote extends TypertRemoteService {
   private readonly panelIntents = new WeakMap<Agent, Map<string, { hash: string; pending: Promise<StudentPanelReply> }>>()
   private readonly feedbackIntents = new WeakMap<Agent, Map<string, { messageId?: string }>>()
-  static inject = ['typert', 'sessionQuery', 'agents', 'remoteAccess']
+  static inject = ['typert', 'sessionQuery', 'agents', 'remoteAccess', 'studentTextbooks']
   static Config: z<StudentTransportConfig> = z.object({ refreshIntervalMs: z.number().step(1).min(1).max(2_147_483_647).default(3000), maxWireBytes: z.number().step(1).min(1024).default(1_048_576) })
   /**
    * @param ctx - Host services containing authorized native Agent lookups.
    * @param config - validated refresh interval and complete wire-response limit.
    */
   constructor(ctx: Context, private readonly config: StudentTransportConfig) { super(ctx, 'student') }
+
+  /** Apply a textbook command within the authorized main Session's workspace.
+   * @param sessionId - Authorized main Session.
+   * @param request - Validated library operation and observed revisions.
+   * @param signal - Cancellation while resolving the Session.
+   * @returns Persisted library state after the operation.
+   */
+  @Remote({ resources: { session: sessionId => sessionId } })
+  async textbooks(sessionId: StudentSessionId, request: TextbookCommand, signal: AbortSignal): Promise<TextbookReply> {
+    return this.ctx.studentTextbooks.command(await this.mainAgent(sessionId, signal), request)
+  }
+
+  /** Issue a one-time phone pairing grant; this never reveals the DSH management credential.
+   * @param sessionId - Authorized main Session.
+   * @param signal - Cancellation while resolving the Session.
+   * @returns Expiring grant with the HTTPS address and certificate pin.
+   */
+  @Remote({ resources: { session: sessionId => sessionId } })
+  async textbookPair(sessionId: StudentSessionId, signal: AbortSignal): Promise<TextbookPairing> {
+    return this.ctx.studentTextbooks.pair(await this.mainAgent(sessionId, signal))
+  }
+
+  /** List or revoke only the devices paired with this workspace.
+   * @param sessionId - Authorized main Session.
+   * @param revoke - Optional device identity whose grant should be removed.
+   * @param signal - Cancellation while resolving the Session.
+   * @returns Remaining devices without secret credentials.
+   */
+  @Remote({ resources: { session: sessionId => sessionId } })
+  async textbookDevices(sessionId: StudentSessionId, revoke: string | undefined, signal: AbortSignal): Promise<TextbookDevice[]> {
+    return this.ctx.studentTextbooks.devices(await this.mainAgent(sessionId, signal), revoke)
+  }
+
+  /** Admit a browser-selected textbook image through the same durable phone upload owner.
+   * @param sessionId - Authorized main Session.
+   * @param request - Stable page identity, position and bounded base64 photo.
+   * @param signal - Cancellation while resolving the Session.
+   * @returns Saved page referencing the retained original.
+   */
+  @Remote({ resources: { session: sessionId => sessionId } })
+  async textbookUpload(sessionId: StudentSessionId, request: { bookId: string; pageId: string; position: number; printedPage: string; data: string }, signal: AbortSignal): Promise<TextbookReply> {
+    const { data, ...metadata } = jsonSchema.object({ bookId: jsonSchema.string(), pageId: jsonSchema.string(), position: jsonSchema.number(), printedPage: jsonSchema.string(), data: jsonSchema.string().min(1).max(27962028).regex(/^[A-Za-z0-9+/]*={0,2}$/u) }).strict().parse(request)
+    return { page: await this.ctx.studentTextbooks.upload(await this.mainAgent(sessionId, signal), metadata, Buffer.from(data, 'base64')) }
+  }
+
+  /** Read a page-owned image for desktop proofreading without exposing arbitrary workspace paths.
+   * @param sessionId - Authorized main Session.
+   * @param bookId - Owning book identity.
+   * @param pageId - Owning page identity.
+   * @param kind - Original photo or cropped illustration.
+   * @param index - Illustration index, ignored for originals.
+   * @param candidate - Select the candidate's illustrations when true.
+   * @param revision - Observed page revision, checked for illustrations.
+   * @param signal - Cancellation while resolving the Session.
+   * @returns Bounded base64 image and media type.
+   */
+  @Remote({ resources: { session: sessionId => sessionId } })
+  async textbookImage(sessionId: StudentSessionId, bookId: string, pageId: string, kind: 'original' | 'asset', index: number, candidate: boolean, revision: number, signal: AbortSignal): Promise<{ data: string; mediaType: string }> {
+    const result = await this.ctx.studentTextbooks.file(await this.mainAgent(sessionId, signal), bookId, pageId, kind, index, candidate, revision)
+    return { data: result.bytes.toString('base64'), mediaType: result.mediaType }
+  }
 
   /**
    * Admit a compact panel intent as an ordinary native user message.

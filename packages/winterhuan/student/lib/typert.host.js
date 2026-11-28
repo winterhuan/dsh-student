@@ -97,7 +97,7 @@ const _winterhuan_dsh_student_student_manualContext_parameter_1$schema = () => (
   'action': z.literal("configure-course"),
   'material': z.object({
   'id': z.string(),
-  'subject': z.union([z.literal("math"), z.literal("chinese"), z.literal("english")]),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english")]),
   'scope': z.object({
   'region': z.string(),
   'grade': z.number(),
@@ -114,7 +114,7 @@ const _winterhuan_dsh_student_student_manualContext_parameter_1$schema = () => (
   'evidence': z.string(),
 }),
   'course': z.object({
-  'subject': z.union([z.literal("math"), z.literal("chinese"), z.literal("english")]),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english")]),
   'materialId': z.string(),
   'unit': z.string(),
   'parentConfirmation': z.string(),
@@ -123,17 +123,17 @@ const _winterhuan_dsh_student_student_manualContext_parameter_1$schema = () => (
   'unitId': z.string(),
   'posture': z.union([z.literal("keep-up"), z.literal("catch-up")]),
   'preview': z.union([z.literal("on"), z.literal("off")]),
-  'pace': z.union([z.literal("teaching"), z.literal("review")]),
+  'pace': z.union([z.literal("review"), z.literal("teaching")]),
   'parentConfirmation': z.string(),
 })]).optional(),
 }), z.object({
   'unitId': z.string(),
   'posture': z.union([z.literal("keep-up"), z.literal("catch-up")]),
   'preview': z.union([z.literal("on"), z.literal("off")]),
-  'pace': z.union([z.literal("teaching"), z.literal("review")]),
+  'pace': z.union([z.literal("review"), z.literal("teaching")]),
   'parentConfirmation': z.string(),
   'action': z.literal("school-progress"),
-  'subject': z.union([z.literal("math"), z.literal("chinese"), z.literal("english")]),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english")]),
 }), z.object({
   'action': z.literal("openmaic-settings"),
   'baseUrl': z.string(),
@@ -238,8 +238,8 @@ let _winterhuan_dsh_student_student_query_parameter_0$schema$value
 const _winterhuan_dsh_student_student_query_parameter_0$schema = () => (_winterhuan_dsh_student_student_query_parameter_0$schema$value ??= z.string())
 let _winterhuan_dsh_student_student_query_parameter_1$schema$value
 const _winterhuan_dsh_student_student_query_parameter_1$schema = () => (_winterhuan_dsh_student_student_query_parameter_1$schema$value ??= z.union([z.object({
-  'kind': z.union([z.literal("daily-plan"), z.literal("capability-progress"), z.literal("capabilities"), z.literal("families"), z.literal("knowledge-sources"), z.literal("legacy-references"), z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("status"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
-  'subject': z.union([z.undefined(), z.literal("math"), z.literal("chinese"), z.literal("english")]).optional(),
+  'kind': z.union([z.literal("status"), z.literal("daily-plan"), z.literal("capability-progress"), z.literal("capabilities"), z.literal("families"), z.literal("knowledge-sources"), z.literal("legacy-references"), z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
+  'subject': z.union([z.undefined(), z.literal("chinese"), z.literal("math"), z.literal("english")]).optional(),
   'id': z.union([z.undefined(), z.string()]).optional(),
   'unit': z.union([z.undefined(), z.string()]).optional(),
   'grade': z.union([z.undefined(), z.number()]).optional(),
@@ -248,7 +248,7 @@ const _winterhuan_dsh_student_student_query_parameter_1$schema = () => (_winterh
 }), z.object({
   'kind': z.literal("dashboard"),
   'options': z.union([z.undefined(), z.object({
-  'subject': z.union([z.undefined(), z.literal("math"), z.literal("chinese"), z.literal("english")]).optional(),
+  'subject': z.union([z.undefined(), z.literal("chinese"), z.literal("math"), z.literal("english")]).optional(),
   'mistakeOffset': z.union([z.undefined(), z.number()]).optional(),
   'mistakeStatus': z.union([z.undefined(), z.literal("due"), z.literal("all"), z.literal("reviewing"), z.literal("mastered")]).optional(),
   'mapGrade': z.union([z.undefined(), z.number()]).optional(),
@@ -256,7 +256,7 @@ const _winterhuan_dsh_student_student_query_parameter_1$schema = () => (_winterh
   'diagGrade': z.union([z.undefined(), z.number()]).optional(),
   'diagTerm': z.union([z.undefined(), z.literal("first"), z.literal("second")]).optional(),
   'diagUnit': z.union([z.undefined(), z.string()]).optional(),
-  'tab': z.union([z.undefined(), z.literal("mistakes"), z.literal("map"), z.literal("today"), z.literal("parent")]).optional(),
+  'tab': z.union([z.undefined(), z.literal("map"), z.literal("mistakes"), z.literal("today"), z.literal("parent")]).optional(),
 })]).optional(),
 })]))
 let _winterhuan_dsh_student_student_query_result$schema$value
@@ -285,14 +285,14 @@ const _winterhuan_dsh_student_student_query_result$schema = () => (_winterhuan_d
   'blockId': z.union([z.undefined(), z.string()]).optional(),
   'questionId': z.union([z.undefined(), z.string()]).optional(),
   'responseId': z.union([z.undefined(), z.string()]).optional(),
-  'selection': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
-  'dailyContext': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
-  'dailyAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
-  'nextAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
-  'previousActivity': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'selection': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+  'dailyContext': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+  'dailyAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+  'nextAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+  'previousActivity': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
   'continuationAction': z.union([z.undefined(), z.string()]).optional(),
-  'operation': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
-  'courseAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'operation': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+  'courseAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
 })]).optional(),
   'messageId': z.string(),
   'requestId': z.union([z.undefined(), z.string()]).optional(),
@@ -337,17 +337,17 @@ const _winterhuan_dsh_student_student_query_result$schema = () => (_winterhuan_d
   'correction': z.string(),
 })),
   'status': z.union([z.literal("partial"), z.literal("valid"), z.literal("missing"), z.literal("invalid"), z.literal("future-format"), z.literal("changing"), z.literal("legacy"), z.literal("archived")]),
-  'versions': z.array(z.object({
-  'version': z.string(),
-  'path': z.string(),
-  'targetKey': z.string(),
-})),
   'issues': z.union([z.undefined(), z.array(z.object({
   'path': z.string(),
   'field': z.string(),
   'rule': z.string(),
   'correction': z.string(),
 }))]).optional(),
+  'versions': z.array(z.object({
+  'version': z.string(),
+  'path': z.string(),
+  'targetKey': z.string(),
+})),
 }))
 let _winterhuan_dsh_student_student_saveManual_parameter_0$schema$value
 const _winterhuan_dsh_student_student_saveManual_parameter_0$schema = () => (_winterhuan_dsh_student_student_saveManual_parameter_0$schema$value ??= z.string())
@@ -377,7 +377,7 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1$schema = () => (_wi
   'action': z.literal("configure-course"),
   'material': z.object({
   'id': z.string(),
-  'subject': z.union([z.literal("math"), z.literal("chinese"), z.literal("english")]),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english")]),
   'scope': z.object({
   'region': z.string(),
   'grade': z.number(),
@@ -394,7 +394,7 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1$schema = () => (_wi
   'evidence': z.string(),
 }),
   'course': z.object({
-  'subject': z.union([z.literal("math"), z.literal("chinese"), z.literal("english")]),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english")]),
   'materialId': z.string(),
   'unit': z.string(),
   'parentConfirmation': z.string(),
@@ -403,17 +403,17 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1$schema = () => (_wi
   'unitId': z.string(),
   'posture': z.union([z.literal("keep-up"), z.literal("catch-up")]),
   'preview': z.union([z.literal("on"), z.literal("off")]),
-  'pace': z.union([z.literal("teaching"), z.literal("review")]),
+  'pace': z.union([z.literal("review"), z.literal("teaching")]),
   'parentConfirmation': z.string(),
 })]).optional(),
 }), z.object({
   'unitId': z.string(),
   'posture': z.union([z.literal("keep-up"), z.literal("catch-up")]),
   'preview': z.union([z.literal("on"), z.literal("off")]),
-  'pace': z.union([z.literal("teaching"), z.literal("review")]),
+  'pace': z.union([z.literal("review"), z.literal("teaching")]),
   'parentConfirmation': z.string(),
   'action': z.literal("school-progress"),
-  'subject': z.union([z.literal("math"), z.literal("chinese"), z.literal("english")]),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english")]),
 }), z.object({
   'action': z.literal("openmaic-settings"),
   'baseUrl': z.string(),
@@ -535,17 +535,17 @@ const _winterhuan_dsh_student_student_submitIntent_parameter_1$schema = () => (_
   'blockId': z.union([z.undefined(), z.string()]).optional(),
   'questionId': z.union([z.undefined(), z.string()]).optional(),
   'responseId': z.union([z.undefined(), z.string()]).optional(),
-  'selection': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
-  'dailyContext': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
-  'dailyAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
-  'nextAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
-  'previousActivity': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+  'selection': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'dailyContext': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'dailyAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'nextAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'previousActivity': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
   'continuationAction': z.union([z.undefined(), z.string()]).optional(),
-  'operation': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
-  'courseAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+  'operation': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
+  'courseAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema()))]).optional(),
 }),
   'photo': z.union([z.undefined(), z.object({
-  'mediaType': z.union([z.literal("image/png"), z.literal("image/jpeg"), z.literal("image/webp")]),
+  'mediaType': z.union([z.literal("image/jpeg"), z.literal("image/png"), z.literal("image/webp")]),
   'data': z.string(),
   'name': z.string(),
 })]).optional(),
@@ -567,12 +567,352 @@ const _winterhuan_dsh_student_student_syncFeedback_result$schema = () => (_winte
   'status': z.union([z.literal("unavailable"), z.literal("queued"), z.literal("coalesced"), z.literal("paused")]),
   'messageId': z.union([z.undefined(), z.string()]).optional(),
 }))
+let _winterhuan_dsh_student_student_textbookDevices_parameter_0$schema$value
+const _winterhuan_dsh_student_student_textbookDevices_parameter_0$schema = () => (_winterhuan_dsh_student_student_textbookDevices_parameter_0$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbookDevices_parameter_1$schema$value
+const _winterhuan_dsh_student_student_textbookDevices_parameter_1$schema = () => (_winterhuan_dsh_student_student_textbookDevices_parameter_1$schema$value ??= z.union([z.undefined(), z.string()]))
+let _winterhuan_dsh_student_student_textbookDevices_result$schema$value
+const _winterhuan_dsh_student_student_textbookDevices_result$schema = () => (_winterhuan_dsh_student_student_textbookDevices_result$schema$value ??= z.array(z.object({
+  'id': z.string(),
+  'name': z.string(),
+  'createdAt': z.number(),
+})))
+let _winterhuan_dsh_student_student_textbookImage_parameter_0$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_0$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_0$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbookImage_parameter_1$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_1$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_1$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbookImage_parameter_2$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_2$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_2$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbookImage_parameter_3$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_3$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_3$schema$value ??= z.union([z.literal("original"), z.literal("asset")]))
+let _winterhuan_dsh_student_student_textbookImage_parameter_4$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_4$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_4$schema$value ??= z.number())
+let _winterhuan_dsh_student_student_textbookImage_parameter_5$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_5$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_5$schema$value ??= z.boolean())
+let _winterhuan_dsh_student_student_textbookImage_parameter_6$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_6$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_6$schema$value ??= z.number())
+let _winterhuan_dsh_student_student_textbookImage_result$schema$value
+const _winterhuan_dsh_student_student_textbookImage_result$schema = () => (_winterhuan_dsh_student_student_textbookImage_result$schema$value ??= z.object({
+  'data': z.string(),
+  'mediaType': z.string(),
+}))
+let _winterhuan_dsh_student_student_textbookPair_parameter_0$schema$value
+const _winterhuan_dsh_student_student_textbookPair_parameter_0$schema = () => (_winterhuan_dsh_student_student_textbookPair_parameter_0$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbookPair_result$schema$value
+const _winterhuan_dsh_student_student_textbookPair_result$schema = () => (_winterhuan_dsh_student_student_textbookPair_result$schema$value ??= z.object({
+  'version': z.literal(1),
+  'url': z.string(),
+  'pin': z.string(),
+  'code': z.string(),
+  'expiresAt': z.number(),
+}))
+let _winterhuan_dsh_student_student_textbooks_parameter_0$schema$value
+const _winterhuan_dsh_student_student_textbooks_parameter_0$schema = () => (_winterhuan_dsh_student_student_textbooks_parameter_0$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbooks_parameter_1$schema$value
+const _winterhuan_dsh_student_student_textbooks_parameter_1$schema = () => (_winterhuan_dsh_student_student_textbooks_parameter_1$schema$value ??= z.union([z.object({
+  'action': z.literal("list"),
+}), z.object({
+  'action': z.literal("create"),
+  'id': z.string(),
+  'title': z.string(),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english"), z.literal("other")]),
+  'expectedPages': z.union([z.literal(null), z.number()]),
+}), z.object({
+  'action': z.literal("book"),
+  'bookId': z.string(),
+}), z.object({
+  'action': z.literal("configure"),
+  'bookId': z.string(),
+  'revision': z.number(),
+  'title': z.string(),
+  'expectedPages': z.union([z.literal(null), z.number()]),
+}), z.object({
+  'action': z.literal("page"),
+  'bookId': z.string(),
+  'pageId': z.string(),
+}), z.object({
+  'action': z.literal("queue"),
+  'bookId': z.string(),
+  'pageId': z.string(),
+  'revision': z.number(),
+  'requestId': z.union([z.undefined(), z.string()]).optional(),
+}), z.object({
+  'action': z.literal("exclude"),
+  'bookId': z.string(),
+  'pageId': z.string(),
+  'revision': z.number(),
+  'excluded': z.boolean(),
+}), z.object({
+  'action': z.literal("edit"),
+  'bookId': z.string(),
+  'pageId': z.string(),
+  'revision': z.number(),
+  'markdown': z.string(),
+  'printedPage': z.string(),
+  'position': z.number(),
+  'confirm': z.boolean(),
+  'useCandidate': z.boolean(),
+}), z.object({
+  'action': z.literal("complete"),
+  'bookId': z.string(),
+  'revision': z.number(),
+})]))
+let _winterhuan_dsh_student_student_textbooks_result$schema$value
+const _winterhuan_dsh_student_student_textbooks_result$schema = () => (_winterhuan_dsh_student_student_textbooks_result$schema$value ??= z.object({
+  'workspaceId': z.union([z.undefined(), z.string()]).optional(),
+  'books': z.union([z.undefined(), z.array(z.object({
+  'format': z.literal(1),
+  'id': z.string(),
+  'title': z.string(),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english"), z.literal("other")]),
+  'expectedPages': z.union([z.literal(null), z.number()]),
+  'revision': z.number(),
+  'confirmedAt': z.union([z.undefined(), z.number()]).optional(),
+}))]).optional(),
+  'book': z.union([z.undefined(), z.object({
+  'format': z.literal(1),
+  'id': z.string(),
+  'title': z.string(),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english"), z.literal("other")]),
+  'expectedPages': z.union([z.literal(null), z.number()]),
+  'revision': z.number(),
+  'confirmedAt': z.union([z.undefined(), z.number()]).optional(),
+})]).optional(),
+  'pages': z.union([z.undefined(), z.array(z.object({
+  'format': z.literal(1),
+  'id': z.string(),
+  'bookId': z.string(),
+  'position': z.number(),
+  'printedPage': z.string(),
+  'sha256': z.string(),
+  'mediaType': z.union([z.literal("image/jpeg"), z.literal("image/png"), z.literal("image/webp")]),
+  'width': z.number(),
+  'height': z.number(),
+  'original': z.string(),
+  'revision': z.number(),
+  'status': z.union([z.literal("failed"), z.literal("received"), z.literal("queued"), z.literal("parsing"), z.literal("review"), z.literal("confirmed")]),
+  'updatedAt': z.number(),
+  'excluded': z.union([z.undefined(), z.literal(false), z.literal(true)]).optional(),
+  'content': z.union([z.undefined(), z.object({
+  'path': z.string(),
+  'assets': z.array(z.object({
+  'path': z.string(),
+  'left': z.number(),
+  'top': z.number(),
+  'width': z.number(),
+  'height': z.number(),
+})),
+  'issues': z.array(z.string()),
+  'source': z.union([z.literal("agent"), z.literal("manual")]),
+})]).optional(),
+  'candidate': z.union([z.undefined(), z.object({
+  'path': z.string(),
+  'assets': z.array(z.object({
+  'path': z.string(),
+  'left': z.number(),
+  'top': z.number(),
+  'width': z.number(),
+  'height': z.number(),
+})),
+  'issues': z.array(z.string()),
+  'source': z.union([z.literal("agent"), z.literal("manual")]),
+})]).optional(),
+  'job': z.union([z.undefined(), z.object({
+  'id': z.string(),
+  'model': z.object({
+  'provider': z.string(),
+  'model': z.string(),
+}),
+})]).optional(),
+  'error': z.union([z.undefined(), z.string()]).optional(),
+}))]).optional(),
+  'page': z.union([z.undefined(), z.object({
+  'format': z.literal(1),
+  'id': z.string(),
+  'bookId': z.string(),
+  'position': z.number(),
+  'printedPage': z.string(),
+  'sha256': z.string(),
+  'mediaType': z.union([z.literal("image/jpeg"), z.literal("image/png"), z.literal("image/webp")]),
+  'width': z.number(),
+  'height': z.number(),
+  'original': z.string(),
+  'revision': z.number(),
+  'status': z.union([z.literal("failed"), z.literal("received"), z.literal("queued"), z.literal("parsing"), z.literal("review"), z.literal("confirmed")]),
+  'updatedAt': z.number(),
+  'excluded': z.union([z.undefined(), z.literal(false), z.literal(true)]).optional(),
+  'content': z.union([z.undefined(), z.object({
+  'path': z.string(),
+  'assets': z.array(z.object({
+  'path': z.string(),
+  'left': z.number(),
+  'top': z.number(),
+  'width': z.number(),
+  'height': z.number(),
+})),
+  'issues': z.array(z.string()),
+  'source': z.union([z.literal("agent"), z.literal("manual")]),
+})]).optional(),
+  'candidate': z.union([z.undefined(), z.object({
+  'path': z.string(),
+  'assets': z.array(z.object({
+  'path': z.string(),
+  'left': z.number(),
+  'top': z.number(),
+  'width': z.number(),
+  'height': z.number(),
+})),
+  'issues': z.array(z.string()),
+  'source': z.union([z.literal("agent"), z.literal("manual")]),
+})]).optional(),
+  'job': z.union([z.undefined(), z.object({
+  'id': z.string(),
+  'model': z.object({
+  'provider': z.string(),
+  'model': z.string(),
+}),
+})]).optional(),
+  'error': z.union([z.undefined(), z.string()]).optional(),
+})]).optional(),
+  'markdown': z.union([z.undefined(), z.string()]).optional(),
+  'candidateMarkdown': z.union([z.undefined(), z.string()]).optional(),
+}))
+let _winterhuan_dsh_student_student_textbookUpload_parameter_0$schema$value
+const _winterhuan_dsh_student_student_textbookUpload_parameter_0$schema = () => (_winterhuan_dsh_student_student_textbookUpload_parameter_0$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbookUpload_parameter_1$schema$value
+const _winterhuan_dsh_student_student_textbookUpload_parameter_1$schema = () => (_winterhuan_dsh_student_student_textbookUpload_parameter_1$schema$value ??= z.object({
+  'bookId': z.string(),
+  'pageId': z.string(),
+  'position': z.number(),
+  'printedPage': z.string(),
+  'data': z.string(),
+}))
+let _winterhuan_dsh_student_student_textbookUpload_result$schema$value
+const _winterhuan_dsh_student_student_textbookUpload_result$schema = () => (_winterhuan_dsh_student_student_textbookUpload_result$schema$value ??= z.object({
+  'workspaceId': z.union([z.undefined(), z.string()]).optional(),
+  'books': z.union([z.undefined(), z.array(z.object({
+  'format': z.literal(1),
+  'id': z.string(),
+  'title': z.string(),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english"), z.literal("other")]),
+  'expectedPages': z.union([z.literal(null), z.number()]),
+  'revision': z.number(),
+  'confirmedAt': z.union([z.undefined(), z.number()]).optional(),
+}))]).optional(),
+  'book': z.union([z.undefined(), z.object({
+  'format': z.literal(1),
+  'id': z.string(),
+  'title': z.string(),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english"), z.literal("other")]),
+  'expectedPages': z.union([z.literal(null), z.number()]),
+  'revision': z.number(),
+  'confirmedAt': z.union([z.undefined(), z.number()]).optional(),
+})]).optional(),
+  'pages': z.union([z.undefined(), z.array(z.object({
+  'format': z.literal(1),
+  'id': z.string(),
+  'bookId': z.string(),
+  'position': z.number(),
+  'printedPage': z.string(),
+  'sha256': z.string(),
+  'mediaType': z.union([z.literal("image/jpeg"), z.literal("image/png"), z.literal("image/webp")]),
+  'width': z.number(),
+  'height': z.number(),
+  'original': z.string(),
+  'revision': z.number(),
+  'status': z.union([z.literal("failed"), z.literal("received"), z.literal("queued"), z.literal("parsing"), z.literal("review"), z.literal("confirmed")]),
+  'updatedAt': z.number(),
+  'excluded': z.union([z.undefined(), z.literal(false), z.literal(true)]).optional(),
+  'content': z.union([z.undefined(), z.object({
+  'path': z.string(),
+  'assets': z.array(z.object({
+  'path': z.string(),
+  'left': z.number(),
+  'top': z.number(),
+  'width': z.number(),
+  'height': z.number(),
+})),
+  'issues': z.array(z.string()),
+  'source': z.union([z.literal("agent"), z.literal("manual")]),
+})]).optional(),
+  'candidate': z.union([z.undefined(), z.object({
+  'path': z.string(),
+  'assets': z.array(z.object({
+  'path': z.string(),
+  'left': z.number(),
+  'top': z.number(),
+  'width': z.number(),
+  'height': z.number(),
+})),
+  'issues': z.array(z.string()),
+  'source': z.union([z.literal("agent"), z.literal("manual")]),
+})]).optional(),
+  'job': z.union([z.undefined(), z.object({
+  'id': z.string(),
+  'model': z.object({
+  'provider': z.string(),
+  'model': z.string(),
+}),
+})]).optional(),
+  'error': z.union([z.undefined(), z.string()]).optional(),
+}))]).optional(),
+  'page': z.union([z.undefined(), z.object({
+  'format': z.literal(1),
+  'id': z.string(),
+  'bookId': z.string(),
+  'position': z.number(),
+  'printedPage': z.string(),
+  'sha256': z.string(),
+  'mediaType': z.union([z.literal("image/jpeg"), z.literal("image/png"), z.literal("image/webp")]),
+  'width': z.number(),
+  'height': z.number(),
+  'original': z.string(),
+  'revision': z.number(),
+  'status': z.union([z.literal("failed"), z.literal("received"), z.literal("queued"), z.literal("parsing"), z.literal("review"), z.literal("confirmed")]),
+  'updatedAt': z.number(),
+  'excluded': z.union([z.undefined(), z.literal(false), z.literal(true)]).optional(),
+  'content': z.union([z.undefined(), z.object({
+  'path': z.string(),
+  'assets': z.array(z.object({
+  'path': z.string(),
+  'left': z.number(),
+  'top': z.number(),
+  'width': z.number(),
+  'height': z.number(),
+})),
+  'issues': z.array(z.string()),
+  'source': z.union([z.literal("agent"), z.literal("manual")]),
+})]).optional(),
+  'candidate': z.union([z.undefined(), z.object({
+  'path': z.string(),
+  'assets': z.array(z.object({
+  'path': z.string(),
+  'left': z.number(),
+  'top': z.number(),
+  'width': z.number(),
+  'height': z.number(),
+})),
+  'issues': z.array(z.string()),
+  'source': z.union([z.literal("agent"), z.literal("manual")]),
+})]).optional(),
+  'job': z.union([z.undefined(), z.object({
+  'id': z.string(),
+  'model': z.object({
+  'provider': z.string(),
+  'model': z.string(),
+}),
+})]).optional(),
+  'error': z.union([z.undefined(), z.string()]).optional(),
+})]).optional(),
+  'markdown': z.union([z.undefined(), z.string()]).optional(),
+  'candidateMarkdown': z.union([z.undefined(), z.string()]).optional(),
+}))
 let _winterhuan_dsh_student_student_watch_parameter_0$schema$value
 const _winterhuan_dsh_student_student_watch_parameter_0$schema = () => (_winterhuan_dsh_student_student_watch_parameter_0$schema$value ??= z.string())
 let _winterhuan_dsh_student_student_watch_parameter_1$schema$value
 const _winterhuan_dsh_student_student_watch_parameter_1$schema = () => (_winterhuan_dsh_student_student_watch_parameter_1$schema$value ??= z.union([z.object({
-  'kind': z.union([z.literal("daily-plan"), z.literal("capability-progress"), z.literal("capabilities"), z.literal("families"), z.literal("knowledge-sources"), z.literal("legacy-references"), z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("status"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
-  'subject': z.union([z.undefined(), z.literal("math"), z.literal("chinese"), z.literal("english")]).optional(),
+  'kind': z.union([z.literal("status"), z.literal("daily-plan"), z.literal("capability-progress"), z.literal("capabilities"), z.literal("families"), z.literal("knowledge-sources"), z.literal("legacy-references"), z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
+  'subject': z.union([z.undefined(), z.literal("chinese"), z.literal("math"), z.literal("english")]).optional(),
   'id': z.union([z.undefined(), z.string()]).optional(),
   'unit': z.union([z.undefined(), z.string()]).optional(),
   'grade': z.union([z.undefined(), z.number()]).optional(),
@@ -581,7 +921,7 @@ const _winterhuan_dsh_student_student_watch_parameter_1$schema = () => (_winterh
 }), z.object({
   'kind': z.literal("dashboard"),
   'options': z.union([z.undefined(), z.object({
-  'subject': z.union([z.undefined(), z.literal("math"), z.literal("chinese"), z.literal("english")]).optional(),
+  'subject': z.union([z.undefined(), z.literal("chinese"), z.literal("math"), z.literal("english")]).optional(),
   'mistakeOffset': z.union([z.undefined(), z.number()]).optional(),
   'mistakeStatus': z.union([z.undefined(), z.literal("due"), z.literal("all"), z.literal("reviewing"), z.literal("mastered")]).optional(),
   'mapGrade': z.union([z.undefined(), z.number()]).optional(),
@@ -589,7 +929,7 @@ const _winterhuan_dsh_student_student_watch_parameter_1$schema = () => (_winterh
   'diagGrade': z.union([z.undefined(), z.number()]).optional(),
   'diagTerm': z.union([z.undefined(), z.literal("first"), z.literal("second")]).optional(),
   'diagUnit': z.union([z.undefined(), z.string()]).optional(),
-  'tab': z.union([z.undefined(), z.literal("mistakes"), z.literal("map"), z.literal("today"), z.literal("parent")]).optional(),
+  'tab': z.union([z.undefined(), z.literal("map"), z.literal("mistakes"), z.literal("today"), z.literal("parent")]).optional(),
 })]).optional(),
 })]))
 let _winterhuan_dsh_student_student_watch_result$schema$value
@@ -620,14 +960,14 @@ const _winterhuan_dsh_student_student_watch_result$schema = () => (_winterhuan_d
   'blockId': z.union([z.undefined(), z.string()]).optional(),
   'questionId': z.union([z.undefined(), z.string()]).optional(),
   'responseId': z.union([z.undefined(), z.string()]).optional(),
-  'selection': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
-  'dailyContext': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
-  'dailyAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
-  'nextAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
-  'previousActivity': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+  'selection': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+  'dailyContext': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+  'dailyAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+  'nextAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+  'previousActivity': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
   'continuationAction': z.union([z.undefined(), z.string()]).optional(),
-  'operation': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
-  'courseAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema2())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema2()))]).optional(),
+  'operation': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
+  'courseAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => PanelJsonValueRemoteCodec$schema3())), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))])), z.record(z.string(), z.lazy(() => PanelJsonValueRemoteCodec$schema3()))]).optional(),
 })]).optional(),
   'messageId': z.string(),
   'requestId': z.union([z.undefined(), z.string()]).optional(),
@@ -672,17 +1012,17 @@ const _winterhuan_dsh_student_student_watch_result$schema = () => (_winterhuan_d
   'correction': z.string(),
 })),
   'status': z.union([z.literal("partial"), z.literal("valid"), z.literal("missing"), z.literal("invalid"), z.literal("future-format"), z.literal("changing"), z.literal("legacy"), z.literal("archived")]),
-  'versions': z.array(z.object({
-  'version': z.string(),
-  'path': z.string(),
-  'targetKey': z.string(),
-})),
   'issues': z.union([z.undefined(), z.array(z.object({
   'path': z.string(),
   'field': z.string(),
   'rule': z.string(),
   'correction': z.string(),
 }))]).optional(),
+  'versions': z.array(z.object({
+  'version': z.string(),
+  'path': z.string(),
+  'targetKey': z.string(),
+})),
 }),
 }), z.object({
   'kind': z.literal("failure"),
@@ -783,7 +1123,7 @@ const _winterhuan_dsh_student_student_manualContext_parameter_1_strict$schema = 
   'action': z.literal("configure-course"),
   'material': z.strictObject({
   'id': z.string(),
-  'subject': z.union([z.literal("math"), z.literal("chinese"), z.literal("english")]),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english")]),
   'scope': z.strictObject({
   'region': z.string(),
   'grade': z.number(),
@@ -800,7 +1140,7 @@ const _winterhuan_dsh_student_student_manualContext_parameter_1_strict$schema = 
   'evidence': z.string(),
 }),
   'course': z.strictObject({
-  'subject': z.union([z.literal("math"), z.literal("chinese"), z.literal("english")]),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english")]),
   'materialId': z.string(),
   'unit': z.string(),
   'parentConfirmation': z.string(),
@@ -809,17 +1149,17 @@ const _winterhuan_dsh_student_student_manualContext_parameter_1_strict$schema = 
   'unitId': z.string(),
   'posture': z.union([z.literal("keep-up"), z.literal("catch-up")]),
   'preview': z.union([z.literal("on"), z.literal("off")]),
-  'pace': z.union([z.literal("teaching"), z.literal("review")]),
+  'pace': z.union([z.literal("review"), z.literal("teaching")]),
   'parentConfirmation': z.string(),
 })]).optional(),
 }), z.strictObject({
   'unitId': z.string(),
   'posture': z.union([z.literal("keep-up"), z.literal("catch-up")]),
   'preview': z.union([z.literal("on"), z.literal("off")]),
-  'pace': z.union([z.literal("teaching"), z.literal("review")]),
+  'pace': z.union([z.literal("review"), z.literal("teaching")]),
   'parentConfirmation': z.string(),
   'action': z.literal("school-progress"),
-  'subject': z.union([z.literal("math"), z.literal("chinese"), z.literal("english")]),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english")]),
 }), z.strictObject({
   'action': z.literal("openmaic-settings"),
   'baseUrl': z.string(),
@@ -901,8 +1241,8 @@ let _winterhuan_dsh_student_student_query_parameter_0_strict$schema$value
 const _winterhuan_dsh_student_student_query_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_query_parameter_0_strict$schema$value ??= z.string())
 let _winterhuan_dsh_student_student_query_parameter_1_strict$schema$value
 const _winterhuan_dsh_student_student_query_parameter_1_strict$schema = () => (_winterhuan_dsh_student_student_query_parameter_1_strict$schema$value ??= z.union([z.strictObject({
-  'kind': z.union([z.literal("daily-plan"), z.literal("capability-progress"), z.literal("capabilities"), z.literal("families"), z.literal("knowledge-sources"), z.literal("legacy-references"), z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("status"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
-  'subject': z.union([z.undefined(), z.literal("math"), z.literal("chinese"), z.literal("english")]).optional(),
+  'kind': z.union([z.literal("status"), z.literal("daily-plan"), z.literal("capability-progress"), z.literal("capabilities"), z.literal("families"), z.literal("knowledge-sources"), z.literal("legacy-references"), z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
+  'subject': z.union([z.undefined(), z.literal("chinese"), z.literal("math"), z.literal("english")]).optional(),
   'id': z.union([z.undefined(), z.string()]).optional(),
   'unit': z.union([z.undefined(), z.string()]).optional(),
   'grade': z.union([z.undefined(), z.number()]).optional(),
@@ -911,7 +1251,7 @@ const _winterhuan_dsh_student_student_query_parameter_1_strict$schema = () => (_
 }), z.strictObject({
   'kind': z.literal("dashboard"),
   'options': z.union([z.undefined(), z.strictObject({
-  'subject': z.union([z.undefined(), z.literal("math"), z.literal("chinese"), z.literal("english")]).optional(),
+  'subject': z.union([z.undefined(), z.literal("chinese"), z.literal("math"), z.literal("english")]).optional(),
   'mistakeOffset': z.union([z.undefined(), z.number()]).optional(),
   'mistakeStatus': z.union([z.undefined(), z.literal("due"), z.literal("all"), z.literal("reviewing"), z.literal("mastered")]).optional(),
   'mapGrade': z.union([z.undefined(), z.number()]).optional(),
@@ -919,7 +1259,7 @@ const _winterhuan_dsh_student_student_query_parameter_1_strict$schema = () => (_
   'diagGrade': z.union([z.undefined(), z.number()]).optional(),
   'diagTerm': z.union([z.undefined(), z.literal("first"), z.literal("second")]).optional(),
   'diagUnit': z.union([z.undefined(), z.string()]).optional(),
-  'tab': z.union([z.undefined(), z.literal("mistakes"), z.literal("map"), z.literal("today"), z.literal("parent")]).optional(),
+  'tab': z.union([z.undefined(), z.literal("map"), z.literal("mistakes"), z.literal("today"), z.literal("parent")]).optional(),
 })]).optional(),
 })]))
 let _winterhuan_dsh_student_student_saveManual_parameter_0_strict$schema$value
@@ -950,7 +1290,7 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema = () 
   'action': z.literal("configure-course"),
   'material': z.strictObject({
   'id': z.string(),
-  'subject': z.union([z.literal("math"), z.literal("chinese"), z.literal("english")]),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english")]),
   'scope': z.strictObject({
   'region': z.string(),
   'grade': z.number(),
@@ -967,7 +1307,7 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema = () 
   'evidence': z.string(),
 }),
   'course': z.strictObject({
-  'subject': z.union([z.literal("math"), z.literal("chinese"), z.literal("english")]),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english")]),
   'materialId': z.string(),
   'unit': z.string(),
   'parentConfirmation': z.string(),
@@ -976,17 +1316,17 @@ const _winterhuan_dsh_student_student_saveManual_parameter_1_strict$schema = () 
   'unitId': z.string(),
   'posture': z.union([z.literal("keep-up"), z.literal("catch-up")]),
   'preview': z.union([z.literal("on"), z.literal("off")]),
-  'pace': z.union([z.literal("teaching"), z.literal("review")]),
+  'pace': z.union([z.literal("review"), z.literal("teaching")]),
   'parentConfirmation': z.string(),
 })]).optional(),
 }), z.strictObject({
   'unitId': z.string(),
   'posture': z.union([z.literal("keep-up"), z.literal("catch-up")]),
   'preview': z.union([z.literal("on"), z.literal("off")]),
-  'pace': z.union([z.literal("teaching"), z.literal("review")]),
+  'pace': z.union([z.literal("review"), z.literal("teaching")]),
   'parentConfirmation': z.string(),
   'action': z.literal("school-progress"),
-  'subject': z.union([z.literal("math"), z.literal("chinese"), z.literal("english")]),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english")]),
 }), z.strictObject({
   'action': z.literal("openmaic-settings"),
   'baseUrl': z.string(),
@@ -1093,7 +1433,7 @@ const _winterhuan_dsh_student_student_submitIntent_parameter_1_strict$schema = (
   'courseAction': z.union([z.undefined(), z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.union([z.literal(null), z.string(), z.number(), z.literal(false), z.literal(true), z.array(z.lazy(() => closed$PanelJsonValueRemoteCodec$schema())), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))])), z.record(z.string(), z.lazy(() => closed$PanelJsonValueRemoteCodec$schema()))]).optional(),
 }),
   'photo': z.union([z.undefined(), z.strictObject({
-  'mediaType': z.union([z.literal("image/png"), z.literal("image/jpeg"), z.literal("image/webp")]),
+  'mediaType': z.union([z.literal("image/jpeg"), z.literal("image/png"), z.literal("image/webp")]),
   'data': z.string(),
   'name': z.string(),
 })]).optional(),
@@ -1105,12 +1445,93 @@ const _winterhuan_dsh_student_student_syncFeedback_parameter_1_strict$schema = (
   'lessonId': z.string(),
   'trigger': z.union([z.literal("return"), z.literal("continue"), z.literal("resume"), z.literal("pause")]),
 }))
+let _winterhuan_dsh_student_student_textbookDevices_parameter_0_strict$schema$value
+const _winterhuan_dsh_student_student_textbookDevices_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_textbookDevices_parameter_0_strict$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbookDevices_parameter_1_strict$schema$value
+const _winterhuan_dsh_student_student_textbookDevices_parameter_1_strict$schema = () => (_winterhuan_dsh_student_student_textbookDevices_parameter_1_strict$schema$value ??= z.union([z.undefined(), z.string()]))
+let _winterhuan_dsh_student_student_textbookImage_parameter_0_strict$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_0_strict$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbookImage_parameter_1_strict$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_1_strict$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_1_strict$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbookImage_parameter_2_strict$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_2_strict$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_2_strict$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbookImage_parameter_3_strict$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_3_strict$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_3_strict$schema$value ??= z.union([z.literal("original"), z.literal("asset")]))
+let _winterhuan_dsh_student_student_textbookImage_parameter_4_strict$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_4_strict$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_4_strict$schema$value ??= z.number())
+let _winterhuan_dsh_student_student_textbookImage_parameter_5_strict$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_5_strict$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_5_strict$schema$value ??= z.boolean())
+let _winterhuan_dsh_student_student_textbookImage_parameter_6_strict$schema$value
+const _winterhuan_dsh_student_student_textbookImage_parameter_6_strict$schema = () => (_winterhuan_dsh_student_student_textbookImage_parameter_6_strict$schema$value ??= z.number())
+let _winterhuan_dsh_student_student_textbookPair_parameter_0_strict$schema$value
+const _winterhuan_dsh_student_student_textbookPair_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_textbookPair_parameter_0_strict$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbooks_parameter_0_strict$schema$value
+const _winterhuan_dsh_student_student_textbooks_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_textbooks_parameter_0_strict$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbooks_parameter_1_strict$schema$value
+const _winterhuan_dsh_student_student_textbooks_parameter_1_strict$schema = () => (_winterhuan_dsh_student_student_textbooks_parameter_1_strict$schema$value ??= z.union([z.strictObject({
+  'action': z.literal("list"),
+}), z.strictObject({
+  'action': z.literal("create"),
+  'id': z.string(),
+  'title': z.string(),
+  'subject': z.union([z.literal("chinese"), z.literal("math"), z.literal("english"), z.literal("other")]),
+  'expectedPages': z.union([z.literal(null), z.number()]),
+}), z.strictObject({
+  'action': z.literal("book"),
+  'bookId': z.string(),
+}), z.strictObject({
+  'action': z.literal("configure"),
+  'bookId': z.string(),
+  'revision': z.number(),
+  'title': z.string(),
+  'expectedPages': z.union([z.literal(null), z.number()]),
+}), z.strictObject({
+  'action': z.literal("page"),
+  'bookId': z.string(),
+  'pageId': z.string(),
+}), z.strictObject({
+  'action': z.literal("queue"),
+  'bookId': z.string(),
+  'pageId': z.string(),
+  'revision': z.number(),
+  'requestId': z.union([z.undefined(), z.string()]).optional(),
+}), z.strictObject({
+  'action': z.literal("exclude"),
+  'bookId': z.string(),
+  'pageId': z.string(),
+  'revision': z.number(),
+  'excluded': z.boolean(),
+}), z.strictObject({
+  'action': z.literal("edit"),
+  'bookId': z.string(),
+  'pageId': z.string(),
+  'revision': z.number(),
+  'markdown': z.string(),
+  'printedPage': z.string(),
+  'position': z.number(),
+  'confirm': z.boolean(),
+  'useCandidate': z.boolean(),
+}), z.strictObject({
+  'action': z.literal("complete"),
+  'bookId': z.string(),
+  'revision': z.number(),
+})]))
+let _winterhuan_dsh_student_student_textbookUpload_parameter_0_strict$schema$value
+const _winterhuan_dsh_student_student_textbookUpload_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_textbookUpload_parameter_0_strict$schema$value ??= z.string())
+let _winterhuan_dsh_student_student_textbookUpload_parameter_1_strict$schema$value
+const _winterhuan_dsh_student_student_textbookUpload_parameter_1_strict$schema = () => (_winterhuan_dsh_student_student_textbookUpload_parameter_1_strict$schema$value ??= z.strictObject({
+  'bookId': z.string(),
+  'pageId': z.string(),
+  'position': z.number(),
+  'printedPage': z.string(),
+  'data': z.string(),
+}))
 let _winterhuan_dsh_student_student_watch_parameter_0_strict$schema$value
 const _winterhuan_dsh_student_student_watch_parameter_0_strict$schema = () => (_winterhuan_dsh_student_student_watch_parameter_0_strict$schema$value ??= z.string())
 let _winterhuan_dsh_student_student_watch_parameter_1_strict$schema$value
 const _winterhuan_dsh_student_student_watch_parameter_1_strict$schema = () => (_winterhuan_dsh_student_student_watch_parameter_1_strict$schema$value ??= z.union([z.strictObject({
-  'kind': z.union([z.literal("daily-plan"), z.literal("capability-progress"), z.literal("capabilities"), z.literal("families"), z.literal("knowledge-sources"), z.literal("legacy-references"), z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("status"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
-  'subject': z.union([z.undefined(), z.literal("math"), z.literal("chinese"), z.literal("english")]).optional(),
+  'kind': z.union([z.literal("status"), z.literal("daily-plan"), z.literal("capability-progress"), z.literal("capabilities"), z.literal("families"), z.literal("knowledge-sources"), z.literal("legacy-references"), z.literal("learning-context"), z.literal("summary"), z.literal("files"), z.literal("settings"), z.literal("curriculum"), z.literal("elements"), z.literal("exercises"), z.literal("review-sheet"), z.literal("diagnose"), z.literal("weak"), z.literal("due"), z.literal("pending"), z.literal("progress"), z.literal("concepts"), z.literal("objectives"), z.literal("relations"), z.literal("worksheets"), z.literal("paper-results"), z.literal("materials"), z.literal("mistakes"), z.literal("sessions"), z.literal("attempts")]),
+  'subject': z.union([z.undefined(), z.literal("chinese"), z.literal("math"), z.literal("english")]).optional(),
   'id': z.union([z.undefined(), z.string()]).optional(),
   'unit': z.union([z.undefined(), z.string()]).optional(),
   'grade': z.union([z.undefined(), z.number()]).optional(),
@@ -1119,7 +1540,7 @@ const _winterhuan_dsh_student_student_watch_parameter_1_strict$schema = () => (_
 }), z.strictObject({
   'kind': z.literal("dashboard"),
   'options': z.union([z.undefined(), z.strictObject({
-  'subject': z.union([z.undefined(), z.literal("math"), z.literal("chinese"), z.literal("english")]).optional(),
+  'subject': z.union([z.undefined(), z.literal("chinese"), z.literal("math"), z.literal("english")]).optional(),
   'mistakeOffset': z.union([z.undefined(), z.number()]).optional(),
   'mistakeStatus': z.union([z.undefined(), z.literal("due"), z.literal("all"), z.literal("reviewing"), z.literal("mastered")]).optional(),
   'mapGrade': z.union([z.undefined(), z.number()]).optional(),
@@ -1127,7 +1548,7 @@ const _winterhuan_dsh_student_student_watch_parameter_1_strict$schema = () => (_
   'diagGrade': z.union([z.undefined(), z.number()]).optional(),
   'diagTerm': z.union([z.undefined(), z.literal("first"), z.literal("second")]).optional(),
   'diagUnit': z.union([z.undefined(), z.string()]).optional(),
-  'tab': z.union([z.undefined(), z.literal("mistakes"), z.literal("map"), z.literal("today"), z.literal("parent")]).optional(),
+  'tab': z.union([z.undefined(), z.literal("map"), z.literal("mistakes"), z.literal("today"), z.literal("parent")]).optional(),
 })]).optional(),
 })]))
 let _winterhuan_dsh_student_studentOpenmaicPlayback_mini_parameter_0_strict$schema$value
@@ -1194,7 +1615,7 @@ const $remote = createTypertRemoteInfo({
         description: 'admission, saved-answer and valid-assessment facts separately; omitted admission remains unknown.',
         jsonSchema: {"type":"object","properties":{"requestId":{"type":"string"},"admission":{"type":"string","enum":["unknown","accepted"]},"nativeStates":{"type":"array","items":{"type":"string","enum":["pending","consumed","claimed","removed"]}},"nativeSourceStatus":{"type":"string","enum":["unavailable","available"]},"cut":{"type":"object","properties":{"sessionId":{"type":"string"},"cursor":{"type":"number"},"source":{"type":"string","enum":["live","prepared"]},"inheritedEventCount":{"type":"number"},"revision":{"type":"string"}},"required":["sessionId","cursor","source","inheritedEventCount"],"additionalProperties":true},"answer":{"type":"string","enum":["unavailable","missing","saved","not-requested"]},"assessment":{"type":"string","enum":["unavailable","pending","valid","not-requested"]},"readStatus":{"type":"string","enum":["valid","missing","invalid","future-format","changing","legacy","archived"]},"versions":{"type":"array","items":{"type":"object","properties":{"version":{"type":"string"},"path":{"type":"string"},"targetKey":{"type":"string"}},"required":["version","path","targetKey"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}},"backupIssues":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"field":{"type":"string"},"rule":{"type":"string"},"correction":{"type":"string"}},"required":["path","field","rule","correction"],"additionalProperties":true}}},"required":["requestId","admission","nativeStates","nativeSourceStatus","answer","assessment","readStatus","versions","issues"],"additionalProperties":true},
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":191,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":254,"column":9},
     },
     'student/manualContext': {
       service: 'student',
@@ -1244,7 +1665,7 @@ const $remote = createTypertRemoteInfo({
         description: 'exact current term identity, observed versions, draft baseline and read issues.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":161,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":224,"column":9},
     },
     'student/query': {
       service: 'student',
@@ -1276,13 +1697,13 @@ const $remote = createTypertRemoteInfo({
             mode: 'strict',
             typeSymbol: '@winterhuan/dsh-student/types#StudentQueryRequest',
             create: _winterhuan_dsh_student_student_query_parameter_1$schema,
-            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["daily-plan","capability-progress","capabilities","families","knowledge-sources","legacy-references","learning-context","summary","files","settings","status","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["math","chinese","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":true},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["math","chinese","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["mistakes","map","today","parent"]}},"required":[],"additionalProperties":true}},"required":["kind"],"additionalProperties":true}]},
+            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["status","daily-plan","capability-progress","capabilities","families","knowledge-sources","legacy-references","learning-context","summary","files","settings","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["chinese","math","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":true},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["chinese","math","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["map","mistakes","today","parent"]}},"required":[],"additionalProperties":true}},"required":["kind"],"additionalProperties":true}]},
           },
           strictCodec: {
             mode: 'strict',
             typeSymbol: '@winterhuan/dsh-student/types#StudentQueryRequest',
             create: _winterhuan_dsh_student_student_query_parameter_1_strict$schema,
-            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["daily-plan","capability-progress","capabilities","families","knowledge-sources","legacy-references","learning-context","summary","files","settings","status","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["math","chinese","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":false},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["math","chinese","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["mistakes","map","today","parent"]}},"required":[],"additionalProperties":false}},"required":["kind"],"additionalProperties":false}]},
+            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["status","daily-plan","capability-progress","capabilities","families","knowledge-sources","legacy-references","learning-context","summary","files","settings","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["chinese","math","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":false},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["chinese","math","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["map","mistakes","today","parent"]}},"required":[],"additionalProperties":false}},"required":["kind"],"additionalProperties":false}]},
           },
         },
       ],
@@ -1294,7 +1715,7 @@ const $remote = createTypertRemoteInfo({
         description: 'current projection, actual file versions, cut and explicit partial or unavailable status.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":111,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":174,"column":9},
     },
     'student/saveManual': {
       service: 'student',
@@ -1344,7 +1765,7 @@ const $remote = createTypertRemoteInfo({
         description: 'thin save outcome, current edited values and versions for subsequent draft saves.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":176,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":239,"column":9},
     },
     'student/submitIntent': {
       service: 'student',
@@ -1394,7 +1815,7 @@ const $remote = createTypertRemoteInfo({
         description: 'Admission only; the agent authors and validates business files.',
         jsonSchema: {"type":"object","properties":{"accepted":{"type":"boolean","const":true}},"required":["accepted"],"additionalProperties":true},
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":67,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":130,"column":9},
     },
     'student/syncFeedback': {
       service: 'student',
@@ -1444,7 +1865,326 @@ const $remote = createTypertRemoteInfo({
         description: 'Queue state only. Failure, cancellation and completion allow a later explicit retry; no automatic wake loop or academic write occurs.',
         jsonSchema: {"type":"object","properties":{"lessonId":{"type":"string"},"status":{"type":"string","enum":["unavailable","queued","coalesced","paused"]},"messageId":{"type":"string"}},"required":["lessonId","status"],"additionalProperties":true},
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":218,"column":9},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":281,"column":9},
+    },
+    'student/textbookDevices': {
+      service: 'student',
+      description: 'List or revoke only the devices paired with this workspace.',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'sessionId',
+          description: 'Authorized main Session.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_textbookDevices_parameter_0$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_textbookDevices_parameter_0_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+        {
+          name: 'revoke',
+          description: 'Optional device identity whose grant should be removed.',
+          source: 'json',
+          acceptsUndefined: true,
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookDevices:revoke',
+            create: _winterhuan_dsh_student_student_textbookDevices_parameter_1$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookDevices:revoke',
+            create: _winterhuan_dsh_student_student_textbookDevices_parameter_1_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+      ],
+      cancellation: { parameter: 'signal' },
+      result: {
+        mode: 'strict',
+        typeSymbol: '@winterhuan/dsh-student#student/textbookDevices:result',
+        create: _winterhuan_dsh_student_student_textbookDevices_result$schema,
+        description: 'Remaining devices without secret credentials.',
+        jsonSchema: {"type":"array","items":{"type":"object","properties":{"id":{"type":"string"},"name":{"type":"string"},"createdAt":{"type":"number"}},"required":["id","name","createdAt"],"additionalProperties":true}},
+      },
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":89,"column":9},
+    },
+    'student/textbookImage': {
+      service: 'student',
+      description: 'Read a page-owned image for desktop proofreading without exposing arbitrary workspace paths.',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'sessionId',
+          description: 'Authorized main Session.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_0$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_0_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+        {
+          name: 'bookId',
+          description: 'Owning book identity.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookImage:bookId',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_1$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookImage:bookId',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_1_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+        {
+          name: 'pageId',
+          description: 'Owning page identity.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookImage:pageId',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_2$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookImage:pageId',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_2_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+        {
+          name: 'kind',
+          description: 'Original photo or cropped illustration.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookImage:kind',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_3$schema,
+            jsonSchema: {"type":"string","enum":["original","asset"]},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookImage:kind',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_3_strict$schema,
+            jsonSchema: {"type":"string","enum":["original","asset"]},
+          },
+        },
+        {
+          name: 'index',
+          description: 'Illustration index, ignored for originals.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookImage:index',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_4$schema,
+            jsonSchema: {"type":"number"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookImage:index',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_4_strict$schema,
+            jsonSchema: {"type":"number"},
+          },
+        },
+        {
+          name: 'candidate',
+          description: 'Select the candidate\'s illustrations when true.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookImage:candidate',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_5$schema,
+            jsonSchema: {"type":"boolean"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookImage:candidate',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_5_strict$schema,
+            jsonSchema: {"type":"boolean"},
+          },
+        },
+        {
+          name: 'revision',
+          description: 'Observed page revision, checked for illustrations.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookImage:revision',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_6$schema,
+            jsonSchema: {"type":"number"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookImage:revision',
+            create: _winterhuan_dsh_student_student_textbookImage_parameter_6_strict$schema,
+            jsonSchema: {"type":"number"},
+          },
+        },
+      ],
+      cancellation: { parameter: 'signal' },
+      result: {
+        mode: 'strict',
+        typeSymbol: '@winterhuan/dsh-student#student/textbookImage:result',
+        create: _winterhuan_dsh_student_student_textbookImage_result$schema,
+        description: 'Bounded base64 image and media type.',
+        jsonSchema: {"type":"object","properties":{"data":{"type":"string"},"mediaType":{"type":"string"}},"required":["data","mediaType"],"additionalProperties":true},
+      },
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":117,"column":9},
+    },
+    'student/textbookPair': {
+      service: 'student',
+      description: 'Issue a one-time phone pairing grant; this never reveals the DSH management credential.',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'sessionId',
+          description: 'Authorized main Session.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_textbookPair_parameter_0$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_textbookPair_parameter_0_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+      ],
+      cancellation: { parameter: 'signal' },
+      result: {
+        mode: 'strict',
+        typeSymbol: '@winterhuan/dsh-student/types#TextbookPairing',
+        create: _winterhuan_dsh_student_student_textbookPair_result$schema,
+        description: 'Expiring grant with the HTTPS address and certificate pin.',
+        jsonSchema: {"type":"object","properties":{"version":{"type":"number","const":1},"url":{"type":"string"},"pin":{"type":"string"},"code":{"type":"string"},"expiresAt":{"type":"number"}},"required":["version","url","pin","code","expiresAt"],"additionalProperties":true},
+      },
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":78,"column":9},
+    },
+    'student/textbooks': {
+      service: 'student',
+      description: 'Apply a textbook command within the authorized main Session\'s workspace.',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'sessionId',
+          description: 'Authorized main Session.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_textbooks_parameter_0$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_textbooks_parameter_0_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+        {
+          name: 'request',
+          description: 'Validated library operation and observed revisions.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#TextbookCommand',
+            create: _winterhuan_dsh_student_student_textbooks_parameter_1$schema,
+            jsonSchema: {"oneOf":[{"type":"object","properties":{"action":{"type":"string","const":"list"}},"required":["action"],"additionalProperties":true},{"type":"object","properties":{"action":{"type":"string","const":"create"},"id":{"type":"string"},"title":{"type":"string"},"subject":{"type":"string","enum":["chinese","math","english","other"]},"expectedPages":{"oneOf":[{"type":"null","const":null},{"type":"number"}]}},"required":["action","id","title","subject","expectedPages"],"additionalProperties":true},{"type":"object","properties":{"action":{"type":"string","const":"book"},"bookId":{"type":"string"}},"required":["action","bookId"],"additionalProperties":true},{"type":"object","properties":{"action":{"type":"string","const":"configure"},"bookId":{"type":"string"},"revision":{"type":"number"},"title":{"type":"string"},"expectedPages":{"oneOf":[{"type":"null","const":null},{"type":"number"}]}},"required":["action","bookId","revision","title","expectedPages"],"additionalProperties":true},{"type":"object","properties":{"action":{"type":"string","const":"page"},"bookId":{"type":"string"},"pageId":{"type":"string"}},"required":["action","bookId","pageId"],"additionalProperties":true},{"type":"object","properties":{"action":{"type":"string","const":"queue"},"bookId":{"type":"string"},"pageId":{"type":"string"},"revision":{"type":"number"},"requestId":{"type":"string"}},"required":["action","bookId","pageId","revision"],"additionalProperties":true},{"type":"object","properties":{"action":{"type":"string","const":"exclude"},"bookId":{"type":"string"},"pageId":{"type":"string"},"revision":{"type":"number"},"excluded":{"type":"boolean"}},"required":["action","bookId","pageId","revision","excluded"],"additionalProperties":true},{"type":"object","properties":{"action":{"type":"string","const":"edit"},"bookId":{"type":"string"},"pageId":{"type":"string"},"revision":{"type":"number"},"markdown":{"type":"string"},"printedPage":{"type":"string"},"position":{"type":"number"},"confirm":{"type":"boolean"},"useCandidate":{"type":"boolean"}},"required":["action","bookId","pageId","revision","markdown","printedPage","position","confirm","useCandidate"],"additionalProperties":true},{"type":"object","properties":{"action":{"type":"string","const":"complete"},"bookId":{"type":"string"},"revision":{"type":"number"}},"required":["action","bookId","revision"],"additionalProperties":true}]},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#TextbookCommand',
+            create: _winterhuan_dsh_student_student_textbooks_parameter_1_strict$schema,
+            jsonSchema: {"oneOf":[{"type":"object","properties":{"action":{"type":"string","const":"list"}},"required":["action"],"additionalProperties":false},{"type":"object","properties":{"action":{"type":"string","const":"create"},"id":{"type":"string"},"title":{"type":"string"},"subject":{"type":"string","enum":["chinese","math","english","other"]},"expectedPages":{"oneOf":[{"type":"null","const":null},{"type":"number"}]}},"required":["action","id","title","subject","expectedPages"],"additionalProperties":false},{"type":"object","properties":{"action":{"type":"string","const":"book"},"bookId":{"type":"string"}},"required":["action","bookId"],"additionalProperties":false},{"type":"object","properties":{"action":{"type":"string","const":"configure"},"bookId":{"type":"string"},"revision":{"type":"number"},"title":{"type":"string"},"expectedPages":{"oneOf":[{"type":"null","const":null},{"type":"number"}]}},"required":["action","bookId","revision","title","expectedPages"],"additionalProperties":false},{"type":"object","properties":{"action":{"type":"string","const":"page"},"bookId":{"type":"string"},"pageId":{"type":"string"}},"required":["action","bookId","pageId"],"additionalProperties":false},{"type":"object","properties":{"action":{"type":"string","const":"queue"},"bookId":{"type":"string"},"pageId":{"type":"string"},"revision":{"type":"number"},"requestId":{"type":"string"}},"required":["action","bookId","pageId","revision"],"additionalProperties":false},{"type":"object","properties":{"action":{"type":"string","const":"exclude"},"bookId":{"type":"string"},"pageId":{"type":"string"},"revision":{"type":"number"},"excluded":{"type":"boolean"}},"required":["action","bookId","pageId","revision","excluded"],"additionalProperties":false},{"type":"object","properties":{"action":{"type":"string","const":"edit"},"bookId":{"type":"string"},"pageId":{"type":"string"},"revision":{"type":"number"},"markdown":{"type":"string"},"printedPage":{"type":"string"},"position":{"type":"number"},"confirm":{"type":"boolean"},"useCandidate":{"type":"boolean"}},"required":["action","bookId","pageId","revision","markdown","printedPage","position","confirm","useCandidate"],"additionalProperties":false},{"type":"object","properties":{"action":{"type":"string","const":"complete"},"bookId":{"type":"string"},"revision":{"type":"number"}},"required":["action","bookId","revision"],"additionalProperties":false}]},
+          },
+        },
+      ],
+      cancellation: { parameter: 'signal' },
+      result: {
+        mode: 'strict',
+        typeSymbol: '@winterhuan/dsh-student/types#TextbookReply',
+        create: _winterhuan_dsh_student_student_textbooks_result$schema,
+        description: 'Persisted library state after the operation.',
+        jsonSchema: {"type":"object","properties":{"workspaceId":{"type":"string"},"books":{"type":"array","items":{"type":"object","properties":{"format":{"type":"number","const":1},"id":{"type":"string"},"title":{"type":"string"},"subject":{"type":"string","enum":["chinese","math","english","other"]},"expectedPages":{"oneOf":[{"type":"null","const":null},{"type":"number"}]},"revision":{"type":"number"},"confirmedAt":{"type":"number"}},"required":["format","id","title","subject","expectedPages","revision"],"additionalProperties":true}},"book":{"type":"object","properties":{"format":{"type":"number","const":1},"id":{"type":"string"},"title":{"type":"string"},"subject":{"type":"string","enum":["chinese","math","english","other"]},"expectedPages":{"oneOf":[{"type":"null","const":null},{"type":"number"}]},"revision":{"type":"number"},"confirmedAt":{"type":"number"}},"required":["format","id","title","subject","expectedPages","revision"],"additionalProperties":true},"pages":{"type":"array","items":{"type":"object","properties":{"format":{"type":"number","const":1},"id":{"type":"string"},"bookId":{"type":"string"},"position":{"type":"number"},"printedPage":{"type":"string"},"sha256":{"type":"string"},"mediaType":{"type":"string","enum":["image/jpeg","image/png","image/webp"]},"width":{"type":"number"},"height":{"type":"number"},"original":{"type":"string"},"revision":{"type":"number"},"status":{"type":"string","enum":["failed","received","queued","parsing","review","confirmed"]},"updatedAt":{"type":"number"},"excluded":{"type":"boolean","enum":[false,true]},"content":{"type":"object","properties":{"path":{"type":"string"},"assets":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"left":{"type":"number"},"top":{"type":"number"},"width":{"type":"number"},"height":{"type":"number"}},"required":["path","left","top","width","height"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"string"}},"source":{"type":"string","enum":["agent","manual"]}},"required":["path","assets","issues","source"],"additionalProperties":true},"candidate":{"type":"object","properties":{"path":{"type":"string"},"assets":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"left":{"type":"number"},"top":{"type":"number"},"width":{"type":"number"},"height":{"type":"number"}},"required":["path","left","top","width","height"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"string"}},"source":{"type":"string","enum":["agent","manual"]}},"required":["path","assets","issues","source"],"additionalProperties":true},"job":{"type":"object","properties":{"id":{"type":"string"},"model":{"type":"object","properties":{"provider":{"type":"string"},"model":{"type":"string"}},"required":["provider","model"],"additionalProperties":true}},"required":["id","model"],"additionalProperties":true},"error":{"type":"string"}},"required":["format","id","bookId","position","printedPage","sha256","mediaType","width","height","original","revision","status","updatedAt"],"additionalProperties":true}},"page":{"type":"object","properties":{"format":{"type":"number","const":1},"id":{"type":"string"},"bookId":{"type":"string"},"position":{"type":"number"},"printedPage":{"type":"string"},"sha256":{"type":"string"},"mediaType":{"type":"string","enum":["image/jpeg","image/png","image/webp"]},"width":{"type":"number"},"height":{"type":"number"},"original":{"type":"string"},"revision":{"type":"number"},"status":{"type":"string","enum":["failed","received","queued","parsing","review","confirmed"]},"updatedAt":{"type":"number"},"excluded":{"type":"boolean","enum":[false,true]},"content":{"type":"object","properties":{"path":{"type":"string"},"assets":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"left":{"type":"number"},"top":{"type":"number"},"width":{"type":"number"},"height":{"type":"number"}},"required":["path","left","top","width","height"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"string"}},"source":{"type":"string","enum":["agent","manual"]}},"required":["path","assets","issues","source"],"additionalProperties":true},"candidate":{"type":"object","properties":{"path":{"type":"string"},"assets":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"left":{"type":"number"},"top":{"type":"number"},"width":{"type":"number"},"height":{"type":"number"}},"required":["path","left","top","width","height"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"string"}},"source":{"type":"string","enum":["agent","manual"]}},"required":["path","assets","issues","source"],"additionalProperties":true},"job":{"type":"object","properties":{"id":{"type":"string"},"model":{"type":"object","properties":{"provider":{"type":"string"},"model":{"type":"string"}},"required":["provider","model"],"additionalProperties":true}},"required":["id","model"],"additionalProperties":true},"error":{"type":"string"}},"required":["format","id","bookId","position","printedPage","sha256","mediaType","width","height","original","revision","status","updatedAt"],"additionalProperties":true},"markdown":{"type":"string"},"candidateMarkdown":{"type":"string"}},"required":[],"additionalProperties":true},
+      },
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":68,"column":9},
+    },
+    'student/textbookUpload': {
+      service: 'student',
+      description: 'Admit a browser-selected textbook image through the same durable phone upload owner.',
+      invocation: { kind: 'direct' },
+      parameters: [
+        {
+          name: 'sessionId',
+          description: 'Authorized main Session.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_textbookUpload_parameter_0$schema,
+            jsonSchema: {"type":"string"},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student/types#StudentSessionId',
+            create: _winterhuan_dsh_student_student_textbookUpload_parameter_0_strict$schema,
+            jsonSchema: {"type":"string"},
+          },
+        },
+        {
+          name: 'request',
+          description: 'Stable page identity, position and bounded base64 photo.',
+          source: 'json',
+          codec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookUpload:request',
+            create: _winterhuan_dsh_student_student_textbookUpload_parameter_1$schema,
+            jsonSchema: {"type":"object","properties":{"bookId":{"type":"string"},"pageId":{"type":"string"},"position":{"type":"number"},"printedPage":{"type":"string"},"data":{"type":"string"}},"required":["bookId","pageId","position","printedPage","data"],"additionalProperties":true},
+          },
+          strictCodec: {
+            mode: 'strict',
+            typeSymbol: '@winterhuan/dsh-student#student/textbookUpload:request',
+            create: _winterhuan_dsh_student_student_textbookUpload_parameter_1_strict$schema,
+            jsonSchema: {"type":"object","properties":{"bookId":{"type":"string"},"pageId":{"type":"string"},"position":{"type":"number"},"printedPage":{"type":"string"},"data":{"type":"string"}},"required":["bookId","pageId","position","printedPage","data"],"additionalProperties":false},
+          },
+        },
+      ],
+      cancellation: { parameter: 'signal' },
+      result: {
+        mode: 'strict',
+        typeSymbol: '@winterhuan/dsh-student/types#TextbookReply',
+        create: _winterhuan_dsh_student_student_textbookUpload_result$schema,
+        description: 'Saved page referencing the retained original.',
+        jsonSchema: {"type":"object","properties":{"workspaceId":{"type":"string"},"books":{"type":"array","items":{"type":"object","properties":{"format":{"type":"number","const":1},"id":{"type":"string"},"title":{"type":"string"},"subject":{"type":"string","enum":["chinese","math","english","other"]},"expectedPages":{"oneOf":[{"type":"null","const":null},{"type":"number"}]},"revision":{"type":"number"},"confirmedAt":{"type":"number"}},"required":["format","id","title","subject","expectedPages","revision"],"additionalProperties":true}},"book":{"type":"object","properties":{"format":{"type":"number","const":1},"id":{"type":"string"},"title":{"type":"string"},"subject":{"type":"string","enum":["chinese","math","english","other"]},"expectedPages":{"oneOf":[{"type":"null","const":null},{"type":"number"}]},"revision":{"type":"number"},"confirmedAt":{"type":"number"}},"required":["format","id","title","subject","expectedPages","revision"],"additionalProperties":true},"pages":{"type":"array","items":{"type":"object","properties":{"format":{"type":"number","const":1},"id":{"type":"string"},"bookId":{"type":"string"},"position":{"type":"number"},"printedPage":{"type":"string"},"sha256":{"type":"string"},"mediaType":{"type":"string","enum":["image/jpeg","image/png","image/webp"]},"width":{"type":"number"},"height":{"type":"number"},"original":{"type":"string"},"revision":{"type":"number"},"status":{"type":"string","enum":["failed","received","queued","parsing","review","confirmed"]},"updatedAt":{"type":"number"},"excluded":{"type":"boolean","enum":[false,true]},"content":{"type":"object","properties":{"path":{"type":"string"},"assets":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"left":{"type":"number"},"top":{"type":"number"},"width":{"type":"number"},"height":{"type":"number"}},"required":["path","left","top","width","height"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"string"}},"source":{"type":"string","enum":["agent","manual"]}},"required":["path","assets","issues","source"],"additionalProperties":true},"candidate":{"type":"object","properties":{"path":{"type":"string"},"assets":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"left":{"type":"number"},"top":{"type":"number"},"width":{"type":"number"},"height":{"type":"number"}},"required":["path","left","top","width","height"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"string"}},"source":{"type":"string","enum":["agent","manual"]}},"required":["path","assets","issues","source"],"additionalProperties":true},"job":{"type":"object","properties":{"id":{"type":"string"},"model":{"type":"object","properties":{"provider":{"type":"string"},"model":{"type":"string"}},"required":["provider","model"],"additionalProperties":true}},"required":["id","model"],"additionalProperties":true},"error":{"type":"string"}},"required":["format","id","bookId","position","printedPage","sha256","mediaType","width","height","original","revision","status","updatedAt"],"additionalProperties":true}},"page":{"type":"object","properties":{"format":{"type":"number","const":1},"id":{"type":"string"},"bookId":{"type":"string"},"position":{"type":"number"},"printedPage":{"type":"string"},"sha256":{"type":"string"},"mediaType":{"type":"string","enum":["image/jpeg","image/png","image/webp"]},"width":{"type":"number"},"height":{"type":"number"},"original":{"type":"string"},"revision":{"type":"number"},"status":{"type":"string","enum":["failed","received","queued","parsing","review","confirmed"]},"updatedAt":{"type":"number"},"excluded":{"type":"boolean","enum":[false,true]},"content":{"type":"object","properties":{"path":{"type":"string"},"assets":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"left":{"type":"number"},"top":{"type":"number"},"width":{"type":"number"},"height":{"type":"number"}},"required":["path","left","top","width","height"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"string"}},"source":{"type":"string","enum":["agent","manual"]}},"required":["path","assets","issues","source"],"additionalProperties":true},"candidate":{"type":"object","properties":{"path":{"type":"string"},"assets":{"type":"array","items":{"type":"object","properties":{"path":{"type":"string"},"left":{"type":"number"},"top":{"type":"number"},"width":{"type":"number"},"height":{"type":"number"}},"required":["path","left","top","width","height"],"additionalProperties":true}},"issues":{"type":"array","items":{"type":"string"}},"source":{"type":"string","enum":["agent","manual"]}},"required":["path","assets","issues","source"],"additionalProperties":true},"job":{"type":"object","properties":{"id":{"type":"string"},"model":{"type":"object","properties":{"provider":{"type":"string"},"model":{"type":"string"}},"required":["provider","model"],"additionalProperties":true}},"required":["id","model"],"additionalProperties":true},"error":{"type":"string"}},"required":["format","id","bookId","position","printedPage","sha256","mediaType","width","height","original","revision","status","updatedAt"],"additionalProperties":true},"markdown":{"type":"string"},"candidateMarkdown":{"type":"string"}},"required":[],"additionalProperties":true},
+      },
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":100,"column":9},
     },
     'student/watch': {
       service: 'student',
@@ -1477,13 +2217,13 @@ const $remote = createTypertRemoteInfo({
             mode: 'strict',
             typeSymbol: '@winterhuan/dsh-student/types#StudentQueryRequest',
             create: _winterhuan_dsh_student_student_watch_parameter_1$schema,
-            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["daily-plan","capability-progress","capabilities","families","knowledge-sources","legacy-references","learning-context","summary","files","settings","status","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["math","chinese","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":true},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["math","chinese","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["mistakes","map","today","parent"]}},"required":[],"additionalProperties":true}},"required":["kind"],"additionalProperties":true}]},
+            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["status","daily-plan","capability-progress","capabilities","families","knowledge-sources","legacy-references","learning-context","summary","files","settings","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["chinese","math","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":true},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["chinese","math","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["map","mistakes","today","parent"]}},"required":[],"additionalProperties":true}},"required":["kind"],"additionalProperties":true}]},
           },
           strictCodec: {
             mode: 'strict',
             typeSymbol: '@winterhuan/dsh-student/types#StudentQueryRequest',
             create: _winterhuan_dsh_student_student_watch_parameter_1_strict$schema,
-            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["daily-plan","capability-progress","capabilities","families","knowledge-sources","legacy-references","learning-context","summary","files","settings","status","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["math","chinese","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":false},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["math","chinese","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["mistakes","map","today","parent"]}},"required":[],"additionalProperties":false}},"required":["kind"],"additionalProperties":false}]},
+            jsonSchema: {"oneOf":[{"type":"object","properties":{"kind":{"type":"string","enum":["status","daily-plan","capability-progress","capabilities","families","knowledge-sources","legacy-references","learning-context","summary","files","settings","curriculum","elements","exercises","review-sheet","diagnose","weak","due","pending","progress","concepts","objectives","relations","worksheets","paper-results","materials","mistakes","sessions","attempts"]},"subject":{"type":"string","enum":["chinese","math","english"]},"id":{"type":"string"},"unit":{"type":"string"},"grade":{"type":"number"},"term":{"type":"string","enum":["first","second"]},"offset":{"type":"number"}},"required":["kind"],"additionalProperties":false},{"type":"object","properties":{"kind":{"type":"string","const":"dashboard"},"options":{"type":"object","properties":{"subject":{"type":"string","enum":["chinese","math","english"]},"mistakeOffset":{"type":"number"},"mistakeStatus":{"type":"string","enum":["due","all","reviewing","mastered"]},"mapGrade":{"type":"number"},"mapTerm":{"type":"string","enum":["first","second"]},"diagGrade":{"type":"number"},"diagTerm":{"type":"string","enum":["first","second"]},"diagUnit":{"type":"string"},"tab":{"type":"string","enum":["map","mistakes","today","parent"]}},"required":[],"additionalProperties":false}},"required":["kind"],"additionalProperties":false}]},
           },
         },
       ],
@@ -1495,7 +2235,7 @@ const $remote = createTypertRemoteInfo({
         description: 'an initial snapshot and later changes or recoverable read-failure frames.',
         jsonSchemaError: 'typert tool schema: recursive selected type requires a supported JSON value declaration',
       },
-      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":135,"column":10},
+      sourceLocation: {"file":"packages/winterhuan/student/src/remote-service.ts","line":198,"column":10},
     },
     'studentOpenmaicPlayback/mini': {
       service: 'studentOpenmaicPlayback',
@@ -1666,6 +2406,41 @@ export const TYPERT = {
         "key": "student",
         "exportName": "StudentRemote",
         "members": [
+          {
+            "kind": "method",
+            "name": "textbooks",
+            "signature": "@Remote({ resources: { session: sessionId => sessionId } }) async textbooks(sessionId: StudentSessionId, request: TextbookCommand, signal: AbortSignal): Promise<TextbookReply>",
+            "summary": "Apply a textbook command within the authorized main Session's workspace.",
+            "jsDoc": "/** Apply a textbook command within the authorized main Session's workspace.\n * @param sessionId - Authorized main Session.\n * @param request - Validated library operation and observed revisions.\n * @param signal - Cancellation while resolving the Session.\n * @returns Persisted library state after the operation.\n */"
+          },
+          {
+            "kind": "method",
+            "name": "textbookPair",
+            "signature": "@Remote({ resources: { session: sessionId => sessionId } }) async textbookPair(sessionId: StudentSessionId, signal: AbortSignal): Promise<TextbookPairing>",
+            "summary": "Issue a one-time phone pairing grant; this never reveals the DSH management credential.",
+            "jsDoc": "/** Issue a one-time phone pairing grant; this never reveals the DSH management credential.\n * @param sessionId - Authorized main Session.\n * @param signal - Cancellation while resolving the Session.\n * @returns Expiring grant with the HTTPS address and certificate pin.\n */"
+          },
+          {
+            "kind": "method",
+            "name": "textbookDevices",
+            "signature": "@Remote({ resources: { session: sessionId => sessionId } }) async textbookDevices(sessionId: StudentSessionId, revoke: string | undefined, signal: AbortSignal): Promise<TextbookDevice[]>",
+            "summary": "List or revoke only the devices paired with this workspace.",
+            "jsDoc": "/** List or revoke only the devices paired with this workspace.\n * @param sessionId - Authorized main Session.\n * @param revoke - Optional device identity whose grant should be removed.\n * @param signal - Cancellation while resolving the Session.\n * @returns Remaining devices without secret credentials.\n */"
+          },
+          {
+            "kind": "method",
+            "name": "textbookUpload",
+            "signature": "@Remote({ resources: { session: sessionId => sessionId } }) async textbookUpload(sessionId: StudentSessionId, request: { bookId: string; pageId: string; position: number; printedPage: string; data: string }, signal: AbortSignal): Promise<TextbookReply>",
+            "summary": "Admit a browser-selected textbook image through the same durable phone upload owner.",
+            "jsDoc": "/** Admit a browser-selected textbook image through the same durable phone upload owner.\n * @param sessionId - Authorized main Session.\n * @param request - Stable page identity, position and bounded base64 photo.\n * @param signal - Cancellation while resolving the Session.\n * @returns Saved page referencing the retained original.\n */"
+          },
+          {
+            "kind": "method",
+            "name": "textbookImage",
+            "signature": "@Remote({ resources: { session: sessionId => sessionId } }) async textbookImage(sessionId: StudentSessionId, bookId: string, pageId: string, kind: 'original' | 'asset', index: number, candidate: boolean, revision: number, signal: AbortSignal): Promise<{ data: string; mediaType: string }>",
+            "summary": "Read a page-owned image for desktop proofreading without exposing arbitrary workspace paths.",
+            "jsDoc": "/** Read a page-owned image for desktop proofreading without exposing arbitrary workspace paths.\n * @param sessionId - Authorized main Session.\n * @param bookId - Owning book identity.\n * @param pageId - Owning page identity.\n * @param kind - Original photo or cropped illustration.\n * @param index - Illustration index, ignored for originals.\n * @param candidate - Select the candidate's illustrations when true.\n * @param revision - Observed page revision, checked for illustrations.\n * @param signal - Cancellation while resolving the Session.\n * @returns Bounded base64 image and media type.\n */"
+          },
           {
             "kind": "method",
             "name": "submitIntent",
@@ -1928,6 +2703,30 @@ export const TYPERT = {
           {
             "name": "TermSettings",
             "declaration": "export type TermSettings = z.infer<typeof termSettingsSchema>;"
+          },
+          {
+            "name": "Textbook",
+            "declaration": "export type Textbook = z.infer<typeof bookSchema>;"
+          },
+          {
+            "name": "TextbookCommand",
+            "declaration": "export type TextbookCommand = z.infer<typeof textbookCommand>;"
+          },
+          {
+            "name": "TextbookDevice",
+            "declaration": "export interface TextbookDevice {\n    id: string;\n    name: string;\n    createdAt: number;\n}"
+          },
+          {
+            "name": "TextbookPage",
+            "declaration": "export type TextbookPage = z.infer<typeof pageSchema>;"
+          },
+          {
+            "name": "TextbookPairing",
+            "declaration": "export interface TextbookPairing {\n    version: 1;\n    url: string;\n    pin: string;\n    code: string;\n    expiresAt: number;\n}"
+          },
+          {
+            "name": "TextbookReply",
+            "declaration": "export interface TextbookReply {\n    workspaceId?: string;\n    books?: Textbook[];\n    book?: Textbook;\n    pages?: TextbookPage[];\n    page?: TextbookPage;\n    markdown?: string;\n    candidateMarkdown?: string;\n}"
           },
           {
             "name": "ValidatedWorkspace",

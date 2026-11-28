@@ -7,7 +7,7 @@ import type {
 } from '@deepseek-ai/dsh-typert-protocol'
 import type { ManualSaveRequest } from '@winterhuan/dsh-student/files'
 import type { LessonGenerationStatus, OpenmaicPlaybackResult } from '@winterhuan/dsh-student/openmaic'
-import type { StudentFeedbackSyncReply, StudentFeedbackSyncRequest, StudentManualContext, StudentManualReply, StudentManualSaveRequest, StudentPanelReply, StudentPanelRequest, StudentQueryRequest, StudentQueryResult, StudentSessionId, StudentSubmissionInspection, StudentSubmissionRequest, StudentWatchFrame } from '@winterhuan/dsh-student/types'
+import type { StudentFeedbackSyncReply, StudentFeedbackSyncRequest, StudentManualContext, StudentManualReply, StudentManualSaveRequest, StudentPanelReply, StudentPanelRequest, StudentQueryRequest, StudentQueryResult, StudentSessionId, StudentSubmissionInspection, StudentSubmissionRequest, StudentWatchFrame, TextbookCommand, TextbookDevice, TextbookPairing, TextbookReply } from '@winterhuan/dsh-student/types'
 
 declare module '@deepseek-ai/dsh-typert-protocol' {
   interface TypertRemoteNamespace$73747564656e74 {
@@ -17,6 +17,11 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     saveManual: (sessionId: StudentSessionId, request: StudentManualSaveRequest, signal?: AbortSignal) => Promise<RemoteResult<StudentManualReply>>
     submitIntent: (sessionId: StudentSessionId, request: StudentPanelRequest, signal?: AbortSignal) => Promise<RemoteResult<StudentPanelReply>>
     syncFeedback: (sessionId: StudentSessionId, request: StudentFeedbackSyncRequest, signal?: AbortSignal) => Promise<RemoteResult<StudentFeedbackSyncReply>>
+    textbookDevices: (sessionId: StudentSessionId, revoke: string | undefined, signal?: AbortSignal) => Promise<RemoteResult<TextbookDevice[]>>
+    textbookImage: (sessionId: StudentSessionId, bookId: string, pageId: string, kind: 'original' | 'asset', index: number, candidate: boolean, revision: number, signal?: AbortSignal) => Promise<RemoteResult<{ data: string; mediaType: string; }>>
+    textbookPair: (sessionId: StudentSessionId, signal?: AbortSignal) => Promise<RemoteResult<TextbookPairing>>
+    textbooks: (sessionId: StudentSessionId, request: TextbookCommand, signal?: AbortSignal) => Promise<RemoteResult<TextbookReply>>
+    textbookUpload: (sessionId: StudentSessionId, request: { bookId: string; pageId: string; position: number; printedPage: string; data: string; }, signal?: AbortSignal) => Promise<RemoteResult<TextbookReply>>
     watch: (sessionId: StudentSessionId, request: StudentQueryRequest, signal?: AbortSignal) => RemoteStreamHandle<StudentWatchFrame, never>
   }
   interface TypertRemoteNamespace$73747564656e744f70656e6d616963506c61796261636b {
@@ -31,6 +36,11 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     'student/saveManual': (sessionId: StudentSessionId, request: StudentManualSaveRequest, signal?: AbortSignal) => Promise<RemoteResult<StudentManualReply>>
     'student/submitIntent': (sessionId: StudentSessionId, request: StudentPanelRequest, signal?: AbortSignal) => Promise<RemoteResult<StudentPanelReply>>
     'student/syncFeedback': (sessionId: StudentSessionId, request: StudentFeedbackSyncRequest, signal?: AbortSignal) => Promise<RemoteResult<StudentFeedbackSyncReply>>
+    'student/textbookDevices': (sessionId: StudentSessionId, revoke: string | undefined, signal?: AbortSignal) => Promise<RemoteResult<TextbookDevice[]>>
+    'student/textbookImage': (sessionId: StudentSessionId, bookId: string, pageId: string, kind: 'original' | 'asset', index: number, candidate: boolean, revision: number, signal?: AbortSignal) => Promise<RemoteResult<{ data: string; mediaType: string; }>>
+    'student/textbookPair': (sessionId: StudentSessionId, signal?: AbortSignal) => Promise<RemoteResult<TextbookPairing>>
+    'student/textbooks': (sessionId: StudentSessionId, request: TextbookCommand, signal?: AbortSignal) => Promise<RemoteResult<TextbookReply>>
+    'student/textbookUpload': (sessionId: StudentSessionId, request: { bookId: string; pageId: string; position: number; printedPage: string; data: string; }, signal?: AbortSignal) => Promise<RemoteResult<TextbookReply>>
     'student/watch': (sessionId: StudentSessionId, request: StudentQueryRequest, signal?: AbortSignal) => RemoteStreamHandle<StudentWatchFrame, never>
     'studentOpenmaicPlayback/mini': (sessionId: StudentSessionId, miniId: string, signal?: AbortSignal) => Promise<RemoteResult<{ id: string; html: string; }>>
     'studentOpenmaicPlayback/open': (sessionId: StudentSessionId, lessonId: string, signal?: AbortSignal) => Promise<RemoteResult<OpenmaicPlaybackResult>>
@@ -49,6 +59,11 @@ export declare const TYPERT_REMOTE: TypertRemoteInfo<{
   readonly 'student/saveManual': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'request': StudentManualSaveRequest }, StudentManualReply>
   readonly 'student/submitIntent': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'request': StudentPanelRequest }, StudentPanelReply>
   readonly 'student/syncFeedback': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'request': StudentFeedbackSyncRequest }, StudentFeedbackSyncReply>
+  readonly 'student/textbookDevices': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'revoke'?: string | undefined }, TextbookDevice[]>
+  readonly 'student/textbookImage': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'bookId': string; readonly 'pageId': string; readonly 'kind': 'original' | 'asset'; readonly 'index': number; readonly 'candidate': boolean; readonly 'revision': number }, { data: string; mediaType: string; }>
+  readonly 'student/textbookPair': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId }, TextbookPairing>
+  readonly 'student/textbooks': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'request': TextbookCommand }, TextbookReply>
+  readonly 'student/textbookUpload': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'request': { bookId: string; pageId: string; position: number; printedPage: string; data: string; } }, TextbookReply>
   readonly 'student/watch': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'request': StudentQueryRequest }, StudentWatchFrame, 'stream'>
   readonly 'studentOpenmaicPlayback/mini': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'miniId': string }, { id: string; html: string; }>
   readonly 'studentOpenmaicPlayback/open': TypertRemoteMethod<{ readonly 'sessionId': StudentSessionId; readonly 'lessonId': string }, OpenmaicPlaybackResult>

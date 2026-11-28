@@ -65,6 +65,8 @@ it.each(['native Session', 'parent saveManual'] as const)('preserves the winner 
   await ctx.plugin(SessionQuery)
   await ctx.plugin(TypertRegistry)
   await ctx.plugin(RemoteAccessService)
+  // These cases exercise file observation; the textbook service is not called.
+  ctx.provide('studentTextbooks', {} as Context['studentTextbooks'])
   await ctx.plugin(StudentRemote)
   await ctx.plugin(SandboxPolicy, { mode: 'danger-full-access' })
   const first = (await ctx.agents.create({ sessionId: SessionId('student-first'), meta: { cwd } })).agent

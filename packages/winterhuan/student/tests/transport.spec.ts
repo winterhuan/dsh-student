@@ -50,6 +50,7 @@ async function fixture(maxWireBytes = 1_048_576, child = false, refreshIntervalM
   const get = vi.fn((wire: SessionId) => wire === id ? agent : undefined)
   const resolve = vi.fn((wire: SessionId) => wire === id ? agent : undefined)
   ctx.provide('agents', { get } as Context['agents'])
+  ctx.provide('studentTextbooks', { command: vi.fn(async () => ({ books: [] })) } as Context['studentTextbooks'])
   ctx.typert.lookups.register('agent', { parameter: 'agent', wire: 'agentId', resource: 'session', hostTypeSymbol: '@deepseek-ai/dsh-agent#Agent', wireTypeSymbol: '@deepseek-ai/dsh-session#SessionId', resolve })
   await ctx.plugin(StudentRemote, { refreshIntervalMs, maxWireBytes })
   return { cwd, ctx, id, agent, get, resolve, signal: new AbortController().signal }
@@ -80,6 +81,13 @@ it('independently reads valid files through the real Remote invocation context',
   const { ctx, id } = await fixture()
   const peer = new Peer(ctx.root, { principal: { kind: 'owner' } })
   await expect(ctx.typertGateway.invoke({ peer, namespace: 'student', method: 'query', args: { sessionId: id, request: { kind: 'dashboard' } } })).resolves.toMatchObject({ status: 'valid', data: { study: { profile: setup.profile } } })
+})
+
+it('invokes textbook commands through the authorized Remote service context', async () => {
+  const { ctx, id, agent } = await fixture()
+  const peer = new Peer(ctx.root, { principal: { kind: 'owner' } })
+  await expect(ctx.typertGateway.invoke({ peer, namespace: 'student', method: 'textbooks', args: { sessionId: id, request: { action: 'list' } } })).resolves.toEqual({ books: [] })
+  expect(ctx.studentTextbooks.command).toHaveBeenCalledWith(agent, { action: 'list' })
 })
 
 it('reads paged and filtered notebooks and browsed maps through the resource Remote query', async () => {

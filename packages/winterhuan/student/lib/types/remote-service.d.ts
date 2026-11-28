@@ -1,4 +1,6 @@
 import type { StudentPanelRequest, StudentPanelReply } from './types.ts';
+import type { TextbookCommand, TextbookReply } from './textbooks/schema.ts';
+import type { TextbookDevice, TextbookPairing } from './textbooks/service.ts';
 import type { Context } from '@deepseek-ai/cordis';
 import z from '@deepseek-ai/schemastery';
 import { TypertRemoteService, type Principal } from '@deepseek-ai/dsh-typert-protocol';
@@ -49,6 +51,54 @@ export declare class StudentRemote extends TypertRemoteService {
      * @param config - validated refresh interval and complete wire-response limit.
      */
     constructor(ctx: Context, config: StudentTransportConfig);
+    /** Apply a textbook command within the authorized main Session's workspace.
+     * @param sessionId - Authorized main Session.
+     * @param request - Validated library operation and observed revisions.
+     * @param signal - Cancellation while resolving the Session.
+     * @returns Persisted library state after the operation.
+     */
+    textbooks(sessionId: StudentSessionId, request: TextbookCommand, signal: AbortSignal): Promise<TextbookReply>;
+    /** Issue a one-time phone pairing grant; this never reveals the DSH management credential.
+     * @param sessionId - Authorized main Session.
+     * @param signal - Cancellation while resolving the Session.
+     * @returns Expiring grant with the HTTPS address and certificate pin.
+     */
+    textbookPair(sessionId: StudentSessionId, signal: AbortSignal): Promise<TextbookPairing>;
+    /** List or revoke only the devices paired with this workspace.
+     * @param sessionId - Authorized main Session.
+     * @param revoke - Optional device identity whose grant should be removed.
+     * @param signal - Cancellation while resolving the Session.
+     * @returns Remaining devices without secret credentials.
+     */
+    textbookDevices(sessionId: StudentSessionId, revoke: string | undefined, signal: AbortSignal): Promise<TextbookDevice[]>;
+    /** Admit a browser-selected textbook image through the same durable phone upload owner.
+     * @param sessionId - Authorized main Session.
+     * @param request - Stable page identity, position and bounded base64 photo.
+     * @param signal - Cancellation while resolving the Session.
+     * @returns Saved page referencing the retained original.
+     */
+    textbookUpload(sessionId: StudentSessionId, request: {
+        bookId: string;
+        pageId: string;
+        position: number;
+        printedPage: string;
+        data: string;
+    }, signal: AbortSignal): Promise<TextbookReply>;
+    /** Read a page-owned image for desktop proofreading without exposing arbitrary workspace paths.
+     * @param sessionId - Authorized main Session.
+     * @param bookId - Owning book identity.
+     * @param pageId - Owning page identity.
+     * @param kind - Original photo or cropped illustration.
+     * @param index - Illustration index, ignored for originals.
+     * @param candidate - Select the candidate's illustrations when true.
+     * @param revision - Observed page revision, checked for illustrations.
+     * @param signal - Cancellation while resolving the Session.
+     * @returns Bounded base64 image and media type.
+     */
+    textbookImage(sessionId: StudentSessionId, bookId: string, pageId: string, kind: 'original' | 'asset', index: number, candidate: boolean, revision: number, signal: AbortSignal): Promise<{
+        data: string;
+        mediaType: string;
+    }>;
     /**
      * Admit a compact panel intent as an ordinary native user message.
      * @param sessionId - Authorized main Session.

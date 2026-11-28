@@ -52,6 +52,11 @@ import { readWorkspace } from "./files/read.js";
 let StudentRemote = (() => {
     let _classSuper = TypertRemoteService;
     let _instanceExtraInitializers = [];
+    let _textbooks_decorators;
+    let _textbookPair_decorators;
+    let _textbookDevices_decorators;
+    let _textbookUpload_decorators;
+    let _textbookImage_decorators;
     let _submitIntent_decorators;
     let _query_decorators;
     let _watch_decorators;
@@ -62,6 +67,11 @@ let StudentRemote = (() => {
     return class StudentRemote extends _classSuper {
         static {
             const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+            _textbooks_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
+            _textbookPair_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
+            _textbookDevices_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
+            _textbookUpload_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
+            _textbookImage_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
             _submitIntent_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
             _query_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
             _watch_decorators = [Remote({ mode: 'stream', resources: { session: sessionId => sessionId } })];
@@ -69,6 +79,11 @@ let StudentRemote = (() => {
             _saveManual_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
             _inspectSubmission_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
             _syncFeedback_decorators = [Remote({ resources: { session: sessionId => sessionId } })];
+            __esDecorate(this, null, _textbooks_decorators, { kind: "method", name: "textbooks", static: false, private: false, access: { has: obj => "textbooks" in obj, get: obj => obj.textbooks }, metadata: _metadata }, null, _instanceExtraInitializers);
+            __esDecorate(this, null, _textbookPair_decorators, { kind: "method", name: "textbookPair", static: false, private: false, access: { has: obj => "textbookPair" in obj, get: obj => obj.textbookPair }, metadata: _metadata }, null, _instanceExtraInitializers);
+            __esDecorate(this, null, _textbookDevices_decorators, { kind: "method", name: "textbookDevices", static: false, private: false, access: { has: obj => "textbookDevices" in obj, get: obj => obj.textbookDevices }, metadata: _metadata }, null, _instanceExtraInitializers);
+            __esDecorate(this, null, _textbookUpload_decorators, { kind: "method", name: "textbookUpload", static: false, private: false, access: { has: obj => "textbookUpload" in obj, get: obj => obj.textbookUpload }, metadata: _metadata }, null, _instanceExtraInitializers);
+            __esDecorate(this, null, _textbookImage_decorators, { kind: "method", name: "textbookImage", static: false, private: false, access: { has: obj => "textbookImage" in obj, get: obj => obj.textbookImage }, metadata: _metadata }, null, _instanceExtraInitializers);
             __esDecorate(this, null, _submitIntent_decorators, { kind: "method", name: "submitIntent", static: false, private: false, access: { has: obj => "submitIntent" in obj, get: obj => obj.submitIntent }, metadata: _metadata }, null, _instanceExtraInitializers);
             __esDecorate(this, null, _query_decorators, { kind: "method", name: "query", static: false, private: false, access: { has: obj => "query" in obj, get: obj => obj.query }, metadata: _metadata }, null, _instanceExtraInitializers);
             __esDecorate(this, null, _watch_decorators, { kind: "method", name: "watch", static: false, private: false, access: { has: obj => "watch" in obj, get: obj => obj.watch }, metadata: _metadata }, null, _instanceExtraInitializers);
@@ -81,7 +96,7 @@ let StudentRemote = (() => {
         config = __runInitializers(this, _instanceExtraInitializers);
         panelIntents = new WeakMap();
         feedbackIntents = new WeakMap();
-        static inject = ['typert', 'sessionQuery', 'agents', 'remoteAccess'];
+        static inject = ['typert', 'sessionQuery', 'agents', 'remoteAccess', 'studentTextbooks'];
         static Config = z.object({ refreshIntervalMs: z.number().step(1).min(1).max(2_147_483_647).default(3000), maxWireBytes: z.number().step(1).min(1024).default(1_048_576) });
         /**
          * @param ctx - Host services containing authorized native Agent lookups.
@@ -90,6 +105,57 @@ let StudentRemote = (() => {
         constructor(ctx, config) {
             super(ctx, 'student');
             this.config = config;
+        }
+        /** Apply a textbook command within the authorized main Session's workspace.
+         * @param sessionId - Authorized main Session.
+         * @param request - Validated library operation and observed revisions.
+         * @param signal - Cancellation while resolving the Session.
+         * @returns Persisted library state after the operation.
+         */
+        async textbooks(sessionId, request, signal) {
+            return this.ctx.studentTextbooks.command(await this.mainAgent(sessionId, signal), request);
+        }
+        /** Issue a one-time phone pairing grant; this never reveals the DSH management credential.
+         * @param sessionId - Authorized main Session.
+         * @param signal - Cancellation while resolving the Session.
+         * @returns Expiring grant with the HTTPS address and certificate pin.
+         */
+        async textbookPair(sessionId, signal) {
+            return this.ctx.studentTextbooks.pair(await this.mainAgent(sessionId, signal));
+        }
+        /** List or revoke only the devices paired with this workspace.
+         * @param sessionId - Authorized main Session.
+         * @param revoke - Optional device identity whose grant should be removed.
+         * @param signal - Cancellation while resolving the Session.
+         * @returns Remaining devices without secret credentials.
+         */
+        async textbookDevices(sessionId, revoke, signal) {
+            return this.ctx.studentTextbooks.devices(await this.mainAgent(sessionId, signal), revoke);
+        }
+        /** Admit a browser-selected textbook image through the same durable phone upload owner.
+         * @param sessionId - Authorized main Session.
+         * @param request - Stable page identity, position and bounded base64 photo.
+         * @param signal - Cancellation while resolving the Session.
+         * @returns Saved page referencing the retained original.
+         */
+        async textbookUpload(sessionId, request, signal) {
+            const { data, ...metadata } = jsonSchema.object({ bookId: jsonSchema.string(), pageId: jsonSchema.string(), position: jsonSchema.number(), printedPage: jsonSchema.string(), data: jsonSchema.string().min(1).max(27962028).regex(/^[A-Za-z0-9+/]*={0,2}$/u) }).strict().parse(request);
+            return { page: await this.ctx.studentTextbooks.upload(await this.mainAgent(sessionId, signal), metadata, Buffer.from(data, 'base64')) };
+        }
+        /** Read a page-owned image for desktop proofreading without exposing arbitrary workspace paths.
+         * @param sessionId - Authorized main Session.
+         * @param bookId - Owning book identity.
+         * @param pageId - Owning page identity.
+         * @param kind - Original photo or cropped illustration.
+         * @param index - Illustration index, ignored for originals.
+         * @param candidate - Select the candidate's illustrations when true.
+         * @param revision - Observed page revision, checked for illustrations.
+         * @param signal - Cancellation while resolving the Session.
+         * @returns Bounded base64 image and media type.
+         */
+        async textbookImage(sessionId, bookId, pageId, kind, index, candidate, revision, signal) {
+            const result = await this.ctx.studentTextbooks.file(await this.mainAgent(sessionId, signal), bookId, pageId, kind, index, candidate, revision);
+            return { data: result.bytes.toString('base64'), mediaType: result.mediaType };
         }
         /**
          * Admit a compact panel intent as an ordinary native user message.

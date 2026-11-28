@@ -224,6 +224,8 @@ async function syncFixture() {
   await f.ctx.plugin(TypertRegistry)
   await f.ctx.plugin(RemoteAccessService)
   await f.ctx.plugin(TypertGatewayService)
+  // These cases exercise feedback; the textbook service is not called.
+  f.ctx.provide('studentTextbooks', {} as Context['studentTextbooks'])
   await f.ctx.plugin(StudentRemote, { refreshIntervalMs: 3000, maxWireBytes: 1048576 })
   await writeFile(join(f.cwd, '.study/openmaic-lessons.json'), JSON.stringify({ format: 1, lessons: [{ id: 'lesson-1', status: 'ready', createdAt: '2026-11-20T01:00:00Z', updatedAt: '2026-11-20T01:01:00Z', title: 'Subtraction', requirement: 'Within20', base: 'https://classroom.test', learnerId: f.settings.learnerId, termId: f.settings.termId, blockId: f.block.id, classroomId: 'stage-1', learnerKey: 'learner-1', feedback: { bindingId: 'binding-1', learnerId: f.settings.learnerId, termId: f.settings.termId, blockId: f.block.id, goalId: 'm.sub', familyId: 'math.sub-basic', scope: { id: 'within20', description: 'Within20', modality: 'written', numberMax: 20 } } }] }))
   const sync = (trigger: 'return' | 'continue' | 'resume' | 'pause') => f.ctx.student.syncFeedback(f.agent.session.id, { lessonId: 'lesson-1', trigger }, new AbortController().signal)

@@ -26,6 +26,7 @@ import { unitCoursePrompt, dailyPlanPrompt, scopeConfirmationPrompt, continuePro
 import { CapabilityProgressView } from './capability-progress.tsx'
 import { TodayView } from './today-view.tsx'
 import css from './desk.module.css'
+import { TextbookLibrary, type TextbookActions } from './textbooks-view.tsx'
 
 type Study = NonNullable<Dashboard['study']>
 type Goal = { id: string; title: string }
@@ -39,7 +40,7 @@ function storeSubject(value: Subject) {
 }
 
 /** Workbench actions share the same persisted state as the native tutoring tools. */
-export function StudyDesk({ sessionId, visible, ask, running, pending = false, syncFeedback, cancel, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, openLesson, pollLesson, readMini, useStore, actions }: DraftProps & StudentManualActions & Partial<StudentSessionActions> & { sessionId: StudentSessionId; useResource: UseStudentResource; visible: boolean; ask: AskTutor; running: boolean; pending?: boolean; t: Translate; readMini?: (miniId: string) => Promise<{ id: string; html: string }>; openLesson?: (lessonId: string) => Promise<import('../openmaic/playback.ts').OpenmaicPlaybackResult>; pollLesson?: (lessonId: string, signal: AbortSignal) => Promise<import('../openmaic/playback.ts').LessonGenerationStatus> }) {
+export function StudyDesk({ sessionId, visible, ask, running, pending = false, syncFeedback, cancel, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, openLesson, pollLesson, readMini, useStore, actions, textbookActions }: DraftProps & StudentManualActions & Partial<StudentSessionActions> & { textbookActions?: TextbookActions; sessionId: StudentSessionId; useResource: UseStudentResource; visible: boolean; ask: AskTutor; running: boolean; pending?: boolean; t: Translate; readMini?: (miniId: string) => Promise<{ id: string; html: string }>; openLesson?: (lessonId: string) => Promise<import('../openmaic/playback.ts').OpenmaicPlaybackResult>; pollLesson?: (lessonId: string, signal: AbortSignal) => Promise<import('../openmaic/playback.ts').LessonGenerationStatus> }) {
   const [homeSubject, setHomeSubject] = useState<Subject | 'all'>('all')
   const [viewAt, setViewAt] = useState<{ identity: string; scene: 'home' | 'summary' }>()
   const [extra, setExtra] = useState(false)
@@ -268,6 +269,7 @@ export function StudyDesk({ sessionId, visible, ask, running, pending = false, s
         <span className="student-muted">{t(workspace.loadNeeded ? 'readyToContinue' : workspace.stale ? 'updatePaused' : 'liveUpdates')}</span>
       </div>
     </header>
+    {textbookActions && <TextbookLibrary api={textbookActions} t={t} scope={sessionId} />}
     {readOnly && data && <p role="status">{t('legacyFilesHelp')}</p>}
     {workspace.error && !workspace.loadNeeded && <p role="alert">{t(workspace.invalidRecords ? 'recordsNeedCheck' : 'staleData')}</p>}
     {study && !workspace.contextReady && !workspace.stale && <p role="status">{t(workspace.contextState.readStatus === 'partial' ? 'partialLearningRecords' : 'continueWaiting')}</p>}

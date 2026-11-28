@@ -13,7 +13,7 @@
     "postcss-value-parser",
     "source-map-js"
   ],
-  "lockfileSha256": "d134593b0d33eb8079ab81e0ea8fa14ee63246019c6fc8e9863d83a91cc7e037",
+  "lockfileSha256": "64a507cd3da7015d1e5690b4743be9d07c6b92c16c495221877dd89de0b4d04f",
   "originalHostSha256": "3177e2fdf783ee0c6dcfa5a39e226c51249de7f51c1ab9b3c7b7200d9a5d0bb4",
   "originalClientSha256": "ffb5bcb99f460a75eebab3df5666d54c0d29d33c700146323939082d95fbf549",
   "host": "The official Host and its npm dependency closure are bundled; DSH services remain external.",

@@ -1,4 +1,6 @@
 /** Student wire DTOs contain projections and current versions, never raw file bytes. */
+export type { Textbook, TextbookPage, TextbookContent, TextbookModel, TextbookCommand, TextbookReply, TextbookUpload } from './textbooks/schema.ts'
+export type { TextbookPairing, TextbookDevice } from './textbooks/service.ts'
 import type { WorkspaceQuery, WorkspaceQueryResult } from './learning/queries.ts'
 import type { NativeSourceCut, NativeConsumedInput, NativeAdmission } from './native-source.ts'
 import type { ManualSaveRequest, ManualSaveResult } from './files/manual.ts'

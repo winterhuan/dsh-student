@@ -9,7 +9,7 @@ kind: "package-bundle"
 
 ## 概述
 
-通过当前 DSH 对话、学习工作台快捷键或 `/study` 引导小学生学习语文、数学与英语，跨对话保留原始作答、帮助、反馈和后续练习。家长在聊天中确认设置、学校进度与照片作业；可选手动表单提供另一种保存方式。没有时长限制。包提供精选二年级上册语文和数学课页、一二年级知识地图及已验证参考题；基础材料不建立校内对齐。
+通过当前 DSH 对话、学习工作台快捷键或 `/study` 引导小学生学习语文、数学与英语。跨对话保留作答、反馈和复习，没有时长限制。家长通过聊天或可选表单确认设置、学校进度与照片作业。从配对手机导入课本照片，保留原图并校对带裁剪配图的 Markdown。随包参考资料与导入课本不自动确认校内对齐或学生掌握。
 
 ## 目录
 
@@ -28,7 +28,7 @@ kind: "package-bundle"
 通过[插件市场](https://winterhuan.github.io/dsh-creative/index.json)安装预构建版本，或在 DSH `0.2.2-rc.5` 中安装以下固定 Git 提交：
 
 ```sh
-dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.11&path:/packages/winterhuan/student'
+dsh plugin --profile market add 'git+https://github.com/winterhuan/dsh-student.git#v0.2.12&path:/packages/winterhuan/student'
 ```
 
 将 `market` 替换为你已有的 DSH profile 名称。
@@ -56,6 +56,16 @@ DSH `0.2.2-rc.5` Headless 不选择 Web 预设列表。非 Web 配置应禁用 `
 ```
 
 配置需要提供相同的原生工具与文件系统服务。安装已启用现有 `fs-observation-policy` 行，保留单个实例。在 `agent/created` 后加载 Student 入口无法捕获该 Agent 的普通输入归属。重启配置并创建新 Agent 后，再调用 `/study`。
+
+### 导入课本照片
+
+在工作台打开「课本录入」，长期保留原图，使用原生 Harness 视觉会话逐页生成 Markdown 和裁剪配图。人工校对与新解析候选稿分开保存。有效页须连续、无重复照片、全部校对，并填写总页数后才能确认整本。排除页保留原图，可恢复。
+
+手机接口默认关闭。为 `student` Host 配置 `textbooks: { host: "具体局域网IP", port: 3082, certFile: "证书绝对路径", keyFile: "私钥绝对路径" }` 后，由同一进程提供 `/student/textbooks/v1` HTTPS 接口。管理网页可继续监听 `127.0.0.1:3082`。保留其他 Student 配置；不要向手机提供管理端凭据。在已授权学习会话中生成十分钟一次性配对信息，设备凭证只允许访问此工作区的课本，并可撤销。
+
+文件位于 `.study/textbooks/<book>/pages/<page>/`：`page.json` 指向 `original.*`、不可覆盖的 `revisions/*.md` 和 `assets/*.png`。Agent 可用 `study_status kind=materials` 查课本，指定 `id=课本ID` 分页查正文路径。模型不可用或断线不会删除原图与人工稿；重启扫描持久化任务。解析使用当前会话所选视觉模型，可能产生模型费用。
+
+开发验收：构建后运行 `node packages/winterhuan/student/tests/textbook-native.e2e.mjs`，使用临时工作区、独立 profile、TLS 与确定性视觉模型验证权限、原生工具限制、同步冲突和修订保留；真实教材识别准确性仍需人工样本验收。
 
 ### 使用学习工作台
 

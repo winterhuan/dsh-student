@@ -1,6 +1,6 @@
 {
   "name": "@winterhuan/dsh-student",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "description": "Short daily learning, confirmed curricula and spaced mistake review for primary-school students",
   "type": "module",
   "license": "MIT",
@@ -114,7 +114,9 @@
     "@deepseek-ai/dsh-tool-web": "0.2.2-rc.5",
     "@deepseek-ai/dsh-typert-protocol": "0.2.2-rc.5",
     "@deepseek-ai/schemastery": "3.19.0",
+    "mdast-util-from-markdown": "2.0.3",
     "playwright-core": "1.56.1",
+    "sharp": "0.35.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -125,6 +127,7 @@
     "@deepseek-ai/dsh-api-remote-access": "0.2.2-rc.5",
     "@deepseek-ai/dsh-api-session-controller": "0.2.2-rc.5",
     "@deepseek-ai/dsh-api-workspace-controller": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-attachment": "0.2.2-rc.5",
     "@deepseek-ai/dsh-client-connection": "0.2.2-rc.5",
     "@deepseek-ai/dsh-client-locale": "0.2.2-rc.5",
     "@deepseek-ai/dsh-client-resources": "0.2.2-rc.5",
@@ -159,8 +162,7 @@
     "@types/react": "18.3.28",
     "@types/react-dom": "18.3.7",
     "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "@deepseek-ai/dsh-attachment": "0.2.2-rc.5"
+    "react-dom": "18.3.1"
   },
   "scripts": {
     "build": "pnpm --dir ../../.. run build",

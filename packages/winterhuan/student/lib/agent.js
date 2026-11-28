@@ -2,6 +2,7 @@ import { t as applicationStudyFiles } from "./application-CtHMwUtl.js";
 import { J as canonical, O as openmaicAcademicQuestion, Ot as sectionReadiness, Vt as validateCourseWorkspace, t as readWorkspace, vt as readLessonFile } from "./read-uEqxBfJ6.js";
 import { a as courseReviewInput, d as readStudentWorkspace, h as nativeMessageHash, i as courseReviewModel, n as generationRequestSchema, o as reviewQuestionsCurrent, s as reviewedCourseRequirement, u as openmaicEntityId } from "./generation-BaMkyPON.js";
 import { a as queryWorkspace } from "./queries-1iZMXoY3.js";
+import { t as TextbookStore } from "./store-KQih6Rur.js";
 import "node:module";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -184,6 +185,32 @@ function registerStudyTools(context) {
 				kind: args.kind ?? "status",
 				offset
 			}, now), paths);
+			if (args.kind === "materials") {
+				const store = new TextbookStore(exec.agent.session.header.cwd, applicationStudyFiles(exec));
+				const books = (await store.books()).filter((book) => (!args.subject || book.subject === args.subject || book.subject === "other") && (!args.id || book.id === args.id));
+				const book = args.id && books[0];
+				const pages = book ? (await store.pages(book.id)).filter((page) => !page.excluded) : void 0;
+				result.data = {
+					...result.data ? z.record(z.string(), z.unknown()).parse(result.data) : {},
+					importedTextbooks: {
+						total: pages?.length ?? books.length,
+						items: pages ? pages.slice(offset, offset + 20).map((page) => ({
+							id: page.id,
+							position: page.position,
+							printedPage: page.printedPage,
+							status: page.status,
+							original: page.original,
+							markdown: page.content?.path,
+							hasCandidate: !!page.candidate
+						})) : books.slice(offset, offset + 20).map((book) => ({
+							...book,
+							path: `.study/textbooks/${book.id}/book.json`
+						})),
+						nextOffset: offset + 20 < (pages?.length ?? books.length) ? offset + 20 : null,
+						guide: "Use materials with id=book ID to list page Markdown paths. Read confirmed pages before tutoring. review/failed content is unverified. Importing a book does not confirm school edition, curriculum alignment or learner mastery."
+					}
+				};
+			}
 			if (args.kind === "files") {
 				const matching = read.files.filter((file) => args.id === void 0 || file.file && "id" in file.file && file.file.id === args.id);
 				result.data = {

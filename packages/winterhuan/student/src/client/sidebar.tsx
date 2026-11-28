@@ -10,6 +10,7 @@ import { useEffect } from 'react'
 import { NS, zh, en } from './locales.ts'
 import { tutorBridge, studentSessionBridge, type StudentSessionActions, type StudyPhoto } from './bridge.ts'
 import { StudyDesk } from './desk.tsx'
+import type { TextbookActions } from './textbooks-view.tsx'
 import { registerTeachingAids } from './teaching-aids.tsx'
 import { mountStudentResource } from './resource.ts'
 import { createStudentDraftStore } from './drafts.tsx'
@@ -21,6 +22,13 @@ export const inject = ['slots', 'sessions', 'uiSession', 'locale', 'sidebarRight
 function studentCallbacks(scope: Context) {
   const t = scope.locale.bind(NS)
   return {
+    textbookActions: (sessionId: StudentSessionId): TextbookActions => ({
+      async command(request) { const result = await scope.remote.student.textbooks(sessionId, request, new AbortController().signal); if (!result.ok) throw new Error(result.error.message); return result.value },
+      async pair() { const result = await scope.remote.student.textbookPair(sessionId, new AbortController().signal); if (!result.ok) throw new Error(result.error.message); return result.value },
+      async devices(revoke) { const result = await scope.remote.student.textbookDevices(sessionId, revoke, new AbortController().signal); if (!result.ok) throw new Error(result.error.message); return result.value },
+      async upload(request) { const result = await scope.remote.student.textbookUpload(sessionId, request, new AbortController().signal); if (!result.ok) throw new Error(result.error.message); return result.value },
+      async image(bookId, pageId, kind, index, candidate, revision) { const result = await scope.remote.student.textbookImage(sessionId, bookId, pageId, kind, index, candidate, revision, new AbortController().signal); if (!result.ok) throw new Error(result.error.message); return result.value },
+    }),
     ...createStudentManualActions(scope.remote.student),
     sessionActions: (sessionId: StudentSessionId): StudentSessionActions => studentSessionBridge(scope, sessionId, t('sessionError')),
     readMini: async (sessionId: StudentSessionId, miniId: string) => { const result = await scope.remote.studentOpenmaicPlayback.mini(sessionId, miniId, new AbortController().signal); if (!result.ok) throw new Error(result.error.message); return result.value },
@@ -37,8 +45,8 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 
 type Props = PropsRuntime<'student.desk'> & PropsLocale<typeof NS> & PropsStore<ReturnType<typeof createStudentDraftStore>> & ReturnType<typeof studentCallbacks>
 
-function Desk({ sessionId, visible, running, pending, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission, openLesson, pollLesson, readMini, sessionActions }: Props) {
-  return <StudyDesk key={sessionId} {...{ sessionId, visible, running, pending }} {...sessionActions(sessionId)} ask={(text, photo) => askStudent(sessionId, text, photo)} t={t} useResource={useResource} readMini={miniId => readMini(sessionId, miniId)} openLesson={lessonId => openLesson(sessionId, lessonId)} pollLesson={(lessonId, signal) => pollLesson(sessionId, lessonId, signal)} {...{ useStore, actions, saveSettings, saveWorksheet, inspectSubmission }} />
+function Desk({ sessionId, visible, running, pending, useResource, t, useStore, actions, askStudent, saveSettings, saveWorksheet, inspectSubmission, openLesson, pollLesson, readMini, sessionActions, textbookActions }: Props) {
+  return <StudyDesk key={sessionId} textbookActions={textbookActions(sessionId)} {...{ sessionId, visible, running, pending }} {...sessionActions(sessionId)} ask={(text, photo) => askStudent(sessionId, text, photo)} t={t} useResource={useResource} readMini={miniId => readMini(sessionId, miniId)} openLesson={lessonId => openLesson(sessionId, lessonId)} pollLesson={(lessonId, signal) => pollLesson(sessionId, lessonId, signal)} {...{ useStore, actions, saveSettings, saveWorksheet, inspectSubmission }} />
 }
 
 function Sidebar({ sessionId, useTabInfo, useSession, useSessions, renderSlot }: PropsRuntime<'sidebar.right.pane.tab'> & PropsRenderSlots<'student.desk'>) {

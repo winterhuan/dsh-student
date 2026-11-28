@@ -5,10 +5,10 @@ import { chmod, lstat, mkdir } from "node:fs/promises";
 import { z } from "zod";
 import { Service } from "@deepseek-ai/cordis";
 import { createHash } from "node:crypto";
+import { join, resolve } from "node:path";
 import { credentialKey, credentialRef } from "@deepseek-ai/dsh-credentials";
 import z$1 from "@deepseek-ai/schemastery";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
 import { chromium } from "playwright-core";
 import { Remote, TypertRemoteService } from "@deepseek-ai/dsh-typert-protocol";
 //#region lib/types/openmaic/browser.js

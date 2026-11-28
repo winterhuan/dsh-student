@@ -4,8 +4,10 @@ import type { DraftProps } from './drafts.tsx';
 import type { StudentSessionId } from '../types.ts';
 import type { UseStudentResource } from './workspace.ts';
 import type { Translate } from './locales.ts';
+import { type TextbookActions } from './textbooks-view.tsx';
 /** Workbench actions share the same persisted state as the native tutoring tools. */
-export declare function StudyDesk({ sessionId, visible, ask, running, pending, syncFeedback, cancel, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, openLesson, pollLesson, readMini, useStore, actions }: DraftProps & StudentManualActions & Partial<StudentSessionActions> & {
+export declare function StudyDesk({ sessionId, visible, ask, running, pending, syncFeedback, cancel, t, useResource, saveSettings, saveWorksheet: saveWorksheetRecord, openLesson, pollLesson, readMini, useStore, actions, textbookActions }: DraftProps & StudentManualActions & Partial<StudentSessionActions> & {
+    textbookActions?: TextbookActions;
     sessionId: StudentSessionId;
     useResource: UseStudentResource;
     visible: boolean;

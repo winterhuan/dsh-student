@@ -3,6 +3,8 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import { z } from 'zod'
 import { readStudentWorkspace } from './transport.ts'
 import { queryWorkspace, type WorkspaceQueryResult } from './learning/queries.ts'
+import { applicationStudyFiles } from './files/application.ts'
+import { TextbookStore } from './textbooks/store.ts'
 
 function boundedRead(result: WorkspaceQueryResult, paths: readonly string[]) {
   const versions = result.versions.filter(file => paths.includes(file.path))
@@ -33,6 +35,13 @@ export function registerStudyTools(context: Context): void {
       const active = read.workspace?.blocks.find(block => block.endedAt === undefined)
       const paths = ['.study/settings.json', ...read.files.filter(file => file.file?.kind === 'daily-plan').map(file => file.path), ...(active ? [`.study/blocks/${active.id}.json`] : []), ...read.files.filter(file => file.file && 'id' in file.file && file.file.id === args.id).map(file => file.path)]
       const result = boundedRead(queryWorkspace(read, { ...args, kind: args.kind ?? 'status', offset }, now), paths)
+      if (args.kind === 'materials') {
+        const store = new TextbookStore(exec.agent!.session.header.cwd!, applicationStudyFiles(exec))
+        const books = (await store.books()).filter(book => (!args.subject || book.subject === args.subject || book.subject === 'other') && (!args.id || book.id === args.id))
+        const book = args.id && books[0]
+        const pages = book ? (await store.pages(book.id)).filter(page => !page.excluded) : undefined
+        result.data = { ...(result.data ? z.record(z.string(), z.unknown()).parse(result.data) : {}), importedTextbooks: { total: pages?.length ?? books.length, items: pages ? pages.slice(offset, offset + 20).map(page => ({ id: page.id, position: page.position, printedPage: page.printedPage, status: page.status, original: page.original, markdown: page.content?.path, hasCandidate: !!page.candidate })) : books.slice(offset, offset + 20).map(book => ({ ...book, path: `.study/textbooks/${book.id}/book.json` })), nextOffset: offset + 20 < (pages?.length ?? books.length) ? offset + 20 : null, guide: 'Use materials with id=book ID to list page Markdown paths. Read confirmed pages before tutoring. review/failed content is unverified. Importing a book does not confirm school edition, curriculum alignment or learner mastery.' } }
+      }
       if (args.kind === 'files') {
         const matching = read.files.filter(file => args.id === undefined || (file.file && 'id' in file.file && file.file.id === args.id))
         result.data = { total: matching.length, items: matching.slice(offset, offset + 20).map(file => ({ path: file.path, version: file.version, kind: file.file?.kind, termId: file.file?.termId, ...(file.file && 'id' in file.file ? { id: file.file.id } : {}) })), nextOffset: offset + 20 < matching.length ? offset + 20 : null }

@@ -1,5 +1,7 @@
 export const NS = 'studentDesk';
 export const zh = {
+    tbMerge: '已对照最新正文，继续保存此合并稿', tbExcluded: '已排除（原图保留）', tbExclude: '排除此页', tbRestore: '恢复此页', tbSavedVersion: '查看 Mac 已保存正文',
+    tbTitle: '课本录入', tbHelp: '原图长期保留，正文保存为 Markdown。逐页解析后核对，再确认整本录入完成。', tbRefresh: '刷新', tbPair: '生成手机配对信息', tbPairHelp: '复制到 Android App（10 分钟内有效，仅可配对一台设备）', tbRevoke: '撤销设备', tbBookName: '课本名称', tbPageCount: '总页数（包含封面、目录和附页）', tbCreate: '新建课本', tbComplete: '整本已确认', tbIncomplete: '尚未确认完整', tbSave: '保存', tbUpload: '导入页面照片', tbPhotoSize: '单张照片不能超过 20 MB。', tbParsePending: '解析待处理页面', tbConfirmBook: '确认整本录入完成', tbCompleteHelp: '请核对页数、缺页、重复照片，并逐页确认正文与配图。', tbUnnumbered: '未编号', tbPage: '页面', tbOriginal: '查看原始照片', tbReparse: '解析 / 重新解析', tbCandidate: '新的解析草稿（原校对稿已保留）', tbUseCandidate: '采用新解析进行校对', tbPosition: '课本中的顺序', tbPrinted: '印刷页码', tbMarkdown: 'Markdown 校对稿', tbConfirmPage: '确认本页已校对', tbConflictHelp: '保存冲突时，草稿仍留在本机。重新打开本页核对最新修订后再保存。', tbReceived: '已收图', tbQueued: '待解析', tbParsing: '正在解析', tbReview: '待校对', tbConfirmed: '已校对', tbFailed: '解析失败', tbCopy: '复制', tbCopied: '已复制', tbFootnotes: '脚注',
     "learningNow": "学习中",
     "backHome": "回到首页",
     "pauseLearning": "暂停一下",
@@ -679,6 +681,8 @@ export const zh = {
     "openmaicEffective": "当前使用",
 };
 export const en = {
+    tbMerge: 'Compared latest version; continue with this merged draft', tbExcluded: 'Excluded (original retained)', tbExclude: 'Exclude page', tbRestore: 'Restore page', tbSavedVersion: 'View saved text on Mac',
+    tbTitle: 'Textbook import', tbHelp: 'Keep original photos and save text as Markdown. Proofread each page before confirming the complete book.', tbRefresh: 'Refresh', tbPair: 'Pair a phone', tbPairHelp: 'Copy into the Android app (valid for 10 minutes and one device)', tbRevoke: 'Revoke device', tbBookName: 'Book title', tbPageCount: 'Total pages, including covers and inserts', tbCreate: 'Create book', tbComplete: 'Book confirmed', tbIncomplete: 'Completeness not confirmed', tbSave: 'Save', tbUpload: 'Import page photos', tbPhotoSize: 'Each photo must be at most 20 MB.', tbParsePending: 'Parse pending pages', tbConfirmBook: 'Confirm complete import', tbCompleteHelp: 'Check page coverage, duplicates, text and illustrations before confirming.', tbUnnumbered: 'Unnumbered', tbPage: 'Page', tbOriginal: 'View original photo', tbReparse: 'Parse / reparse', tbCandidate: 'New draft (your previous correction is retained)', tbUseCandidate: 'Proofread the new draft', tbPosition: 'Position in book', tbPrinted: 'Printed page number', tbMarkdown: 'Markdown correction', tbConfirmPage: 'Confirm proofreading', tbConflictHelp: 'On conflicts, your draft stays on this device. Reopen the page and compare the latest revision before saving.', tbReceived: 'Photo received', tbQueued: 'Queued', tbParsing: 'Parsing', tbReview: 'Needs proofreading', tbConfirmed: 'Proofread', tbFailed: 'Parsing failed', tbCopy: 'Copy', tbCopied: 'Copied', tbFootnotes: 'Footnotes',
     "learningNow": "Learning",
     "backHome": "Back home",
     "pauseLearning": "Pause",
